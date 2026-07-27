@@ -990,8 +990,8 @@ UI_TRANSLATIONS = {
     "js_pasted_partial_recovered": {"it": "Incollato: {ok} di {tot} immagine/i recuperata/e.",
                                     "en": "Pasted: {ok} of {tot} image(s) recovered."},
     "js_pasted_word_image_unavailable": {
-        "it": "Il testo e' stato incollato, ma il tuo sistema non ha fornito alla pagina il file dell'immagine copiata da Word (solo un percorso locale non leggibile dal browser): salva l'immagine come file e usa \"Carica immagine\".",
-        "en": "The text was pasted, but your system did not give the page the file for the image copied from Word (only a local path the browser cannot read): save the image as a file and use \"Upload image\"."},
+        "it": "Il testo e' stato incollato, ma il tuo sistema non ha fornito alla pagina il file dell'immagine copiata (solo un riferimento che il browser non puo' caricare): salva l'immagine come file e usa \"Carica immagine\".",
+        "en": "The text was pasted, but your system did not give the page the file for the copied image (only a reference the browser cannot load): save the image as a file and use \"Upload image\"."},
 }
 
 
@@ -2760,15 +2760,29 @@ function handlePastedImages(istanzaQuill, statusElementId) {
   }, true);  // capture phase: we need to run before Quill's own paste handler.
 }
 
-// Detects a pasted <img> tag pointing to a local file path
-// ("file:///C:/Users/...") instead of a real, loadable address: a common
-// leftover of copying text and pictures together from Word on Windows.
-// A web page cannot read that path for security reasons, so it is only
-// used to decide whether to warn the author.
+// Detects a pasted <img> tag whose src is not a real, loadable address.
+// Word (and similar word processors) leave all sorts of placeholders in
+// the clipboard HTML instead of a usable picture: a local file path
+// ("file:///C:/Users/...", unreadable by a web page for security reasons),
+// or a bare "//:0" (the placeholder Word writes for some pictures and
+// shapes when the clipboard does not carry a matching bitmap for them).
+// Rather than list every placeholder we have seen, we accept only the
+// addresses that are actually loadable in a browser (http/https/data, or
+// a path relative to this site, like the "/media/..." PyBlog itself
+// generates) and treat anything else as unrecoverable.
 function contieneImmagineNonRecuperabile(html) {
   if (!html) { return false; }
-  var trovato = /<img\\b[^>]*\\bsrc\\s*=\\s*["']?file:/i.exec(html);
-  return trovato !== null;
+  var regexTag = /<img\\b[^>]*>/gi;
+  var tag = regexTag.exec(html);
+  while (tag !== null) {
+    var corrispondenzaSrc = tag[0].match(/\\bsrc\\s*=\\s*["']([^"']*)["']/i);
+    var indirizzo = corrispondenzaSrc ? corrispondenzaSrc[1] : '';
+    if (!/^(https?:|data:|\\/)/i.test(indirizzo)) {
+      return true;
+    }
+    tag = regexTag.exec(html);
+  }
+  return false;
 }
 
 // Reads the width a pasted <img> tag declares, either as a plain HTML
