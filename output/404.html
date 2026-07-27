@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  
+  <title>Pagina non trovata &middot; Inside the Machine</title>
+  <link rel="stylesheet" href="/style.css">
+  <script>
+// We apply the saved theme right away, before the page is painted.
+(function() {
+  try {
+    var salvato = localStorage.getItem('pb-tema');
+    if (salvato === 'dark') {
+      document.documentElement.setAttribute('data-tema', 'dark');
+    } else if (salvato === null && window.matchMedia
+               && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      // No saved choice: we respect the system preference.
+      document.documentElement.setAttribute('data-tema', 'dark');
+    }
+  } catch (e) { }
+})();
+// Aligns the code blocks theme (highlight.js) with the site theme.
+// The link has id "hljs-tema" and only exists on the article pages.
+function updateCodeTheme() {
+  var link = document.getElementById('hljs-tema');
+  if (!link) { return; }
+  var scuro = document.documentElement.getAttribute('data-tema') === 'dark';
+  if (scuro) {
+    link.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css';
+  } else {
+    link.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css';
+  }
+}
+// Switches between light and dark theme and saves the choice.
+function toggleTheme() {
+  var attuale = document.documentElement.getAttribute('data-tema');
+  if (attuale === 'dark') {
+    document.documentElement.removeAttribute('data-tema');
+    try { localStorage.setItem('pb-tema', 'light'); } catch (e) { }
+  } else {
+    document.documentElement.setAttribute('data-tema', 'dark');
+    try { localStorage.setItem('pb-tema', 'dark'); } catch (e) { }
+  }
+  updateCodeTheme();
+}
+// On load, we sync the code theme with the saved one.
+document.addEventListener('DOMContentLoaded', updateCodeTheme);
+</script>
+</head>
+<body>
+  <a class="skip-to-content" href="#content">Salta al contenuto</a>
+  <header class="site">
+    <div class="site-brand">
+      <h1><a href="/">Inside the Machine</a></h1>
+      <p class="site-subtitle">Note tecniche su AI, sistemi distribuiti e dintorni</p>
+    </div>
+    <nav class="site-nav">
+      <a href="/">Home</a>
+      <a href="/#articles">Articoli</a>
+      <a href="/archivio.html">Archivio</a>
+      <a href="/rss.xml">RSS</a>
+      <a class="nav-lingua" href="/en/" lang="en" title="EN">EN</a>
+      <button class="tema-toggle" onclick="toggleTheme()" aria-label="Cambia tema" title="Tema chiaro/scuro">
+        <span class="tema-icona">&#9789;</span>
+      </button>
+    </nav>
+  </header>
+  <main id="content" class="main-content">
+    <div style="text-align:center; padding:4rem 1rem;">
+      <h1 style="font-size:3rem; margin:0;">404</h1>
+      <p style="font-size:1.2rem; color:var(--secondario);">La pagina che cerchi non esiste o e' stata spostata.</p>
+      <p style="margin-top:2rem;"><a href="/">&larr; Torna alla homepage</a></p>
+    </div>
+  </main>
+  <footer class="site">
+    <p>&copy; 2026 Giuseppe Ciuni &middot;
+       <a href="/archivio.html">Archivio</a> &middot;
+       <a href="/rss.xml">RSS</a></p>
+  </footer>
+</body>
+</html>

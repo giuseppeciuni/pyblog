@@ -1,0 +1,36 @@
+# Umami self-hosted per www.ciunix.com
+# Avvio:  docker compose up -d
+# Poi:    http://SERVER:3000  (login iniziale: admin / umami — cambiala subito)
+# Dietro nginx: proxy_pass verso 127.0.0.1:3000 dal virtual host stats.ciunix.com
+services:
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      DATABASE_URL: postgresql://umami:CAMBIAMI_PASSWORD_DB@db:5432/umami
+      DATABASE_TYPE: postgresql
+      # Stringa casuale lunga: genera con  openssl rand -base64 32
+      APP_SECRET: CAMBIAMI_SEGRETO_CASUALE
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: CAMBIAMI_PASSWORD_DB
+    volumes:
+      - umami-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  umami-db:

@@ -1,0 +1,7 @@
+# ai.txt - AI training rights statement
+# This is an informal convention, not a binding legal standard.
+
+Policy: open
+
+This site's author places no restrictions on using its content to train artificial intelligence models.
+License: https://tuodominio.com/training-rights.html

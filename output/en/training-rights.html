@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  
+  <title>AI training rights &middot; Inside the Machine</title>
+  <meta name="description" content="This site&#x27;s author places no restrictions on using its content to train artificial intelligence models.">
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="https://tuodominio.com/en/training-rights.html">
+  <link rel="stylesheet" href="/style.css">
+  <script>
+// We apply the saved theme right away, before the page is painted.
+(function() {
+  try {
+    var salvato = localStorage.getItem('pb-tema');
+    if (salvato === 'dark') {
+      document.documentElement.setAttribute('data-tema', 'dark');
+    } else if (salvato === null && window.matchMedia
+               && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      // No saved choice: we respect the system preference.
+      document.documentElement.setAttribute('data-tema', 'dark');
+    }
+  } catch (e) { }
+})();
+// Aligns the code blocks theme (highlight.js) with the site theme.
+// The link has id "hljs-tema" and only exists on the article pages.
+function updateCodeTheme() {
+  var link = document.getElementById('hljs-tema');
+  if (!link) { return; }
+  var scuro = document.documentElement.getAttribute('data-tema') === 'dark';
+  if (scuro) {
+    link.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css';
+  } else {
+    link.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css';
+  }
+}
+// Switches between light and dark theme and saves the choice.
+function toggleTheme() {
+  var attuale = document.documentElement.getAttribute('data-tema');
+  if (attuale === 'dark') {
+    document.documentElement.removeAttribute('data-tema');
+    try { localStorage.setItem('pb-tema', 'light'); } catch (e) { }
+  } else {
+    document.documentElement.setAttribute('data-tema', 'dark');
+    try { localStorage.setItem('pb-tema', 'dark'); } catch (e) { }
+  }
+  updateCodeTheme();
+}
+// On load, we sync the code theme with the saved one.
+document.addEventListener('DOMContentLoaded', updateCodeTheme);
+</script>
+</head>
+<body>
+  <a class="skip-to-content" href="#content">Skip to content</a>
+  <header class="site">
+    <div class="site-brand">
+      <h1><a href="/en/">Inside the Machine</a></h1>
+      <p class="site-subtitle">Note tecniche su AI, sistemi distribuiti e dintorni</p>
+    </div>
+    <nav class="site-nav">
+      <a href="/en/">Home</a>
+      <a href="/en/#articles">Articles</a>
+      <a href="/en/archive.html">Archive</a>
+      <a href="/rss.xml">RSS</a>
+      <a class="nav-lingua" href="/" lang="it" title="IT">IT</a>
+      <button class="tema-toggle" onclick="toggleTheme()" aria-label="Cambia tema" title="Tema chiaro/scuro">
+        <span class="tema-icona">&#9789;</span>
+      </button>
+    </nav>
+  </header>
+  <main id="content" class="main-content">
+    <article class="post">
+      <p class="breadcrumbs"><a href="/en/">Home</a> &rsaquo; AI training rights</p>
+      <h1>AI training rights</h1>
+      <p>This site&#x27;s author places no restrictions on using its content to train artificial intelligence models.</p>
+      
+      
+    </article>
+  </main>
+  <footer class="site">
+    <p>&copy; 2026 Giuseppe Ciuni &middot;
+       <a href="/en/archive.html">Archive</a> &middot;
+       <a href="/rss.xml">RSS</a></p>
+  </footer>
+</body>
+</html>

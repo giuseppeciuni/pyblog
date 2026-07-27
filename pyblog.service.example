@@ -1,0 +1,48 @@
+# systemd unit for the PyBlog editor on a VPS.
+#
+# Install:
+#   sudo useradd --system --home /opt/pyblog --shell /usr/sbin/nologin pyblog
+#   sudo cp pyblog.service.example /etc/systemd/system/pyblog.service
+#   (edit the paths and the API key below)
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now pyblog
+#
+# The server listens on localhost only: nginx proxies the admin routes
+# to it (see nginx.conf.example) and serves the static site directly.
+
+[Unit]
+Description=PyBlog editor (admin area)
+After=network.target
+
+[Service]
+Type=simple
+User=pyblog
+Group=pyblog
+WorkingDirectory=/opt/pyblog
+ExecStart=/usr/bin/python3 /opt/pyblog/pyblog.py serve 8000 127.0.0.1
+Restart=on-failure
+RestartSec=5
+
+# The LLM API key lives in a root-only file instead of config.json: it
+# never touches the project folder, the backups of config.json, or the
+# Settings page. Create /etc/pyblog.env with a line like
+#   PYBLOG_LLM_API_KEY=sk-...
+# then:  sudo chmod 600 /etc/pyblog.env && sudo chown root:root /etc/pyblog.env
+# Variables by provider:
+#   PYBLOG_LLM_API_KEY      (Anthropic / custom endpoint)
+#   PYBLOG_OPENAI_API_KEY   PYBLOG_DEEPSEEK_API_KEY
+#   PYBLOG_DEEPL_API_KEY    PYBLOG_GOOGLE_API_KEY
+EnvironmentFile=/etc/pyblog.env
+# Simpler but less protected alternative (unit files are world-readable):
+# Environment=PYBLOG_LLM_API_KEY=sk-REPLACE-ME
+
+# Hardening: the process cannot gain privileges, sees a private /tmp,
+# and can only write inside its own folder.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/pyblog
+
+[Install]
+WantedBy=multi-user.target

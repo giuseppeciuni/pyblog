@@ -1,0 +1,15 @@
+# Inside the Machine
+
+> Note tecniche su AI, sistemi distribuiti e dintorni
+
+Autore: Giuseppe Ciuni.
+
+## Articoli
+
+- [Senza titolo](https://tuodominio.com/posts/senza-titolo.html): Scopri la quarta tappa di "Inside the machine": come un LLM genera testo passo dopo passo e perché un modello base non è ancora un assistente, tra inferenza, temperatura e RLHF.
+
+## Training & Licensing
+
+This site's author places no restrictions on using its content to train artificial intelligence models.
+
+Full statement: https://tuodominio.com/training-rights.html

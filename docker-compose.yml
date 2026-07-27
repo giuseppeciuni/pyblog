@@ -1,0 +1,22 @@
+# PyBlog with Docker Compose.
+#
+# Start:    docker compose up -d
+# Editor:   http://localhost:8000/admin
+# Stop:     docker compose down
+#
+# The current folder is mounted inside the container: articles
+# (posts/), configuration (config.json), the password and the generated
+# site (output/) stay on your disk and survive the container.
+
+services:
+  pyblog:
+    build: .
+    container_name: pyblog
+    ports:
+      # We expose the port ONLY on localhost. To publish the blog use
+      # nginx serving the output/ folder (see nginx.conf.example):
+      # it's static, no need to keep PyBlog running in production.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - .:/app
+    restart: unless-stopped

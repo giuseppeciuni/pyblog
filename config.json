@@ -1,0 +1,81 @@
+{
+  "site_title": "Inside the Machine",
+  "subtitle": "Note tecniche su AI, sistemi distribuiti e dintorni",
+  "author": "Giuseppe Ciuni",
+  "base_url": "https://tuodominio.com",
+  "analytics_id": "",
+  "umami_url": "",
+  "umami_website_id": "",
+  "language": "it",
+  "admin_language": "it",
+  "home_content": "<h2 class=\"ql-align-center\">Benvenuto su Inside the Machine</h2><p class=\"ql-align-center\">Un blog tecnico su intelligenza artificiale, sistemi distribuiti e sviluppo software.</p><p class=\"ql-align-center\">Qui trovi articoli, guide e appunti pensati per chi costruisce con la tecnologia.</p><p class=\"ql-align-center\"><strong>Scorri in basso per leggere gli ultimi articoli.</strong></p><p><br></p><p>Per personalizzare questa presentazione, vai nella pagina <em>Impostazioni e homepage</em> della redazione: puoi scrivere la tua biografia, aggiungere una foto, cambiare i testi e impostare il titolo del site.</p>",
+  "home_content_en": "<h2 class=\"ql-align-center\">Welcome to Inside the Machine</h2><p class=\"ql-align-center\">A technical blog about artificial intelligence, distributed systems and software development.</p><p class=\"ql-align-center\">Here you will find articles, guides and notes for those who build with technology.</p><p class=\"ql-align-center\"><strong>Scroll down to read the latest articles.</strong></p><p><br></p><p>To customize this introduction, go to the <em>Settings and homepage</em> page in the admin area: you can write your biography, add a photo, change the texts and set the site title.</p>",
+  "comments": "none",
+  "giscus": {
+    "repo": "tuonome/tuorepo",
+    "repo_id": "R_xxxxxxxx",
+    "category": "Comments",
+    "category_id": "DIC_xxxxxxxx",
+    "theme": "light"
+  },
+  "disqus": {
+    "shortname": "tuo-shortname"
+  },
+  "translation": {
+    "service": "deepseek",
+    "deepl_api_key": "",
+    "google_api_key": "",
+    "llm_api_key": "",
+    "llm_endpoint": "https://api.anthropic.com/v1/messages",
+    "llm_model": "claude-sonnet-4-6",
+    "openai_api_key": "",
+    "openai_model": "gpt-4o-mini",
+    "deepseek_api_key": "",
+    "deepseek_model": "deepseek-chat"
+  },
+  "seo": {
+    "backlink_site": "startupbusiness.it",
+    "author_url": "",
+    "author_image": "",
+    "author_bio": "",
+    "author_role": "",
+    "social_profiles": [],
+    "logo": "",
+    "twitter_site": "",
+    "favicon": ""
+  },
+  "ai_training": {
+    "policy": "open",
+    "contact_email": "",
+    "license_url": "",
+    "statement": ""
+  },
+  "home_order": [
+    "intro",
+    "cards",
+    "articles"
+  ],
+  "articles_per_page": 10,
+  "home_cards": [
+    {
+      "active": true,
+      "title": "Biografia",
+      "content": "<p>Racconta qui chi sei, la tua esperienza e di cosa ti occupi.</p>"
+    },
+    {
+      "active": true,
+      "title": "Progetti",
+      "content": "<p>Elenca qui i tuoi progetti principali, con una breve descrizione di ciascuno.</p>"
+    },
+    {
+      "active": true,
+      "title": "Informazioni in evidenza",
+      "content": "<p>Metti qui le informazioni che vuoi mettere in evidenza: contatti, link utili, o una galleria di immagini.</p>"
+    },
+    {
+      "active": false,
+      "title": "Comunicazioni di servizio",
+      "content": "<p>Usa questo spazio per avvisi importanti ai lettori.</p>"
+    }
+  ]
+}

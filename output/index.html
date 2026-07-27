@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  
+  <title>Inside the Machine &middot; Note tecniche su AI, sistemi distribuiti e dintorni</title>
+  <meta name="description" content="Note tecniche su AI, sistemi distribuiti e dintorni">
+  <meta name="author" content="Giuseppe Ciuni">
+  <link rel="canonical" href="https://tuodominio.com/">
+  <link rel="alternate" hreflang="it" href="https://tuodominio.com/">
+  <link rel="alternate" hreflang="en" href="https://tuodominio.com/en/">
+  <link rel="alternate" hreflang="x-default" href="https://tuodominio.com/">
+  <meta property="og:title" content="Inside the Machine">
+  <meta property="og:description" content="Note tecniche su AI, sistemi distribuiti e dintorni">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tuodominio.com/">
+  <meta property="og:site_name" content="Inside the Machine">
+  <meta property="og:locale" content="it_IT">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="alternate" type="application/rss+xml" title="Inside the Machine" href="/rss.xml">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "name": "Inside the Machine", "description": "Note tecniche su AI, sistemi distribuiti e dintorni", "url": "https://tuodominio.com/", "inLanguage": "it", "author": {"@type": "Person", "name": "Giuseppe Ciuni"}}</script>
+  <script>
+// We apply the saved theme right away, before the page is painted.
+(function() {
+  try {
+    var salvato = localStorage.getItem('pb-tema');
+    if (salvato === 'dark') {
+      document.documentElement.setAttribute('data-tema', 'dark');
+    } else if (salvato === null && window.matchMedia
+               && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      // No saved choice: we respect the system preference.
+      document.documentElement.setAttribute('data-tema', 'dark');
+    }
+  } catch (e) { }
+})();
+// Aligns the code blocks theme (highlight.js) with the site theme.
+// The link has id "hljs-tema" and only exists on the article pages.
+function updateCodeTheme() {
+  var link = document.getElementById('hljs-tema');
+  if (!link) { return; }
+  var scuro = document.documentElement.getAttribute('data-tema') === 'dark';
+  if (scuro) {
+    link.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css';
+  } else {
+    link.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css';
+  }
+}
+// Switches between light and dark theme and saves the choice.
+function toggleTheme() {
+  var attuale = document.documentElement.getAttribute('data-tema');
+  if (attuale === 'dark') {
+    document.documentElement.removeAttribute('data-tema');
+    try { localStorage.setItem('pb-tema', 'light'); } catch (e) { }
+  } else {
+    document.documentElement.setAttribute('data-tema', 'dark');
+    try { localStorage.setItem('pb-tema', 'dark'); } catch (e) { }
+  }
+  updateCodeTheme();
+}
+// On load, we sync the code theme with the saved one.
+document.addEventListener('DOMContentLoaded', updateCodeTheme);
+</script>
+</head>
+<body>
+  <a class="skip-to-content" href="#content">Salta al contenuto</a>
+  <header class="site">
+    <div class="site-brand">
+      <h1><a href="/">Inside the Machine</a></h1>
+      <p class="site-subtitle">Note tecniche su AI, sistemi distribuiti e dintorni</p>
+    </div>
+    <nav class="site-nav">
+      <a href="/">Home</a>
+      <a href="/#articles">Articoli</a>
+      <a href="/archivio.html">Archivio</a>
+      <a href="/rss.xml">RSS</a>
+      <a class="nav-lingua" href="/en/" lang="en" title="EN">EN</a>
+      <button class="tema-toggle" onclick="toggleTheme()" aria-label="Cambia tema" title="Tema chiaro/scuro">
+        <span class="tema-icona">&#9789;</span>
+      </button>
+    </nav>
+  </header>
+
+  <main id="content" class="main-content">
+  <section class="home-intro">
+    <h2 class="ql-align-center">Benvenuto su Inside the Machine</h2><p class="ql-align-center">Un blog tecnico su intelligenza artificiale, sistemi distribuiti e sviluppo software.</p><p class="ql-align-center">Qui trovi articoli, guide e appunti pensati per chi costruisce con la tecnologia.</p><p class="ql-align-center"><strong>Scorri in basso per leggere gli ultimi articoli.</strong></p><p><br></p><p>Per personalizzare questa presentazione, vai nella pagina <em>Impostazioni e homepage</em> della redazione: puoi scrivere la tua biografia, aggiungere una foto, cambiare i testi e impostare il titolo del site.</p>
+  </section>
+  <section class="cards-section">
+    <h2 class="articles-heading">Esplora</h2>
+    <div class="home-cards-grid">
+    <a class="home-card" href="/pagine/biografia.html">
+      <h3 class="home-card-title">Biografia</h3>
+      <p class="home-card-excerpt">Racconta qui chi sei, la tua esperienza e di cosa ti occupi.</p>
+      <span class="home-card-link">Apri &rarr;</span>
+    </a>
+    <a class="home-card" href="/pagine/progetti.html">
+      <h3 class="home-card-title">Progetti</h3>
+      <p class="home-card-excerpt">Elenca qui i tuoi progetti principali, con una breve descrizione di ciascuno.</p>
+      <span class="home-card-link">Apri &rarr;</span>
+    </a>
+    <a class="home-card" href="/pagine/informazioni-in-evidenza.html">
+      <h3 class="home-card-title">Informazioni in evidenza</h3>
+      <p class="home-card-excerpt">Metti qui le informazioni che vuoi mettere in evidenza: contatti, link utili, o una galleria di immagini.</p>
+      <span class="home-card-link">Apri &rarr;</span>
+    </a>
+    </div>
+  </section>
+  <section id="articles" class="articles-section">
+    <h2 class="articles-heading">Articoli</h2>
+
+    <div class="search-box">
+      <input type="search" id="search-box-input" placeholder="Cerca negli articoli..."
+             autocomplete="off" aria-label="Cerca">
+      <p id="search-box-info"></p>
+    </div>
+
+    <div class="articles-grid" id="lista-articoli">
+    <a class="article-card" href="/posts/senza-titolo.html">
+      <div class="card-date">19 luglio 2026</div>
+      <h3 class="card-title">Senza titolo</h3>
+      <p class="card-excerpt">Dall&#x27;addestramento alla risposta finale: ecco cosa accade davvero nei meandri di un Large Language Model quando smette di &quot;imparare&quot; e inizia a parlare. Il quarto articolo della serie &quot;Inside the machine&quot; di Giuseppe Ciuni svela i meccanismi nascosti dietro la generazione del testo, spiegando perché un modello &quot;base&quot; scaricato da internet non sa rispondere ai comandi e come invece nasce un vero assistente. Scoprirai concetti chiave come temperatura, inferenza autoregressiva e KV cache, che ti aiuteranno a capire perché le API fanno pagare di più i token in uscita. Un tuffo tecnico ma chiarissimo che ogni CTO o founder dovrebbe fare prima di integrare l&#x27;IA in azienda.</p>
+      <span class="card-read-more">Leggi l'articolo &rarr;</span>
+    </a>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="site">
+    <p>&copy; 2026 Giuseppe Ciuni &middot;
+       <a href="/archivio.html">Archivio</a> &middot;
+       <a href="/rss.xml">RSS</a></p>
+  </footer>
+
+  <script>
+  // Browser-side search: it downloads the JSON index once and filters locally.
+  // It shows a snippet of the context around the searched word, with
+  // highlighting. It searches both Italian and English. A 100% static site.
+  (function() {
+    const input = document.getElementById('search-box-input');
+    const info = document.getElementById('search-box-info');
+    const lista = document.getElementById('lista-articoli');
+    let indice = [];
+
+    // Variables that depend on the page language (injected from Python).
+    const LINGUA_PAGINA = "it";
+    const PREFISSO_POST = "/posts/";
+    const ETICHETTA_LEGGI = "Leggi l'articolo";
+    const MSG_SEARCH_UNAVAILABLE = "Indice di ricerca non disponibile.";
+    const MSG_NO_RESULTS_FOR = "Nessun articolo trovato per";
+    const MSG_RESULTS_FOR = "risultato/i per";
+    // Slice of articles shown on this page (for the pagination).
+    // When the search is cleared, we restore ONLY this slice,
+    // not the whole index. The search itself always searches everything.
+    const PAGINA_INIZIO = 0;
+    const PAGINA_FINE = 10;
+
+    // Returns the date formatted in the page language.
+    function articleDate(a) {
+      if (LINGUA_PAGINA === 'en' && a.date_en) {
+        return a.date_en;
+      }
+      return a.date_it;
+    }
+
+    // Returns the right title based on the page language.
+    function articleTitle(a) {
+      if (LINGUA_PAGINA === 'en') {
+        if (a.title_en) {
+          return a.title_en;
+        }
+        return a.title;
+      }
+      return a.title;
+    }
+
+    // Tells whether an article should be shown in this language.
+    // On the English home we only show articles with a confirmed translation.
+    function articleIsVisible(a) {
+      if (LINGUA_PAGINA === 'en') {
+        return a.has_en === true;
+      }
+      return true;
+    }
+
+    // Loads the article index generated at build time.
+    fetch('/search-index.json')
+      .then(r => r.json())
+      .then(dati => { indice = dati; })
+      .catch(() => { info.textContent = MSG_SEARCH_UNAVAILABLE; });
+
+    // Strips accents and lowercases, for more forgiving comparisons.
+    function normalizeText(s) {
+      if (s === null || s === undefined) {
+        return '';
+      }
+      return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    // Bolds the occurrences of the term in a text (already made safe).
+    function highlight(testoSicuro, termine) {
+      const testoNorm = normalizeText(testoSicuro);
+      const termineNorm = normalizeText(termine);
+      let risultato = '';
+      let posizione = 0;
+      let trovato = testoNorm.indexOf(termineNorm, posizione);
+      while (trovato !== -1) {
+        risultato = risultato + testoSicuro.substring(posizione, trovato);
+        risultato = risultato + '<mark>' +
+          testoSicuro.substring(trovato, trovato + termine.length) + '</mark>';
+        posizione = trovato + termine.length;
+        trovato = testoNorm.indexOf(termineNorm, posizione);
+      }
+      risultato = risultato + testoSicuro.substring(posizione);
+      return risultato;
+    }
+
+    // Derives a text snippet around the first occurrence of the term.
+    function extractSnippet(testo, termine) {
+      const testoNorm = normalizeText(testo);
+      const termineNorm = normalizeText(termine);
+      const posizione = testoNorm.indexOf(termineNorm);
+      if (posizione === -1) {
+        return '';
+      }
+      // We take a bit of text before and after the word we found.
+      let inizio = posizione - 60;
+      if (inizio < 0) {
+        inizio = 0;
+      }
+      let fine = posizione + termine.length + 60;
+      if (fine > testo.length) {
+        fine = testo.length;
+      }
+      let frammento = testo.substring(inizio, fine);
+      if (inizio > 0) {
+        frammento = '...' + frammento;
+      }
+      if (fine < testo.length) {
+        frammento = frammento + '...';
+      }
+      // We make the text safe and then highlight the term.
+      return highlight(escapeHtml(frammento), termine);
+    }
+
+    function searchArticles(q) {
+      const termine = q.trim();
+      const termineNorm = normalizeText(termine);
+      if (termineNorm === '') {
+        // Empty query: restore the original full list.
+        info.textContent = '';
+        renderAll();
+        return;
+      }
+
+      // For each article we check where the term appears.
+      const risultati = [];
+      for (let i = 0; i < indice.length; i++) {
+        const a = indice[i];
+        // On the English home we skip the articles with no translation.
+        if (articleIsVisible(a) === false) {
+          continue;
+        }
+        const inTitolo = normalizeText(a.title).includes(termineNorm);
+        const inDescr = normalizeText(a.description).includes(termineNorm);
+        const inTags = normalizeText(a.tags).includes(termineNorm);
+        const inTesto = normalizeText(a.text).includes(termineNorm);
+        const inTestoEn = normalizeText(a.text_en).includes(termineNorm);
+        const inTitoloEn = normalizeText(a.title_en).includes(termineNorm);
+
+        if (inTitolo || inDescr || inTags || inTesto || inTestoEn || inTitoloEn) {
+          // We build the snippet from the point where the word was found.
+          let snippet = '';
+          if (LINGUA_PAGINA === 'en' && inTestoEn) {
+            snippet = extractSnippet(a.text_en, termine);
+          } else if (inTesto) {
+            snippet = extractSnippet(a.text, termine);
+          } else if (inTestoEn) {
+            snippet = extractSnippet(a.text_en, termine);
+          } else if (inDescr) {
+            snippet = extractSnippet(a.description, termine);
+          }
+          risultati.push({ articolo: a, snippet: snippet });
+        }
+      }
+
+      renderResults(risultati, termine);
+      if (risultati.length === 0) {
+        info.textContent = MSG_NO_RESULTS_FOR + ' "' + termine + '".';
+      } else {
+        info.textContent = risultati.length + ' ' + MSG_RESULTS_FOR + ' "' + termine + '".';
+      }
+    }
+
+    // Shows the search results, with highlighted title and snippet.
+    function renderResults(risultati, termine) {
+      if (risultati.length === 0) {
+        lista.innerHTML = '';
+        return;
+      }
+      let html = '';
+      for (let i = 0; i < risultati.length; i++) {
+        const a = risultati[i].articolo;
+        const snippet = risultati[i].snippet;
+        let bloccoSnippet = '';
+        if (snippet !== '') {
+          bloccoSnippet = '<p class="card-snippet">' + snippet + '</p>';
+        }
+        html = html +
+          '<a class="article-card" href="' + PREFISSO_POST + a.slug + '.html">' +
+          '<div class="card-date">' + articleDate(a) + '</div>' +
+          '<h3 class="card-title">' + highlight(escapeHtml(articleTitle(a)), termine) + '</h3>' +
+          bloccoSnippet +
+          '<span class="card-read-more">' + ETICHETTA_LEGGI + ' &rarr;</span>' +
+          '</a>';
+      }
+      lista.innerHTML = html;
+    }
+
+    // Shows every article (the initial state, with no search).
+    function render(elenco) {
+      if (elenco.length === 0) {
+        lista.innerHTML = '';
+        return;
+      }
+      let html = '';
+      for (let i = 0; i < elenco.length; i++) {
+        const a = elenco[i];
+        if (articleIsVisible(a) === false) {
+          continue;
+        }
+        // Card preview. Priority: preview written by the author,
+        // then automatic excerpt (about 9 lines), then SEO description.
+        let testoAnteprima = '';
+        if (LINGUA_PAGINA === 'en' && a.preview_en) {
+          testoAnteprima = a.preview_en;
+        } else if (a.preview) {
+          testoAnteprima = a.preview;
+        }
+        if (!testoAnteprima) {
+          let fonte = a.text;
+          if (LINGUA_PAGINA === 'en' && a.text_en) {
+            fonte = a.text_en;
+          }
+          if (fonte) {
+            testoAnteprima = fonte.substring(0, 640);
+            if (fonte.length > 640) {
+              testoAnteprima = testoAnteprima + '...';
+            }
+          }
+        }
+        if (!testoAnteprima) {
+          testoAnteprima = a.description;
+        }
+        let estratto = '';
+        if (testoAnteprima) {
+          estratto = '<p class="card-excerpt">' + escapeHtml(testoAnteprima) + '</p>';
+        }
+        html = html +
+          '<a class="article-card" href="' + PREFISSO_POST + a.slug + '.html">' +
+          '<div class="card-date">' + articleDate(a) + '</div>' +
+          '<h3 class="card-title">' + escapeHtml(articleTitle(a)) + '</h3>' +
+          estratto +
+          '<span class="card-read-more">' + ETICHETTA_LEGGI + ' &rarr;</span>' +
+          '</a>';
+      }
+      lista.innerHTML = html;
+    }
+
+    function renderAll() {
+      // First we filter by language, then we take the page slice.
+      const visibili = [];
+      for (let i = 0; i < indice.length; i++) {
+        if (articleIsVisible(indice[i])) {
+          visibili.push(indice[i]);
+        }
+      }
+      render(visibili.slice(PAGINA_INIZIO, PAGINA_FINE));
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    let timer;
+    input.addEventListener('input', function() {
+      clearTimeout(timer);
+      timer = setTimeout(function() { searchArticles(input.value); }, 120);
+    });
+  })();
+  </script>
+</body>
+</html>

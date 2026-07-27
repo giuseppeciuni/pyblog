@@ -1,0 +1,74 @@
+# nginx configuration for PyBlog on a single internet-facing VPS.
+#
+# Architecture: nginx serves the static site (output/) directly, and
+# proxies ONLY the administration routes to the PyBlog server, which
+# listens on localhost. Visitors never touch the Python process; the
+# admin area is reachable, but always over HTTPS and rate-limited.
+#
+# Copy to /etc/nginx/sites-available/blog, enable with a symlink, then:
+#   sudo apt install certbot python3-certbot-nginx
+#   sudo certbot --nginx -d mysite.com -d www.mysite.com
+# certbot rewrites this file adding HTTPS and the HTTP->HTTPS redirect.
+
+# Slows down password guessing on the login page: at most 1 request
+# per second per IP, with a small burst allowance.
+limit_req_zone $binary_remote_addr zone=pyblog_login:10m rate=1r/s;
+
+server {
+    listen 80;
+    server_name mysite.com www.mysite.com;
+
+    root /path/to/pyblog/output;
+    index index.html;
+
+    access_log /var/log/nginx/blog-access.log;
+    error_log  /var/log/nginx/blog-error.log;
+
+    # --- Administration: proxied to the PyBlog server on localhost ---
+    # Every dynamic route of the editor, in one place. Everything else
+    # is served as static files.
+    location ~ ^/(admin|edit|config|login|logout|change-password|preview|export|save|delete|toggle-status|save-config|save-config-raw|rebuild|upload|translate|generate-description|generate-preview|analyze-seo|admin-language|set-password)$ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # PyBlog uses this to add the Secure flag to the session cookie.
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # The AI analysis and translations can take up to a minute.
+        proxy_read_timeout 120s;
+        # Uploaded images can be large.
+        client_max_body_size 50m;
+    }
+
+    # The login gets the rate limit on top.
+    location = /login {
+        limit_req zone=pyblog_login burst=5 nodelay;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # --- Public site: static files, no Python involved ---
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg|woff2)$ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location = /rss.xml {
+        default_type application/rss+xml;
+    }
+
+    location = /llms.txt {
+        default_type text/plain;
+    }
+
+    # Uploaded media. nginx natively handles Range requests,
+    # essential for video streaming and seeking.
+    location /media/ {
+        add_header Cache-Control "public, max-age=2592000";
+    }
+}
