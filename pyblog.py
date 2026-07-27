@@ -989,6 +989,9 @@ UI_TRANSLATIONS = {
     "js_pasted_all_recovered": {"it": "Incollato: {n} immagine/i recuperata/e.", "en": "Pasted with {n} image(s) recovered."},
     "js_pasted_partial_recovered": {"it": "Incollato: {ok} di {tot} immagine/i recuperata/e.",
                                     "en": "Pasted: {ok} of {tot} image(s) recovered."},
+    "js_pasted_word_image_unavailable": {
+        "it": "Il testo e' stato incollato, ma il tuo sistema non ha fornito alla pagina il file dell'immagine copiata da Word (solo un percorso locale non leggibile dal browser): salva l'immagine come file e usa \"Carica immagine\".",
+        "en": "The text was pasted, but your system did not give the page the file for the image copied from Word (only a local path the browser cannot read): save the image as a file and use \"Upload image\"."},
 }
 
 
@@ -2622,16 +2625,6 @@ function handlePastedImages(istanzaQuill, statusElementId) {
   istanzaQuill.root.addEventListener('paste', function(evento) {
     if (!evento.clipboardData) { return; }
 
-    // DIAGNOSTICA TEMPORANEA: stampa nella console del browser cosa contiene
-    // davvero la clipboard in questo paste, per capire perche' in alcuni
-    // ambienti (Word Windows -> Chrome/Edge) non arriva nessuna immagine
-    // reale insieme al testo. Da rimuovere una volta capita la causa.
-    var tipiClipboard = [];
-    for (var dbg = 0; dbg < evento.clipboardData.items.length; dbg++) {
-      tipiClipboard.push(evento.clipboardData.items[dbg].kind + '/' + evento.clipboardData.items[dbg].type);
-    }
-    console.log('[PyBlog paste-debug] tipi presenti negli appunti:', tipiClipboard);
-
     var elementiImmagine = [];
     for (var i = 0; i < evento.clipboardData.items.length; i++) {
       var voce = evento.clipboardData.items[i];
@@ -2642,8 +2635,18 @@ function handlePastedImages(istanzaQuill, statusElementId) {
     // No embedded images in this paste: let Quill handle it as usual
     // (plain text, or a paste that already has no images at all).
     if (elementiImmagine.length === 0) {
-      console.log('[PyBlog paste-debug] nessuna immagine trovata negli appunti: il recupero non parte, HTML incollato cosi come arriva.');
-      console.log('[PyBlog paste-debug] HTML incollato:', evento.clipboardData.getData('text/html'));
+      // Some sources (Word on Windows, when you copy text together with a
+      // picture) put in the clipboard only a broken local reference
+      // ("file:///C:/Users/.../image1.png") and no actual image data at
+      // all: a web page has no way to read a local file path for security
+      // reasons, so there is nothing here to recover. We at least warn the
+      // author instead of letting the picture disappear with no
+      // explanation (a plain web page copy does not have this problem:
+      // browsers normally embed the picture itself in that HTML).
+      var statoAvviso = statusElementId ? document.getElementById(statusElementId) : null;
+      if (statoAvviso && contieneImmagineNonRecuperabile(evento.clipboardData.getData('text/html'))) {
+        statoAvviso.textContent = '__MSG_WORD_IMAGE_UNAVAILABLE__';
+      }
       return;
     }
 
@@ -2757,6 +2760,17 @@ function handlePastedImages(istanzaQuill, statusElementId) {
   }, true);  // capture phase: we need to run before Quill's own paste handler.
 }
 
+// Detects a pasted <img> tag pointing to a local file path
+// ("file:///C:/Users/...") instead of a real, loadable address: a common
+// leftover of copying text and pictures together from Word on Windows.
+// A web page cannot read that path for security reasons, so it is only
+// used to decide whether to warn the author.
+function contieneImmagineNonRecuperabile(html) {
+  if (!html) { return false; }
+  var trovato = /<img\\b[^>]*\\bsrc\\s*=\\s*["']?file:/i.exec(html);
+  return trovato !== null;
+}
+
 // Reads the width a pasted <img> tag declares, either as a plain HTML
 // attribute (width="200") or as an inline style (style="width:200px").
 // Returns null when the tag declares no width at all.
@@ -2831,6 +2845,7 @@ function caricaBlobImmagine(blob) {
     testo = testo.replace("__MSG_RECOVERING__", T("js_recovering_pasted_images", language))
     testo = testo.replace("__MSG_ALL_OK__", T("js_pasted_all_recovered", language))
     testo = testo.replace("__MSG_PARTIAL__", T("js_pasted_partial_recovered", language))
+    testo = testo.replace("__MSG_WORD_IMAGE_UNAVAILABLE__", T("js_pasted_word_image_unavailable", language))
     return testo
 
 
