@@ -2622,6 +2622,16 @@ function handlePastedImages(istanzaQuill, statusElementId) {
   istanzaQuill.root.addEventListener('paste', function(evento) {
     if (!evento.clipboardData) { return; }
 
+    // DIAGNOSTICA TEMPORANEA: stampa nella console del browser cosa contiene
+    // davvero la clipboard in questo paste, per capire perche' in alcuni
+    // ambienti (Word Windows -> Chrome/Edge) non arriva nessuna immagine
+    // reale insieme al testo. Da rimuovere una volta capita la causa.
+    var tipiClipboard = [];
+    for (var dbg = 0; dbg < evento.clipboardData.items.length; dbg++) {
+      tipiClipboard.push(evento.clipboardData.items[dbg].kind + '/' + evento.clipboardData.items[dbg].type);
+    }
+    console.log('[PyBlog paste-debug] tipi presenti negli appunti:', tipiClipboard);
+
     var elementiImmagine = [];
     for (var i = 0; i < evento.clipboardData.items.length; i++) {
       var voce = evento.clipboardData.items[i];
@@ -2631,7 +2641,11 @@ function handlePastedImages(istanzaQuill, statusElementId) {
     }
     // No embedded images in this paste: let Quill handle it as usual
     // (plain text, or a paste that already has no images at all).
-    if (elementiImmagine.length === 0) { return; }
+    if (elementiImmagine.length === 0) {
+      console.log('[PyBlog paste-debug] nessuna immagine trovata negli appunti: il recupero non parte, HTML incollato cosi come arriva.');
+      console.log('[PyBlog paste-debug] HTML incollato:', evento.clipboardData.getData('text/html'));
+      return;
+    }
 
     var htmlIncollato = evento.clipboardData.getData('text/html');
     // No HTML at all: a single image was copied on its own (e.g. from
