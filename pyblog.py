@@ -15,7 +15,6 @@ import os
 import sys
 import re
 import html
-import html.parser
 import http.server
 import socketserver
 import urllib.parse
@@ -701,52 +700,6 @@ UI_TRANSLATIONS = {
     "seo_faq": {"it": "FAQ per i motori AI", "en": "FAQ for AI search engines"},
     "seo_ai_tips": {"it": "Consigli AI-SEO", "en": "AI-SEO advice"},
     "seo_apply_tags": {"it": "Usa questi tag", "en": "Use these tags"},
-    "seo_apply": {"it": "Applica", "en": "Apply"},
-    "seo_use_title": {"it": "Usa", "en": "Use"},
-    "seo_suggested_description": {"it": "Meta description pronta", "en": "Ready-made meta description"},
-    "seo_add_faq": {"it": "Aggiungi le FAQ all'articolo", "en": "Add the FAQ to the article"},
-    "seo_add_related": {"it": "Aggiungi la sezione 'Per approfondire'", "en": "Add the 'Read more' section"},
-    "seo_apply_all": {"it": "Applica tutto (descrizione, tag, FAQ, link)", "en": "Apply everything (description, tags, FAQ, links)"},
-    "seo_applied": {"it": "Applicato: rivedi e poi salva l'articolo.", "en": "Applied: review, then save the article."},
-    "seo_faq_heading": {"it": "Domande frequenti", "en": "Frequently asked questions"},
-    "seo_related_heading": {"it": "Per approfondire", "en": "Read more"},
-    "seo_trend_queries": {"it": "Ricerche reali degli utenti (Google Suggest)", "en": "Real user searches (Google Suggest)"},
-    "seo_content_changes": {"it": "Modifiche proposte all'articolo", "en": "Proposed article changes"},
-    "seo_baseurl_warning": {"it": "Attenzione: base_url e' ancora quello di esempio. Imposta il dominio vero nelle Impostazioni.",
-                            "en": "Warning: base_url is still the placeholder. Set the real domain in Settings."},
-    "seo_make_revision": {"it": "Prepara la revisione completa dell'articolo", "en": "Prepare the full article revision"},
-    "seo_revision_title": {"it": "Revisione proposta: l'articolo con le aggiunte evidenziate",
-                           "en": "Proposed revision: the article with the additions highlighted"},
-    "seo_revision_intro": {"it": "Il testo originale e' intatto. I blocchi verdi sono le aggiunte proposte: togli la spunta a quelle che non vuoi. Le modifiche entrano nell'editor solo quando applichi, e nell'articolo pubblicato solo quando salvi.",
-                           "en": "The original text is untouched. The green blocks are the proposed additions: untick the ones you do not want. Changes reach the editor only when you apply, and the published article only when you save."},
-    "seo_revision_generating": {"it": "Preparazione della revisione in corso (fino a un minuto)...",
-                                "en": "Preparing the revision (up to a minute)..."},
-    "seo_revision_apply": {"it": "Applica le aggiunte selezionate", "en": "Apply the selected additions"},
-    "seo_revision_cancel": {"it": "Chiudi senza applicare", "en": "Close without applying"},
-    "seo_revision_applied": {"it": "Aggiunte inserite nell'editor: rivedi e poi salva.",
-                             "en": "Additions inserted in the editor: review, then save."},
-    "seo_revision_end_note": {"it": "(posizione non trovata: verrebbe aggiunta in fondo)",
-                              "en": "(position not found: it would be added at the end)"},
-    "seo_revision_why": {"it": "Perche'", "en": "Why"},
-    "seo_open_report": {"it": "Report dell'analisi (fonti e motivazioni)", "en": "Analysis report (sources and rationale)"},
-    "seo_report_title": {"it": "Report dell'analisi SEO", "en": "SEO analysis report"},
-    "seo_report_sources": {"it": "Fonti consultate", "en": "Sources consulted"},
-    "seo_report_service": {"it": "Servizio AI e modello", "en": "AI service and model"},
-    "seo_report_date": {"it": "Data dell'analisi", "en": "Analysis date"},
-    "seo_report_seeds": {"it": "Termini interrogati su Google Suggest", "en": "Terms looked up on Google Suggest"},
-    "seo_report_collected": {"it": "Query reali raccolte", "en": "Real queries collected"},
-    "seo_report_none": {"it": "nessuna (Suggest non raggiungibile o senza risultati)", "en": "none (Suggest unreachable or no results)"},
-    "seo_report_keywords": {"it": "Keyword: perche' e dove", "en": "Keywords: why and where"},
-    "seo_report_col_keyword": {"it": "Keyword", "en": "Keyword"},
-    "seo_report_col_type": {"it": "Tipo", "en": "Type"},
-    "seo_report_col_reason": {"it": "Perche' e' stata scelta", "en": "Why it was chosen"},
-    "seo_report_col_queries": {"it": "Query reali di supporto", "en": "Supporting real queries"},
-    "seo_report_col_placement": {"it": "Dove viene usata", "en": "Where it is used"},
-    "seo_report_changes": {"it": "Modifiche proposte e loro motivo", "en": "Proposed changes and their reason"},
-    "seo_report_download": {"it": "Scarica il report (HTML)", "en": "Download the report (HTML)"},
-    "seo_report_close": {"it": "Chiudi", "en": "Close"},
-    "seo_report_missing": {"it": "Il modello non ha fornito le motivazioni per keyword: rilancia l'analisi.",
-                           "en": "The model did not provide the per-keyword rationale: run the analysis again."},
     "seo_copy": {"it": "Copia", "en": "Copy"},
     "seo_copied": {"it": "Copiato!", "en": "Copied!"},
     "js_seo_analyzing": {"it": "Analisi in corso (richiede fino a un minuto)...",
@@ -936,10 +889,6 @@ UI_TRANSLATIONS = {
     # Server-side error/success messages (API responses and password pages)
     "err_unknown_translation_service": {"it": "Servizio di traduzione sconosciuto.", "en": "Unknown translation service."},
     "err_service_error": {"it": "Errore dal servizio: ", "en": "Service error: "},
-    "err_ssl_certificates": {
-        "it": "Python non trova i certificati per verificare la connessione HTTPS. Su macOS (Python da python.org) esegui una volta: open \"/Applications/Python 3.X/Install Certificates.command\". In alternativa: pip3 install certifi e poi, prima di avviare l'editor, export SSL_CERT_FILE=\"$(python3 -m certifi)\".",
-        "en": "Python cannot find the certificates to verify the HTTPS connection. On macOS (Python from python.org) run once: open \"/Applications/Python 3.X/Install Certificates.command\". Alternatively: pip3 install certifi and then, before starting the editor, export SSL_CERT_FILE=\"$(python3 -m certifi)\".",
-    },
     "err_generation_needs_llm": {
         "it": "La generazione richiede un servizio LLM (Anthropic, OpenAI o DeepSeek). Selezionane uno nelle Impostazioni.",
         "en": "Generation requires an LLM service (Anthropic, OpenAI or DeepSeek). Select one in Settings."},
@@ -989,9 +938,6 @@ UI_TRANSLATIONS = {
     "js_pasted_all_recovered": {"it": "Incollato: {n} immagine/i recuperata/e.", "en": "Pasted with {n} image(s) recovered."},
     "js_pasted_partial_recovered": {"it": "Incollato: {ok} di {tot} immagine/i recuperata/e.",
                                     "en": "Pasted: {ok} of {tot} image(s) recovered."},
-    "js_pasted_word_image_unavailable": {
-        "it": "Il testo e' stato incollato, ma il tuo sistema non ha fornito alla pagina il file dell'immagine copiata da Word (solo un percorso locale non leggibile dal browser): salva l'immagine come file e usa \"Carica immagine\".",
-        "en": "The text was pasted, but your system did not give the page the file for the image copied from Word (only a local path the browser cannot read): save the image as a file and use \"Upload image\"."},
 }
 
 
@@ -1253,49 +1199,9 @@ def translate_text(text):
             return {"ok": False, "error": T("err_unknown_translation_service", admin_language())}
         return {"ok": True, "text": tradotto}
     except _urlerr.HTTPError as error:
-        return {"ok": False, "error": T("err_service_error", admin_language()) + str(error.code) + _http_error_detail(error)}
+        return {"ok": False, "error": T("err_service_error", admin_language()) + str(error.code)}
     except Exception as error:
-        return {"ok": False, "error": _friendly_network_error(error)}
-
-
-def _http_error_detail(error):
-    """
-    Extract the human-readable message from an HTTP error response.
-    Providers put the actual reason in the JSON body (wrong model name,
-    credit exhausted, malformed field...): showing just the status code
-    hides exactly the part the person needs. Anthropic uses
-    {"error": {"message": ...}}, OpenAI-compatible services the same
-    shape; anything else falls back to the raw (truncated) body.
-    """
-    try:
-        body = error.read().decode("utf-8", errors="replace")
-    except Exception:
-        body = ""
-    if body != "":
-        try:
-            parsed = json.loads(body)
-            inner = parsed.get("error", {})
-            if isinstance(inner, dict):
-                message = inner.get("message", "")
-                if message != "":
-                    return " - " + str(message)[:300]
-        except Exception:
-            pass
-        return " - " + body[:300]
-    return ""
-
-
-def _friendly_network_error(error):
-    """
-    Turn a raw network exception into a message a person can act on.
-    The classic case is macOS, where a fresh Python has no CA bundle
-    linked and every HTTPS call fails with CERTIFICATE_VERIFY_FAILED:
-    the raw text gives no clue about the (one-command) fix.
-    """
-    testo = str(error)
-    if "CERTIFICATE_VERIFY_FAILED" in testo or "certificate verify failed" in testo:
-        return T("err_ssl_certificates", admin_language())
-    return testo
+        return {"ok": False, "error": str(error)}
 
 
 def _call_llm_with_prompt(prompt, max_tokens=300):
@@ -1367,9 +1273,9 @@ def _call_llm_with_prompt(prompt, max_tokens=300):
         # DeepL and Google cannot generate text.
         return {"ok": False, "error": T("err_generation_needs_llm", admin_language())}
     except _urlerr.HTTPError as error:
-        return {"ok": False, "error": T("err_service_error", admin_language()) + str(error.code) + _http_error_detail(error)}
+        return {"ok": False, "error": T("err_service_error", admin_language()) + str(error.code)}
     except Exception as error:
-        return {"ok": False, "error": _friendly_network_error(error)}
+        return {"ok": False, "error": str(error)}
 
 
 def generate_seo_description(html_content, title_value):
@@ -1469,216 +1375,6 @@ def _published_articles_for_linking(exclude_slug):
     return result[:20]
 
 
-def _fetch_search_suggestions(term, language="it"):
-    """
-    Ask Google Suggest (the search autocomplete) for the queries people
-    are really typing around a term, in the given language. This is the
-    same free, key-less source most SEO tools use to discover long-tail
-    queries. It is not a search-volume API (those are paid services):
-    it tells you WHAT is being searched, not how much.
-    Failures are tolerated silently: the SEO analysis works anyway,
-    just without the real-queries signal.
-    """
-    try:
-        query = urllib.parse.urlencode({"client": "firefox", "hl": language, "q": term})
-        url = "https://suggestqueries.google.com/complete/search?" + query
-        request = _urlreq.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with _urlreq.urlopen(request, timeout=4) as reply:
-            data = json.loads(reply.read().decode("utf-8", errors="replace"))
-        if isinstance(data, list) and len(data) > 1 and isinstance(data[1], list):
-            result = []
-            for voice in data[1]:
-                if isinstance(voice, str) and voice.strip() != "":
-                    result.append(voice.strip())
-            return result
-    except Exception:
-        pass
-    return []
-
-
-def _collect_trend_queries(title_value, tags_value):
-    """
-    Build the list of real search queries around the article's topics.
-    The seeds are the title and the tags: for each one we ask Google
-    Suggest what people are typing. Capped to keep the analysis fast.
-    """
-    seeds = []
-    if title_value.strip() != "":
-        seeds.append(title_value.strip()[:60])
-    for tag in tags_value.split(","):
-        tag = tag.strip()
-        if tag != "" and tag not in seeds:
-            seeds.append(tag)
-    seeds = seeds[:5]
-
-    collected = []
-    seen = set()
-    for seed in seeds:
-        for suggestion in _fetch_search_suggestions(seed):
-            low = suggestion.lower()
-            if low not in seen:
-                seen.add(low)
-                collected.append(suggestion)
-    # The seeds are returned too: the analysis report declares exactly
-    # which terms were looked up, so every keyword choice is traceable.
-    return seeds, collected[:25]
-
-
-class _RevisionSanitizer(html.parser.HTMLParser):
-    """
-    Rebuilds a fragment of HTML keeping only a small whitelist of tags.
-    The revision content comes from the language model and is inserted
-    into the article: without this step the model (or a poisoned
-    response) could inject scripts or arbitrary markup into the blog.
-    Allowed: structural text tags, plus links restricted to internal
-    article URLs and same-page anchors.
-    """
-    ALLOWED = {"p", "h2", "h3", "ul", "ol", "li", "strong", "em", "b", "i", "br", "a", "blockquote", "code"}
-    # Tags whose CONTENT must be dropped too: keeping the inner text of
-    # a <script> would leak the code as visible (and pasteable) text.
-    DROP_CONTENT = {"script", "style", "iframe", "object", "template"}
-
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.parts = []
-        self.open_tags = []
-        self.dropping = 0
-
-    def handle_starttag(self, tag, attrs):
-        if tag in self.DROP_CONTENT:
-            self.dropping = self.dropping + 1
-            return
-        if self.dropping > 0:
-            return
-        if tag not in self.ALLOWED:
-            return
-        if tag == "a":
-            href = ""
-            for name, value in attrs:
-                if name == "href" and value is not None:
-                    href = value
-            valid = href.startswith("/posts/") or href.startswith("#")
-            if valid and re.fullmatch(r"[A-Za-z0-9/#._-]+", href) is not None:
-                self.parts.append('<a href="' + href + '">')
-                self.open_tags.append("a")
-            else:
-                # The link target is not acceptable: keep the text only.
-                self.parts.append("")
-                self.open_tags.append("")
-            return
-        if tag == "br":
-            self.parts.append("<br>")
-            return
-        self.parts.append("<" + tag + ">")
-        self.open_tags.append(tag)
-
-    def handle_endtag(self, tag):
-        if tag in self.DROP_CONTENT:
-            if self.dropping > 0:
-                self.dropping = self.dropping - 1
-            return
-        if self.dropping > 0:
-            return
-        if tag not in self.ALLOWED or tag == "br":
-            return
-        if len(self.open_tags) > 0:
-            aperto = self.open_tags.pop()
-            if aperto != "":
-                self.parts.append("</" + aperto + ">")
-
-    def handle_data(self, data):
-        if self.dropping > 0:
-            return
-        self.parts.append(html.escape(data))
-
-    def result(self):
-        # Close anything the model left open.
-        while len(self.open_tags) > 0:
-            aperto = self.open_tags.pop()
-            if aperto != "":
-                self.parts.append("</" + aperto + ">")
-        return "".join(self.parts)
-
-
-def _sanitize_revision_html(fragment):
-    """Sanitize a fragment proposed by the model for the revision."""
-    cleaner = _RevisionSanitizer()
-    try:
-        cleaner.feed(str(fragment))
-        cleaner.close()
-    except Exception:
-        return ""
-    return cleaner.result()
-
-
-def generate_article_revision(html_content, title_value, tags_value, analysis):
-    """
-    Ask the model for a set of MINIMAL, anchored edits that apply the
-    SEO analysis to the article. The model never rewrites the article:
-    it proposes discrete insertions, each anchored to an existing
-    paragraph, and the program applies them deterministically. This is
-    what guarantees the original text stays untouched except for the
-    additions the operator accepts.
-    Return {ok, edits: [{anchor, new_html, reason}]} or {ok: False, error}.
-    """
-    text = _plain_text(html_content)
-    if text.strip() == "":
-        return {"ok": False, "error": T("err_no_content_to_summarize", admin_language())}
-
-    analysis_text = json.dumps(analysis, ensure_ascii=False)[:3000]
-    excerpt = text[:5000]
-
-    prompt = (
-        "Sei un revisore SEO. Hai gia' prodotto questa analisi per l'articolo:\n"
-        + analysis_text + "\n\n"
-        "Titolo: " + title_value + "\n"
-        "Tag: " + tags_value + "\n\n"
-        "Testo dell'articolo (solo testo, senza markup):\n" + excerpt + "\n\n"
-        "Proponi al massimo 6 MODIFICHE MINIME che applicano l'analisi. "
-        "Regole tassative:\n"
-        "- NON riscrivere ne' riassumere il testo esistente: solo AGGIUNTE.\n"
-        "- Ogni aggiunta e' ancorata a una frase esistente: riporta in "
-        "'anchor' un frammento ESATTO e testuale di 8-20 parole preso "
-        "dall'articolo, dopo il cui paragrafo inserire il nuovo contenuto. "
-        "Usa anchor con stringa vuota per inserire in fondo all'articolo.\n"
-        "- 'new_html' contiene il contenuto nuovo, gia' scritto in "
-        "italiano nello stile dell'articolo, usando SOLO questi tag: "
-        "p, h2, h3, ul, ol, li, strong, em, a (i link solo verso "
-        "/posts/... del blog).\n"
-        "- 'reason' spiega in una frase perche' l'aggiunta serve "
-        "(quale query o obiettivo SEO intercetta).\n"
-        "- Includi, se pertinenti dall'analisi: una sezione FAQ, la "
-        "sezione 'Per approfondire' con i link interni, e i paragrafi "
-        "che rispondono alle query reali.\n\n"
-        "Rispondi SOLO con JSON valido:\n"
-        '{"edits": [{"anchor": "...", "new_html": "...", "reason": "..."}]}'
-    )
-
-    result = _call_llm_with_prompt(prompt, max_tokens=3500)
-    if result["ok"] is not True:
-        return result
-
-    parsed = _extract_json_object(result["text"])
-    if parsed is None or not isinstance(parsed.get("edits"), list):
-        return {"ok": False, "error": T("err_seo_analysis_parse", admin_language())}
-
-    edits = []
-    for voice in parsed["edits"][:8]:
-        if not isinstance(voice, dict):
-            continue
-        clean_html = _sanitize_revision_html(voice.get("new_html", ""))
-        if clean_html.strip() == "":
-            continue
-        edits.append({
-            "anchor": str(voice.get("anchor", ""))[:300],
-            "new_html": clean_html,
-            "reason": str(voice.get("reason", ""))[:300],
-        })
-    if len(edits) == 0:
-        return {"ok": False, "error": T("err_seo_analysis_parse", admin_language())}
-    return {"ok": True, "edits": edits}
-
-
 def analyze_article_seo(html_content, title_value, slug_value, tags_value, description_value):
     """
     Full SEO and AI-SEO analysis of an article, using the configured LLM.
@@ -1717,14 +1413,6 @@ def analyze_article_seo(html_content, title_value, slug_value, tags_value, descr
     else:
         articles_text = "(nessun altro articolo pubblicato)"
 
-    # Real search queries around the article's topics, from Google
-    # Suggest: they anchor the keyword choices to actual demand.
-    trend_seeds, trend_queries = _collect_trend_queries(title_value, tags_value)
-    if len(trend_queries) > 0:
-        trend_text = "\n".join("- " + q for q in trend_queries)
-    else:
-        trend_text = "(nessuna disponibile)"
-
     # We limit the content excerpt to keep the token cost reasonable.
     excerpt = text[:4000]
 
@@ -1743,11 +1431,6 @@ def analyze_article_seo(html_content, title_value, slug_value, tags_value, descr
         "URL dell'articolo: " + article_url + "\n\n"
         "Altri articoli del blog (per suggerire link interni):\n"
         + articles_text + "\n\n"
-        "QUERY DI RICERCA REALI che le persone stanno digitando ora su "
-        "Google intorno a questi temi (da Google Suggest). Usale come "
-        "segnale di domanda: quando una query e' pertinente all'articolo, "
-        "preferiscila come keyword e proponi modifiche che la intercettino.\n"
-        + trend_text + "\n\n"
         "Contenuto:\n" + excerpt + "\n\n"
         "Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, "
         "senza markdown, con esattamente queste chiavi:\n"
@@ -1756,19 +1439,15 @@ def analyze_article_seo(html_content, title_value, slug_value, tags_value, descr
         '  "secondary_keywords": [5-8 keyword secondarie e long-tail],\n'
         '  "suggested_tags": [4-6 tag consigliati per questo blog],\n'
         '  "title_variants": [2-3 varianti di titolo SEO, max 60 caratteri],\n'
-        '  "meta_description_review": "giudizio in 1-2 frasi sulla meta description attuale",\n'
-        '  "suggested_description": "una meta description pronta all\'uso per questo articolo, massimo 155 caratteri, in italiano",\n'
+        '  "meta_description_review": "giudizio in 1-2 frasi sulla meta description attuale, con proposta se migliorabile",\n'
         '  "anchor_texts": [3-5 anchor text per il backlink da ' + backlink_site + '],\n'
         '  "internal_links": [per ogni link interno consigliato un oggetto {"slug": "...", "anchor": "..."}; lista vuota se nessuno e\' pertinente],\n'
         '  "faq": [2-3 oggetti {"question": "...", "answer": "..."} con domande che i lettori farebbero a un motore AI, e risposte di 2-3 frasi tratte dall\'articolo],\n'
-        '  "ai_seo_tips": [2-4 consigli concreti e specifici per QUESTO articolo per comparire nelle risposte dei motori AI],\n'
-        '  "trend_queries": [le query reali dell\'elenco sopra che giudichi pertinenti per questo articolo, massimo 8; lista vuota se nessuna],\n'
-        '  "content_changes": [2-4 modifiche concrete e pronte da applicare all\'articolo per intercettare le query reali: per ognuna un oggetto {"where": "dove intervenire, es. dopo la sezione X", "change": "il testo o la sezione da aggiungere, gia\' scritto in italiano"}],\n'
-        '  "keyword_report": [OBBLIGATORIO: una voce per OGNI keyword delle liste primary_keywords e secondary_keywords, nello stesso ordine. Ogni voce: {"keyword": "...", "type": "primaria" o "secondaria", "reason": "perche\' e\' stata scelta: pertinenza col contenuto e intento di ricerca, in 1-2 frasi", "queries": [le query reali dell\'elenco sopra che la supportano; lista vuota se la scelta viene solo dal contenuto], "placement": "dove viene usata o dove conviene usarla: titolo, description, sezione dell\'articolo o modifica proposta"}]\n'
+        '  "ai_seo_tips": [2-4 consigli concreti e specifici per QUESTO articolo per comparire nelle risposte dei motori AI]\n'
         "}"
     )
 
-    result = _call_llm_with_prompt(prompt, max_tokens=4000)
+    result = _call_llm_with_prompt(prompt, max_tokens=2000)
     if result["ok"] is not True:
         return result
 
@@ -1776,30 +1455,7 @@ def analyze_article_seo(html_content, title_value, slug_value, tags_value, descr
     if analysis is None:
         return {"ok": False, "error": T("err_seo_analysis_parse", admin_language())}
 
-    # The sources block makes the analysis auditable: which service and
-    # model produced it, which terms were looked up on Google Suggest,
-    # and which real queries came back. The report shows all of it.
-    translation_config = CONFIG.get("translation", {})
-    sources = {
-        "service": translation_config.get("service", ""),
-        "model": _current_llm_model_name(translation_config),
-        "suggest_seeds": trend_seeds,
-        "suggest_queries": trend_queries,
-        "analyzed_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-    }
-    return {"ok": True, "analysis": analysis, "article_url": article_url, "sources": sources}
-
-
-def _current_llm_model_name(translation_config):
-    """The model name of the service in use, for the analysis report."""
-    service = translation_config.get("service", "")
-    if service == "llm":
-        return translation_config.get("llm_model", "")
-    if service == "openai":
-        return translation_config.get("openai_model", translation_config.get("openai_modello", ""))
-    if service == "deepseek":
-        return translation_config.get("deepseek_model", translation_config.get("deepseek_modello", ""))
-    return ""
+    return {"ok": True, "analysis": analysis, "article_url": article_url}
 
 
 # ---------------------------------------------------------------------------
@@ -2605,22 +2261,11 @@ function attachImageOverlay(istanzaQuill) {
 // actual image data in the clipboard as separate, real image items (this
 // is how "paste image" works everywhere). We read those real images,
 // upload each one to the server, and splice the resulting URLs into the
-// pasted HTML in place of the broken ones.
-//
-// BUG FIXED: we used to pair the n-th clipboard image with the n-th <img>
-// tag purely by position, in the order both lists happened to come in.
-// That breaks when the source document mixes text and images: some
-// applications place, as the clipboard's image item for that portion, a
-// flattened screenshot of the text AND the image together, instead of the
-// isolated picture the <img> tag actually points to. Paired by position,
-// that screenshot landed inside the first <img> tag, so the text before
-// the first picture visually turned into a single image, while the later
-// pictures (each with a clean clipboard item of their own) still came out
-// fine. The fix: whenever a pasted <img> tag declares its width/height
-// (Word and Google Docs normally write them), we only pair it with a
-// clipboard image whose real pixel size matches. Only tags with no
-// declared size, and only when the remaining tags and remaining images
-// are equal in number, fall back to the old position-based pairing.
+// pasted HTML in place of the broken ones, matching them in the order
+// they appear. This works reliably for the common case (each embedded
+// image becomes one clipboard image item, in document order); it is not
+// a byte-for-byte guarantee for very unusual documents, but it recovers
+// what previously vanished silently.
 function handlePastedImages(istanzaQuill, statusElementId) {
   istanzaQuill.root.addEventListener('paste', function(evento) {
     if (!evento.clipboardData) { return; }
@@ -2634,21 +2279,7 @@ function handlePastedImages(istanzaQuill, statusElementId) {
     }
     // No embedded images in this paste: let Quill handle it as usual
     // (plain text, or a paste that already has no images at all).
-    if (elementiImmagine.length === 0) {
-      // Some sources (Word on Windows, when you copy text together with a
-      // picture) put in the clipboard only a broken local reference
-      // ("file:///C:/Users/.../image1.png") and no actual image data at
-      // all: a web page has no way to read a local file path for security
-      // reasons, so there is nothing here to recover. We at least warn the
-      // author instead of letting the picture disappear with no
-      // explanation (a plain web page copy does not have this problem:
-      // browsers normally embed the picture itself in that HTML).
-      var statoAvviso = statusElementId ? document.getElementById(statusElementId) : null;
-      if (statoAvviso && contieneImmagineNonRecuperabile(evento.clipboardData.getData('text/html'))) {
-        statoAvviso.textContent = '__MSG_WORD_IMAGE_UNAVAILABLE__';
-      }
-      return;
-    }
+    if (elementiImmagine.length === 0) { return; }
 
     var htmlIncollato = evento.clipboardData.getData('text/html');
     // No HTML at all: a single image was copied on its own (e.g. from
@@ -2663,169 +2294,39 @@ function handlePastedImages(istanzaQuill, statusElementId) {
     var stato = statusElementId ? document.getElementById(statusElementId) : null;
     if (stato) { stato.textContent = '__MSG_RECOVERING__'; }
 
-    // The <img> tags found in the pasted HTML, in the order they appear,
-    // together with the width/height they declare (if any). This is what
-    // lets us pair each tag with the right clipboard image further down,
-    // instead of just trusting the order they came in.
-    var tagImmagine = [];
-    var regexTagImg = /<img\\b[^>]*>/gi;
-    var trovato = regexTagImg.exec(htmlIncollato);
-    while (trovato !== null) {
-      tagImmagine.push({
-        larghezza: leggiLarghezzaDichiarata(trovato[0]),
-        altezza: leggiAltezzaDichiarata(trovato[0])
-      });
-      trovato = regexTagImg.exec(htmlIncollato);
-    }
-
-    // We upload every clipboard image and, in parallel, decode it locally
-    // to read its real pixel size: we need that size to pair it safely
-    // with the right <img> tag.
-    var operazioni = [];
+    var caricamenti = [];
     for (var j = 0; j < elementiImmagine.length; j++) {
-      var blobCorrente = elementiImmagine[j].getAsFile();
-      operazioni.push(Promise.all([caricaBlobImmagine(blobCorrente), leggiDimensioneBlob(blobCorrente)]));
+      caricamenti.push(caricaBlobImmagine(elementiImmagine[j].getAsFile()));
     }
 
-    Promise.all(operazioni).then(function(risultati) {
-      var immaginiCaricate = [];
-      for (var k = 0; k < risultati.length; k++) {
-        var dimensioneReale = risultati[k][1];
-        immaginiCaricate.push({
-          url: risultati[k][0],
-          larghezza: dimensioneReale ? dimensioneReale.larghezza : null,
-          altezza: dimensioneReale ? dimensioneReale.altezza : null,
-          usata: false
-        });
-      }
-
-      // 1) Tags with a declared size are paired only with a clipboard
-      //    image whose real size matches (within a small tolerance for
-      //    Word/Google Docs rounding). This is what stops a flattened
-      //    text+image screenshot from being mistaken for a real picture.
-      var assegnazioni = [];
-      for (var t = 0; t < tagImmagine.length; t++) {
-        assegnazioni.push(null);
-      }
-      for (var t2 = 0; t2 < tagImmagine.length; t2++) {
-        var tagCorrente = tagImmagine[t2];
-        if (tagCorrente.larghezza === null || tagCorrente.altezza === null) { continue; }
-        var indiceTrovato = trovaImmagineDiTagliaCorrispondente(tagCorrente, immaginiCaricate);
-        if (indiceTrovato !== null) {
-          assegnazioni[t2] = immaginiCaricate[indiceTrovato].url;
-          immaginiCaricate[indiceTrovato].usata = true;
-        }
-      }
-
-      // 2) Tags with no declared size cannot be verified: we fall back to
-      //    pairing them in order with whatever images are still unused,
-      //    but only if their counts match exactly. This keeps the old,
-      //    simple behaviour for the common case (a plain paste with no
-      //    size hints at all, where there is no ambiguity to resolve).
-      var tagScoperti = [];
-      for (var t3 = 0; t3 < tagImmagine.length; t3++) {
-        if (assegnazioni[t3] === null) { tagScoperti.push(t3); }
-      }
-      var immaginiLibere = immaginiCaricate.filter(function(im) { return !im.usata; });
-      if (tagScoperti.length === immaginiLibere.length) {
-        for (var m = 0; m < tagScoperti.length; m++) {
-          assegnazioni[tagScoperti[m]] = immaginiLibere[m].url;
-        }
-      }
-
-      // We rebuild the HTML: each <img> tag with a safe pairing is
-      // replaced with its uploaded URL; the others are dropped rather
-      // than risking a wrong image ending up in their place.
-      var indiceTag = 0;
-      var htmlFinale = htmlIncollato.replace(/<img\\b[^>]*>/gi, function() {
-        var urlAssegnato = assegnazioni[indiceTag];
-        indiceTag = indiceTag + 1;
-        if (urlAssegnato === null || urlAssegnato === undefined) { return ''; }
-        return '<img src="' + urlAssegnato + '">';
+    Promise.all(caricamenti).then(function(url) {
+      var htmlFinale = htmlIncollato;
+      var indiceUrl = 0;
+      // We replace each <img ...> tag, in order of appearance, with one
+      // of the freshly uploaded URLs. Any leftover <img> tags (more tags
+      // than real images, an unusual case) are left untouched.
+      htmlFinale = htmlFinale.replace(/<img\\b[^>]*>/gi, function(tagOriginale) {
+        if (indiceUrl >= url.length) { return tagOriginale; }
+        var urlCaricato = url[indiceUrl];
+        indiceUrl = indiceUrl + 1;
+        // A failed upload for this image: remove the tag rather than
+        // leaving a broken src="null" reference. The status message
+        // already tells the author how many images were recovered.
+        if (urlCaricato === null) { return ''; }
+        return '<img src="' + urlCaricato + '">';
       });
       var posizione = istanzaQuill.getSelection(true) || { index: istanzaQuill.getLength() };
       istanzaQuill.clipboard.dangerouslyPasteHTML(posizione.index, htmlFinale);
       if (stato) {
-        var riuscite = 0;
-        for (var n = 0; n < assegnazioni.length; n++) {
-          if (assegnazioni[n] !== null && assegnazioni[n] !== undefined) { riuscite = riuscite + 1; }
-        }
-        if (riuscite === tagImmagine.length) {
+        var riuscite = url.filter(function(u) { return u !== null; }).length;
+        if (riuscite === elementiImmagine.length) {
           stato.textContent = '__MSG_ALL_OK__'.replace('{n}', riuscite);
         } else {
-          stato.textContent = '__MSG_PARTIAL__'.replace('{ok}', riuscite).replace('{tot}', tagImmagine.length);
+          stato.textContent = '__MSG_PARTIAL__'.replace('{ok}', riuscite).replace('{tot}', elementiImmagine.length);
         }
       }
     });
   }, true);  // capture phase: we need to run before Quill's own paste handler.
-}
-
-// Detects a pasted <img> tag pointing to a local file path
-// ("file:///C:/Users/...") instead of a real, loadable address: a common
-// leftover of copying text and pictures together from Word on Windows.
-// A web page cannot read that path for security reasons, so it is only
-// used to decide whether to warn the author.
-function contieneImmagineNonRecuperabile(html) {
-  if (!html) { return false; }
-  var trovato = /<img\\b[^>]*\\bsrc\\s*=\\s*["']?file:/i.exec(html);
-  return trovato !== null;
-}
-
-// Reads the width a pasted <img> tag declares, either as a plain HTML
-// attribute (width="200") or as an inline style (style="width:200px").
-// Returns null when the tag declares no width at all.
-function leggiLarghezzaDichiarata(tag) {
-  var corrispondenzaAttributo = tag.match(/\\bwidth\\s*=\\s*"(\\d+)/i);
-  if (corrispondenzaAttributo) { return parseInt(corrispondenzaAttributo[1], 10); }
-  var corrispondenzaStile = tag.match(/width\\s*:\\s*(\\d+)px/i);
-  if (corrispondenzaStile) { return parseInt(corrispondenzaStile[1], 10); }
-  return null;
-}
-
-// Same as leggiLarghezzaDichiarata, for the height.
-function leggiAltezzaDichiarata(tag) {
-  var corrispondenzaAttributo = tag.match(/\\bheight\\s*=\\s*"(\\d+)/i);
-  if (corrispondenzaAttributo) { return parseInt(corrispondenzaAttributo[1], 10); }
-  var corrispondenzaStile = tag.match(/height\\s*:\\s*(\\d+)px/i);
-  if (corrispondenzaStile) { return parseInt(corrispondenzaStile[1], 10); }
-  return null;
-}
-
-// Decodes an image blob locally to read its real pixel size. Resolves to
-// null if the blob turns out not to be a valid image.
-function leggiDimensioneBlob(blob) {
-  return new Promise(function(resolve) {
-    var indirizzoTemporaneo = URL.createObjectURL(blob);
-    var immagine = new Image();
-    immagine.onload = function() {
-      URL.revokeObjectURL(indirizzoTemporaneo);
-      resolve({ larghezza: immagine.naturalWidth, altezza: immagine.naturalHeight });
-    };
-    immagine.onerror = function() {
-      URL.revokeObjectURL(indirizzoTemporaneo);
-      resolve(null);
-    };
-    immagine.src = indirizzoTemporaneo;
-  });
-}
-
-// Looks, among the uploaded images not yet paired, for one whose real
-// pixel size matches the size declared by the pasted tag (with a small
-// tolerance for Word/Google Docs rounding). Returns its index in
-// immaginiCaricate, or null when none matches closely enough.
-function trovaImmagineDiTagliaCorrispondente(tagCorrente, immaginiCaricate) {
-  var tolleranza = 3; // pixel di margine per arrotondamenti/DPI
-  for (var i = 0; i < immaginiCaricate.length; i++) {
-    var immagine = immaginiCaricate[i];
-    if (immagine.usata) { continue; }
-    if (immagine.larghezza === null) { continue; }
-    var differenzaLarghezza = Math.abs(immagine.larghezza - tagCorrente.larghezza);
-    var differenzaAltezza = Math.abs(immagine.altezza - tagCorrente.altezza);
-    if (differenzaLarghezza <= tolleranza && differenzaAltezza <= tolleranza) {
-      return i;
-    }
-  }
-  return null;
 }
 
 // Uploads a single pasted image blob to the server, reusing the same
@@ -2845,7 +2346,6 @@ function caricaBlobImmagine(blob) {
     testo = testo.replace("__MSG_RECOVERING__", T("js_recovering_pasted_images", language))
     testo = testo.replace("__MSG_ALL_OK__", T("js_pasted_all_recovered", language))
     testo = testo.replace("__MSG_PARTIAL__", T("js_pasted_partial_recovered", language))
-    testo = testo.replace("__MSG_WORD_IMAGE_UNAVAILABLE__", T("js_pasted_word_image_unavailable", language))
     return testo
 
 
@@ -6280,12 +5780,12 @@ function translateHome() {{
   var contenutoIt = quill.root.innerHTML;
 
   if (quill.getText().trim() === '') {{
-    stato.textContent = "{T("js_write_intro_first", la)}";
+    stato.textContent = '{T("js_write_intro_first", la)}';
     return;
   }}
 
   pulsante.disabled = true;
-  stato.textContent = "{T("js_translating", la)}";
+  stato.textContent = '{T("js_translating", la)}';
 
   fetch('/translate', {{
     method: 'POST',
@@ -6297,14 +5797,14 @@ function translateHome() {{
     pulsante.disabled = false;
     if (res.ok === true) {{
       quillHomeEn.root.innerHTML = res.text;
-      stato.textContent = "{T("js_translated_home", la)}";
+      stato.textContent = '{T("js_translated_home", la)}';
     }} else {{
-      stato.textContent = "{T("js_error_prefix", la)}" + res.error;
+      stato.textContent = '{T("js_error_prefix", la)}' + res.error;
     }}
   }})
   .catch(function(e) {{
     pulsante.disabled = false;
-    stato.textContent = "{T("js_net_error_translation", la)}";
+    stato.textContent = '{T("js_net_error_translation", la)}';
   }});
 }}
 
@@ -6449,12 +5949,12 @@ function extractYoutubeId(url) {{
 }}
 
 function insertYoutube() {{
-  var url = prompt("{T("js_prompt_youtube_link", la)}");
+  var url = prompt('{T("js_prompt_youtube_link", la)}');
   if (url === null) {{ return; }}
   if (url === "") {{ return; }}
   var idVideo = extractYoutubeId(url);
   if (idVideo === "") {{
-    alert("{T("js_youtube_not_recognized", la)}");
+    alert('{T("js_youtube_not_recognized", la)}');
     return;
   }}
   var codice = '<div class="video-youtube">';
@@ -6799,23 +6299,6 @@ textarea {{ resize:vertical; line-height:1.5; }}
 .seo-copy {{ background:#f1eefe; color:#6b3df5; border:1px solid #d8ccfb; border-radius:5px; padding:0.1rem 0.5rem; font-size:0.72rem; cursor:pointer; white-space:nowrap; }}
 .seo-copy:hover {{ background:#e4ddfd; }}
 .seo-text {{ font-size:0.85rem; margin:0.25rem 0; line-height:1.4; }}
-.seo-warning {{ background:#fef3cd; border:1px solid #f0d68a; border-radius:6px; padding:0.4rem 0.6rem; }}
-.seo-apply-all {{ width:100%; margin-top:0.6rem; background:#1a8754; color:#fff; border:none; border-radius:6px; padding:0.45rem 0.8rem; font-size:0.85rem; cursor:pointer; }}
-.seo-apply-all:hover {{ background:#146c43; }}
-.seo-report-btn {{ width:100%; margin-top:0.4rem; background:#fff; color:#0066cc; border:1px solid #0066cc; border-radius:6px; padding:0.4rem 0.8rem; font-size:0.83rem; cursor:pointer; }}
-.seo-report-btn:hover {{ background:#eef5ff; }}
-/* The revision window: the article with the proposed additions. */
-#revision-overlay {{ position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center; }}
-.revision-window {{ background:#fff; border-radius:10px; padding:1.2rem; width:min(92vw, 860px); max-height:88vh; display:flex; flex-direction:column; gap:0.7rem; box-shadow:0 10px 40px rgba(0,0,0,0.25); }}
-.revision-window h3 {{ margin:0; font-size:1rem; }}
-.revision-intro {{ margin:0; font-size:0.82rem; color:#555; }}
-.revision-area {{ overflow:auto; padding:0.6rem; border:1px solid #e4e4e7; border-radius:8px; line-height:1.55; }}
-.revision-edit {{ background:#e8f7ee; border:1px solid #9fd8b4; border-left:4px solid #1a8754; border-radius:6px; margin:0.6rem 0; padding:0.5rem 0.7rem; }}
-.revision-edit-head {{ display:flex; align-items:flex-start; gap:0.5rem; font-size:0.78rem; color:#146c43; font-weight:600; cursor:pointer; margin-bottom:0.35rem; }}
-.revision-edit-head input {{ margin-top:0.15rem; }}
-.revision-edit-body {{ font-size:0.95rem; }}
-.revision-rejected {{ opacity:0.45; background:#f4f4f5; border-color:#d4d4d8; border-left-color:#a1a1aa; }}
-.revision-rejected .revision-edit-body {{ text-decoration:line-through; }}
 /* Embedded tables inside the editor: they must look like tables, and
    invite the click that opens the small table editor. */
 #editor .raw-html-block {{ cursor:pointer; position:relative; margin:0.8rem 0; }}
@@ -6837,7 +6320,7 @@ textarea {{ resize:vertical; line-height:1.5; }}
 .table-editor-bar button {{ background:#f1eefe; color:#6b3df5; border:1px solid #d8ccfb; border-radius:5px; padding:0.25rem 0.7rem; font-size:0.8rem; cursor:pointer; }}
 .table-editor-bar button:hover {{ background:#e4ddfd; }}
 .table-editor-actions {{ display:flex; gap:0.5rem; justify-content:flex-end; }}
-.table-editor-actions button {{ border:1px solid #d4d4d8; background:#fff; color:#333; border-radius:6px; padding:0.35rem 1rem; font-size:0.85rem; cursor:pointer; }}
+.table-editor-actions button {{ border:1px solid #d4d4d8; background:#fff; border-radius:6px; padding:0.35rem 1rem; font-size:0.85rem; cursor:pointer; }}
 .table-editor-actions .table-editor-save {{ background:#6b3df5; color:#fff; border-color:#6b3df5; }}
 .table-editor-actions .table-editor-save:hover {{ background:#5a30d0; }}
 .btn-suggerisci:disabled {{ opacity:0.6; cursor:default; }}
@@ -7051,7 +6534,7 @@ function updateDescriptionCounter() {{
   if (lunghezza === 0) {{
     messaggio = "{T("js_desc_counter_empty", la)}";
   }} else if (lunghezza > 160) {{
-    messaggio = lunghezza + ' {T("js_chars_unit", la)} - ' + "{T("js_chars_too_long_google", la)}";
+    messaggio = lunghezza + ' {T("js_chars_unit", la)} - ' + '{T("js_chars_too_long_google", la)}';
   }} else if (lunghezza < 50) {{
     messaggio = lunghezza + " " + "{T("js_chars_unit", la)}" + " - " + "{T("js_chars_too_short_seo", la)}";
   }} else {{
@@ -7075,7 +6558,7 @@ function suggestDescription() {{
   }}
 
   pulsante.disabled = true;
-  stato.textContent = "{T("js_generating", la)}";
+  stato.textContent = '{T("js_generating", la)}';
 
   fetch('/generate-description', {{
     method: 'POST',
@@ -7088,14 +6571,14 @@ function suggestDescription() {{
     if (res.ok === true) {{
       document.getElementById('description').value = res.description;
       updateDescriptionCounter();
-      stato.textContent = "{T("js_suggestion_inserted", la)}";
+      stato.textContent = '{T("js_suggestion_inserted", la)}';
     }} else {{
-      stato.textContent = "{T("js_error_prefix", la)}" + res.error;
+      stato.textContent = '{T("js_error_prefix", la)}' + res.error;
     }}
   }})
   .catch(function(e) {{
     pulsante.disabled = false;
-    stato.textContent = "{T("js_net_error_generation", la)}";
+    stato.textContent = '{T("js_net_error_generation", la)}';
   }});
 }}
 
@@ -7144,18 +6627,16 @@ function analyzeSeo() {{
   .then(function(res) {{
     pulsante.disabled = false;
     if (res.ok === true) {{
-      stato.textContent = "{T("js_seo_done", la)}";
-      window.lastSeoSources = res.sources || null;
-      window.lastSeoArticleUrl = res.article_url;
+      stato.textContent = '{T("js_seo_done", la)}';
       renderSeoResults(pannello, res.analysis, res.article_url);
       pannello.style.display = 'block';
     }} else {{
-      stato.textContent = "{T("js_error_prefix", la)}" + res.error;
+      stato.textContent = '{T("js_error_prefix", la)}' + res.error;
     }}
   }})
   .catch(function(e) {{
     pulsante.disabled = false;
-    stato.textContent = "{T("js_net_error_generation", la)}";
+    stato.textContent = '{T("js_net_error_generation", la)}';
   }});
 }}
 
@@ -7176,7 +6657,7 @@ function seoCopyRow(testo) {{
   var btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'seo-copy';
-  btn.textContent = "{T("seo_copy", la)}";
+  btn.textContent = '{T("seo_copy", la)}';
   btn.onclick = function() {{ copyToClipboard(testo, btn); }};
   riga.appendChild(span);
   riga.appendChild(btn);
@@ -7187,7 +6668,7 @@ function seoCopyRow(testo) {{
 function copyToClipboard(testo, bottone) {{
   var conferma = function() {{
     var originale = bottone.textContent;
-    bottone.textContent = "{T("seo_copied", la)}";
+    bottone.textContent = '{T("seo_copied", la)}';
     setTimeout(function() {{ bottone.textContent = originale; }}, 1200);
   }};
   if (navigator.clipboard && navigator.clipboard.writeText) {{
@@ -7206,74 +6687,18 @@ function copyToClipboard(testo, bottone) {{
 
 // Renders the analysis into the panel. Every field is optional: the model
 // may omit some keys, and the panel simply skips the missing sections.
-// Where possible, each suggestion carries a button that applies it to the
-// article directly, so accepting a change is a single click.
 function renderSeoResults(pannello, analisi, urlArticolo) {{
   if (!analisi) {{ return; }}
 
-  // Warns when the site URL is still the placeholder from the example
-  // config: every generated URL would be fake.
-  if (urlArticolo.indexOf('tuodominio.com') >= 0) {{
-    var avviso = document.createElement('div');
-    avviso.className = 'seo-text seo-warning';
-    avviso.textContent = "{T("seo_baseurl_warning", la)}";
-    pannello.appendChild(avviso);
-  }}
-
-  // The revision editor and the report need these later.
-  window.lastSeoAnalysis = analisi;
-  window.lastSeoSources = window.lastSeoSources || null;
-
-  // The main path: a full revision of the article, with every proposed
-  // addition highlighted and individually acceptable.
-  var revBtn = document.createElement('button');
-  revBtn.type = 'button';
-  revBtn.className = 'seo-apply-all';
-  revBtn.textContent = "{T("seo_make_revision", la)}";
-  revBtn.onclick = function() {{ requestArticleRevision(); }};
-  pannello.appendChild(revBtn);
-
-  // The report: sources consulted and the rationale of every choice.
-  var repBtn = document.createElement('button');
-  repBtn.type = 'button';
-  repBtn.className = 'seo-report-btn';
-  repBtn.textContent = "{T("seo_open_report", la)}";
-  repBtn.onclick = function() {{ openSeoReport(); }};
-  pannello.appendChild(repBtn);
-
-  // One click to accept the whole package of safe changes.
-  var tuttoBtn = document.createElement('button');
-  tuttoBtn.type = 'button';
-  tuttoBtn.className = 'seo-apply-all';
-  tuttoBtn.textContent = "{T("seo_apply_all", la)}";
-  tuttoBtn.onclick = function() {{
-    applySeoDescription(analisi);
-    applySeoTags(analisi);
-    appendFaqToArticle(analisi);
-    appendRelatedToArticle(analisi);
-    document.getElementById('seo-status').textContent = "{T("seo_applied", la)}";
-  }};
-  pannello.appendChild(tuttoBtn);
-
   // The exact URL to use as the backlink target on the external site.
-  pannello.appendChild(seoHeading("{T("seo_backlink_target", la)}"));
+  pannello.appendChild(seoHeading('{T("seo_backlink_target", la)}'));
   pannello.appendChild(seoCopyRow(urlArticolo));
 
-  // Ready-made meta description, with its own apply button.
-  if (analisi['suggested_description']) {{
-    pannello.appendChild(seoHeading("{T("seo_suggested_description", la)}"));
-    var rigaDesc = seoCopyRow(String(analisi['suggested_description']));
-    rigaDesc.appendChild(seoActionButton("{T("seo_apply", la)}", function() {{
-      applySeoDescription(analisi);
-    }}));
-    pannello.appendChild(rigaDesc);
-  }}
-
   var liste = [
-    ['primary_keywords', "{T("seo_primary_keywords", la)}"],
-    ['secondary_keywords', "{T("seo_secondary_keywords", la)}"],
-    ['trend_queries', "{T("seo_trend_queries", la)}"],
-    ['anchor_texts', "{T("seo_anchor_texts", la)}"]
+    ['primary_keywords', '{T("seo_primary_keywords", la)}'],
+    ['secondary_keywords', '{T("seo_secondary_keywords", la)}'],
+    ['title_variants', '{T("seo_title_variants", la)}'],
+    ['anchor_texts', '{T("seo_anchor_texts", la)}']
   ];
   for (var i = 0; i < liste.length; i++) {{
     var chiave = liste[i][0];
@@ -7287,45 +6712,36 @@ function renderSeoResults(pannello, analisi, urlArticolo) {{
     }}
   }}
 
-  // Title variants: one click replaces the article title.
-  var varianti = analisi['title_variants'];
-  if (varianti && varianti.length > 0) {{
-    pannello.appendChild(seoHeading("{T("seo_title_variants", la)}"));
-    for (var v = 0; v < varianti.length; v++) {{
-      (function(testoTitolo) {{
-        var riga = seoCopyRow(testoTitolo);
-        riga.appendChild(seoActionButton("{T("seo_use_title", la)}", function() {{
-          document.getElementById('title').value = testoTitolo;
-        }}));
-        pannello.appendChild(riga);
-      }})(String(varianti[v]));
-    }}
-  }}
-
-  // Suggested tags: shown as text, with a button applying them.
+  // Suggested tags: shown as text, with a button applying them to the field.
   var tagValori = analisi['suggested_tags'];
   if (tagValori && tagValori.length > 0) {{
-    pannello.appendChild(seoHeading("{T("seo_suggested_tags", la)}"));
-    var rigaTag = seoCopyRow(tagValori.join(', '));
-    rigaTag.appendChild(seoActionButton("{T("seo_apply_tags", la)}", function() {{
-      applySeoTags(analisi);
-    }}));
+    pannello.appendChild(seoHeading('{T("seo_suggested_tags", la)}'));
+    var tagTesto = tagValori.join(', ');
+    var rigaTag = seoCopyRow(tagTesto);
+    var btnTag = document.createElement('button');
+    btnTag.type = 'button';
+    btnTag.className = 'seo-copy';
+    btnTag.textContent = '{T("seo_apply_tags", la)}';
+    btnTag.onclick = function() {{
+      document.getElementById('tags').value = tagTesto;
+    }};
+    rigaTag.appendChild(btnTag);
     pannello.appendChild(rigaTag);
   }}
 
   // The model's opinion on the current meta description.
   if (analisi['meta_description_review']) {{
-    pannello.appendChild(seoHeading("{T("seo_meta_review", la)}"));
+    pannello.appendChild(seoHeading('{T("seo_meta_review", la)}'));
     var giudizio = document.createElement('div');
     giudizio.className = 'seo-text';
     giudizio.textContent = String(analisi['meta_description_review']);
     pannello.appendChild(giudizio);
   }}
 
-  // Internal links: list plus a button appending a "Read more" section.
+  // Internal links: slug plus the suggested anchor text.
   var interni = analisi['internal_links'];
   if (interni && interni.length > 0) {{
-    pannello.appendChild(seoHeading("{T("seo_internal_links", la)}"));
+    pannello.appendChild(seoHeading('{T("seo_internal_links", la)}'));
     for (var k = 0; k < interni.length; k++) {{
       var voce = interni[k];
       if (voce && voce.slug) {{
@@ -7334,16 +6750,13 @@ function renderSeoResults(pannello, analisi, urlArticolo) {{
         pannello.appendChild(seoCopyRow(anchor + '  ->  /posts/' + String(voce.slug) + '.html'));
       }}
     }}
-    pannello.appendChild(seoActionButton("{T("seo_add_related", la)}", function() {{
-      appendRelatedToArticle(analisi);
-    }}));
   }}
 
-  // FAQ suggested for AI answer engines, with a button that inserts
-  // them at the end of the article.
+  // FAQ suggested for AI answer engines: ready to paste at the end of
+  // the article (AI crawlers favour explicit question/answer blocks).
   var faq = analisi['faq'];
   if (faq && faq.length > 0) {{
-    pannello.appendChild(seoHeading("{T("seo_faq", la)}"));
+    pannello.appendChild(seoHeading('{T("seo_faq", la)}'));
     for (var f = 0; f < faq.length; f++) {{
       if (faq[f] && faq[f].question) {{
         var blocco = document.createElement('div');
@@ -7356,440 +6769,19 @@ function renderSeoResults(pannello, analisi, urlArticolo) {{
         pannello.appendChild(blocco);
       }}
     }}
-    pannello.appendChild(seoActionButton("{T("seo_add_faq", la)}", function() {{
-      appendFaqToArticle(analisi);
-    }}));
-  }}
-
-  // Concrete edits proposed to intercept the real search queries.
-  var modifiche = analisi['content_changes'];
-  if (modifiche && modifiche.length > 0) {{
-    pannello.appendChild(seoHeading("{T("seo_content_changes", la)}"));
-    for (var m = 0; m < modifiche.length; m++) {{
-      var voceModifica = modifiche[m];
-      if (voceModifica && voceModifica.change) {{
-        var dove = '';
-        if (voceModifica.where) {{ dove = String(voceModifica.where) + ': '; }}
-        pannello.appendChild(seoCopyRow(dove + String(voceModifica.change)));
-      }}
-    }}
   }}
 
   // Concrete AI-SEO advice for this specific article.
   var consigli = analisi['ai_seo_tips'];
   if (consigli && consigli.length > 0) {{
-    pannello.appendChild(seoHeading("{T("seo_ai_tips", la)}"));
+    pannello.appendChild(seoHeading('{T("seo_ai_tips", la)}'));
     for (var c = 0; c < consigli.length; c++) {{
       var tip = document.createElement('div');
       tip.className = 'seo-text';
-      tip.textContent = '\u2022 ' + String(consigli[c]);
+      tip.textContent = '\\u2022 ' + String(consigli[c]);
       pannello.appendChild(tip);
     }}
   }}
-}}
-
-// A small action button used inside the results panel.
-function seoActionButton(etichetta, azione) {{
-  var btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'seo-copy';
-  btn.textContent = etichetta;
-  btn.onclick = azione;
-  return btn;
-}}
-
-// --- Applying the suggestions to the article ---------------------------
-
-function applySeoDescription(analisi) {{
-  if (analisi['suggested_description']) {{
-    document.getElementById('description').value = String(analisi['suggested_description']).slice(0, 160);
-  }}
-}}
-
-function applySeoTags(analisi) {{
-  var tagValori = analisi['suggested_tags'];
-  if (tagValori && tagValori.length > 0) {{
-    document.getElementById('tags').value = tagValori.join(', ');
-  }}
-}}
-
-// Builds the FAQ section HTML. Everything coming from the model is
-// escaped: the strings become article content, so they must not be able
-// to carry markup of their own.
-function buildFaqHtml(faq) {{
-  var pezzi = ['<h2>{T("seo_faq_heading", la)}</h2>'];
-  for (var i = 0; i < faq.length; i++) {{
-    if (faq[i] && faq[i].question) {{
-      pezzi.push('<p><strong>' + escapeCellText(String(faq[i].question)) + '</strong><br>'
-                 + escapeCellText(String(faq[i].answer || '')) + '</p>');
-    }}
-  }}
-  return pezzi.join('');
-}}
-
-// Builds the "Read more" section HTML with the internal links.
-// The slug is validated (letters, numbers, hyphens only) before being
-// used inside a URL.
-function buildRelatedHtml(interni) {{
-  var pezzi = ['<h2>{T("seo_related_heading", la)}</h2><ul>'];
-  var validi = 0;
-  for (var i = 0; i < interni.length; i++) {{
-    var voce = interni[i];
-    if (voce && voce.slug && /^[a-z0-9-]+$/.test(String(voce.slug))) {{
-      var anchor = String(voce.anchor || voce.slug);
-      pezzi.push('<li><a href="/posts/' + String(voce.slug) + '.html">'
-                 + escapeCellText(anchor) + '</a></li>');
-      validi = validi + 1;
-    }}
-  }}
-  pezzi.push('</ul>');
-  if (validi === 0) {{ return ''; }}
-  return pezzi.join('');
-}}
-
-function appendFaqToArticle(analisi) {{
-  var faq = analisi['faq'];
-  if (!faq || faq.length === 0) {{ return; }}
-  var htmlFaq = buildFaqHtml(faq);
-  quill.clipboard.dangerouslyPasteHTML(quill.getLength() - 1, htmlFaq);
-}}
-
-function appendRelatedToArticle(analisi) {{
-  var interni = analisi['internal_links'];
-  if (!interni || interni.length === 0) {{ return; }}
-  var htmlLink = buildRelatedHtml(interni);
-  if (htmlLink === '') {{ return; }}
-  quill.clipboard.dangerouslyPasteHTML(quill.getLength() - 1, htmlLink);
-}}
-
-// --- Full article revision --------------------------------------------
-// Asks the server for the anchored edits, then opens the review window:
-// the article as it is, with each proposed addition shown in place,
-// highlighted, and individually selectable.
-
-function requestArticleRevision() {{
-  var stato = document.getElementById('seo-status');
-  stato.textContent = "{T("seo_revision_generating", la)}";
-  fetch('/revise-article', {{
-    method: 'POST',
-    headers: {{ 'Content-Type': 'application/json' }},
-    body: JSON.stringify({{
-      content: quill.root.innerHTML,
-      title: document.getElementById('title').value,
-      tags: document.getElementById('tags').value,
-      analysis: window.lastSeoAnalysis || {{}}
-    }})
-  }})
-  .then(function(r) {{ return r.json(); }})
-  .then(function(res) {{
-    if (res.ok === true) {{
-      stato.textContent = '';
-      openRevisionEditor(res.edits);
-    }} else {{
-      stato.textContent = "{T("js_error_prefix", la)}" + res.error;
-    }}
-  }})
-  .catch(function(e) {{
-    stato.textContent = "{T("js_net_error_generation", la)}";
-  }});
-}}
-
-// Normalises a text for anchor matching: whitespace collapsed,
-// case-insensitive.
-function normalizeAnchorText(testo) {{
-  return String(testo).replace(/\\s+/g, ' ').trim().toLowerCase();
-}}
-
-// The top-level blocks of the current article, as real DOM nodes.
-function articleBlocks() {{
-  var contenitore = document.createElement('div');
-  contenitore.innerHTML = quill.root.innerHTML;
-  var blocchi = [];
-  for (var i = 0; i < contenitore.children.length; i++) {{
-    blocchi.push(contenitore.children[i]);
-  }}
-  return blocchi;
-}}
-
-// Finds the index of the block containing the anchor text; -1 when the
-// anchor is empty or cannot be found (the edit then goes at the end).
-function findAnchorBlock(blocchi, anchor) {{
-  var cercato = normalizeAnchorText(anchor);
-  if (cercato === '') {{ return -1; }}
-  for (var i = 0; i < blocchi.length; i++) {{
-    if (normalizeAnchorText(blocchi[i].textContent).indexOf(cercato) >= 0) {{
-      return i;
-    }}
-  }}
-  return -1;
-}}
-
-// Builds and shows the revision window.
-function openRevisionEditor(edits) {{
-  var esistente = document.getElementById('revision-overlay');
-  if (esistente) {{ return; }}
-
-  var blocchi = articleBlocks();
-
-  // For every block index, the edits to insert right after it; the
-  // edits with no position found go into the tail list.
-  var perBlocco = {{}};
-  var inCoda = [];
-  for (var e = 0; e < edits.length; e++) {{
-    var indice = findAnchorBlock(blocchi, edits[e].anchor);
-    edits[e].found = indice >= 0;
-    if (indice >= 0) {{
-      if (!perBlocco[indice]) {{ perBlocco[indice] = []; }}
-      perBlocco[indice].push(e);
-    }} else {{
-      inCoda.push(e);
-    }}
-  }}
-
-  var sfondo = document.createElement('div');
-  sfondo.id = 'revision-overlay';
-  var finestra = document.createElement('div');
-  finestra.className = 'revision-window';
-
-  var titolo = document.createElement('h3');
-  titolo.textContent = "{T("seo_revision_title", la)}";
-  finestra.appendChild(titolo);
-  var intro = document.createElement('p');
-  intro.className = 'revision-intro';
-  intro.textContent = "{T("seo_revision_intro", la)}";
-  finestra.appendChild(intro);
-
-  var area = document.createElement('div');
-  area.className = 'revision-area';
-  for (var b = 0; b < blocchi.length; b++) {{
-    area.appendChild(blocchi[b].cloneNode(true));
-    if (perBlocco[b]) {{
-      for (var k = 0; k < perBlocco[b].length; k++) {{
-        area.appendChild(buildEditCard(edits, perBlocco[b][k], true));
-      }}
-    }}
-  }}
-  for (var t = 0; t < inCoda.length; t++) {{
-    area.appendChild(buildEditCard(edits, inCoda[t], false));
-  }}
-  finestra.appendChild(area);
-
-  var azioni = document.createElement('div');
-  azioni.className = 'table-editor-actions';
-  var applica = tableEditorButton("{T("seo_revision_apply", la)}", function() {{
-    applyRevision(edits, blocchi, perBlocco, inCoda);
-  }});
-  applica.className = 'table-editor-save';
-  var chiudi = tableEditorButton("{T("seo_revision_cancel", la)}", function() {{
-    closeRevisionEditor();
-  }});
-  azioni.appendChild(applica);
-  azioni.appendChild(chiudi);
-  finestra.appendChild(azioni);
-
-  sfondo.appendChild(finestra);
-  sfondo.addEventListener('click', function(evento) {{
-    if (evento.target === sfondo) {{ closeRevisionEditor(); }}
-  }});
-  document.body.appendChild(sfondo);
-}}
-
-// A proposed addition, rendered in place: green block, checkbox,
-// reason, and the content itself (already sanitised by the server).
-function buildEditCard(edits, indice, trovato) {{
-  var voce = edits[indice];
-  var carta = document.createElement('div');
-  carta.className = 'revision-edit';
-
-  var testata = document.createElement('label');
-  testata.className = 'revision-edit-head';
-  var spunta = document.createElement('input');
-  spunta.type = 'checkbox';
-  spunta.checked = true;
-  spunta.onchange = function() {{
-    voce.accepted = spunta.checked;
-    if (spunta.checked) {{
-      carta.classList.remove('revision-rejected');
-    }} else {{
-      carta.classList.add('revision-rejected');
-    }}
-  }};
-  voce.accepted = true;
-  testata.appendChild(spunta);
-  var motivo = document.createElement('span');
-  motivo.textContent = "{T("seo_revision_why", la)}" + ': ' + String(voce.reason || '');
-  if (!trovato) {{
-    motivo.textContent = motivo.textContent + ' ' + "{T("seo_revision_end_note", la)}";
-  }}
-  testata.appendChild(motivo);
-  carta.appendChild(testata);
-
-  var corpo = document.createElement('div');
-  corpo.className = 'revision-edit-body';
-  corpo.innerHTML = voce.new_html;
-  carta.appendChild(corpo);
-  return carta;
-}}
-
-// Rebuilds the article: the original blocks untouched, plus the
-// accepted additions in their positions, then hands it to the editor.
-function applyRevision(edits, blocchi, perBlocco, inCoda) {{
-  var pezzi = [];
-  for (var b = 0; b < blocchi.length; b++) {{
-    pezzi.push(blocchi[b].outerHTML);
-    if (perBlocco[b]) {{
-      for (var k = 0; k < perBlocco[b].length; k++) {{
-        var voce = edits[perBlocco[b][k]];
-        if (voce.accepted) {{ pezzi.push(voce.new_html); }}
-      }}
-    }}
-  }}
-  for (var t = 0; t < inCoda.length; t++) {{
-    var vc = edits[inCoda[t]];
-    if (vc.accepted) {{ pezzi.push(vc.new_html); }}
-  }}
-  var nuovoHtml = pezzi.join('');
-  quill.setContents([]);
-  quill.clipboard.dangerouslyPasteHTML(0, nuovoHtml);
-  closeRevisionEditor();
-  document.getElementById('seo-status').textContent = "{T("seo_revision_applied", la)}";
-}}
-
-function closeRevisionEditor() {{
-  var sfondo = document.getElementById('revision-overlay');
-  if (sfondo) {{ document.body.removeChild(sfondo); }}
-}}
-
-// --- Analysis report ---------------------------------------------------
-// Shows (and lets you download) a report that makes the analysis
-// auditable: which sources were consulted, why every keyword was
-// chosen, which real queries support it and where it is used.
-
-// Builds the report as standalone HTML. Everything dynamic is escaped:
-// the report must be safe to open as a file on its own.
-function buildReportHtml(analisi, fonti, urlArticolo) {{
-  var e = escapeCellText;
-  var pezzi = [];
-  pezzi.push('<!DOCTYPE html><html lang="it"><head><meta charset="utf-8">');
-  pezzi.push('<title>' + "{T("seo_report_title", la)}" + '</title>');
-  pezzi.push('<style>body{{font-family:system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;line-height:1.5;color:#222}}');
-  pezzi.push('h1{{font-size:1.4rem}}h2{{font-size:1.05rem;margin-top:1.6rem;color:#0066cc}}');
-  pezzi.push('table{{border-collapse:collapse;width:100%;font-size:0.88rem}}th,td{{border:1px solid #ddd;padding:0.4rem 0.6rem;text-align:left;vertical-align:top}}');
-  pezzi.push('th{{background:#f4f4f5}}ul{{margin:0.3rem 0}}</style></head><body>');
-  pezzi.push('<h1>' + "{T("seo_report_title", la)}" + '</h1>');
-  pezzi.push('<p><strong>URL:</strong> ' + e(urlArticolo || '') + '</p>');
-
-  pezzi.push('<h2>' + "{T("seo_report_sources", la)}" + '</h2><ul>');
-  if (fonti) {{
-    pezzi.push('<li><strong>' + "{T("seo_report_service", la)}" + ':</strong> '
-               + e(String(fonti.service || '')) + ' / ' + e(String(fonti.model || '')) + '</li>');
-    pezzi.push('<li><strong>' + "{T("seo_report_date", la)}" + ':</strong> ' + e(String(fonti.analyzed_at || '')) + '</li>');
-    pezzi.push('<li><strong>' + "{T("seo_report_seeds", la)}" + ':</strong> '
-               + e((fonti.suggest_seeds || []).join(', ')) + '</li>');
-    var query = fonti.suggest_queries || [];
-    if (query.length > 0) {{
-      pezzi.push('<li><strong>' + "{T("seo_report_collected", la)}" + ' (' + query.length + '):</strong> '
-                 + e(query.join(' | ')) + '</li>');
-    }} else {{
-      pezzi.push('<li><strong>' + "{T("seo_report_collected", la)}" + ':</strong> '
-                 + "{T("seo_report_none", la)}" + '</li>');
-    }}
-  }}
-  pezzi.push('</ul>');
-
-  pezzi.push('<h2>' + "{T("seo_report_keywords", la)}" + '</h2>');
-  var voci = analisi['keyword_report'];
-  if (voci && voci.length > 0) {{
-    pezzi.push('<table><tr><th>' + "{T("seo_report_col_keyword", la)}" + '</th><th>'
-               + "{T("seo_report_col_type", la)}" + '</th><th>'
-               + "{T("seo_report_col_reason", la)}" + '</th><th>'
-               + "{T("seo_report_col_queries", la)}" + '</th><th>'
-               + "{T("seo_report_col_placement", la)}" + '</th></tr>');
-    for (var i = 0; i < voci.length; i++) {{
-      var v = voci[i];
-      if (!v || !v.keyword) {{ continue; }}
-      var supporto = '';
-      if (v.queries && v.queries.length > 0) {{ supporto = v.queries.join(' | '); }}
-      pezzi.push('<tr><td><strong>' + e(String(v.keyword)) + '</strong></td><td>'
-                 + e(String(v.type || '')) + '</td><td>'
-                 + e(String(v.reason || '')) + '</td><td>'
-                 + e(supporto) + '</td><td>'
-                 + e(String(v.placement || '')) + '</td></tr>');
-    }}
-    pezzi.push('</table>');
-  }} else {{
-    pezzi.push('<p>' + "{T("seo_report_missing", la)}" + '</p>');
-  }}
-
-  var modifiche = analisi['content_changes'];
-  if (modifiche && modifiche.length > 0) {{
-    pezzi.push('<h2>' + "{T("seo_report_changes", la)}" + '</h2><ul>');
-    for (var m = 0; m < modifiche.length; m++) {{
-      var mod = modifiche[m];
-      if (mod && mod.change) {{
-        pezzi.push('<li><strong>' + e(String(mod.where || '')) + ':</strong> '
-                   + e(String(mod.change)) + '</li>');
-      }}
-    }}
-    pezzi.push('</ul>');
-  }}
-  pezzi.push('</body></html>');
-  return pezzi.join('');
-}}
-
-function openSeoReport() {{
-  var esistente = document.getElementById('seo-report-overlay');
-  if (esistente) {{ return; }}
-  var analisi = window.lastSeoAnalysis || {{}};
-  var fonti = window.lastSeoSources || null;
-  var urlArticolo = window.lastSeoArticleUrl || '';
-
-  var sfondo = document.createElement('div');
-  sfondo.id = 'seo-report-overlay';
-  var finestra = document.createElement('div');
-  finestra.className = 'revision-window';
-
-  var area = document.createElement('div');
-  area.className = 'revision-area';
-  // The report body is built by us with escaped content: showing it
-  // through innerHTML is safe here.
-  var reportHtml = buildReportHtml(analisi, fonti, urlArticolo);
-  var inizioBody = reportHtml.indexOf('<body>') + '<body>'.length;
-  var fineBody = reportHtml.lastIndexOf('</body>');
-  area.innerHTML = reportHtml.slice(inizioBody, fineBody);
-  finestra.appendChild(area);
-
-  var azioni = document.createElement('div');
-  azioni.className = 'table-editor-actions';
-  var scarica = tableEditorButton("{T("seo_report_download", la)}", function() {{
-    downloadSeoReport(reportHtml);
-  }});
-  scarica.className = 'table-editor-save';
-  var chiudi = tableEditorButton("{T("seo_report_close", la)}", function() {{
-    document.body.removeChild(sfondo);
-  }});
-  azioni.appendChild(scarica);
-  azioni.appendChild(chiudi);
-  finestra.appendChild(azioni);
-
-  sfondo.appendChild(finestra);
-  sfondo.addEventListener('click', function(evento) {{
-    if (evento.target === sfondo) {{ document.body.removeChild(sfondo); }}
-  }});
-  document.body.appendChild(sfondo);
-}}
-
-function downloadSeoReport(reportHtml) {{
-  var slug = document.getElementById('slug').value.trim();
-  if (slug === '') {{ slug = 'articolo'; }}
-  var blob = new Blob([reportHtml], {{ type: 'text/html;charset=utf-8' }});
-  var collegamento = document.createElement('a');
-  collegamento.href = URL.createObjectURL(blob);
-  collegamento.download = 'report-seo-' + slug + '.html';
-  document.body.appendChild(collegamento);
-  collegamento.click();
-  document.body.removeChild(collegamento);
-  URL.revokeObjectURL(collegamento.href);
 }}
 
 // Character counter for the preview meant for readers.
@@ -7819,7 +6811,7 @@ function generatePreview() {{
   }}
 
   pulsante.disabled = true;
-  stato.textContent = "{T("js_generating", la)}";
+  stato.textContent = '{T("js_generating", la)}';
 
   fetch('/generate-preview', {{
     method: 'POST',
@@ -7832,14 +6824,14 @@ function generatePreview() {{
     if (res.ok === true) {{
       document.getElementById('reader_preview').value = res.preview;
       updatePreviewCounter();
-      stato.textContent = "{T("js_suggestion_inserted", la)}";
+      stato.textContent = '{T("js_suggestion_inserted", la)}';
     }} else {{
-      stato.textContent = "{T("js_error_prefix", la)}" + res.error;
+      stato.textContent = '{T("js_error_prefix", la)}' + res.error;
     }}
   }})
   .catch(function(e) {{
     pulsante.disabled = false;
-    stato.textContent = "{T("js_net_error_generation", la)}";
+    stato.textContent = '{T("js_net_error_generation", la)}';
   }});
 }}
 // We create a second Quill editor for the English translation, so the author
@@ -7897,7 +6889,7 @@ updateTranslationSection();
 // The calls happen in the backend, where the API keys are safe.
 function translateArticle() {{
   var stato = document.getElementById('translation-status');
-  stato.textContent = "{T("js_translating", la)}";
+  stato.textContent = '{T("js_translating", la)}';
 
   // We take the Italian texts to translate.
   var titoloIt = document.getElementById('title').value;
@@ -7911,7 +6903,7 @@ function translateArticle() {{
       document.getElementById('description_en').value = descrizioneTradotta;
       translatePiece(contenutoIt, function(contenutoTradotto) {{
         quillEn.root.innerHTML = contenutoTradotto;
-        stato.textContent = "{T("js_translated_review", la)}";
+        stato.textContent = '{T("js_translated_review", la)}';
       }});
     }});
   }});
@@ -7934,13 +6926,13 @@ function translatePiece(testo, quandoFinito) {{
       quandoFinito(res.text);
     }} else {{
       var stato = document.getElementById('translation-status');
-      stato.textContent = "{T("js_error_prefix", la)}" + res.error + "{T("js_check_api_key", la)}";
+      stato.textContent = '{T("js_error_prefix", la)}' + res.error + '{T("js_check_api_key", la)}';
       quandoFinito('');
     }}
   }})
   .catch(function(errore) {{
     var stato = document.getElementById('translation-status');
-    stato.textContent = "{T("js_net_error_translation", la)}";
+    stato.textContent = '{T("js_net_error_translation", la)}';
     quandoFinito('');
   }});
 }}
@@ -8406,7 +7398,7 @@ function extractYoutubeId(url) {{
 
 // Asks for the link and inserts the YouTube video into the editor.
 function insertYoutube() {{
-  var url = prompt("{T("js_prompt_youtube_link", la)}");
+  var url = prompt('{T("js_prompt_youtube_link", la)}');
   if (url === null) {{
     return;
   }}
@@ -8415,7 +7407,7 @@ function insertYoutube() {{
   }}
   var idVideo = extractYoutubeId(url);
   if (idVideo === "") {{
-    alert("{T("js_youtube_not_recognized", la)}");
+    alert('{T("js_youtube_not_recognized", la)}');
     return;
   }}
   var html = '<div class="video-youtube">';
@@ -8531,7 +7523,7 @@ function saveArticle() {{
     body: JSON.stringify(articleData())
   }}).then(r => r.json()).then(res => {{
     if (res.ok) window.location.href = '/admin';
-    else alert("{T("js_error_prefix", la)}" + res.error);
+    else alert('{T("js_error_prefix", la)}' + res.error);
   }});
 }}
 
@@ -8548,13 +7540,13 @@ function previewEnglish() {{
       slugOriginale = res.slug;
       window.open('/preview?slug=' + encodeURIComponent(res.slug) + '&language=en', '_blank');
     }} else {{
-      alert("{T("js_error_prefix", la)}" + res.error);
+      alert('{T("js_error_prefix", la)}' + res.error);
     }}
   }});
 }}
 
 function deleteItem() {{
-  if (!confirm("{T("js_delete_confirm", la)}")) return;
+  if (!confirm('{T("js_delete_confirm", la)}')) return;
   fetch('/delete', {{
     method: 'POST',
     headers: {{ 'Content-Type': 'application/json' }},
@@ -8896,21 +7888,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     data.get("slug", ""),
                     data.get("tags", ""),
                     data.get("description", ""))
-                self._send_json(esito)
-            except Exception as e:
-                self._send_json({"ok": False, "error": str(e)})
-            return
-
-        if route == "/revise-article":
-            # Turns the SEO analysis into anchored, minimal edits that
-            # the operator reviews and accepts one by one.
-            try:
-                data = json.loads(body)
-                esito = generate_article_revision(
-                    data.get("content", ""),
-                    data.get("title", ""),
-                    data.get("tags", ""),
-                    data.get("analysis", {}))
                 self._send_json(esito)
             except Exception as e:
                 self._send_json({"ok": False, "error": str(e)})

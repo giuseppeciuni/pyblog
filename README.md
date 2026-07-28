@@ -146,4 +146,3 @@ MIT — see the [LICENSE](LICENSE) file. You can use, modify and distribute it f
 ## Contributing
 
 PyBlog is designed as a single-file project, deliberately simple. Issues and pull requests are welcome: if you propose a feature, keep the project's philosophy in mind (zero dependencies, single file, readable code).
-# pyblog
