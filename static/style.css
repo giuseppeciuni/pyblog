@@ -448,3 +448,27 @@ html[data-tema="dark"] .errore-404-numero {
   }
   .paginazione .paginazione-vuoto { display:none; }
 }
+/* --- Formats applied to a whole table in the editor -----------------------
+   The toolbar can format a selected table as a unit: an embedded table has
+   no text in the editor's model, so these formats become classes on the
+   table itself. The rules mirror the ones in admin.css, so what the author
+   sees while writing is what gets published. */
+.article-table.pb-tbl-bold th,
+.article-table.pb-tbl-bold td { font-weight:700; }
+.article-table.pb-tbl-italic th,
+.article-table.pb-tbl-italic td { font-style:italic; }
+.article-table.pb-tbl-underline th,
+.article-table.pb-tbl-underline td { text-decoration:underline; }
+.article-table.pb-tbl-strike th,
+.article-table.pb-tbl-strike td { text-decoration:line-through; }
+.article-table.pb-tbl-underline.pb-tbl-strike th,
+.article-table.pb-tbl-underline.pb-tbl-strike td { text-decoration:underline line-through; }
+.article-table.pb-tbl-sfondo th,
+.article-table.pb-tbl-sfondo td { background:transparent; }
+/* An aligned table shrinks to its content: a table at width:100% has no room
+   to move, so centring it would look like nothing happened. */
+.raw-html-block.ql-align-center .article-table,
+.raw-html-block.ql-align-right .article-table { width:auto; max-width:100%; }
+.raw-html-block.ql-align-center .article-table { margin-left:auto; margin-right:auto; }
+.raw-html-block.ql-align-right .article-table { margin-left:auto; margin-right:0; }
+.raw-html-block.ql-align-justify .article-table { width:100%; }

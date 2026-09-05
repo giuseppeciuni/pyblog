@@ -118,6 +118,7 @@ JS_TRANSLATION_KEYS = (
     "admin_table_del_row", "admin_table_add_col", "admin_table_del_col",
     "admin_table_save", "admin_table_cancel", "js_table_how_many_rows",
     "js_table_how_many_cols", "js_table_header_cell", "js_table_body_cell",
+    "js_table_format_not_applicable",
     # Dashboard
     "js_site_rebuilt", "js_status_change_error", "js_delete_named",
     "js_delete_error", "js_delete_confirm",

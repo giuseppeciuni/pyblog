@@ -239,3 +239,43 @@ button:disabled { opacity: 0.65; cursor: default; }
   font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;
 }
 .btn-importa-word:hover { background: #14489a !important; }
+
+/* ===========================================================================
+   SELECTED TABLE IN THE EDITOR
+   =========================================================================== */
+
+/* Quill draws no selection around a block embed, so a selected table would
+   look exactly like an unselected one. This is what tells the author which
+   table the toolbar is about to act on. */
+#editor .raw-html-block.pb-tabella-selezionata {
+  outline: 2px solid var(--pb-viola); outline-offset: 2px; border-radius: 4px;
+  background: rgba(107, 61, 245, 0.06);
+}
+/* The hover outline would otherwise sit on top of the selection outline. */
+#editor .raw-html-block.pb-tabella-selezionata:hover { outline-color: var(--pb-viola-scuro); }
+
+/* The formats the toolbar can apply to a whole table. The same rules exist
+   in the public stylesheet, so the editor shows what will be published. */
+#editor .article-table.pb-tbl-bold th,
+#editor .article-table.pb-tbl-bold td { font-weight: 700; }
+#editor .article-table.pb-tbl-italic th,
+#editor .article-table.pb-tbl-italic td { font-style: italic; }
+#editor .article-table.pb-tbl-underline th,
+#editor .article-table.pb-tbl-underline td { text-decoration: underline; }
+#editor .article-table.pb-tbl-strike th,
+#editor .article-table.pb-tbl-strike td { text-decoration: line-through; }
+#editor .article-table.pb-tbl-underline.pb-tbl-strike th,
+#editor .article-table.pb-tbl-underline.pb-tbl-strike td { text-decoration: underline line-through; }
+/* A background chosen for the table has to win over the header and zebra
+   stripes our own stylesheet paints on the cells. */
+#editor .article-table.pb-tbl-sfondo th,
+#editor .article-table.pb-tbl-sfondo td { background: transparent; }
+
+/* Alignment. A table at width:100% cannot be centred, so an aligned table
+   shrinks to its content first: that is what makes the button do something
+   visible instead of nothing. */
+#editor .raw-html-block.ql-align-center .article-table,
+#editor .raw-html-block.ql-align-right .article-table { width: auto; }
+#editor .raw-html-block.ql-align-center .article-table { margin-left: auto; margin-right: auto; }
+#editor .raw-html-block.ql-align-right .article-table { margin-left: auto; margin-right: 0; }
+#editor .raw-html-block.ql-align-justify .article-table { width: 100%; }

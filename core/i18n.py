@@ -169,7 +169,11 @@ UI_TRANSLATIONS = {
     "err_seo_analysis_parse": {"it": "Il modello non ha restituito un'analisi leggibile: riprova.",
                                "en": "The model did not return a readable analysis: try again."},
     "admin_table_editor_title": {"it": "Modifica tabella", "en": "Edit table"},
-    "admin_table_hint": {"it": "Clicca sulla tabella per modificarla", "en": "Click the table to edit it"},
+    "admin_table_hint": {"it": "Clic per selezionare, doppio clic per modificare",
+                         "en": "Click to select, double-click to edit"},
+    "js_table_format_not_applicable": {
+        "it": "Questo formato sostituirebbe la tabella. Sulla tabella puoi usare allineamento, rientro, grassetto, corsivo, sottolineato, barrato e colori.",
+        "en": "This format would replace the table. On a table you can use alignment, indent, bold, italic, underline, strikethrough and colours."},
     "admin_table_add_row": {"it": "+ riga", "en": "+ row"},
     "admin_table_del_row": {"it": "- riga", "en": "- row"},
     "admin_table_add_col": {"it": "+ colonna", "en": "+ column"},

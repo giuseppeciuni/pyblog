@@ -783,8 +783,20 @@ function attachTableSupport(istanzaQuill) {
     return new Delta().insert({ rawHTML: htmlTabella });
   });
 
-  // A click anywhere on an embedded table opens the editor for that table.
+  // A single click SELECTS the table, a double click opens the cell editor.
+  //
+  // It used to be one click to edit, which meant a table could never simply
+  // be selected: the modal always got there first, and with no selection the
+  // toolbar had nothing to act on. Selecting first is also what makes the
+  // block buttons (alignment, indent) work, because Quill applies those to
+  // whatever the selection covers.
   istanzaQuill.root.addEventListener('click', function(evento) {
+    var blocco = evento.target.closest('.raw-html-block');
+    if (!blocco) { return; }
+    selectTableBlock(istanzaQuill, blocco);
+  });
+
+  istanzaQuill.root.addEventListener('dblclick', function(evento) {
     var blocco = evento.target.closest('.raw-html-block');
     if (!blocco) { return; }
     var tabella = blocco.querySelector('table');
@@ -792,8 +804,49 @@ function attachTableSupport(istanzaQuill) {
     openTableEditor(istanzaQuill, blocco, tabella);
   });
 
+  // The selected table is outlined, so it is obvious what the toolbar will
+  // act on. Quill draws no selection of its own around a block embed.
+  istanzaQuill.on('selection-change', function(range) {
+    highlightSelectedTable(istanzaQuill, range);
+  });
+
   istanzaQuill.on('editor-change', refreshTableHints);
   refreshTableHints();
+}
+
+// The table the caret is currently on, or null. The toolbar handlers read it
+// to decide whether a button should act on a table or on ordinary text.
+var tabellaSelezionata = null;
+
+// Puts Quill's own selection on a table block.
+//
+// A block embed occupies exactly one position in the document, so selecting
+// it means a range of length 1 at its index. Once Quill knows that, the
+// block-level buttons work through their normal path and the toolbar shows
+// the right state.
+function selectTableBlock(istanzaQuill, blocco) {
+  var blot = Quill.find(blocco);
+  if (!blot) { return; }
+  var indice = istanzaQuill.getIndex(blot);
+  istanzaQuill.setSelection(indice, 1, 'user');
+}
+
+// Outlines the selected table and remembers it.
+function highlightSelectedTable(istanzaQuill, range) {
+  var blocchi = istanzaQuill.root.querySelectorAll('.raw-html-block');
+  for (var i = 0; i < blocchi.length; i++) {
+    blocchi[i].classList.remove('pb-tabella-selezionata');
+  }
+  tabellaSelezionata = null;
+  if (!range) { return; }
+
+  var linea = istanzaQuill.getLine(range.index);
+  if (!linea || !linea[0] || !linea[0].domNode) { return; }
+  var nodo = linea[0].domNode;
+  if (!nodo.classList || !nodo.classList.contains('raw-html-block')) { return; }
+
+  nodo.classList.add('pb-tabella-selezionata');
+  tabellaSelezionata = nodo;
 }
 
 // The "click to edit" hint over an embedded table is a translated string, so
@@ -806,6 +859,180 @@ function refreshTableHints() {
   for (var i = 0; i < blocchi.length; i++) {
     blocchi[i].setAttribute('data-hint', t('admin_table_hint'));
   }
+}
+
+/* --- Toolbar buttons applied to a selected table -------------------------- */
+
+// Which toolbar formats become a class on the table, and which class.
+//
+// Alignment and indent are NOT here: Quill applies those itself, as block
+// attributes on the embed, and they round-trip through its own model. These
+// are the inline formats, which Quill can only attach to text; an embed has
+// no text, so without this they would silently do nothing on a table.
+var TABLE_FORMAT_CLASSES = {
+  bold: 'pb-tbl-bold',
+  italic: 'pb-tbl-italic',
+  underline: 'pb-tbl-underline',
+  strike: 'pb-tbl-strike'
+};
+
+// Every class this file can put on a table, used by "remove formatting".
+var TABLE_ALL_CLASSES = ['pb-tbl-bold', 'pb-tbl-italic', 'pb-tbl-underline',
+                         'pb-tbl-strike', 'pb-tbl-sfondo'];
+
+// The <table> inside a selected block, or null.
+function selectedTableElement() {
+  if (!tabellaSelezionata) { return null; }
+  return tabellaSelezionata.querySelector('table');
+}
+
+// Applies a change to the selected table and tells Quill about it.
+//
+// The change is made to the DOM inside the block, which is exactly what the
+// blot stores and what the save reads (the article is saved from
+// quill.root.innerHTML), so it survives a reload with no further work.
+function changeSelectedTable(azione) {
+  var tabella = selectedTableElement();
+  if (!tabella) { return false; }
+  azione(tabella);
+  quill.update();
+  markEditorDirty();
+  updatePreview();
+  return true;
+}
+
+// Turns an inline format on or off for the whole table.
+function toggleTableClass(classe) {
+  return changeSelectedTable(function(tabella) {
+    tabella.classList.toggle(classe);
+  });
+}
+
+// Builds the toolbar handler for one inline format: it acts on the table when
+// one is selected, and otherwise does exactly what Quill would have done.
+//
+// The fallback is a plain quill.format(): Quill's toolbar has already worked
+// out whether the click means on or off (it passes false when the button is
+// active) and hands us the final value. Recomputing that here would be wrong
+// for the buttons that carry a value of their own, such as the list ones.
+//
+// On a table we toggle instead, because the button's active state is derived
+// from Quill's model and our table formatting lives in the DOM: the button
+// never lights up, so the value we are handed is always "on".
+function inlineFormatHandler(nome) {
+  return function(valore) {
+    if (tabellaSelezionata && TABLE_FORMAT_CLASSES[nome]) {
+      toggleTableClass(TABLE_FORMAT_CLASSES[nome]);
+      return;
+    }
+    quill.format(nome, valore, 'user');
+  };
+}
+
+// Text colour: on a table it goes on the table element, and the cells
+// inherit it.
+function colorHandler(valore) {
+  if (tabellaSelezionata) {
+    changeSelectedTable(function(tabella) {
+      if (valore) {
+        tabella.style.color = valore;
+      } else {
+        tabella.style.color = '';
+      }
+    });
+    return;
+  }
+  quill.format('color', valore, 'user');
+}
+
+// Background: a background is not inherited, and our own stylesheet paints
+// the header row and the alternating rows. So the colour goes on the table
+// and a class turns those cell backgrounds off, otherwise the new colour
+// would be hidden behind them.
+function backgroundHandler(valore) {
+  if (tabellaSelezionata) {
+    changeSelectedTable(function(tabella) {
+      if (valore) {
+        tabella.style.backgroundColor = valore;
+        tabella.classList.add('pb-tbl-sfondo');
+      } else {
+        tabella.style.backgroundColor = '';
+        tabella.classList.remove('pb-tbl-sfondo');
+      }
+    });
+    return;
+  }
+  quill.format('background', valore, 'user');
+}
+
+// "Remove formatting" on a table strips what the buttons above added, and
+// the alignment Quill added, without touching the table itself.
+function cleanHandler() {
+  if (tabellaSelezionata) {
+    var blocco = tabellaSelezionata;
+    changeSelectedTable(function(tabella) {
+      for (var i = 0; i < TABLE_ALL_CLASSES.length; i++) {
+        tabella.classList.remove(TABLE_ALL_CLASSES[i]);
+      }
+      tabella.style.color = '';
+      tabella.style.backgroundColor = '';
+    });
+    var classi = blocco.className.split(/\s+/);
+    for (var j = 0; j < classi.length; j++) {
+      if (classi[j].indexOf('ql-align-') === 0 || classi[j].indexOf('ql-indent-') === 0) {
+        blocco.classList.remove(classi[j]);
+      }
+    }
+    quill.update();
+    markEditorDirty();
+    return;
+  }
+  // Away from a table this is Quill's own "remove formatting": with a
+  // selection it strips the formats inside it, and with just a caret it
+  // clears the inline formats that would apply to what you type next.
+  var range = quill.getSelection();
+  if (range === null) { return; }
+  if (range.length === 0) {
+    var formati = quill.getFormat();
+    for (var nome in formati) {
+      if (Quill.import('parchment').query(nome, Quill.import('parchment').Scope.INLINE) != null) {
+        quill.format(nome, false, 'user');
+      }
+    }
+    return;
+  }
+  quill.removeFormat(range.index, range.length, 'user');
+}
+
+// The formats that would replace the block with something else - a heading,
+// a list, a quote, a code block - would destroy the table, so on a selected
+// table they do nothing. Doing nothing is the point: before this they were
+// one click away from silently swallowing the table.
+function blockFormatHandler(nome) {
+  return function(valore) {
+    if (tabellaSelezionata) {
+      pbToast(t('js_table_format_not_applicable'), 'info');
+      return;
+    }
+    quill.format(nome, valore, 'user');
+  };
+}
+
+// The handlers passed to the toolbar when the article editor is created.
+function tableAwareToolbarHandlers() {
+  return {
+    bold: inlineFormatHandler('bold'),
+    italic: inlineFormatHandler('italic'),
+    underline: inlineFormatHandler('underline'),
+    strike: inlineFormatHandler('strike'),
+    color: colorHandler,
+    background: backgroundHandler,
+    clean: cleanHandler,
+    header: blockFormatHandler('header'),
+    blockquote: blockFormatHandler('blockquote'),
+    'code-block': blockFormatHandler('code-block'),
+    list: blockFormatHandler('list')
+  };
 }
 
 // --- Small table editor ---------------------------------------------------
@@ -1223,7 +1450,17 @@ function initEditorPage() {
 
   quill = new Quill('#editor', {
     theme: 'snow',
-    modules: { blotFormatter: {}, syntax: true, toolbar: TOOLBAR_ARTICOLO }
+    modules: {
+      blotFormatter: {},
+      syntax: true,
+      // The toolbar needs handlers of our own so its buttons can act on a
+      // selected table. Every handler falls back to Quill's own behaviour
+      // when the selection is ordinary text.
+      toolbar: {
+        container: TOOLBAR_ARTICOLO,
+        handlers: tableAwareToolbarHandlers()
+      }
+    }
   });
   quill.root.innerHTML = pbPage('content', '');
   PB_MAIN_QUILL = quill;
