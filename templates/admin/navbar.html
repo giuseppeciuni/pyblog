@@ -1,0 +1,21 @@
+<nav class="navbar navbar-expand-lg pb-navbar">
+  <div class="container-fluid pb-content" style="padding-top:0.5rem;padding-bottom:0.5rem;">
+    <a class="navbar-brand" href="/admin">PyBlog</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navAdmin" aria-controls="navAdmin"
+            aria-expanded="false" aria-label="Menu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navAdmin">
+      <ul class="navbar-nav me-auto">
+$voci
+      </ul>
+      <ul class="navbar-nav align-items-lg-center">
+        <li class="nav-item"><a class="nav-link" href="/" target="_blank">$vedi_blog</a></li>
+        <li class="nav-item"><a class="nav-link" href="/change-password">$password</a></li>
+        <li class="nav-item"><a class="nav-link text-danger" href="/logout">$esci</a></li>
+        <li class="nav-item"><button class="btn btn-sm btn-outline-secondary ms-lg-2" onclick="changeAdminLanguage('$prossima_lingua')" title="$title_lingua">$etichetta_lingua</button></li>
+      </ul>
+    </div>
+  </div>
+</nav>

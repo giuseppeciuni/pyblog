@@ -1,0 +1,18 @@
+{
+  "title": "Note sui sistemi distribuiti",
+  "slug": "note-sui-sistemi-distribuiti",
+  "description": "Consenso, partizioni di rete e il prezzo della coerenza, spiegati con esempi concreti.",
+  "preview": "Tre concetti che tornano in ogni sistema distribuito, raccontati senza teoremi.",
+  "content": "<p>Ogni sistema distribuito prima o poi incontra gli stessi tre problemi.</p><h2>Il consenso</h2><p>Mettere d'accordo nodi che non si fidano.</p><h2>Le partizioni</h2><p>La rete si spezza, e va bene cos&igrave;.</p><h3>Che cosa fare</h3><p>Scegliere in anticipo che cosa sacrificare.</p><h2>La coerenza</h2><p>Costa, e il conto arriva sempre.</p>",
+  "tags": "AI, Python, Sistemi",
+  "image": "",
+  "status": "published",
+  "date": "2026-02-05T08:00:00+00:00",
+  "date_modified": "2026-02-05T08:00:00+00:00",
+  "title_en": "Notes on distributed systems",
+  "description_en": "Consensus, network partitions and the price of consistency, explained with concrete examples.",
+  "preview_en": "Three ideas that come back in every distributed system, told without theorems.",
+  "content_en": "<p>Every distributed system sooner or later meets the same three problems.</p><h2>Consensus</h2><p>Getting nodes that do not trust each other to agree.</p><h2>Partitions</h2><p>The network breaks, and that is fine.</p><h3>What to do</h3><p>Decide in advance what you are willing to sacrifice.</p><h2>Consistency</h2><p>It costs, and the bill always arrives.</p>",
+  "translation_authorized": true,
+  "translation_confirmed": true
+}

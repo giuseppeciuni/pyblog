@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="$lang">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$titolo_pagina</title>
+<link href="$bootstrap_css" rel="stylesheet">
+<link rel="stylesheet" href="/admin-static/common.css">
+<link rel="stylesheet" href="/admin-static/admin.css">
+$head_extra</head>
+<body>
+$navbar$contenuto
+<script>
+// Everything the admin JavaScript needs, handed over as JSON. No translated
+// string and no page value is ever concatenated into a script: an Italian
+// apostrophe would close the surrounding JavaScript string.
+window.PB_I18N = $i18n;
+window.PB_CSRF = $csrf;
+window.PB_PAGE = $page_data;
+</script>
+<script src="$bootstrap_js"></script>
+$script_extra<script src="/admin-static/admin.js"></script>
+</body>
+</html>

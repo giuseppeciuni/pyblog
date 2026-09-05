@@ -1,0 +1,225 @@
+<div class="config-wrap">
+<h1>$titolo_pagina_h1</h1>
+
+<div class="config-layout">
+<div class="config-col-sinistra">
+
+<h2>$label_parte_alta</h2>
+<p class="hint">$hint_parte_alta</p>
+<div id="editor-home"></div>
+
+<div class="video-bar">
+  <button type="button" data-tooltip="$tip_upload_image" onclick="document.getElementById('file-image').click()">$label_carica_immagine</button>
+  <button type="button" data-tooltip="$tip_youtube" onclick="insertYoutube()">$label_youtube</button>
+  <button type="button" data-tooltip="$tip_upload_video" onclick="document.getElementById('file-video').click()">$label_carica_video</button>
+  <input type="file" id="file-image" accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml, .svg, .png, .jpg, .jpeg, .gif, .webp" style="display:none" onchange="uploadImage()">
+  <input type="file" id="file-video" accept="video/mp4, video/webm, .mp4, .webm" style="display:none" onchange="uploadVideo()">
+  <span id="upload-status" class="hint"></span>
+</div>
+
+<div class="preview-bar">
+  <button type="button" data-tooltip="$tip_preview" onclick="togglePreview()">$label_mostra_anteprima_home</button>
+  <span class="hint">$hint_come_appare</span>
+</div>
+<iframe id="preview-iframe" class="preview-frame" style="display:none"></iframe>
+
+<div class="sezione-home-en" style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid #e4e4e7">
+  <h2>$label_presentazione_inglese</h2>
+  <p class="hint">$hint_presentazione_en</p>
+  <div class="translation-bar" style="margin:0.6rem 0">
+    <button type="button" onclick="translateHome(this)">$label_traduci_italiano</button>
+    <span id="home-en-status" class="hint"></span>
+  </div>
+  <div id="editor-home-en"></div>
+</div>
+
+<h2>$label_card_home</h2>
+<p class="hint">$hint_card_home</p>
+$card_html
+
+</div><!-- end of the left column -->
+
+<div class="config-col-destra">
+
+<h2>$label_impostazioni_generali</h2>
+
+<label>$label_titolo_sito</label>
+<input type="text" id="site_title" value="$valore_titolo_sito" placeholder="$ph_site_title">
+
+<label>$label_sottotitolo</label>
+<input type="text" id="subtitle" value="$valore_sottotitolo" placeholder="$ph_subtitle">
+
+<label>$label_autore</label>
+<input type="text" id="author" value="$valore_autore" placeholder="$ph_author">
+
+<label>$label_dominio <span class="hint">$hint_dominio</span></label>
+<input type="text" id="base_url" value="$valore_dominio" placeholder="$ph_base_url">
+
+<label>$label_analytics <span class="hint">$hint_analytics</span></label>
+<input type="text" id="analytics_id" value="$valore_analytics" placeholder="$ph_analytics_id">
+
+<label>$label_umami <span class="hint">$hint_umami</span></label>
+<input type="text" id="umami_url" value="$valore_umami_url" placeholder="$ph_umami_url">
+<input type="text" id="umami_website_id" value="$valore_umami_id" placeholder="$ph_umami_website_id" style="margin-top:0.3rem">
+
+<label>$label_lingua_principale <span class="hint">$hint_lingua_principale</span></label>
+<input type="text" id="language" value="$valore_lingua">
+
+<h2>$label_layout</h2>
+<p class="hint">$hint_layout</p>
+
+<label>$label_posizione 1</label>
+$select_ordine_0
+<label>$label_posizione 2</label>
+$select_ordine_1
+<label>$label_posizione 3</label>
+$select_ordine_2
+
+<label>$label_articoli_per_pagina <span class="hint">$hint_articoli_per_pagina</span></label>
+<input type="number" id="articoli_per_pagina" min="0" value="$valore_articoli_per_pagina">
+
+<h2>$label_seo</h2>
+<p class="hint">$hint_seo</p>
+
+<label>$label_seo_autore_url <span class="hint">$hint_seo_autore_url</span></label>
+<input type="text" id="seo_author_url" value="$valore_seo_autore_url" placeholder="$ph_seo_author_url">
+
+<label>$label_seo_autore_immagine</label>
+<input type="text" id="seo_author_image" value="$valore_seo_autore_immagine" placeholder="$ph_seo_author_image">
+
+<label>$label_seo_autore_ruolo <span class="hint">$hint_seo_autore_ruolo</span></label>
+<input type="text" id="seo_author_role" value="$valore_seo_autore_ruolo" placeholder="$ph_seo_author_role">
+
+<label>$label_seo_autore_bio <span class="hint">$hint_seo_autore_bio</span></label>
+<textarea id="seo_author_bio" rows="3" placeholder="$ph_seo_author_bio">$valore_seo_autore_bio</textarea>
+
+<label>$label_seo_profili <span class="hint">$hint_seo_profili</span></label>
+<textarea id="seo_profili" rows="4" placeholder="https://github.com/tuonome&#10;https://www.linkedin.com/in/tuonome&#10;https://x.com/tuonome">$valore_seo_profili</textarea>
+
+<label>$label_seo_logo</label>
+<input type="text" id="seo_logo" value="$valore_seo_logo" placeholder="$ph_seo_logo">
+
+<label>$label_seo_twitter <span class="hint">$hint_seo_twitter</span></label>
+<input type="text" id="seo_twitter" value="$valore_seo_twitter" placeholder="$ph_seo_twitter">
+
+<label>$label_seo_favicon <span class="hint">$hint_seo_favicon</span></label>
+<input type="text" id="seo_favicon" value="$valore_seo_favicon">
+
+<h2>$label_ai_training</h2>
+<p class="hint">$hint_ai_training</p>
+
+<label>$label_ai_policy</label>
+<select id="ai_training_policy" onchange="updateAiTrainingGroup()">
+  <option value="open" $sel_ai_open>$label_ai_open</option>
+  <option value="licensed" $sel_ai_licensed>$label_ai_licensed</option>
+  <option value="disallow" $sel_ai_disallow>$label_ai_disallow</option>
+</select>
+
+<div id="gruppo-ai-licenza" style="display:none">
+  <label>$label_ai_email <span class="hint">$hint_ai_email</span></label>
+  <input type="text" id="ai_training_contact_email" value="$valore_ai_email" placeholder="licensing@tuodominio.it">
+</div>
+
+<label>$label_ai_license_url <span class="hint">$hint_ai_license_url</span></label>
+<input type="text" id="ai_training_license_url" value="$valore_ai_license_url">
+
+<label>$label_ai_statement <span class="hint">$hint_ai_statement</span></label>
+<textarea id="ai_training_statement" rows="3">$valore_ai_statement</textarea>
+
+<p class="hint">$nota_ai_standard</p>
+
+<h2>$label_commenti</h2>
+
+<label>$label_sistema_commenti</label>
+<select id="commenti" onchange="updateCommentGroups()">
+  <option value="none" $sel_commenti_nessuno>$label_commenti_nessuno</option>
+  <option value="giscus" $sel_giscus>Giscus (GitHub)</option>
+  <option value="disqus" $sel_disqus>Disqus</option>
+</select>
+
+<div class="gruppo-commenti" id="gruppo-giscus">
+  <p class="hint">Valori da https://giscus.app</p>
+  <label>Repo <span class="hint">(es. tuonome/tuorepo)</span></label>
+  <input type="text" id="giscus_repo" value="$valore_giscus_repo">
+  <label>Repo ID</label>
+  <input type="text" id="giscus_repo_id" value="$valore_giscus_repo_id">
+  <label>Category</label>
+  <input type="text" id="giscus_category" value="$valore_giscus_category">
+  <label>Category ID</label>
+  <input type="text" id="giscus_category_id" value="$valore_giscus_category_id">
+  <label>$label_tema <span class="hint">(light / dark)</span></label>
+  <input type="text" id="giscus_theme" value="$valore_giscus_theme">
+</div>
+
+<div class="gruppo-commenti" id="gruppo-disqus">
+  <p class="hint">$hint_disqus</p>
+  <label>Shortname Disqus</label>
+  <input type="text" id="disqus_shortname" value="$valore_disqus_shortname">
+</div>
+
+<h2>$label_traduzione</h2>
+<p class="hint">$hint_traduzione</p>
+
+<label>$label_servizio_traduzione</label>
+<select id="translation_service" onchange="updateTranslationGroups()">
+  <option value="deepl" $sel_deepl>DeepL</option>
+  <option value="google" $sel_google>Google Translate</option>
+  <option value="llm" $sel_llm>Anthropic Claude</option>
+  <option value="openai" $sel_openai>OpenAI (ChatGPT)</option>
+  <option value="deepseek" $sel_deepseek>DeepSeek</option>
+</select>
+
+<div class="translation-group" id="gruppo-deepl">
+  <label>$label_chiave_api DeepL <span class="hint">(https://www.deepl.com/pro-api)</span></label>
+  <input type="password" id="deepl_api_key" value="$valore_deepl_key" placeholder="$ph_lascia_vuoto">
+</div>
+
+<div class="translation-group" id="gruppo-google">
+  <label>$label_chiave_api Google Cloud Translation</label>
+  <input type="password" id="google_api_key" value="$valore_google_key" placeholder="$ph_lascia_vuoto">
+</div>
+
+<div class="translation-group" id="gruppo-llm">
+  <label>$label_chiave_api Anthropic</label>
+  <input type="password" id="llm_api_key" value="$valore_llm_key" placeholder="$ph_lascia_vuoto">
+  <label>$label_endpoint</label>
+  <input type="text" id="llm_endpoint" value="$valore_llm_endpoint">
+  <label>$label_modello</label>
+  <input type="text" id="llm_modello" value="$valore_llm_modello">
+</div>
+
+<div class="translation-group" id="gruppo-openai">
+  <label>$label_chiave_api OpenAI <span class="hint">(https://platform.openai.com/api-keys)</span></label>
+  <input type="password" id="openai_api_key" value="$valore_openai_key" placeholder="$ph_lascia_vuoto">
+  <label>$label_modello <span class="hint">(gpt-4o-mini, gpt-4o)</span></label>
+  <input type="text" id="openai_modello" value="$valore_openai_modello">
+</div>
+
+<div class="translation-group" id="gruppo-deepseek">
+  <label>$label_chiave_api DeepSeek <span class="hint">(https://platform.deepseek.com)</span></label>
+  <input type="password" id="deepseek_api_key" value="$valore_deepseek_key" placeholder="$ph_lascia_vuoto">
+  <label>$label_modello <span class="hint">(deepseek-chat)</span></label>
+  <input type="text" id="deepseek_modello" value="$valore_deepseek_modello">
+</div>
+
+</div><!-- end of the right column -->
+</div><!-- end of config-layout -->
+
+<div class="azioni config-save-bar">
+  <button class="save-btn" onclick="saveConfig()">$label_salva_rigenera</button>
+  <span id="save-status" class="hint"></span>
+</div>
+
+<details class="config-avanzata">
+  <summary>$label_config_avanzata</summary>
+  <div class="config-avanzata-corpo">
+    <p class="hint">$hint_config_avanzata</p>
+    <textarea id="config-raw" rows="20" spellcheck="false"></textarea>
+    <div class="azioni" style="margin-top:0.8rem">
+      <button type="button" class="save-btn" onclick="saveRawConfig()">$label_salva_config_raw</button>
+      <button type="button" class="btn-secondario" onclick="restoreRawConfig()">$label_ripristina</button>
+      <span id="config-raw-status" class="hint"></span>
+    </div>
+  </div>
+</details>
+</div>

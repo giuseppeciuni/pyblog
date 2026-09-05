@@ -9,9 +9,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# We only copy what's strictly needed. If you mount a volume on /app
+# We only copy what's strictly needed: the entry point, the engine, the
+# templates and the CSS/JS sources. If you mount a volume on /app
 # (recommended, see docker-compose.yml), these files get overwritten by yours.
 COPY pyblog.py .
+COPY core/ ./core/
+COPY templates/ ./templates/
+COPY static/ ./static/
 
 EXPOSE 8000
 

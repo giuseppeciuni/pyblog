@@ -1,0 +1,47 @@
+<div class="pb-content">
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+      <h1 class="h3 mb-0">$label_articoli</h1>
+      <p class="text-secondary small mb-0">$titolo_sito</p>
+    </div>
+    <a class="btn btn-primary" href="/edit">$nuovo_articolo</a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col">
+      <div class="card pb-card text-center"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">$totale</div>
+        <div class="text-secondary small">$label_totali</div>
+      </div></div>
+    </div>
+    <div class="col">
+      <div class="card pb-card text-center"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">$pubblicati</div>
+        <div class="text-secondary small">$label_pubblicati</div>
+      </div></div>
+    </div>
+    <div class="col">
+      <div class="card pb-card text-center"><div class="card-body py-3">
+        <div class="fs-3 fw-semibold">$bozze</div>
+        <div class="text-secondary small">$label_bozze</div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 flex-wrap mb-3">
+    <a class="btn btn-outline-secondary btn-sm" href="/config">$label_impostazioni</a>
+    <button class="btn btn-outline-secondary btn-sm" onclick="rebuildSite()">$label_rigenera</button>
+    <a class="btn btn-outline-secondary btn-sm" href="/export">$label_backup</a>
+  </div>
+
+  <input type="search" class="form-control mb-3" id="search-box-admin"
+         placeholder="$placeholder_filtro" oninput="filterArticles()">
+
+  <div id="elenco-articoli">
+$elenco
+  </div>
+  <div class="text-center text-secondary p-4" id="nessun-risultato" style="display:none">
+    $nessun_corrisponde
+  </div>
+</div>

@@ -1,0 +1,18 @@
+{
+  "title": "Appunti su tabelle, immagini e codice",
+  "slug": "appunti-tabelle-immagini-codice",
+  "description": "Una bozza di prova con una tabella, un'immagine e alcuni blocchi di codice, per verificare l'editor.",
+  "preview": "",
+  "content": "<p>Questa &egrave; una bozza: serve a controllare che tabelle, immagini e blocchi di codice sopravvivano al salvataggio e all'anteprima.</p><h2>Una tabella</h2><div class=\"raw-html-block\" contenteditable=\"false\"><table class=\"article-table\"><tbody><tr><th>Comando</th><th>Che cosa fa</th></tr><tr><td>build</td><td>rigenera l'HTML statico</td></tr><tr><td>serve</td><td>avvia l'editor</td></tr></tbody></table></div><h2>Un'immagine</h2><p class=\"ql-align-center\"><img src=\"/media/pasted-image.png\"></p><h2>Un blocco di codice</h2><pre class=\"ql-syntax\">def build():\n    return len(load_articles())\n</pre><h3>Un secondo blocco</h3><pre class=\"ql-syntax\">python3 pyblog.py serve 8000\n</pre>",
+  "tags": "Python, Editor",
+  "image": "",
+  "status": "draft",
+  "date": "2026-04-02T10:30:00+00:00",
+  "date_modified": "2026-04-02T10:30:00+00:00",
+  "title_en": "",
+  "description_en": "",
+  "preview_en": "",
+  "content_en": "",
+  "translation_authorized": false,
+  "translation_confirmed": false
+}

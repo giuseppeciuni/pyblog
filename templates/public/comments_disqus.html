@@ -1,0 +1,19 @@
+<section class="commenti">
+    <h2>Commenti</h2>
+    <div id="disqus_thread"></div>
+    <script>
+      var disqus_config = function () {
+        this.page.url = $page_url;
+        this.page.identifier = $identifier;
+      };
+      (function() {
+        var d = document, s = d.createElement('script');
+        s.src = $embed_url;
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+      })();
+    </script>
+    <noscript>Abilita JavaScript per vedere i
+      <a href="https://disqus.com/?ref_noscript">commenti gestiti da Disqus</a>.
+    </noscript>
+  </section>

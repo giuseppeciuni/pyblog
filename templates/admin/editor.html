@@ -1,0 +1,124 @@
+<div class="editor-wrap">
+<h1 class="mb-3">$titolo_pagina_h1</h1>
+
+<div class="editor-layout">
+
+  <!-- MAIN COLUMN: article title and content -->
+  <div class="editor-main">
+    <label>$label_titolo</label>
+    <input type="text" id="title" value="$valore_titolo" placeholder="">
+
+    <label>$label_contenuto</label>
+    <div id="editor"></div>
+
+    <div class="video-bar">
+      <button type="button" data-tooltip="$tip_upload_image" onclick="document.getElementById('file-image').click()">$label_carica_immagine</button>
+      <button type="button" data-tooltip="$tip_youtube" onclick="insertYoutube()">$label_youtube</button>
+      <button type="button" data-tooltip="$tip_upload_video" onclick="document.getElementById('file-video').click()">$label_carica_video</button>
+      <button type="button" data-tooltip="$tip_table" onclick="insertTable()">$label_tabella</button>
+      <input type="file" id="file-image" accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml, .svg, .png, .jpg, .jpeg, .gif, .webp" style="display:none" onchange="uploadImage()">
+      <input type="file" id="file-video" accept="video/mp4, video/webm, .mp4, .webm" style="display:none" onchange="uploadVideo()">
+      <span id="upload-status" class="hint"></span>
+    </div>
+
+    <div class="preview-bar">
+      <button type="button" data-tooltip="$tip_preview" onclick="togglePreview()">$label_anteprima</button>
+    </div>
+    <iframe id="preview-iframe" class="preview-frame" style="display:none"></iframe>
+  </div>
+
+  <!-- SIDEBAR: metadata, reader preview, SEO, status, actions -->
+  <aside class="editor-sidebar">
+
+    <div class="sidebar-azioni" style="margin-top:0; padding-top:0; border-top:none">
+      <button onclick="saveArticle()">$label_salva</button>
+      $bottone_elimina
+    </div>
+
+    <h2>$label_sezione_pubblicazione</h2>
+    <label>$label_stato</label>
+    <select id="status">
+      <option value="draft" $selected_bozza>$label_bozza</option>
+      <option value="published" $selected_pubblicato>$label_pubblicato</option>
+    </select>
+
+    <h2>$label_sezione_metadati</h2>
+    <label>Slug <span class="hint">(URL)</span></label>
+    <input type="text" id="slug" value="$valore_slug" placeholder="auto">
+
+    <label>$label_tag</label>
+    <input type="text" id="tags" value="$valore_tag" placeholder="AI, Python">
+
+    <label>$label_immagine</label>
+    <input type="text" id="image" value="$valore_immagine">
+
+    <div class="card-campo">
+      <h2>$label_anteprima_lettori</h2>
+      <p class="hint" style="margin:0 0 0.3rem">$hint_anteprima</p>
+      <textarea id="reader_preview" rows="6" maxlength="900" oninput="updatePreviewCounter()">$valore_anteprima</textarea>
+      <div class="d-flex justify-content-between align-items-center" style="margin-top:0.2rem">
+        <span class="hint" id="preview-counter"></span>
+        <button type="button" class="btn-suggerisci" onclick="generatePreview(this)">$label_genera_anteprima</button>
+      </div>
+      <span id="preview-status" class="hint"></span>
+    </div>
+
+    <div class="card-campo">
+      <h2>$label_descrizione_seo</h2>
+      <p class="hint" style="margin:0 0 0.3rem">$hint_descrizione</p>
+      <textarea id="description" rows="6" maxlength="320" oninput="updateDescriptionCounter()">$valore_descrizione</textarea>
+      <div class="d-flex justify-content-between align-items-center" style="margin-top:0.2rem">
+        <span class="hint" id="description-counter"></span>
+        <button type="button" class="btn-suggerisci" onclick="suggestDescription(this)">$label_suggerisci</button>
+      </div>
+      <span id="description-status" class="hint"></span>
+    </div>
+
+    <div class="card-campo">
+      <h2>$label_analisi_seo</h2>
+      <p class="hint" style="margin:0 0 0.3rem">$hint_analisi_seo</p>
+      <button type="button" id="seo-analyze-btn" class="btn-suggerisci" onclick="analyzeSeo()">$label_analizza</button>
+      <span id="seo-status" class="hint"></span>
+      <div id="seo-results" style="display:none"></div>
+    </div>
+
+    <div class="translation-section">
+      <h2>$label_versione_inglese</h2>
+      <label class="riga-flag">
+        <input type="checkbox" id="translation_authorized" onchange="updateTranslationSection()">
+        $label_autorizza
+      </label>
+
+      <div id="translation-block" style="display:none">
+        <div class="translation-bar">
+          <button type="button" onclick="translateArticle()">$label_traduci</button>
+          <span id="translation-status" class="hint"></span>
+        </div>
+
+        <label>$label_titolo (EN)</label>
+        <input type="text" id="title_en">
+
+        <label>$label_descrizione_seo (EN)</label>
+        <input type="text" id="description_en" maxlength="160">
+
+        <label>$label_anteprima_lettori (EN)</label>
+        <textarea id="preview_en" rows="3" maxlength="900"></textarea>
+
+        <label>$label_contenuto (EN)</label>
+        <div id="editor-en"></div>
+
+        <div class="translation-bar" style="margin-top:1rem">
+          <button type="button" onclick="previewEnglish()">$label_anteprima_en</button>
+          <span class="hint">$hint_anteprima_en</span>
+        </div>
+
+        <label class="riga-flag" style="margin-top:1rem">
+          <input type="checkbox" id="translation_confirmed">
+          $label_conferma_traduzione
+        </label>
+      </div>
+    </div>
+
+  </aside>
+</div>
+</div>

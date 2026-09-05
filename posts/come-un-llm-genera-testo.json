@@ -1,0 +1,18 @@
+{
+  "title": "Come un LLM genera testo",
+  "slug": "come-un-llm-genera-testo",
+  "description": "Un percorso passo dopo passo nell'inferenza di un modello linguistico: dal token all'attenzione, fino alla temperatura.",
+  "preview": "Che cosa succede, davvero, quando un modello \"scrive\"? Seguiamo un singolo token dall'input all'output.",
+  "content": "<p>Un modello linguistico non \"sa\" nulla: stima la probabilit&agrave; del token successivo. Vediamo che cosa vuol dire, senza formule.</p><h2>Il tokenizer</h2><p>Il testo viene spezzato in <strong>token</strong>, non in parole.</p><h2 class=\"ql-align-center\">L'attenzione</h2><p>Ogni token guarda tutti gli altri e decide a quali dare peso.</p><h3>Le teste di attenzione</h3><p>Pi&ugrave; teste in parallelo, ciascuna con un criterio diverso.</p><h2>La temperatura</h2><p>Alza la temperatura e il modello diventa creativo; abbassala e diventa prevedibile.</p><ul><li>0.0 &rarr; deterministico</li><li>1.0 &rarr; campionamento pieno</li></ul>",
+  "tags": "AI, Python, LLM",
+  "image": "",
+  "status": "published",
+  "date": "2026-03-11T09:00:00+00:00",
+  "date_modified": "2026-03-12T09:00:00+00:00",
+  "title_en": "How an LLM generates text",
+  "description_en": "A step-by-step walk through the inference of a language model: from the token to attention, all the way to temperature.",
+  "preview_en": "What actually happens when a model \"writes\"? Let's follow a single token from input to output.",
+  "content_en": "<p>A language model does not \"know\" anything: it estimates the probability of the next token. Let's see what that means, without formulas.</p><h2>The tokenizer</h2><p>Text is split into <strong>tokens</strong>, not into words.</p><h2 class=\"ql-align-center\">Attention</h2><p>Every token looks at all the others and decides which ones to weigh.</p><h3>Attention heads</h3><p>Several heads in parallel, each with a different criterion.</p><h2>Temperature</h2><p>Raise the temperature and the model gets creative; lower it and it becomes predictable.</p><ul><li>0.0 &rarr; deterministic</li><li>1.0 &rarr; full sampling</li></ul>",
+  "translation_authorized": true,
+  "translation_confirmed": true
+}
