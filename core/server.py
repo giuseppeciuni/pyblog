@@ -1081,6 +1081,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         route = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
 
+        # --- The stylesheets and script of the admin area ---
+        # These are served BEFORE the authentication check, and deliberately.
+        # The login page and the first-run password page link to them, and
+        # they are not logged in by definition: behind the check they were
+        # answered with the login page itself, as text/html, so the browser
+        # discarded both stylesheets and drew those two pages unstyled.
+        # There is nothing to protect here anyway - the files are the same
+        # bytes for every visitor, like the Bootstrap CSS these pages already
+        # load from a CDN. Only the three names in ADMIN_STATIC_FILES are
+        # served, so this opens nothing else.
+        if route.startswith("/admin-static/"):
+            self._serve_admin_static(route)
+            return
+
         # --- Access pages (no authentication) ---
         if route == "/login":
             self._login_or_setup_page()
@@ -1091,7 +1105,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
 
         # --- Administration (authentication required) ---
-        if route in ADMIN_GET_ROUTES or route.startswith("/admin-static/"):
+        if route in ADMIN_GET_ROUTES:
             if not self._user_is_authenticated():
                 self._login_or_setup_page()
                 return
@@ -1115,9 +1129,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         """Serve an administration page. The caller checked authentication."""
         csrf = self._csrf()
 
-        if route.startswith("/admin-static/"):
-            self._serve_admin_static(route)
-        elif route == "/admin":
+        if route == "/admin":
             self._send(admin_page(load_articles(), csrf))
         elif route == "/config":
             self._send(config_page(csrf))
