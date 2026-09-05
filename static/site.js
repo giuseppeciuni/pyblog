@@ -8,8 +8,9 @@
 
    The page-dependent values (language, link prefix, translated labels, the
    slice of articles shown by the pagination) are NOT written into this file:
-   the homepage template injects them as window.PB_SITE with json.dumps, so an
-   Italian apostrophe can never break the syntax.
+   every page injects them as window.PB_SITE with json.dumps, so an Italian
+   apostrophe can never break the syntax. The search settings are only there
+   on the homepage; the rest is on every page.
    --------------------------------------------------------------------------- */
 
 /* --- 1) Light/dark theme ------------------------------------------------- */
@@ -81,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var info = document.getElementById('search-box-info');
   var lista = document.getElementById('lista-articoli');
   if (!input || !info || !lista) { return; }
+  if (opzioni.post_prefix === undefined) { return; }
 
   var indice = [];
 
@@ -125,11 +127,32 @@ document.addEventListener('DOMContentLoaded', function() {
     return true;
   }
 
-  // Loads the article index generated at build time.
+  // Loads the article index generated at build time. The 404 page sends
+  // readers here with ?q=..., so once the index is in we run that query.
   fetch('/search-index.json')
     .then(function(r) { return r.json(); })
-    .then(function(dati) { indice = dati; })
+    .then(function(dati) {
+      indice = dati;
+      var iniziale = queryFromUrl();
+      if (iniziale !== '') {
+        input.value = iniziale;
+        searchArticles(iniziale);
+        input.focus();
+      }
+    })
     .catch(function() { info.textContent = MSG_SEARCH_UNAVAILABLE; });
+
+  // Reads the q parameter of the address, if there is one.
+  function queryFromUrl() {
+    try {
+      var parametri = new URLSearchParams(window.location.search);
+      var valore = parametri.get('q');
+      if (valore === null) { return ''; }
+      return valore;
+    } catch (e) {
+      return '';
+    }
+  }
 
   // Strips accents and lowercases, for more forgiving comparisons.
   function normalizeText(s) {
@@ -331,4 +354,139 @@ document.addEventListener('DOMContentLoaded', function() {
     clearTimeout(timer);
     timer = setTimeout(function() { searchArticles(input.value); }, 120);
   });
+});
+
+/* --- 4) Copy button on the code blocks ------------------------------------ */
+
+// Adds a "copy" button to every code block of an article.
+//
+// A code block exists to be used, and selecting several screens of it with
+// the mouse - on a phone especially - is miserable. The button is added by
+// JavaScript rather than baked into the HTML so that articles written before
+// this existed get it too, and so the generated pages stay clean.
+document.addEventListener('DOMContentLoaded', function() {
+  var opzioni = window.PB_SITE;
+  if (!opzioni) { return; }
+
+  var blocchi = document.querySelectorAll('article.post pre.ql-syntax, .card-page pre.ql-syntax');
+  for (var i = 0; i < blocchi.length; i++) {
+    aggiungiPulsanteCopia(blocchi[i], opzioni);
+  }
+});
+
+function aggiungiPulsanteCopia(blocco, opzioni) {
+  // The button is positioned against a wrapper, so the block itself keeps
+  // its own scrolling and padding untouched.
+  var contenitore = document.createElement('div');
+  contenitore.className = 'blocco-codice';
+  blocco.parentNode.insertBefore(contenitore, blocco);
+  contenitore.appendChild(blocco);
+
+  var pulsante = document.createElement('button');
+  pulsante.type = 'button';
+  pulsante.className = 'copia-codice';
+  pulsante.textContent = opzioni.copy_label;
+  pulsante.setAttribute('title', opzioni.copy_title);
+  pulsante.setAttribute('aria-label', opzioni.copy_title);
+
+  pulsante.addEventListener('click', function() {
+    var testo = blocco.textContent;
+    copiaTesto(testo, function(riuscito) {
+      if (riuscito) {
+        pulsante.textContent = opzioni.copied_label;
+        pulsante.classList.add('copiato');
+      }
+      setTimeout(function() {
+        pulsante.textContent = opzioni.copy_label;
+        pulsante.classList.remove('copiato');
+      }, 1500);
+    });
+  });
+
+  contenitore.appendChild(pulsante);
+}
+
+// Copies text to the clipboard, with a fallback for browsers without the
+// clipboard API and for pages served over plain HTTP, where it is disabled.
+function copiaTesto(testo, quandoFatto) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(testo)
+      .then(function() { quandoFatto(true); })
+      .catch(function() { quandoFatto(false); });
+    return;
+  }
+  var area = document.createElement('textarea');
+  area.value = testo;
+  area.setAttribute('readonly', 'readonly');
+  area.style.position = 'absolute';
+  area.style.left = '-9999px';
+  document.body.appendChild(area);
+  area.select();
+  var riuscito = false;
+  try {
+    riuscito = document.execCommand('copy');
+  } catch (e) {
+    riuscito = false;
+  }
+  document.body.removeChild(area);
+  quandoFatto(riuscito);
+}
+
+/* --- 5) Reading progress bar --------------------------------------------- */
+
+// A thin bar at the top of an article showing how far down it you are.
+//
+// It measures the article itself, not the whole document: the header, the
+// related articles and the footer are not part of the read, and counting
+// them would show 60% when you have actually finished.
+document.addEventListener('DOMContentLoaded', function() {
+  var opzioni = window.PB_SITE;
+  var articolo = document.querySelector('article.post');
+  if (!opzioni || !articolo) { return; }
+
+  var barra = document.createElement('div');
+  barra.className = 'progresso-lettura';
+  barra.setAttribute('role', 'progressbar');
+  barra.setAttribute('aria-label', opzioni.progress_label);
+  barra.setAttribute('aria-valuemin', '0');
+  barra.setAttribute('aria-valuemax', '100');
+
+  var riempimento = document.createElement('div');
+  riempimento.className = 'progresso-lettura-barra';
+  barra.appendChild(riempimento);
+  document.body.appendChild(barra);
+
+  var inAttesa = false;
+
+  function aggiorna() {
+    inAttesa = false;
+    var inizio = articolo.offsetTop;
+    var altezza = articolo.offsetHeight;
+    var visibile = window.innerHeight;
+    // How much of the article has scrolled past the bottom of the window.
+    var percorso = altezza - visibile;
+    if (percorso <= 0) {
+      riempimento.style.width = '100%';
+      barra.setAttribute('aria-valuenow', '100');
+      return;
+    }
+    var avanzamento = (window.pageYOffset - inizio) / percorso;
+    if (avanzamento < 0) { avanzamento = 0; }
+    if (avanzamento > 1) { avanzamento = 1; }
+    var percentuale = Math.round(avanzamento * 100);
+    riempimento.style.width = percentuale + '%';
+    barra.setAttribute('aria-valuenow', String(percentuale));
+  }
+
+  // requestAnimationFrame keeps the work to one update per painted frame,
+  // instead of one per scroll event.
+  function pianifica() {
+    if (inAttesa) { return; }
+    inAttesa = true;
+    window.requestAnimationFrame(aggiorna);
+  }
+
+  window.addEventListener('scroll', pianifica, { passive: true });
+  window.addEventListener('resize', pianifica);
+  aggiorna();
 });

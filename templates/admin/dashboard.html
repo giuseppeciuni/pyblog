@@ -31,12 +31,23 @@
 
   <div class="d-flex gap-2 flex-wrap mb-3">
     <a class="btn btn-outline-secondary btn-sm" href="/config">$label_impostazioni</a>
-    <button class="btn btn-outline-secondary btn-sm" onclick="rebuildSite()">$label_rigenera</button>
+    <button class="btn btn-outline-secondary btn-sm" onclick="rebuildSite(this)">$label_rigenera</button>
     <a class="btn btn-outline-secondary btn-sm" href="/export">$label_backup</a>
   </div>
 
-  <input type="search" class="form-control mb-3" id="search-box-admin"
-         placeholder="$placeholder_filtro" oninput="filterArticles()">
+  <div class="d-flex gap-2 flex-wrap align-items-center mb-3">
+    <input type="search" class="form-control" style="flex:1 1 16rem" id="search-box-admin"
+           placeholder="$placeholder_filtro" oninput="filterArticles()">
+    <div class="pb-toolbar">
+      <label for="ordina-articoli">$label_ordina</label>
+      <select class="form-select" id="ordina-articoli" onchange="sortArticles()">
+        <option value="recenti">$ordina_recenti</option>
+        <option value="vecchi">$ordina_vecchi</option>
+        <option value="titolo">$ordina_titolo</option>
+        <option value="stato">$ordina_stato</option>
+      </select>
+    </div>
+  </div>
 
   <div id="elenco-articoli">
 $elenco

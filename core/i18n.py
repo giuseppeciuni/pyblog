@@ -400,6 +400,8 @@ UI_TRANSLATIONS = {
     # nothing visible is written into the .js file itself.
     "js_site_rebuilt": {"it": "Sito rigenerato: {n} articoli.", "en": "Site rebuilt: {n} articles."},
     "js_status_change_error": {"it": "Errore nel cambio di stato.", "en": "Error changing the status."},
+    "js_site_rebuilt_error": {"it": "Rigenerazione del sito non riuscita.",
+                              "en": "The site rebuild failed."},
     "js_delete_error": {"it": "Errore durante l'eliminazione.", "en": "Error while deleting."},
     "js_table_how_many_rows": {"it": "Quante righe? (intestazione inclusa)",
                                "en": "How many rows? (header included)"},
@@ -428,6 +430,96 @@ UI_TRANSLATIONS = {
     "err_svg_unsafe": {"it": "L'SVG contiene elementi attivi che non e' stato possibile rimuovere con certezza: rifiutato.",
                        "en": "The SVG contains active elements that could not be removed with confidence: rejected."},
     "err_malformed_upload": {"it": "Caricamento malformato.", "en": "Malformed upload."},
+
+    # --- Word (.docx) import ---
+    "admin_importa_word": {"it": "Importa da Word (.docx)", "en": "Import from Word (.docx)"},
+    "tip_import_docx": {
+        "it": "Carica un documento Word: testo, titoli, liste, tabelle e immagini finiscono nell'editor",
+        "en": "Upload a Word document: text, headings, lists, tables and images land in the editor"},
+    "admin_docx_hint": {
+        "it": "Il documento viene convertito e messo nell'editor, non salvato: rivedilo prima di pubblicare.",
+        "en": "The document is converted into the editor, not saved: review it before publishing."},
+    "js_docx_importing": {"it": "Conversione del documento in corso...",
+                          "en": "Converting the document..."},
+    "js_docx_imported": {"it": "Documento importato. Rivedilo, poi salva.",
+                         "en": "Document imported. Review it, then save."},
+    "js_docx_net_error": {"it": "Errore di rete durante l'importazione.",
+                          "en": "Network error during the import."},
+    "js_docx_overwrite_title": {"it": "Sostituire il contenuto?", "en": "Replace the content?"},
+    "js_docx_overwrite_body": {
+        "it": "L'editor contiene gi\u00e0 del testo. Importando il documento Word verr\u00e0 sostituito. L'articolo non viene salvato: puoi ancora annullare ricaricando la pagina senza salvare.",
+        "en": "The editor already contains text. Importing the Word document will replace it. The article is not saved: you can still back out by reloading the page without saving."},
+    "js_docx_overwrite_confirm": {"it": "Sostituisci", "en": "Replace"},
+    "js_docx_warnings_title": {"it": "Avvisi della conversione:", "en": "Conversion warnings:"},
+    "js_docx_wrong_extension": {"it": "Scegli un file con estensione .docx (il vecchio formato .doc non \u00e8 supportato).",
+                                "en": "Choose a file with a .docx extension (the old .doc format is not supported)."},
+
+    "err_docx_not_a_zip": {
+        "it": "Il file non \u00e8 un documento Word valido. Se \u00e8 un vecchio .doc, riaprilo in Word e salvalo come .docx.",
+        "en": "The file is not a valid Word document. If it is an old .doc, reopen it in Word and save it as .docx."},
+    "err_docx_no_document": {
+        "it": "L'archivio non contiene un documento Word (manca word/document.xml).",
+        "en": "The archive contains no Word document (word/document.xml is missing)."},
+    "err_docx_parse": {"it": "Il documento Word non \u00e8 leggibile: il contenuto XML \u00e8 danneggiato.",
+                       "en": "The Word document cannot be read: its XML content is damaged."},
+    "err_docx_empty": {"it": "Il documento Word non contiene testo da importare.",
+                       "en": "The Word document contains no text to import."},
+    "err_docx_unreadable": {"it": "Impossibile leggere il file.", "en": "The file could not be read."},
+
+    "warn_docx_image_skipped": {
+        "it": "Immagine scartata ({name}): il formato non \u00e8 mostrabile in una pagina web.",
+        "en": "Image skipped ({name}): the format cannot be shown in a web page."},
+    "warn_docx_image_missing": {
+        "it": "Immagine non incorporata nel documento ({name}): non c'\u00e8 nulla da estrarre.",
+        "en": "Image not embedded in the document ({name}): there is nothing to extract."},
+    "warn_docx_link_skipped": {
+        "it": "Collegamento rimosso, indirizzo non consentito ({href}). Il testo \u00e8 rimasto.",
+        "en": "Link removed, address not allowed ({href}). The text was kept."},
+    "warn_docx_nested_table": {
+        "it": "Una tabella dentro un'altra tabella \u00e8 stata ridotta a testo.",
+        "en": "A table inside another table was reduced to text."},
+    "warn_docx_numbering_missing": {
+        "it": "Numerazione delle liste non leggibile: sono stati usati elenchi puntati.",
+        "en": "List numbering could not be read: bulleted lists were used instead."},
+
+    # --- Shared admin dialogs (toasts, confirmation modal) ---
+    "admin_annulla": {"it": "Annulla", "en": "Cancel"},
+    "admin_chiudi": {"it": "Chiudi", "en": "Close"},
+
+    # --- Editor: saving, autosave, unsaved changes ---
+    "admin_salva_chiudi": {"it": "Salva e chiudi", "en": "Save and close"},
+    "admin_salva_resta": {"it": "Salva", "en": "Save"},
+    "js_article_saved": {"it": "Articolo salvato e sito rigenerato.",
+                         "en": "Article saved and site rebuilt."},
+    "js_save_error": {"it": "Salvataggio non riuscito.", "en": "The save failed."},
+    "js_unsaved_changes": {"it": "Ci sono modifiche non salvate in questo articolo.",
+                           "en": "This article has unsaved changes."},
+    "js_autosaving": {"it": "Salvataggio della bozza...", "en": "Saving the draft..."},
+    "js_autosaved_at": {"it": "Bozza salvata alle {time}", "en": "Draft saved at {time}"},
+    "js_autosave_failed": {"it": "Salvataggio automatico non riuscito, riprovo tra poco.",
+                           "en": "Autosave failed, retrying shortly."},
+    "js_autosave_needs_title": {"it": "Scrivi un titolo perch\u00e9 il salvataggio automatico possa partire.",
+                                "en": "Write a title so the autosave can start."},
+    "js_delete_title": {"it": "Eliminare l'articolo?", "en": "Delete the article?"},
+    "js_delete_body": {
+        "it": "\u00ab{title}\u00bb verr\u00e0 eliminato definitivamente, insieme alla sua pagina pubblica. L'operazione non si pu\u00f2 annullare.",
+        "en": "\u201c{title}\u201d will be permanently deleted, along with its public page. This cannot be undone."},
+
+    # --- Dashboard: sorting and reading time ---
+    "admin_ordina": {"it": "Ordina", "en": "Sort"},
+    "admin_ordina_recenti": {"it": "Pi\u00f9 recenti", "en": "Newest first"},
+    "admin_ordina_vecchi": {"it": "Meno recenti", "en": "Oldest first"},
+    "admin_ordina_titolo": {"it": "Titolo (A-Z)", "en": "Title (A-Z)"},
+    "admin_ordina_stato": {"it": "Stato (bozze prima)", "en": "Status (drafts first)"},
+
+    # --- Public site: code blocks, 404, reading progress ---
+    "copia_codice": {"it": "Copia", "en": "Copy"},
+    "codice_copiato": {"it": "Copiato", "en": "Copied"},
+    "copia_codice_titolo": {"it": "Copia il codice negli appunti",
+                            "en": "Copy the code to the clipboard"},
+    "ultimi_articoli": {"it": "Ultimi articoli", "en": "Latest articles"},
+    "cerca_nel_sito": {"it": "Cerca nel sito", "en": "Search the site"},
+    "progresso_lettura": {"it": "Avanzamento della lettura", "en": "Reading progress"},
 }
 
 

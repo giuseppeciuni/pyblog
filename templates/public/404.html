@@ -1,7 +1,16 @@
   <main id="content" class="main-content">
-    <div style="text-align:center; padding:4rem 1rem;">
-      <h1 style="font-size:3rem; margin:0;">404</h1>
-      <p style="font-size:1.2rem; color:var(--secondario);">$testo</p>
-      <p style="margin-top:2rem;"><a href="/">&larr; $torna_home</a></p>
+    <div class="pagina-404">
+      <h1 class="errore-404-numero">404</h1>
+      <p class="errore-404-testo">$testo</p>
+
+      <form class="errore-404-ricerca" action="$url_home" method="get" role="search">
+        <label class="sr-only" for="ricerca-404">$label_cerca</label>
+        <input type="search" id="ricerca-404" name="q" placeholder="$placeholder_ricerca"
+               autocomplete="off">
+        <button type="submit">$label_cerca</button>
+      </form>
+
+$ultimi_articoli
+      <p class="errore-404-ritorno"><a href="$url_home">&larr; $torna_home</a></p>
     </div>
   </main>

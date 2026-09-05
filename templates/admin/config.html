@@ -206,7 +206,7 @@ $select_ordine_2
 </div><!-- end of config-layout -->
 
 <div class="azioni config-save-bar">
-  <button class="save-btn" onclick="saveConfig()">$label_salva_rigenera</button>
+  <button class="save-btn" onclick="saveConfig(this)">$label_salva_rigenera</button>
   <span id="save-status" class="hint"></span>
 </div>
 
@@ -216,7 +216,7 @@ $select_ordine_2
     <p class="hint">$hint_config_avanzata</p>
     <textarea id="config-raw" rows="20" spellcheck="false"></textarea>
     <div class="azioni" style="margin-top:0.8rem">
-      <button type="button" class="save-btn" onclick="saveRawConfig()">$label_salva_config_raw</button>
+      <button type="button" class="save-btn" onclick="saveRawConfig(this)">$label_salva_config_raw</button>
       <button type="button" class="btn-secondario" onclick="restoreRawConfig()">$label_ripristina</button>
       <span id="config-raw-status" class="hint"></span>
     </div>

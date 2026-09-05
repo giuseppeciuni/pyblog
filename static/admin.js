@@ -69,6 +69,99 @@ function pbStatus(idElemento, testo) {
   }
 }
 
+/* --- Feedback: toasts, confirmation modal, busy buttons ------------------- */
+
+// Shows a Bootstrap toast. It replaces alert(), which blocks the page, steals
+// the focus and cannot say whether something went well or badly.
+// kind is a Bootstrap colour: success, danger, warning or info.
+function pbToast(messaggio, kind) {
+  var contenitore = document.getElementById('pb-toasts');
+  if (!contenitore || !window.bootstrap) {
+    // Without Bootstrap we still have to tell the author something.
+    alert(messaggio);
+    return;
+  }
+  if (!kind) { kind = 'success'; }
+
+  var toast = document.createElement('div');
+  toast.className = 'toast align-items-center text-bg-' + kind + ' border-0';
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  toast.setAttribute('aria-atomic', 'true');
+
+  var riga = document.createElement('div');
+  riga.className = 'd-flex';
+  var corpo = document.createElement('div');
+  corpo.className = 'toast-body';
+  // textContent, never innerHTML: a message can carry a server error, and an
+  // error can carry anything.
+  corpo.textContent = messaggio;
+  var chiudi = document.createElement('button');
+  chiudi.type = 'button';
+  chiudi.className = 'btn-close btn-close-white me-2 m-auto';
+  chiudi.setAttribute('data-bs-dismiss', 'toast');
+  chiudi.setAttribute('aria-label', t('admin_chiudi'));
+  riga.appendChild(corpo);
+  riga.appendChild(chiudi);
+  toast.appendChild(riga);
+  contenitore.appendChild(toast);
+
+  var delay = 4000;
+  if (kind === 'danger' || kind === 'warning') { delay = 8000; }
+  var istanza = new bootstrap.Toast(toast, { delay: delay });
+  toast.addEventListener('hidden.bs.toast', function() { toast.remove(); });
+  istanza.show();
+}
+
+// Asks the author to confirm a destructive or overwriting action, using the
+// Bootstrap modal in the layout instead of the browser's confirm(), which
+// cannot be styled and gives no room to explain the consequence.
+function pbConfirm(titolo, corpo, etichettaConferma, kind, quandoConfermato) {
+  var finestra = document.getElementById('pb-confirm');
+  if (!finestra || !window.bootstrap) {
+    if (confirm(titolo + '\n\n' + corpo)) { quandoConfermato(); }
+    return;
+  }
+  document.getElementById('pb-confirm-title').textContent = titolo;
+  document.getElementById('pb-confirm-body').textContent = corpo;
+
+  var vecchio = document.getElementById('pb-confirm-ok');
+  // Replacing the button drops every listener a previous call attached, so
+  // confirming twice cannot fire the first action again.
+  var conferma = vecchio.cloneNode(false);
+  conferma.textContent = etichettaConferma;
+  conferma.className = 'btn btn-' + kind;
+  vecchio.parentNode.replaceChild(conferma, vecchio);
+
+  var istanza = bootstrap.Modal.getOrCreateInstance(finestra);
+  conferma.addEventListener('click', function() {
+    istanza.hide();
+    quandoConfermato();
+  });
+  istanza.show();
+}
+
+// Puts a button in its waiting state and back. The label is left alone: only
+// a spinner appears in front of it, so the button keeps its width and the
+// author is not shown a different word every time something is slow.
+function pbBusy(pulsante, occupato) {
+  if (!pulsante) { return; }
+  if (occupato) {
+    if (pulsante.querySelector('.pb-spinner')) { return; }
+    var spinner = document.createElement('span');
+    spinner.className = 'pb-spinner';
+    spinner.setAttribute('aria-hidden', 'true');
+    pulsante.insertBefore(spinner, pulsante.firstChild);
+    pulsante.disabled = true;
+    pulsante.setAttribute('aria-busy', 'true');
+  } else {
+    var esistente = pulsante.querySelector('.pb-spinner');
+    if (esistente) { esistente.remove(); }
+    pulsante.disabled = false;
+    pulsante.removeAttribute('aria-busy');
+  }
+}
+
 /* --- Quill: image overlay ------------------------------------------------ */
 
 // Keeps the resize box glued to its image.
@@ -340,15 +433,34 @@ function insertYoutube() {
   PB_MAIN_QUILL.clipboard.dangerouslyPasteHTML(posizione.index, codice);
 }
 
+// Refuses a file that is over the limit before a single byte is uploaded.
+//
+// The server refuses it too, but it does so by answering and closing the
+// connection while the browser is still sending: the author would see a
+// network error rather than a reason. Checking here turns that into a
+// sentence that says what the limit is.
+function fileFitsLimit(file, limiteMb) {
+  if (file.size <= limiteMb * 1024 * 1024) {
+    return true;
+  }
+  pbToast(t('err_file_too_large').replace('{n}', String(limiteMb)), 'danger');
+  return false;
+}
+
 // Shared upload routine: sends the chosen file, then inserts the snippet
 // built by costruisciCodice() at the cursor. Used by both the image and the
 // video buttons, on both admin pages.
-function uploadMediaFile(idCampoFile, messaggioInizio, messaggioFine, costruisciCodice) {
+function uploadMediaFile(idCampoFile, limiteMb, messaggioInizio, messaggioFine,
+                         costruisciCodice) {
   if (!PB_MAIN_QUILL) { return; }
   var campoFile = document.getElementById(idCampoFile);
   if (!campoFile || campoFile.files.length === 0) { return; }
 
   var file = campoFile.files[0];
+  if (!fileFitsLimit(file, limiteMb)) {
+    campoFile.value = '';
+    return;
+  }
   var datiForm = new FormData();
   datiForm.append('video', file);
   pbStatus('upload-status', messaggioInizio);
@@ -373,7 +485,8 @@ function uploadMediaFile(idCampoFile, messaggioInizio, messaggioFine, costruisci
 
 // Uploads a video file to the server and inserts it into the editor.
 function uploadVideo() {
-  uploadMediaFile('file-video', t('js_uploading'), t('js_video_uploaded'),
+  uploadMediaFile('file-video', pbPage('max_video_mb', 100),
+    t('js_uploading'), t('js_video_uploaded'),
     function(url) {
       return '<video controls src="' + url + '"></video><p><br></p>';
     });
@@ -381,10 +494,97 @@ function uploadVideo() {
 
 // Uploads an image (PNG, JPEG or SVG) to the server and inserts it.
 function uploadImage() {
-  uploadMediaFile('file-image', t('js_uploading_image'), t('js_image_uploaded'),
+  uploadMediaFile('file-image', pbPage('max_image_mb', 10),
+    t('js_uploading_image'), t('js_image_uploaded'),
     function(url) {
       return '<img src="' + url + '"><p><br></p>';
     });
+}
+
+/* --- Importing a Word document -------------------------------------------- */
+
+// Sends the chosen .docx to the server, which converts it, and drops the
+// result into the title field and the editor.
+//
+// Nothing is saved: the conversion is lossy by nature (Word has features a
+// blog article does not), so the author has to look at the result before it
+// becomes an article. If the editor already holds text, we ask first.
+function importDocx() {
+  var campoFile = document.getElementById('file-docx');
+  if (!campoFile || campoFile.files.length === 0) { return; }
+  var file = campoFile.files[0];
+  // The same file can be chosen again after a cancelled confirmation.
+  campoFile.value = '';
+
+  if (file.name.toLowerCase().endsWith('.docx') === false) {
+    pbToast(t('js_docx_wrong_extension'), 'danger');
+    return;
+  }
+  if (!fileFitsLimit(file, pbPage('max_docx_mb', 30))) { return; }
+
+  var vuoto = true;
+  if (quill && quill.getText().trim() !== '') { vuoto = false; }
+
+  if (vuoto) {
+    sendDocx(file);
+    return;
+  }
+  pbConfirm(t('js_docx_overwrite_title'), t('js_docx_overwrite_body'),
+            t('js_docx_overwrite_confirm'), 'warning',
+            function() { sendDocx(file); });
+}
+
+// Uploads the document and applies what comes back.
+function sendDocx(file) {
+  var pulsante = document.getElementById('btn-importa-docx');
+  var datiForm = new FormData();
+  datiForm.append('docx', file, file.name);
+
+  pbBusy(pulsante, true);
+  pbStatus('docx-status', t('js_docx_importing'));
+
+  pbFetch('/import-docx', { method: 'POST', body: datiForm })
+    .then(function(risposta) { return risposta.json(); })
+    .then(function(risultato) {
+      pbBusy(pulsante, false);
+      if (risultato.ok !== true) {
+        pbStatus('docx-status', '');
+        pbToast(risultato.error, 'danger');
+        return;
+      }
+      applyImportedDocx(risultato);
+    })
+    .catch(function() {
+      pbBusy(pulsante, false);
+      pbStatus('docx-status', '');
+      pbToast(t('js_docx_net_error'), 'danger');
+    });
+}
+
+// Fills the form with the converted document and reports what was dropped.
+function applyImportedDocx(risultato) {
+  var campoTitolo = document.getElementById('title');
+  // An existing title is kept: the author may have chosen it deliberately,
+  // and the one Word suggests is only the first heading of the file.
+  if (campoTitolo.value.trim() === '') {
+    campoTitolo.value = risultato.title;
+  }
+  quill.root.innerHTML = risultato.content;
+  markEditorDirty();
+  updatePreview();
+  refreshTableHints();
+
+  pbStatus('docx-status', '');
+  pbToast(t('js_docx_imported'), 'success');
+
+  // Warnings are shown one by one: each names a specific image, link or
+  // table, and an author needs to know which.
+  if (risultato.warnings && risultato.warnings.length > 0) {
+    pbToast(t('js_docx_warnings_title'), 'warning');
+    for (var i = 0; i < risultato.warnings.length; i++) {
+      pbToast(risultato.warnings[i], 'warning');
+    }
+  }
 }
 
 /* --- Tables: pasting from Word, and the small table editor ---------------- */
@@ -587,17 +787,20 @@ function attachTableSupport(istanzaQuill) {
     openTableEditor(istanzaQuill, blocco, tabella);
   });
 
-  // The "click to edit" hint over an embedded table is a translated string,
-  // so it cannot live in the stylesheet: the CSS reads it from this
-  // attribute instead.
-  function refreshTableHints() {
-    var blocchi = istanzaQuill.root.querySelectorAll('.raw-html-block');
-    for (var i = 0; i < blocchi.length; i++) {
-      blocchi[i].setAttribute('data-hint', t('admin_table_hint'));
-    }
-  }
   istanzaQuill.on('editor-change', refreshTableHints);
   refreshTableHints();
+}
+
+// The "click to edit" hint over an embedded table is a translated string, so
+// it cannot live in the stylesheet: the CSS reads it from this attribute
+// instead. It is refreshed on every change, and again after a Word import
+// replaces the whole document.
+function refreshTableHints() {
+  if (!quill) { return; }
+  var blocchi = quill.root.querySelectorAll('.raw-html-block');
+  for (var i = 0; i < blocchi.length; i++) {
+    blocchi[i].setAttribute('data-hint', t('admin_table_hint'));
+  }
 }
 
 // --- Small table editor ---------------------------------------------------
@@ -829,39 +1032,53 @@ function filterArticles() {
 }
 
 // Rebuilds the static site.
-function rebuildSite() {
+function rebuildSite(pulsante) {
+  pbBusy(pulsante, true);
   pbPostJson('/rebuild', {})
     .then(function(res) {
-      alert(t('js_site_rebuilt').replace('{n}', res.articles));
+      pbBusy(pulsante, false);
+      pbToast(t('js_site_rebuilt').replace('{n}', res.articles), 'success');
+    })
+    .catch(function() {
+      pbBusy(pulsante, false);
+      pbToast(t('js_site_rebuilt_error'), 'danger');
     });
 }
 
 // Changes an article's status (published/draft) and reloads the page.
-function changeStatus(slug, nuovoStato) {
+function changeStatus(pulsante, slug, nuovoStato) {
+  pbBusy(pulsante, true);
   pbPostJson('/toggle-status', { slug: slug, status: nuovoStato })
     .then(function(res) {
       if (res.ok === true) {
         window.location.reload();
       } else {
-        alert(t('js_status_change_error'));
+        pbBusy(pulsante, false);
+        pbToast(t('js_status_change_error'), 'danger');
       }
+    })
+    .catch(function() {
+      pbBusy(pulsante, false);
+      pbToast(t('js_status_change_error'), 'danger');
     });
 }
 
 // Deletes an article after confirmation, then reloads the page.
 function deleteArticle(slug, titolo) {
-  var conferma = confirm(t('js_delete_named') + ' "' + titolo + '"?');
-  if (conferma === false) {
-    return;
-  }
-  pbPostJson('/delete', { slug: slug })
-    .then(function(res) {
-      if (res.ok === true) {
-        window.location.reload();
-      } else {
-        alert(t('js_delete_error'));
-      }
-    });
+  pbConfirm(t('js_delete_title'),
+            t('js_delete_body').replace('{title}', titolo),
+            t('admin_elimina'), 'danger',
+            function() {
+    pbPostJson('/delete', { slug: slug })
+      .then(function(res) {
+        if (res.ok === true) {
+          window.location.reload();
+        } else {
+          pbToast(t('js_delete_error'), 'danger');
+        }
+      })
+      .catch(function() { pbToast(t('js_delete_error'), 'danger'); });
+  });
 }
 
 /* --- Preview iframes ------------------------------------------------------ */
@@ -983,6 +1200,18 @@ var quillEn = null;
 // change does not leave orphan files.
 var slugOriginale = '';
 
+// Whether the editor holds changes that are not on disk yet. It drives three
+// things: the warning when you leave the page, whether the autosave has any
+// work to do, and whether Ctrl+S needs to do anything at all.
+var editorDirty = false;
+// Set while a save is in flight, so the autosave and a manual save cannot
+// overlap and race each other's writes.
+var salvataggioInCorso = false;
+var timerAutosalvataggio = null;
+
+// How often the autosave runs, in milliseconds.
+var AUTOSAVE_INTERVAL = 60000;
+
 function initEditorPage() {
   registerBlotFormatter();
   registerRawHtmlBlot();
@@ -1022,7 +1251,125 @@ function initEditorPage() {
   updatePreviewCounter();
 
   // Every time you type in the editor, update the preview (if it is open).
-  quill.on('text-change', function() { updatePreview(); });
+  quill.on('text-change', function() {
+    updatePreview();
+    markEditorDirty();
+  });
+  quillEn.on('text-change', markEditorDirty);
+  watchEditorFields();
+
+  // The article as it is right now is what is on disk: loading the page is
+  // not a change.
+  markEditorClean();
+  startAutosave();
+  installUnsavedChangesGuard();
+  installSaveShortcut();
+}
+
+// Every field of the form marks the article as changed when it is touched.
+function watchEditorFields() {
+  var campi = ['title', 'slug', 'tags', 'image', 'status', 'description',
+               'reader_preview', 'title_en', 'description_en', 'preview_en',
+               'translation_authorized', 'translation_confirmed'];
+  for (var i = 0; i < campi.length; i++) {
+    var elemento = document.getElementById(campi[i]);
+    if (!elemento) { continue; }
+    elemento.addEventListener('input', markEditorDirty);
+    elemento.addEventListener('change', markEditorDirty);
+  }
+}
+
+function markEditorDirty() {
+  editorDirty = true;
+}
+
+function markEditorClean() {
+  editorDirty = false;
+}
+
+// Warns before leaving the page with unsaved work. Browsers show their own
+// wording and ignore ours, but the event still has to be cancelled for the
+// dialog to appear at all.
+function installUnsavedChangesGuard() {
+  window.addEventListener('beforeunload', function(evento) {
+    if (!editorDirty) { return undefined; }
+    evento.preventDefault();
+    evento.returnValue = t('js_unsaved_changes');
+    return t('js_unsaved_changes');
+  });
+}
+
+// Ctrl+S (Cmd+S on a Mac) saves without leaving the editor, which is what
+// the muscle memory of anyone who has used a word processor expects.
+function installSaveShortcut() {
+  document.addEventListener('keydown', function(evento) {
+    var modificatore = evento.ctrlKey || evento.metaKey;
+    if (!modificatore || evento.key.toLowerCase() !== 's') { return; }
+    evento.preventDefault();
+    saveArticle(document.getElementById('btn-salva'));
+  });
+}
+
+// Saves the draft in the background every minute, but only when there is
+// something to save.
+//
+// It deliberately runs on DRAFTS only. Saving also rebuilds the site, so
+// autosaving a published article would push half-written edits live every
+// minute; on a draft there is no public page to spoil.
+function startAutosave() {
+  if (timerAutosalvataggio !== null) {
+    clearInterval(timerAutosalvataggio);
+  }
+  timerAutosalvataggio = setInterval(autosaveDraft, AUTOSAVE_INTERVAL);
+}
+
+function autosaveDraft() {
+  if (!editorDirty || salvataggioInCorso) { return; }
+  var stato = document.getElementById('status');
+  if (!stato || stato.value !== 'draft') { return; }
+  if (document.getElementById('title').value.trim() === '') {
+    pbStatus('autosave-status', t('js_autosave_needs_title'));
+    return;
+  }
+
+  salvataggioInCorso = true;
+  pbStatus('autosave-status', t('js_autosaving'));
+  pbPostJson('/save', articleData())
+    .then(function(res) {
+      salvataggioInCorso = false;
+      if (res.ok) {
+        slugOriginale = res.slug;
+        markEditorClean();
+        setAutosaveIndicator(t('js_autosaved_at').replace('{time}', currentTime()), false);
+      } else {
+        setAutosaveIndicator(t('js_autosave_failed'), true);
+      }
+    })
+    .catch(function() {
+      salvataggioInCorso = false;
+      setAutosaveIndicator(t('js_autosave_failed'), true);
+    });
+}
+
+function setAutosaveIndicator(testo, errore) {
+  var elemento = document.getElementById('autosave-status');
+  if (!elemento) { return; }
+  elemento.textContent = testo;
+  if (errore) {
+    elemento.classList.add('pb-autosave-error');
+  } else {
+    elemento.classList.remove('pb-autosave-error');
+  }
+}
+
+// The current time as HH:MM, for the "saved at" indicator.
+function currentTime() {
+  var adesso = new Date();
+  var ore = String(adesso.getHours());
+  var minuti = String(adesso.getMinutes());
+  if (ore.length < 2) { ore = '0' + ore; }
+  if (minuti.length < 2) { minuti = '0' + minuti; }
+  return ore + ':' + minuti;
 }
 
 // Character counter for the SEO description, warning about Google's limit.
@@ -1065,7 +1412,7 @@ function suggestDescription(pulsante) {
     pbStatus('description-status', t('js_write_article_content_first'));
     return;
   }
-  pulsante.disabled = true;
+  pbBusy(pulsante, true);
   pbStatus('description-status', t('js_generating'));
 
   pbPostJson('/generate-description', {
@@ -1073,18 +1420,21 @@ function suggestDescription(pulsante) {
     title: document.getElementById('title').value
   })
   .then(function(res) {
-    pulsante.disabled = false;
+    pbBusy(pulsante, false);
     if (res.ok === true) {
       document.getElementById('description').value = res.description;
       updateDescriptionCounter();
+      markEditorDirty();
       pbStatus('description-status', t('js_suggestion_inserted'));
     } else {
-      pbStatus('description-status', t('js_error_prefix') + res.error);
+      pbStatus('description-status', '');
+      pbToast(t('js_error_prefix') + res.error, 'danger');
     }
   })
   .catch(function() {
-    pulsante.disabled = false;
-    pbStatus('description-status', t('js_net_error_generation'));
+    pbBusy(pulsante, false);
+    pbStatus('description-status', '');
+    pbToast(t('js_net_error_generation'), 'danger');
   });
 }
 
@@ -1095,7 +1445,7 @@ function generatePreview(pulsante) {
     pbStatus('preview-status', t('js_write_article_content_first'));
     return;
   }
-  pulsante.disabled = true;
+  pbBusy(pulsante, true);
   pbStatus('preview-status', t('js_generating'));
 
   pbPostJson('/generate-preview', {
@@ -1103,18 +1453,21 @@ function generatePreview(pulsante) {
     title: document.getElementById('title').value
   })
   .then(function(res) {
-    pulsante.disabled = false;
+    pbBusy(pulsante, false);
     if (res.ok === true) {
       document.getElementById('reader_preview').value = res.preview;
       updatePreviewCounter();
+      markEditorDirty();
       pbStatus('preview-status', t('js_suggestion_inserted'));
     } else {
-      pbStatus('preview-status', t('js_error_prefix') + res.error);
+      pbStatus('preview-status', '');
+      pbToast(t('js_error_prefix') + res.error, 'danger');
     }
   })
   .catch(function() {
-    pulsante.disabled = false;
-    pbStatus('preview-status', t('js_net_error_generation'));
+    pbBusy(pulsante, false);
+    pbStatus('preview-status', '');
+    pbToast(t('js_net_error_generation'), 'danger');
   });
 }
 
@@ -1142,7 +1495,7 @@ function analyzeSeo() {
   }
 
   var pulsante = document.getElementById('seo-analyze-btn');
-  pulsante.disabled = true;
+  pbBusy(pulsante, true);
   pbStatus('seo-status', t('js_seo_analyzing'));
   pannello.style.display = 'none';
   pannello.textContent = '';
@@ -1155,18 +1508,20 @@ function analyzeSeo() {
     description: document.getElementById('description').value
   })
   .then(function(res) {
-    pulsante.disabled = false;
+    pbBusy(pulsante, false);
     if (res.ok === true) {
       pbStatus('seo-status', t('js_seo_done'));
       renderSeoResults(pannello, res.analysis, res.article_url);
       pannello.style.display = 'block';
     } else {
-      pbStatus('seo-status', t('js_error_prefix') + res.error);
+      pbStatus('seo-status', '');
+      pbToast(t('js_error_prefix') + res.error, 'danger');
     }
   })
   .catch(function() {
-    pulsante.disabled = false;
-    pbStatus('seo-status', t('js_net_error_generation'));
+    pbBusy(pulsante, false);
+    pbStatus('seo-status', '');
+    pbToast(t('js_net_error_generation'), 'danger');
   });
 }
 
@@ -1327,8 +1682,12 @@ function updateTranslationSection() {
 
 // Asks the server to translate title, description and content into English.
 // The calls happen in the backend, where the API keys are safe.
-function translateArticle() {
+function translateArticle(pulsante) {
+  pbBusy(pulsante, true);
   pbStatus('translation-status', t('js_translating'));
+  // The three pieces are translated one after the other; the button comes
+  // back to life when the last one lands.
+  var quandoFinito = function() { pbBusy(pulsante, false); };
 
   // We take the Italian texts to translate.
   var titoloIt = document.getElementById('title').value;
@@ -1342,7 +1701,9 @@ function translateArticle() {
       document.getElementById('description_en').value = descrizioneTradotta;
       translatePiece(contenutoIt, function(contenutoTradotto) {
         quillEn.root.innerHTML = contenutoTradotto;
+        markEditorDirty();
         pbStatus('translation-status', t('js_translated_review'));
+        quandoFinito();
       });
     });
   });
@@ -1393,40 +1754,93 @@ function articleData() {
   };
 }
 
-function saveArticle() {
+// Saves and STAYS in the editor. Losing the page you were working on after
+// every save is the single most annoying thing a writing tool can do; the
+// toast is enough to tell you it worked.
+function saveArticle(pulsante) {
+  submitArticle(pulsante, false);
+}
+
+// Saves and goes back to the article list, for when you really are done.
+function saveAndClose(pulsante) {
+  submitArticle(pulsante, true);
+}
+
+function submitArticle(pulsante, chiudiDopo) {
+  if (salvataggioInCorso) { return; }
+  salvataggioInCorso = true;
+  pbBusy(pulsante, true);
+
   pbPostJson('/save', articleData())
     .then(function(res) {
-      if (res.ok) {
-        window.location.href = '/admin';
-      } else {
-        alert(t('js_error_prefix') + res.error);
+      salvataggioInCorso = false;
+      pbBusy(pulsante, false);
+      if (!res.ok) {
+        pbToast(t('js_save_error') + ' ' + res.error, 'danger');
+        return;
       }
+      slugOriginale = res.slug;
+      markEditorClean();
+      setAutosaveIndicator('', false);
+      if (chiudiDopo) {
+        window.location.href = '/admin';
+        return;
+      }
+      // The address bar still says "new article" after the first save of a
+      // new one; correcting it means a reload would reopen the right article.
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '',
+          '/edit?slug=' + encodeURIComponent(res.slug));
+      }
+      pbToast(t('js_article_saved'), 'success');
+    })
+    .catch(function() {
+      salvataggioInCorso = false;
+      pbBusy(pulsante, false);
+      pbToast(t('js_save_error'), 'danger');
     });
 }
 
 // Preview of the English page: it first SAVES the article (otherwise
 // you would see the version on disk, not the one you are writing), then
 // it opens /preview with language=en in a new tab. You stay in the editor.
-function previewEnglish() {
+function previewEnglish(pulsante) {
+  pbBusy(pulsante, true);
   pbPostJson('/save', articleData())
     .then(function(res) {
+      pbBusy(pulsante, false);
       if (res.ok) {
         slugOriginale = res.slug;
+        markEditorClean();
         window.open('/preview?slug=' + encodeURIComponent(res.slug) + '&language=en', '_blank');
       } else {
-        alert(t('js_error_prefix') + res.error);
+        pbToast(t('js_save_error') + ' ' + res.error, 'danger');
       }
+    })
+    .catch(function() {
+      pbBusy(pulsante, false);
+      pbToast(t('js_save_error'), 'danger');
     });
 }
 
 function deleteItem() {
-  if (!confirm(t('js_delete_confirm'))) { return; }
-  pbPostJson('/delete', { slug: pbPage('slug', '') })
-    .then(function(res) {
-      if (res.ok) {
-        window.location.href = '/admin';
-      }
-    });
+  var titolo = document.getElementById('title').value;
+  pbConfirm(t('js_delete_title'),
+            t('js_delete_body').replace('{title}', titolo),
+            t('admin_elimina'), 'danger',
+            function() {
+    pbPostJson('/delete', { slug: pbPage('slug', '') })
+      .then(function(res) {
+        if (res.ok) {
+          // The article is gone, so there is nothing left to warn about.
+          markEditorClean();
+          window.location.href = '/admin';
+        } else {
+          pbToast(t('js_delete_error'), 'danger');
+        }
+      })
+      .catch(function() { pbToast(t('js_delete_error'), 'danger'); });
+  });
 }
 
 /* --- The settings page ---------------------------------------------------- */
@@ -1492,12 +1906,12 @@ function translateHome(pulsante) {
     pbStatus('home-en-status', t('js_write_intro_first'));
     return;
   }
-  pulsante.disabled = true;
+  pbBusy(pulsante, true);
   pbStatus('home-en-status', t('js_translating'));
 
   pbPostJson('/translate', { text: quillHome.root.innerHTML })
     .then(function(res) {
-      pulsante.disabled = false;
+      pbBusy(pulsante, false);
       if (res.ok === true) {
         quillHomeEn.root.innerHTML = res.text;
         pbStatus('home-en-status', t('js_translated_home'));
@@ -1506,8 +1920,9 @@ function translateHome(pulsante) {
       }
     })
     .catch(function() {
-      pulsante.disabled = false;
-      pbStatus('home-en-status', t('js_net_error_translation'));
+      pbBusy(pulsante, false);
+      pbStatus('home-en-status', '');
+      pbToast(t('js_net_error_translation'), 'danger');
     });
 }
 
@@ -1551,7 +1966,7 @@ function updateTranslationGroups() {
   }
 }
 
-function saveConfig() {
+function saveConfig(pulsante) {
   // We collect the data of the homepage cards.
   var cardElementi = document.querySelectorAll('.card-config');
   var cardDati = [];
@@ -1655,16 +2070,23 @@ function saveConfig() {
     }
   };
 
+  pbBusy(pulsante, true);
   pbStatus('save-status', t('admin_salvataggio'));
   pbPostJson('/save-config', config)
     .then(function(res) {
+      pbBusy(pulsante, false);
+      pbStatus('save-status', '');
       if (res.ok === true) {
-        pbStatus('save-status', t('admin_config_salvata'));
+        pbToast(t('admin_config_salvata'), 'success');
       } else {
-        pbStatus('save-status', t('js_error_prefix') + res.error);
+        pbToast(t('js_error_prefix') + res.error, 'danger');
       }
     })
-    .catch(function() { pbStatus('save-status', t('admin_errore_salvataggio')); });
+    .catch(function() {
+      pbBusy(pulsante, false);
+      pbStatus('save-status', '');
+      pbToast(t('admin_errore_salvataggio'), 'danger');
+    });
 }
 
 // Puts the original config back into the textarea (discards unsaved changes).
@@ -1674,29 +2096,36 @@ function restoreRawConfig() {
 }
 
 // Saves the hand-edited config.json, after server-side validation.
-function saveRawConfig() {
+function saveRawConfig(pulsante) {
   var contenuto = document.getElementById('config-raw').value;
 
   // Preliminary browser-side check: warns immediately if the JSON is broken.
   try {
     JSON.parse(contenuto);
   } catch (e) {
-    pbStatus('config-raw-status', t('err_invalid_json_prefix') + e.message);
+    pbToast(t('err_invalid_json_prefix') + e.message, 'danger');
     return;
   }
 
+  pbBusy(pulsante, true);
   pbStatus('config-raw-status', t('admin_salvataggio'));
   pbPostJson('/save-config-raw', { content: contenuto })
     .then(function(res) {
+      pbBusy(pulsante, false);
+      pbStatus('config-raw-status', '');
       if (res.ok === true) {
-        pbStatus('config-raw-status', t('admin_config_raw_salvata'));
+        pbToast(t('admin_config_raw_salvata'), 'success');
         // We update the "original" reference to the newly saved content.
         configRawIniziale = contenuto;
       } else {
-        pbStatus('config-raw-status', t('js_error_prefix') + res.error);
+        pbToast(t('js_error_prefix') + res.error, 'danger');
       }
     })
-    .catch(function() { pbStatus('config-raw-status', t('admin_errore_salvataggio')); });
+    .catch(function() {
+      pbBusy(pulsante, false);
+      pbStatus('config-raw-status', '');
+      pbToast(t('admin_errore_salvataggio'), 'danger');
+    });
 }
 
 /* --- Page dispatch -------------------------------------------------------- */
@@ -1710,3 +2139,44 @@ document.addEventListener('DOMContentLoaded', function() {
     initConfigPage();
   }
 });
+
+/* --- Dashboard: sorting --------------------------------------------------- */
+
+// Reorders the article cards in place. Sorting in the browser keeps the page
+// static: no reload, no round trip, and the search filter stays applied.
+function sortArticles() {
+  var scelta = document.getElementById('ordina-articoli').value;
+  var contenitore = document.getElementById('elenco-articoli');
+  if (!contenitore) { return; }
+
+  var carte = [];
+  var elementi = contenitore.querySelectorAll('.articolo-card');
+  for (var i = 0; i < elementi.length; i++) {
+    carte.push(elementi[i]);
+  }
+
+  carte.sort(function(a, b) {
+    if (scelta === 'titolo') {
+      return a.getAttribute('data-titolo').localeCompare(b.getAttribute('data-titolo'));
+    }
+    if (scelta === 'stato') {
+      var statoA = a.getAttribute('data-stato');
+      var statoB = b.getAttribute('data-stato');
+      if (statoA !== statoB) {
+        return statoA.localeCompare(statoB);
+      }
+      // Within one status, the newest first: the same order as the default.
+      return b.getAttribute('data-data').localeCompare(a.getAttribute('data-data'));
+    }
+    var dataA = a.getAttribute('data-data');
+    var dataB = b.getAttribute('data-data');
+    if (scelta === 'vecchi') {
+      return dataA.localeCompare(dataB);
+    }
+    return dataB.localeCompare(dataA);
+  });
+
+  for (var j = 0; j < carte.length; j++) {
+    contenitore.appendChild(carte[j]);
+  }
+}

@@ -20,13 +20,20 @@ import html
 import json
 import string
 
-from core.config import TEMPLATES_DIR
+from core.config import STATIC_DIR, TEMPLATES_DIR
 
 
 # Templates read from disk, keyed by their name. A template file never changes
 # while the server runs, so reading it once is enough; clear_cache() exists for
 # the tests and for anyone editing templates with the server up.
 _TEMPLATE_CACHE = {}
+
+# The single-file bundle produced by "pyblog.py bundle" has no templates/ or
+# static/ folder next to it: it fills these two dictionaries with the file
+# contents instead, and the two readers below prefer them over the disk.
+# In a normal checkout they stay empty and nothing changes.
+EMBEDDED_TEMPLATES = {}
+EMBEDDED_STATIC = {}
 
 
 def load_template(name):
@@ -37,18 +44,40 @@ def load_template(name):
     if name in _TEMPLATE_CACHE:
         return _TEMPLATE_CACHE[name]
 
-    path_value = (TEMPLATES_DIR / name).resolve()
-    # A template name always comes from our own code, never from a request,
-    # but the check costs nothing and documents the intent.
-    try:
-        path_value.relative_to(TEMPLATES_DIR.resolve())
-    except ValueError:
-        raise ValueError("Template outside the templates folder: " + name)
+    if name in EMBEDDED_TEMPLATES:
+        text = EMBEDDED_TEMPLATES[name]
+    else:
+        path_value = (TEMPLATES_DIR / name).resolve()
+        # A template name always comes from our own code, never from a
+        # request, but the check costs nothing and documents the intent.
+        try:
+            path_value.relative_to(TEMPLATES_DIR.resolve())
+        except ValueError:
+            raise ValueError("Template outside the templates folder: " + name)
+        text = path_value.read_text(encoding="utf-8")
 
-    text = path_value.read_text(encoding="utf-8")
     compiled = string.Template(text)
     _TEMPLATE_CACHE[name] = compiled
     return compiled
+
+
+def static_exists(name):
+    """Tell whether a static file is available, embedded or on disk."""
+    if name in EMBEDDED_STATIC:
+        return True
+    return (STATIC_DIR / name).is_file()
+
+
+def read_static(name):
+    """
+    Return the text of a file of static/, from the bundle or from disk.
+
+    Every static file this project ships is text (CSS and JavaScript), so a
+    single text reader covers them all.
+    """
+    if name in EMBEDDED_STATIC:
+        return EMBEDDED_STATIC[name]
+    return (STATIC_DIR / name).read_text(encoding="utf-8")
 
 
 def clear_cache():

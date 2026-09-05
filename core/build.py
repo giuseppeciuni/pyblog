@@ -13,7 +13,6 @@ the placeholders. Two rules are absolute:
 """
 import json
 import re
-import shutil
 import threading
 from datetime import datetime, timezone
 
@@ -22,7 +21,7 @@ from core.articles import (articles_visible_in_language, card_slug,
                            collect_tags, excerpt_from_html,
                            extract_article_tags, html_content_is_empty,
                            load_articles, plain_text, slugify)
-from core.config import (CONFIG, MEDIA_DIR, OUTPUT_DIR, STATIC_DIR,
+from core.config import (CONFIG, MEDIA_DIR, OUTPUT_DIR,
                          ai_training_config, archive_file_name,
                          articles_per_page_count, feed_file_name,
                          language_url_prefix, main_language,
@@ -106,6 +105,48 @@ def social_profile_links():
         label = esc(profile_label(profile))
         links.append(f'<a href="{esc(profile)}" rel="me">{label}</a>')
     return links
+
+
+# Matches an <img> tag that does not already carry a loading attribute.
+LAZY_IMAGE_PATTERN = re.compile(r"<img(?![^>]*\bloading=)([^>]*)>", re.IGNORECASE)
+
+
+def add_lazy_loading(html_content_value):
+    """
+    Add loading="lazy" to every image that does not already have it.
+
+    An article can carry a dozen photos, and a reader on a phone should not
+    pay for the ones below the fold. The attribute is added here rather than
+    in the editor so it also covers articles written before this existed, and
+    content pasted from Word or imported from Markdown.
+    """
+    if html_content_value is None or html_content_value == "":
+        return ""
+    return LAZY_IMAGE_PATTERN.sub(r'<img\1 loading="lazy">', html_content_value)
+
+
+def tag_links(art, language, css_class="card-tag"):
+    """
+    Render an article's tags as small links, for the homepage cards.
+
+    Seeing the topics before clicking is how a reader decides whether an
+    article is for them; the links also give the tag pages somewhere to be
+    found from.
+    """
+    tags = extract_article_tags(art)
+    if len(tags) == 0:
+        return ""
+    prefix = language_url_prefix(language) + "/tag/"
+    pieces = []
+    for tag in tags:
+        tag_slug = slugify(tag)
+        if tag_slug == "":
+            continue
+        pieces.append(f'<a class="{css_class}" href="{prefix}{tag_slug}.html">'
+                      f"#{esc(tag)}</a>")
+    if len(pieces) == 0:
+        return ""
+    return '<span class="card-tags">' + "".join(pieces) + "</span>"
 
 
 def compute_reading_time(html_content_value, language="it"):
@@ -329,14 +370,39 @@ def site_footer(language="it"):
     ).rstrip("\n")
 
 
+def site_options(language, extra=None):
+    """
+    The values site.js needs, as a plain dictionary.
+
+    Every public page gets one: the page language and the labels of the copy
+    button on code blocks. The homepage adds the search settings on top. It
+    travels as JSON, never as text concatenated into a script, so a translated
+    label with an apostrophe cannot break the page.
+    """
+    options = {
+        "language": language,
+        "copy_label": T("copia_codice", language),
+        "copied_label": T("codice_copiato", language),
+        "copy_title": T("copia_codice_titolo", language),
+        "progress_label": T("progresso_lettura", language),
+    }
+    if extra is not None:
+        options.update(extra)
+    return options
+
+
 def render_page(language, titolo_pagina, contenuto, meta_extra="",
-                head_extra="", script_extra="", feed_links=None):
+                head_extra="", script_extra="", feed_links=None,
+                site_extra=None):
     """
     Wrap a page body in the shared public layout (templates/base.html).
 
     titolo_pagina is inserted as-is: the caller has already escaped the parts
     that come from the configuration or from an article.
     """
+    head_extra = block(head_extra) + (
+        "  <script>window.PB_SITE = "
+        + js(site_options(language, site_extra)) + ";</script>")
     if feed_links is None:
         feed_links = ('  <link rel="alternate" type="application/rss+xml" '
                       f'title="{esc(CONFIG["site_title"])}" href="{feed_url(language)}">\n')
@@ -699,6 +765,7 @@ def generate_article_page(art, language="it", all_articles=None):
     # We generate the table of contents (only for long articles).
     # The function adds the ids to the headings and gives us back the index to show.
     content, toc_html = generate_table_of_contents(content, language)
+    content = add_lazy_loading(content)
 
     # "Related articles" block (in both languages).
     related_block = ""
@@ -897,7 +964,7 @@ def generate_card_page(card, language="it"):
         url_home=prefix + "/",
         label_home=T("home", language),
         titolo=esc(title_value),
-        contenuto_card=content,
+        contenuto_card=add_lazy_loading(content),
         torna_home=T("torna_homepage", language),
     )
 
@@ -972,12 +1039,19 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         if preview_text != "":
             excerpt = f'<p class="card-excerpt">{esc(preview_text)}</p>'
 
+        # The card is a link, so the tags cannot be links inside it: nested
+        # anchors are invalid HTML and browsers unnest them unpredictably.
+        # They sit as a sibling row under the card instead.
+        tags_row = tag_links(art, language)
+        if tags_row != "":
+            tags_row = "\n    " + tags_row
+
         feed_items.append(f"""    <a class="article-card" href="{post_prefix}{art['slug']}.html">
       <div class="card-date">{format_date(art['date'], language)}</div>
       <h3 class="card-title">{esc(card_title)}</h3>
       {excerpt}
       <span class="card-read-more">{T('leggi_articolo', language)} &rarr;</span>
-    </a>""")
+    </a>{tags_row}""")
 
     if len(feed_items) > 0:
         lista = "\n".join(feed_items)
@@ -1003,11 +1077,11 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         author_photo = seo_data().get("author_image", "")
         if author_photo != "":
             avatar = (f'<img class="home-avatar" src="{esc(author_photo)}" '
-                      f'alt="{esc(CONFIG["author"])}">\n    ')
+                      f'alt="{esc(CONFIG["author"])}" loading="lazy">\n    ')
         home_block = render.render(
             "public/home_intro.html",
             avatar=avatar,
-            contenuto_intro=home_content,
+            contenuto_intro=add_lazy_loading(home_content),
         )
 
     # Editorial cards (bio, projects, photos, notices).
@@ -1115,11 +1189,22 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         "  " + social_meta(language),
     ])
 
-    # Values the client-side search needs. They travel as JSON, never
-    # concatenated into the script: an apostrophe in a translated label used
-    # to be one typo away from breaking the whole search.
+    # rel=prev/next tell a search engine that the paginated pages are one
+    # sequence rather than a pile of near-duplicates.
+    if totale_pagine > 1:
+        page_folder = pagination_folder(language)
+        if page > 1:
+            if page == 2:
+                previous_url = base + prefix + "/"
+            else:
+                previous_url = f"{base}{prefix}/{page_folder}/{page - 1}.html"
+            meta_extra = meta_extra + f'\n  <link rel="prev" href="{previous_url}">'
+        if page < totale_pagine:
+            next_url = f"{base}{prefix}/{page_folder}/{page + 1}.html"
+            meta_extra = meta_extra + f'\n  <link rel="next" href="{next_url}">'
+
+    # Values the client-side search needs, on top of the ones every page gets.
     search_options = {
-        "language": language,
         "post_prefix": post_prefix,
         "read_label": T("leggi_articolo", language),
         "msg_unavailable": T("js_search_unavailable", language),
@@ -1129,9 +1214,7 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         "page_end": end,
     }
 
-    head_extra = (
-        '  <script type="application/ld+json">' + jsonld_home + "</script>\n"
-        "  <script>window.PB_SITE = " + js(search_options) + ";</script>")
+    head_extra = '  <script type="application/ld+json">' + jsonld_home + "</script>"
 
     return render_page(
         language,
@@ -1139,6 +1222,7 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         contenuto,
         meta_extra=meta_extra,
         head_extra=head_extra,
+        site_extra=search_options,
     )
 
 
@@ -1284,13 +1368,42 @@ def generate_tag_page(tag_name, tag_articles, language="it"):
     )
 
 
-def generate_404_page():
-    """Generate a custom 404 page, consistent with the site design."""
-    # The texts follow the site's main language.
+def generate_404_page(articles=None):
+    """
+    Generate a custom 404 page, consistent with the site design.
+
+    A dead end is not a good place to leave a reader, so the page offers two
+    ways out: a search box, which submits to the homepage where the
+    client-side search picks the query up from ?q=, and the five most recent
+    articles. Both are plain links and a plain form, so the page still works
+    as a static file with no JavaScript at all.
+    """
     language = main_language()
+    prefix = language_url_prefix(language)
+    post_prefix = prefix + "/posts/"
+
+    latest_block = ""
+    if articles is not None:
+        visibili = articles_visible_in_language(articles, language)
+        feed_items = []
+        for art in visibili[:5]:
+            feed_items.append(
+                f'        <li><a href="{post_prefix}{art["slug"]}.html">'
+                f'{esc(title_in_language(art, language))}</a>'
+                f'<span class="errore-404-data">{format_date(art["date"], language)}</span></li>')
+        if len(feed_items) > 0:
+            latest_block = ('      <section class="errore-404-ultimi">\n'
+                            f'        <h2>{T("ultimi_articoli", language)}</h2>\n'
+                            "        <ul>\n" + "\n".join(feed_items)
+                            + "\n        </ul>\n      </section>\n")
+
     contenuto = render.render(
         "public/404.html",
         testo=T("errore_404", language),
+        url_home=prefix + "/",
+        label_cerca=T("cerca_nel_sito", language),
+        placeholder_ricerca=esc(T("cerca_articoli", language)),
+        ultimi_articoli=latest_block,
         torna_home=T("torna_homepage", language),
     )
     return render_page(
@@ -1698,11 +1811,16 @@ PUBLIC_ASSETS = ("common.css", "style.css", "site.js")
 
 
 def copy_public_assets():
-    """Copy the public CSS and JavaScript from static/ into output/."""
+    """
+    Write the public CSS and JavaScript into output/.
+
+    The contents come from render.read_static, so this works both from a
+    normal checkout, where they are files under static/, and from the
+    single-file bundle, where they are strings inside the script.
+    """
     for name in PUBLIC_ASSETS:
-        source = STATIC_DIR / name
-        if source.exists():
-            shutil.copyfile(source, OUTPUT_DIR / name)
+        if render.static_exists(name):
+            (OUTPUT_DIR / name).write_text(render.read_static(name), encoding="utf-8")
 
 
 def build():
@@ -1873,9 +1991,9 @@ def _build_unlocked():
     (OUTPUT_DIR / sec_folder / "training-rights.html").write_text(
         generate_training_rights_page(ls), encoding="utf-8")
 
-    # Custom 404 page.
+    # Custom 404 page, with a search box and the latest articles.
     (OUTPUT_DIR / "404.html").write_text(
-        generate_404_page(), encoding="utf-8")
+        generate_404_page(published_articles), encoding="utf-8")
 
     # Automatically generated favicon (title initial on a gradient).
     # If the author has configured a custom favicon, it is not needed.

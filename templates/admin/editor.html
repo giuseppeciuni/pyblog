@@ -8,7 +8,19 @@
     <label>$label_titolo</label>
     <input type="text" id="title" value="$valore_titolo" placeholder="">
 
-    <label>$label_contenuto</label>
+    <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
+      <label class="mb-0">$label_contenuto</label>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <button type="button" class="btn-importa-word" data-tooltip="$tip_import_docx"
+                id="btn-importa-docx" onclick="document.getElementById('file-docx').click()">
+          <span aria-hidden="true">&#128462;</span> $label_importa_word
+        </button>
+        <input type="file" id="file-docx" accept=".docx" style="display:none"
+               onchange="importDocx()">
+        <span id="docx-status" class="hint"></span>
+      </div>
+    </div>
+    <p class="hint" style="margin:0.2rem 0 0">$hint_docx</p>
     <div id="editor"></div>
 
     <div class="video-bar">
@@ -31,7 +43,9 @@
   <aside class="editor-sidebar">
 
     <div class="sidebar-azioni" style="margin-top:0; padding-top:0; border-top:none">
-      <button onclick="saveArticle()">$label_salva</button>
+      <button id="btn-salva" onclick="saveArticle(this)">$label_salva</button>
+      <button class="btn-salva-chiudi" onclick="saveAndClose(this)">$label_salva_chiudi</button>
+      <span id="autosave-status" class="pb-autosave" role="status" aria-live="polite"></span>
       $bottone_elimina
     </div>
 
@@ -91,7 +105,7 @@
 
       <div id="translation-block" style="display:none">
         <div class="translation-bar">
-          <button type="button" onclick="translateArticle()">$label_traduci</button>
+          <button type="button" onclick="translateArticle(this)">$label_traduci</button>
           <span id="translation-status" class="hint"></span>
         </div>
 
@@ -108,7 +122,7 @@
         <div id="editor-en"></div>
 
         <div class="translation-bar" style="margin-top:1rem">
-          <button type="button" onclick="previewEnglish()">$label_anteprima_en</button>
+          <button type="button" onclick="previewEnglish(this)">$label_anteprima_en</button>
           <span class="hint">$hint_anteprima_en</span>
         </div>
 

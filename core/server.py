@@ -23,19 +23,21 @@ from core import build as build_module
 from core import i18n, render
 from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
-from core.articles import (delete_article, html_content_is_empty, load_article,
-                           load_articles, save_article, save_uploaded_file,
-                           validate_upload)
+from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, delete_article,
+                           html_content_is_empty, load_article, load_articles,
+                           save_article, save_uploaded_file, validate_upload)
+from core.docx_import import convert_docx, looks_like_docx
 from core.auth import (create_session_token, csrf_token_for,
                        csrf_token_is_valid, destroy_all_sessions,
                        destroy_session, login_is_locked, login_lock_remaining,
                        password_is_set, record_failed_login,
                        record_successful_login, session_is_valid, set_password,
                        verify_password)
-from core.build import BUILD_LOCK, build, format_date, generate_article_page
+from core.build import (BUILD_LOCK, build, compute_reading_time, format_date,
+                        generate_article_page)
 from core.config import (CONFIG, CONFIG_FILE, OUTPUT_DIR, PORT, POSTS_DIR,
-                         STATIC_DIR, admin_language, load_config,
-                         reload_global_config, save_config)
+                         admin_language, load_config, reload_global_config,
+                         save_config)
 from core.i18n import T
 from core.render import esc, js
 
@@ -74,6 +76,9 @@ ADMIN_CSP = (
 # other endpoint speaks JSON and never needs more than a few megabytes.
 MAX_UPLOAD_BODY = 100 * 1024 * 1024   # 100 MB
 MAX_JSON_BODY = 32 * 1024 * 1024      # 32 MB
+# A Word document is text and a handful of images; anything past this is not
+# an article. The cap is checked before the body is read.
+MAX_DOCX_BODY = 30 * 1024 * 1024      # 30 MB
 
 # POST endpoints that change state and therefore require a valid CSRF token.
 # /login and /set-password are absent on purpose: there is no session yet, so
@@ -82,7 +87,12 @@ CSRF_PROTECTED_ROUTES = (
     "/save", "/delete", "/save-config", "/save-config-raw", "/toggle-status",
     "/rebuild", "/upload", "/admin-language", "/change-password",
     "/translate", "/generate-description", "/generate-preview", "/analyze-seo",
+    "/import-docx",
 )
+
+# The files the administration area serves from static/. Naming them makes
+# the route an allowlist rather than a path check.
+ADMIN_STATIC_FILES = ("common.css", "admin.css", "admin.js")
 
 # The GET routes handled by the administration, as opposed to the static site.
 ADMIN_GET_ROUTES = ("/admin", "/config", "/edit", "/change-password",
@@ -127,6 +137,16 @@ JS_TRANSLATION_KEYS = (
     # Settings
     "admin_salvataggio", "admin_config_salvata", "admin_errore_salvataggio",
     "admin_config_raw_salvata", "err_invalid_json_prefix",
+    # Shared dialogs, saving, autosave and the Word import
+    "admin_chiudi", "admin_annulla", "admin_elimina",
+    "js_article_saved", "js_save_error", "js_unsaved_changes",
+    "js_autosaving", "js_autosaved_at", "js_autosave_failed",
+    "js_autosave_needs_title", "js_delete_title", "js_delete_body",
+    "js_site_rebuilt_error",
+    "js_docx_importing", "js_docx_imported", "js_docx_net_error",
+    "js_docx_overwrite_title", "js_docx_overwrite_body",
+    "js_docx_overwrite_confirm", "js_docx_warnings_title",
+    "js_docx_wrong_extension", "err_file_too_large",
 )
 
 # Toolbar tooltips: CSS selector of the Quill button -> translated label.
@@ -179,6 +199,25 @@ def js_translations(language):
     result["js_home_intro_placeholder_it"] = T("js_home_intro_placeholder", "it")
     result["js_home_intro_placeholder_en"] = T("js_home_intro_placeholder", "en")
     return result
+
+
+def translate_warnings(warnings, language):
+    """
+    Turn the importer's warning records into sentences for the author.
+
+    The converter records {"key": ..., "name": ...} rather than text, because
+    it does not know which language the admin area is running in. Here we look
+    the key up and substitute the parameters into the message.
+    """
+    messages = []
+    for warning in warnings:
+        text = T(warning.get("key", ""), language)
+        for name in warning:
+            if name == "key":
+                continue
+            text = text.replace("{" + name + "}", str(warning[name]))
+        messages.append(text)
+    return messages
 
 
 # ---------------------------------------------------------------------------
@@ -235,6 +274,8 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
         bootstrap_js=BOOTSTRAP_JS,
         head_extra=build_module.block(head_extra),
         navbar=build_module.block(navbar),
+        label_chiudi=T("admin_chiudi", language),
+        label_annulla=T("admin_annulla", language),
         contenuto=contenuto,
         i18n=js(js_translations(language)),
         csrf=js(csrf),
@@ -344,9 +385,20 @@ def admin_page(articles, csrf):
                 f'href="/preview?slug={esc(art["slug"])}&amp;language=en" target="_blank">'
                 f'{T("admin_anteprima", la)} EN</a>')
 
+        # Sorting happens in the browser, so every row carries the keys it
+        # can be sorted by. Drafts sort first, because they are the ones
+        # still waiting for work.
+        if art.get("status") == "published":
+            status_order = "1"
+        else:
+            status_order = "0"
+
         lines.append(render.render(
             "admin/dashboard_row.html",
             titolo_minuscolo=esc(art["title"].lower()),
+            data_iso=esc(art.get("date", "")),
+            ordine_stato=status_order,
+            tempo_lettura=compute_reading_time(art.get("content", ""), la),
             classe_badge=classe_badge,
             etichetta_badge=badge_label,
             badge_en=badge_en,
@@ -386,6 +438,11 @@ def admin_page(articles, csrf):
         label_rigenera=T("admin_rigenera", la),
         label_backup=T("admin_scarica_backup", la),
         placeholder_filtro=esc(T("admin_filtra", la)),
+        label_ordina=T("admin_ordina", la),
+        ordina_recenti=T("admin_ordina_recenti", la),
+        ordina_vecchi=T("admin_ordina_vecchi", la),
+        ordina_titolo=T("admin_ordina_titolo", la),
+        ordina_stato=T("admin_ordina_stato", la),
         elenco=listing,
         nessun_corrisponde=T("admin_nessun_corrisponde", la),
     )
@@ -425,6 +482,9 @@ def editor_page(art, csrf):
         label_titolo=T("admin_titolo", la),
         valore_titolo=esc(art.get("title", "")),
         label_contenuto=T("admin_contenuto", la),
+        tip_import_docx=esc(T("tip_import_docx", la)),
+        label_importa_word=T("admin_importa_word", la),
+        hint_docx=T("admin_docx_hint", la),
         tip_upload_image=esc(T("tip_upload_image", la)),
         label_carica_immagine=T("admin_carica_immagine", la),
         tip_youtube=esc(T("tip_youtube", la)),
@@ -436,6 +496,7 @@ def editor_page(art, csrf):
         tip_preview=esc(T("tip_preview", la)),
         label_anteprima=T("admin_mostra_anteprima", la),
         label_salva=T("admin_salva_genera", la),
+        label_salva_chiudi=T("admin_salva_chiudi", la),
         bottone_elimina=delete_button,
         label_sezione_pubblicazione=T("admin_sezione_pubblicazione", la),
         label_stato=T("admin_stato", la),
@@ -474,6 +535,12 @@ def editor_page(art, csrf):
     page_data = {
         "page": "editor",
         "preview_kind": "article",
+        # The browser checks these before uploading, so an oversized file
+        # produces a clear message instead of a connection the server drops
+        # halfway through. The real limits are still enforced server-side.
+        "max_docx_mb": MAX_DOCX_BODY // (1024 * 1024),
+        "max_image_mb": MAX_IMAGE_BYTES // (1024 * 1024),
+        "max_video_mb": MAX_VIDEO_BYTES // (1024 * 1024),
         "slug": art.get("slug", ""),
         "content": art.get("content", ""),
         "title_en": art.get("title_en", ""),
@@ -771,6 +838,8 @@ def config_page(csrf):
     page_data = {
         "page": "config",
         "preview_kind": "home",
+        "max_image_mb": MAX_IMAGE_BYTES // (1024 * 1024),
+        "max_video_mb": MAX_VIDEO_BYTES // (1024 * 1024),
         "home_content": config.get("home_content", ""),
         "home_content_en": config.get("home_content_en", ""),
         "card_contents": card_contents,
@@ -987,18 +1056,23 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def _serve_admin_static(self, route):
         """
-        Serve a file of static/ under /admin-static/. It uses the same
-        path-traversal check as the output folder, so a crafted route cannot
-        climb out of static/ and read config.json or the password file.
+        Serve a file of static/ under /admin-static/.
+
+        Only the handful of names this project ships are served, which is a
+        stricter rule than a path check: a route can name nothing else, so it
+        cannot climb out of the folder to reach config.json or the password
+        file. The contents come from render.read_static, so the route works
+        from the single-file bundle too, where static/ does not exist.
         """
-        path_value = self._path_inside(STATIC_DIR, route, prefix="/admin-static/")
-        if path_value is None:
-            self.send_error(404, "Invalid path.")
-            return
-        if path_value.exists() and path_value.is_file():
-            self._send_file(path_value)
-        else:
+        name = route[len("/admin-static/"):]
+        if name not in ADMIN_STATIC_FILES or not render.static_exists(name):
             self.send_error(404, "File not found.")
+            return
+        if name.endswith(".css"):
+            tipo = "text/css"
+        else:
+            tipo = "text/javascript"
+        self._send(render.read_static(name), tipo, with_csp=False)
 
     # --- GET ----------------------------------------------------------------
 
@@ -1151,6 +1225,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         if route == "/upload":
             self._handle_upload()
+            return
+        if route == "/import-docx":
+            self._handle_import_docx()
             return
 
         data, error = self._read_json_body()
@@ -1444,6 +1521,70 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         except Exception as e:
             self._send_json({"ok": False, "error": str(e)})
+
+    def _handle_import_docx(self):
+        """
+        Receive a .docx uploaded from the editor, convert it and hand the
+        result back as JSON. Nothing is saved: the browser drops the title and
+        the HTML into the form, and the author decides whether to keep them.
+
+        The body is capped at 30 MB before it is read, and the first bytes
+        must be a ZIP signature: a .doc, a PDF or a renamed executable is
+        refused before the converter ever sees it.
+        """
+        la = admin_language()
+        try:
+            content_type = self.headers.get("Content-Type", "")
+            if "boundary=" not in content_type:
+                self._send_json({"ok": False, "error": T("err_invalid_format", la)})
+                return
+            boundary = content_type.split("boundary=")[1].strip().strip('"')
+            if boundary == "":
+                self._send_json({"ok": False, "error": T("err_invalid_format", la)})
+                return
+
+            length = self._content_length(MAX_DOCX_BODY)
+            if length is None:
+                self._send_json({
+                    "ok": False,
+                    "error": T("err_file_too_large", la).replace(
+                        "{n}", str(MAX_DOCX_BODY // (1024 * 1024)))})
+                return
+            body = self.rfile.read(length)
+
+            file_name, file_data = self._parse_multipart_file(
+                body, ("--" + boundary).encode("utf-8"))
+            if file_name is None:
+                self._send_json({"ok": False, "error": T("err_malformed_upload", la)})
+                return
+            if file_name == "":
+                self._send_json({"ok": False, "error": T("err_no_file_received", la)})
+                return
+            if not file_name.lower().endswith(".docx"):
+                self._send_json({"ok": False, "error": T("js_docx_wrong_extension", la)})
+                return
+            if not looks_like_docx(file_data):
+                self._send_json({"ok": False, "error": T("err_docx_not_a_zip", la)})
+                return
+
+            fallback_title = file_name.rsplit(".", 1)[0]
+            # Extracting the images writes into the media folder, so the
+            # conversion takes the same lock as a save.
+            with BUILD_LOCK:
+                result = convert_docx(file_data, fallback_title=fallback_title)
+
+            if not result["ok"]:
+                self._send_json({"ok": False, "error": T(result["error_key"], la)})
+                return
+
+            self._send_json({
+                "ok": True,
+                "title": result["title"],
+                "content": result["content"],
+                "warnings": translate_warnings(result["warnings"], la),
+            })
+        except Exception as error:
+            self._send_json({"ok": False, "error": str(error)})
 
     def _parse_multipart_file(self, body, boundary_bytes):
         """

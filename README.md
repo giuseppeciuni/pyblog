@@ -18,6 +18,7 @@ PyBlog is a static blog generator written in **pure Python**, with not one exter
 
 - **Zero dependencies.** A thin `pyblog.py` entry point plus a small `core/` package, with the HTML in `templates/` and the CSS/JS in `static/`. You can read it, understand it, modify it. Python standard library only.
 - **Migrate from Hugo/Jekyll in one command.** `python3 pyblog.py import-md posts/` reads your Markdown files with front matter and imports them all. Export back to Markdown any time: no lock-in, in either direction.
+- **Write in Word, publish here.** Drop a `.docx` into the editor and it arrives with its headings, lists, tables and images. Implemented on `zipfile` and `xml.etree`, like everything else: no `python-docx`.
 - **Visual editor in the browser.** Write like in Word (Quill WYSIWYG): bold, resizable images, syntax-highlighted code blocks, tables, YouTube videos.
 - **Blazing-fast static HTML.** Public pages are static files served by nginx in milliseconds. Python only runs the admin area and can stay off.
 - **Bilingual with AI translation.** Write in one language, translate to the other with one click (DeepL, Google, Claude, OpenAI or DeepSeek). The site becomes bilingual with a language switcher and a per-article English preview.
@@ -93,8 +94,10 @@ core/
   ai.py                translation (DeepL, Google, Claude, OpenAI, DeepSeek),
                        SEO description and reader preview, SEO analysis
   auth.py              password (PBKDF2), sessions, CSRF tokens, login rate limiting
+  docx_import.py       Word .docx -> HTML, written on zipfile and xml.etree
   build.py             generation of the whole static site
   server.py            the HTTP handler and the administration pages
+  bundle.py            builds the single-file distribution
 templates/
   base.html            the shared layout of every public page
   public/*.html        article, homepage, archive, tag, card, 404, training rights
@@ -105,6 +108,7 @@ static/
   admin.css            the administration area
   site.js              theme and client-side search (copied into output/)
   admin.js             the whole editor: Quill, uploads, tables, SEO panel, fetch calls
+test_docx/             .docx fixtures and the tests for the Word importer
 posts/                 the articles, one JSON file each
 output/                the generated static site (this is what nginx serves)
 config.json            the site configuration (created on the first save)
@@ -130,17 +134,84 @@ python3 pyblog.py serve 8000 0.0.0.0  # ...reachable from the network (behind a 
 python3 pyblog.py build             # regenerate the whole static site into output/
 python3 pyblog.py password          # set or change the admin password
 python3 pyblog.py import-md posts/  # import Markdown files (a file or a folder)
+python3 pyblog.py import-docx doc/  # import Word documents as drafts (a file or a folder)
 python3 pyblog.py export-md out/    # export every article to Markdown with front matter
+python3 pyblog.py bundle            # build pyblog_standalone.py, the single-file version
 ```
 
 `build` is also run automatically after every save, so you rarely need it by
 hand: it is there for scripts, for a first run, and for after you have edited
 `config.json` or a template by hand.
 
+### The single-file version
+
+`python3 pyblog.py bundle` writes **`pyblog_standalone.py`**: one script with
+the nine modules, the 29 templates and the CSS/JavaScript embedded as strings,
+for people who would rather download a single file than a folder. It supports
+every command except `bundle` itself, and produces byte-for-byte the same site.
+
+```bash
+python3 pyblog.py bundle          # from a checkout, writes pyblog_standalone.py
+python3 pyblog_standalone.py serve  # elsewhere: nothing else needed
+```
+
+It is a build artifact, not a second codebase: fix things in `core/` and
+generate it again.
+
+## Importing from Word
+
+`python3 pyblog.py import-docx documento.docx`, or the **Import from Word
+(.docx)** button in the editor, converts a Word document into an article. The
+button drops the result into the editor without saving, so you can look it
+over first; the command line imports as drafts, for the same reason.
+
+A `.docx` is a ZIP of XML parts, so PyBlog reads it with `zipfile` and
+`xml.etree` — no `python-docx`, no `mammoth`, no dependency at all.
+
+**What is converted**
+
+| Word | Becomes |
+|---|---|
+| Heading 1-4 (and the localised styles, e.g. `Titolo 2`) | `<h1>`-`<h4>` |
+| Bold, italic, underline, strikethrough | `<strong> <em> <u> <s>` |
+| Formatting carried by a paragraph or character style | the same tags |
+| Centre / right / justified alignment | the editor's `ql-align-*` classes |
+| Bulleted and numbered lists, including one level of nesting | `<ul>` / `<ol>` |
+| Tables | `<table class="article-table">`, first row as header |
+| Embedded images (PNG, JPEG, GIF, WebP) | saved to `media/`, `<img loading="lazy">` |
+| Hyperlinks to http, https and mailto | `<a href="...">` |
+| Line breaks | `<br>` |
+| Tracked insertions | ordinary text |
+
+The first Heading 1 becomes the article title and is removed from the body,
+because it becomes the page's `<h1>`. If there is none, the file name is used.
+
+**What is dropped, and why**
+
+- **WMF and EMF images.** Word embeds them happily and no browser can display
+  them. They are refused with a warning naming the file.
+- **Linked (not embedded) images.** The bytes live on the author's disk, not
+  in the document; there is nothing to extract.
+- **Links that are not http, https or mailto.** A `javascript:` or `file:`
+  target has no place in a published page. The link text is kept.
+- **A table inside a table.** Word uses those for page layout; the inner one
+  is reduced to its text.
+- **Tracked deletions, comments, footnotes, headers and footers, text boxes,
+  equations, fields, fonts, colours, sizes, page breaks and section setup.**
+  A blog article does not carry them.
+
+Every conversion reports what it dropped: as toasts in the editor, as
+`warning:` lines on the command line. Two more limits worth knowing: without
+`numbering.xml` every list falls back to bullets (a bullet where a number
+belonged is a small loss; invented numbers would be wrong), and the upload is
+capped at 30 MB.
+
 ## Full feature list
 
 **Writing**
 - WYSIWYG editor (Quill): fonts, sizes, colors, alignment
+- Import from Word (.docx): headings, formatting, lists, tables, images, links
+- Save without leaving the editor, autosave of drafts, Ctrl+S, unsaved-changes warning
 - Resizable images by dragging the corners; PNG/JPEG/SVG upload
 - Syntax-highlighted code blocks (Python, JS and more)
 - Tables (manual or paste from Word), YouTube videos and video upload
@@ -170,6 +241,8 @@ hand: it is there for scripts, for a first run, and for after you have edited
 
 **Reading**
 - Browser-side full-text search with snippets and highlighting
+- Copy button on code blocks and a reading progress bar on articles
+- A 404 page that helps: search box plus the latest articles
 - Light/dark theme with saved preference
 - Homepage with introduction, editorial cards (bio, projects) and article grid
 - Comments via Giscus or Disqus, your choice

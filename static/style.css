@@ -31,6 +31,26 @@ html[data-tema="dark"] .card-hero-title {
 }
 html[data-tema="dark"] .articles-heading { color:var(--testo); }
 html[data-tema="dark"] .card-page { color:var(--testo); }
+/* Dark-mode contrast fixes.
+   The borders of a table and the rule of a blockquote were drawn with
+   --bordo (#2e2e35) on the page background (#101013): a ratio of 1.41:1,
+   a line you have to hunt for rather than see. Both now use #66667a, which
+   measures 3.39:1 and clears the 3:1 WCAG asks of a non-text element that
+   carries meaning. The quoted text itself moves from the muted grey to the
+   body colour: a whole paragraph set in the secondary colour is harder to
+   read than the caption that colour was chosen for. */
+html[data-tema="dark"] .article-table th,
+html[data-tema="dark"] .article-table td { border-color:#66667a; }
+html[data-tema="dark"] .article-table th { background:#26262d; }
+html[data-tema="dark"] blockquote {
+  border-left-color:#66667a; color:var(--testo); opacity:0.92; }
+/* The search snippet: the highlight was already adjusted, but the text
+   around it stayed at the muted colour on a card background. */
+html[data-tema="dark"] .card-snippet { color:#c4c4cc; }
+html[data-tema="dark"] .card-snippet mark,
+html[data-tema="dark"] .card-title mark { background:#8a6600; color:#fff; }
+/* Small tag labels under a card. */
+html[data-tema="dark"] .card-tag { border-color:#3a3a45; }
 body {
   font-family:var(--pb-font);
   font-size:var(--pb-font-size); line-height:var(--pb-line-height); color:var(--testo);
@@ -307,4 +327,105 @@ footer.site { max-width:var(--larghezza-home); margin:4rem auto 0; padding:1.5re
   .home-intro h1, .home-intro h2 { font-size:1.7rem; }
   .home-intro p { font-size:1rem; }
   pre { font-size:0.8rem; padding:0.8rem 1rem; }
+}
+/* --- Tag labels under the homepage cards ---------------------------------
+   They sit outside the card, because the card is itself a link and nesting
+   one anchor inside another is invalid HTML. */
+.card-tags { display:flex; flex-wrap:wrap; gap:0.4rem; margin:0.5rem 0 0.2rem; padding:0 0.3rem; }
+.card-tag {
+  font-size:0.75rem; color:var(--secondario); text-decoration:none;
+  border:1px solid var(--bordo); border-radius:999px; padding:0.1rem 0.6rem;
+  background:var(--card-bg); line-height:1.6;
+}
+.card-tag:hover { color:var(--link); border-color:var(--link); }
+/* --- Copy button on the code blocks --------------------------------------- */
+.blocco-codice { position:relative; }
+.blocco-codice pre { margin:0; }
+.copia-codice {
+  position:absolute; top:0.5rem; right:0.5rem;
+  font-family:inherit; font-size:0.75rem; line-height:1.4;
+  padding:0.2rem 0.6rem; border-radius:6px; cursor:pointer;
+  color:var(--secondario); background:var(--card-bg);
+  border:1px solid var(--bordo);
+  opacity:0; transition:opacity 0.15s;
+}
+/* The button appears on hover on a mouse, and is always visible on a touch
+   screen, where there is no hover to reveal it. */
+.blocco-codice:hover .copia-codice,
+.copia-codice:focus-visible { opacity:1; }
+@media (hover: none) { .copia-codice { opacity:1; } }
+.copia-codice:hover { color:var(--link); border-color:var(--link); }
+.copia-codice.copiato { color:#0a6b2e; border-color:#0a6b2e; }
+html[data-tema="dark"] .copia-codice.copiato { color:#4ade80; border-color:#4ade80; }
+/* --- Reading progress bar ------------------------------------------------- */
+.progresso-lettura {
+  position:fixed; top:0; left:0; width:100%; height:3px;
+  background:transparent; z-index:50; pointer-events:none;
+}
+.progresso-lettura-barra {
+  height:100%; width:0;
+  background:linear-gradient(90deg, #0066cc, #5b3df5);
+}
+html[data-tema="dark"] .progresso-lettura-barra {
+  background:linear-gradient(90deg, #6ba9ff, #b39dff);
+}
+/* Someone who has asked for less motion gets the bar without the animation. */
+@media (prefers-reduced-motion: reduce) {
+  .progresso-lettura-barra { transition:none; }
+}
+/* --- 404 page ------------------------------------------------------------- */
+.pagina-404 { max-width:var(--larghezza); margin:0 auto; text-align:center; padding:3rem 0 2rem; }
+.errore-404-numero { font-size:3.5rem; margin:0; line-height:1;
+  background:linear-gradient(120deg, #0066cc, #5b3df5); -webkit-background-clip:text;
+  background-clip:text; -webkit-text-fill-color:transparent; }
+html[data-tema="dark"] .errore-404-numero {
+  background:linear-gradient(120deg, #6ba9ff, #b39dff); -webkit-background-clip:text;
+  background-clip:text; -webkit-text-fill-color:transparent; }
+.errore-404-testo { font-size:1.15rem; color:var(--secondario); margin:0.6rem 0 2rem; }
+.errore-404-ricerca { display:flex; gap:0.5rem; max-width:28rem; margin:0 auto 2.5rem; }
+.errore-404-ricerca input {
+  flex:1; padding:0.7rem 1rem; font-size:1rem; font-family:inherit;
+  border:1px solid var(--bordo); border-radius:8px;
+  background:var(--card-bg); color:var(--testo);
+}
+.errore-404-ricerca input:focus { border-color:var(--link); }
+.errore-404-ricerca button {
+  padding:0.7rem 1.2rem; font-size:0.95rem; font-family:inherit; cursor:pointer;
+  border:none; border-radius:8px; background:var(--link); color:#fff;
+}
+.errore-404-ultimi { text-align:left; max-width:34rem; margin:0 auto 2rem; }
+.errore-404-ultimi h2 { font-size:1.1rem; margin:0 0 0.8rem;
+  padding-bottom:0.4rem; border-bottom:1px solid var(--bordo); }
+.errore-404-ultimi ul { list-style:none; padding:0; margin:0; }
+.errore-404-ultimi li { display:flex; justify-content:space-between; gap:1rem;
+  align-items:baseline; margin:0.5rem 0; }
+.errore-404-ultimi a { color:var(--testo); text-decoration:none; }
+.errore-404-ultimi a:hover { color:var(--link); text-decoration:underline; }
+.errore-404-data { color:var(--secondario); font-size:0.82rem; white-space:nowrap; }
+.errore-404-ritorno a { color:var(--link); text-decoration:none; }
+/* A label that only a screen reader needs. */
+.sr-only {
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+@media (max-width: 640px) {
+  .errore-404-ricerca { flex-direction:column; }
+  .errore-404-ultimi li { flex-direction:column; gap:0.1rem; }
+  .errore-404-numero { font-size:2.8rem; }
+}
+/* --- Pagination on a narrow screen ----------------------------------------
+   Three items side by side leave no room for the labels on a phone: the
+   counter moves to its own line and the two links share the row below,
+   each big enough to be a comfortable tap target. */
+@media (max-width: 560px) {
+  .paginazione {
+    display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;
+  }
+  .paginazione .paginazione-info {
+    grid-column:1 / -1; order:-1; text-align:center;
+  }
+  .paginazione a {
+    display:block; text-align:center; padding:0.7rem 0.5rem;
+  }
+  .paginazione .paginazione-vuoto { display:none; }
 }
