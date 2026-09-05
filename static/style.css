@@ -203,14 +203,33 @@ article.post h1 { font-size:2rem; margin:0 0 0.4rem; }
 pre { background:var(--codice-bg); padding:1rem 1.2rem; border-radius:6px; overflow-x:auto; font-size:0.85rem; line-height:1.5; }
 pre.ql-syntax, pre code { font-family:"SF Mono",Menlo,Monaco,Consolas,monospace; tab-size:4; }
 pre.ql-syntax { background:var(--codice-bg); border:1px solid var(--bordo); }
-/* Tables (including those pasted from Word). On mobile they scroll horizontally.
+/* Tables (including those pasted from Word or imported from a .docx).
    The backgrounds use the theme variables: they used to be fixed light colours
-   that became unreadable in dark mode (light text on a light background). */
-.article-table { border-collapse:collapse; width:100%; margin:1.5rem 0; font-size:0.92rem; display:block; overflow-x:auto; }
+   that became unreadable in dark mode (light text on a light background).
+
+   The table must stay display:table. It used to carry display:block with
+   overflow-x:auto, so that a wide table would scroll on a phone, and that is
+   what made every table on the public site narrower than the same table in
+   the editor: with display:block the element becomes an ordinary block box,
+   its rows generate an ANONYMOUS table box inside it, and that anonymous box
+   is sized shrink-to-fit. The width:100% then applied to the outer block and
+   never reached the grid the reader sees.
+
+   The horizontal scrolling now lives on the wrapper instead. Every table in
+   an article is inside div.raw-html-block - the editor's own blot writes it,
+   and so does the Word importer - so the wrapper is always there to scroll. */
+.article-table { border-collapse:collapse; width:100%; max-width:100%; margin:1.5rem 0; font-size:0.92rem; }
 .article-table th, .article-table td { border:1px solid var(--bordo); padding:0.6rem 0.8rem; text-align:left; vertical-align:top; }
 .article-table th { background:var(--codice-bg); font-weight:600; }
 .article-table tr:nth-child(even) td { background:var(--card-hover); }
-.raw-html-block { margin:0; }
+.raw-html-block { margin:0; overflow-x:auto; }
+/* A table written by hand in an article, with no wrapper around it, has no
+   scroll container of its own. On a narrow screen it falls back to the old
+   behaviour, where shrink-to-fit plus scrolling is what you want anyway. */
+@media (max-width: 640px) {
+  article.post > .article-table,
+  .card-page > .article-table { display:block; overflow-x:auto; }
+}
 code { font-family:"SF Mono",Menlo,Monaco,Consolas,monospace; font-size:0.88em; }
 p code,li code { background:var(--codice-bg); padding:0.1rem 0.35rem; border-radius:4px; }
 img { max-width:100% !important; height:auto; }
