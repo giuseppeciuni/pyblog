@@ -98,9 +98,28 @@ def test_full_document():
     check("table with a header row",
           '<table class="article-table"><tbody><tr><th>Comando</th><th>Effetto</th></tr>'
           "<tr><td>build</td><td>rigenera</td></tr>" in content)
+    # Without this wrapper Quill has no blot for the element, deletes it on
+    # the first normalisation, and the imported table disappears while the
+    # text and images around it survive.
+    check("tables carry the raw-html-block wrapper the editor needs",
+          content.count('<div class="raw-html-block" contenteditable="false">'
+                        '<table class="article-table">') == 3)
+    check("every table is wrapped, none is left bare",
+          content.count("<table class=") == content.count('<div class="raw-html-block"'))
+
+    # A table as Word really writes it: property elements before the rows, a
+    # column grid, per-row and per-cell properties, and one row inside a
+    # content control.
+    check("a table with Word's property elements is read",
+          "<th>Parametro</th><th>Valore</th><th>Note</th>" in content)
+    check("a row wrapped in a content control is not lost",
+          "<td>porta</td><td>8000</td><td>predefinita</td>" in content)
+    check("the rows after it are still read",
+          "<td>host</td><td>127.0.0.1</td><td>solo locale</td>" in content)
+
     check("nested table is flattened to text",
           "dentro A dentro B dentro C dentro D" in content
-          and content.count("<table") == 2)
+          and content.count("<table") == 3)
     check("a warning reports the flattened table",
           "warn_docx_nested_table" in warning_keys(result))
 

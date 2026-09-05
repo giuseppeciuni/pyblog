@@ -659,6 +659,48 @@ class DocxConverter:
 
     # --- Tables -----------------------------------------------------------
 
+    def own_rows(self, table):
+        """
+        The w:tr elements that belong to THIS table.
+
+        They are usually direct children, but a real Word document wraps them
+        in content controls (w:sdt) or tracked-change markers (w:ins) often
+        enough that looking only one level down loses whole tables. We walk
+        down through anything, stopping at a nested table, whose rows are not
+        ours, and at a cell, which cannot contain a row of our own.
+        """
+        rows = []
+
+        def walk(node):
+            for child in node:
+                name = _local(child.tag)
+                if name in ("tbl", "tc"):
+                    continue
+                if name == "tr":
+                    rows.append(child)
+                else:
+                    walk(child)
+
+        walk(table)
+        return rows
+
+    def own_cells(self, row):
+        """The w:tc elements of a row, through the same wrappers."""
+        cells = []
+
+        def walk(node):
+            for child in node:
+                name = _local(child.tag)
+                if name == "tbl":
+                    continue
+                if name == "tc":
+                    cells.append(child)
+                else:
+                    walk(child)
+
+        walk(row)
+        return cells
+
     def render_table(self, table, depth=0):
         """
         Render a w:tbl as the same <table class="article-table"> the editor
@@ -674,9 +716,9 @@ class DocxConverter:
 
         rows_html = []
         row_index = 0
-        for row in table.findall(W + "tr"):
+        for row in self.own_rows(table):
             cells_html = []
-            for cell in row.findall(W + "tc"):
+            for cell in self.own_cells(row):
                 content = self.render_cell(cell, depth)
                 if row_index == 0:
                     cells_html.append("<th>" + content + "</th>")
@@ -689,8 +731,23 @@ class DocxConverter:
 
         if len(rows_html) == 0:
             return ""
-        return ('<table class="article-table"><tbody>'
-                + "".join(rows_html) + "</tbody></table>")
+
+        table_html = ('<table class="article-table"><tbody>'
+                      + "".join(rows_html) + "</tbody></table>")
+
+        # The wrapper is not decoration: it is what makes the table survive.
+        #
+        # Quill keeps a document model of its own and deletes any element it
+        # has no blot for. A bare <table> is one of those, so an imported
+        # table used to vanish the moment the editor normalised the content,
+        # while the text and images around it (which Quill does understand)
+        # came through fine. The editor registers a "rawHTML" blot bound to
+        # div.raw-html-block, which is also what its own paste-from-Word path
+        # produces, so emitting the same wrapper here makes an imported table
+        # indistinguishable from one pasted or drawn in the editor - editable
+        # by clicking it, and saved unchanged.
+        return ('<div class="raw-html-block" contenteditable="false">'
+                + table_html + "</div>")
 
     def render_cell(self, cell, depth):
         """Render the blocks inside one table cell, as inline-ish HTML."""
@@ -713,6 +770,11 @@ class DocxConverter:
                 nested = self.render_table(child, depth + 1)
                 if nested != "":
                     pieces.append(nested)
+            elif name in ("sdt", "sdtContent", "ins"):
+                # A cell's content can sit inside a content control too.
+                nested_cell = self.render_cell(child, depth)
+                if nested_cell != "":
+                    pieces.append(nested_cell)
         return " ".join(piece for piece in pieces if piece.strip() != "")
 
     def flatten_table_text(self, table):

@@ -145,6 +145,40 @@ def table(rows, nested=False):
     return "".join(out)
 
 
+def realistic_table(rows):
+    """
+    A table shaped the way Word actually writes one.
+
+    The minimal <w:tbl><w:tr><w:tc> of the fixture above is not what comes
+    out of Word: there are table, row and cell property elements, a column
+    grid, and - in documents that have been through review or that use
+    content controls - the rows sit inside a w:sdt rather than directly under
+    the table. A parser that only looks at direct children loses those.
+    """
+    columns = max(len(cells) for cells in rows)
+    out = ["<w:tbl>"]
+    out.append('<w:tblPr><w:tblStyle w:val="GridTable"/>'
+               '<w:tblW w:w="0" w:type="auto"/>'
+               '<w:tblBorders><w:top w:val="single" w:sz="4"/></w:tblBorders>'
+               "</w:tblPr>")
+    out.append("<w:tblGrid>" + '<w:gridCol w:w="3000"/>' * columns + "</w:tblGrid>")
+    for index, cells in enumerate(rows):
+        riga = ["<w:tr><w:trPr><w:cantSplit/></w:trPr>"]
+        for cell in cells:
+            riga.append('<w:tc><w:tcPr><w:tcW w:w="3000" w:type="dxa"/>'
+                        "<w:vAlign w:val=\"center\"/></w:tcPr>"
+                        + paragraph(run(cell), style="Normal") + "</w:tc>")
+        riga.append("</w:tr>")
+        riga_xml = "".join(riga)
+        # The second row is wrapped in a content control, as Word does.
+        if index == 1:
+            riga_xml = ("<w:sdt><w:sdtPr/><w:sdtContent>" + riga_xml
+                        + "</w:sdtContent></w:sdt>")
+        out.append(riga_xml)
+    out.append("</w:tbl>")
+    return "".join(out)
+
+
 BODY = "".join([
     paragraph(run("Guida completa all'import da Word"), style="Heading1"),
     paragraph(run("Questo paragrafo ha del ") + run("grassetto diretto", bold=True)
@@ -173,6 +207,10 @@ BODY = "".join([
               + '<w:hyperlink r:id="rId12">' + run("collegamento pericoloso")
               + "</w:hyperlink>" + run(".")),
     table([["Comando", "Effetto"], ["build", "rigenera"], ["serve", "avvia"]]),
+    paragraph(run("Una tabella come la scrive davvero Word"), style="Heading2"),
+    realistic_table([["Parametro", "Valore", "Note"],
+                     ["porta", "8000", "predefinita"],
+                     ["host", "127.0.0.1", "solo locale"]]),
     paragraph(drawing("rId10")),
     paragraph(picture("rId14")),
     paragraph(drawing("rId13")),

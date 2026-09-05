@@ -570,6 +570,11 @@ function applyImportedDocx(risultato) {
     campoTitolo.value = risultato.title;
   }
   quill.root.innerHTML = risultato.content;
+  // Writing innerHTML puts the HTML in the page but leaves Quill's own
+  // document model stale. update() makes it scan the new DOM now, so the
+  // imported tables are recognised as rawHTML blots immediately instead of
+  // at the next keystroke - and so an undo cannot rewind past the import.
+  quill.update();
   markEditorDirty();
   updatePreview();
   refreshTableHints();
