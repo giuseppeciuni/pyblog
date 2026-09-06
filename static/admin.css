@@ -164,8 +164,22 @@ body { background:#f5f6f8; }
 .riga-flag input { width:auto; margin-top:0.2rem; }
 .translation-bar { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; margin:0.8rem 0; }
 .translation-bar button { background:var(--pb-blu); color:#fff; padding:0.5rem 1rem; font-size:0.85rem; border:none; border-radius:var(--pb-radius-sm); cursor:pointer; }
-.editor-wrap button { background:var(--pb-blu); color:#fff; padding:0.7rem 1.4rem; border:none; border-radius:var(--pb-radius-sm); font-size:1rem; cursor:pointer; }
-.editor-wrap button.delete-btn { background:#cc0000; }
+/* The big blue buttons are the sidebar actions: save, save and close, delete.
+   This rule used to be scoped to .editor-wrap, which was a mistake: at
+   specificity 0-1-1 it beat .btn-suggerisci and .btn-importa-word (0-1-0),
+   so the three AI buttons and the Word import button were drawn full size in
+   blue instead of small and purple, and it beat .translation-bar button too.
+   Scoping it to the action stack is what the original bare "button" rule
+   effectively did, and it takes the fight with those classes away. */
+.sidebar-azioni button { background:var(--pb-blu); color:#fff; padding:0.7rem 1.4rem; border:none; border-radius:var(--pb-radius-sm); font-size:1rem; cursor:pointer; }
+.sidebar-azioni button.delete-btn { background:#cc0000; }
+/* "Save and close" is the secondary of the two: it leaves the editor, so it
+   should not compete with the one you press twenty times while writing. */
+.sidebar-azioni button.btn-salva-chiudi {
+  background:#fff; color:var(--pb-blu); border:1px solid var(--pb-blu);
+  font-size:0.92rem; padding:0.55rem 1.2rem;
+}
+.sidebar-azioni button.btn-salva-chiudi:hover { background:#f0f6ff; }
 /* Readable code blocks in the editor: Quill's native style makes them
    black on black. We force a light background and dark text, as on the public site. */
 .ql-editor pre, .ql-editor pre.ql-syntax {
