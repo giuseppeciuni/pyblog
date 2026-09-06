@@ -592,20 +592,32 @@ html[data-tema="dark"] .in-evidenza-titolo { color:var(--testo); }
   display:flex; align-items:center; justify-content:center;
   padding:2rem 1rem; cursor:zoom-out;
 }
+/* The picture closes on a click too, so it shows the same cursor as the
+   backdrop: a "default" cursor on the one thing filling the screen said the
+   opposite of what happens. */
 .zoom-immagine img {
   max-width:100%; max-height:100%; object-fit:contain;
-  border-radius:6px; cursor:default;
+  border-radius:6px; cursor:zoom-out;
   box-shadow:0 10px 50px rgba(0,0,0,0.5);
 }
+/* 2.75rem is 44px, the smallest target a finger hits reliably. The button is
+   a shortcut, not the way out: a tap anywhere does that. */
 .zoom-chiudi {
   position:absolute; top:1rem; right:1rem;
-  width:2.6rem; height:2.6rem; line-height:1;
+  width:2.75rem; height:2.75rem; line-height:1;
   font-size:1.8rem; font-family:inherit;
   color:#fff; background:rgba(255,255,255,0.12);
   border:1px solid rgba(255,255,255,0.3); border-radius:50%;
-  cursor:pointer;
+  cursor:pointer; z-index:1;
 }
 .zoom-chiudi:hover { background:rgba(255,255,255,0.24); }
+@media (max-width: 640px) {
+  /* Less padding gives the picture the room a small screen does not have,
+     and the button steps in from the edge so it clears a rounded corner or
+     a notch. */
+  .zoom-immagine { padding:0.75rem 0.5rem; }
+  .zoom-chiudi { top:0.75rem; right:0.75rem; }
+}
 /* The page behind must not scroll while the picture is open. */
 body.zoom-aperto { overflow:hidden; }
 /* Someone who has asked for less motion gets no hover lift on the cover. */

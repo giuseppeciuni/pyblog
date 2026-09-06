@@ -1331,6 +1331,7 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
     # Values the client-side search needs, on top of the ones every page gets.
     search_options = {
         "post_prefix": post_prefix,
+        "tag_prefix": prefix + "/tag/",
         "read_label": T("leggi_articolo", language),
         "msg_unavailable": T("js_search_unavailable", language),
         "msg_no_results": T("js_search_no_results", language),
@@ -1599,6 +1600,22 @@ def generate_rss(articles, language=None):
 </rss>"""
 
 
+def tag_link_data(art):
+    """
+    An article's tags as {name, slug} pairs, ready for a link.
+
+    Used by the search index: the browser rebuilds the cards when someone
+    searches, and it has to be able to build the tag links too.
+    """
+    result = []
+    for tag in extract_article_tags(art):
+        tag_slug = slugify(tag)
+        if tag_slug == "":
+            continue
+        result.append({"name": tag, "slug": tag_slug})
+    return result
+
+
 def generate_search_index(articles):
     """
     Generate the JSON index used by the browser-side search.
@@ -1625,6 +1642,11 @@ def generate_search_index(articles):
             # cover too: without it a search would quietly drop every
             # thumbnail from the page.
             "image": art.get("image", ""),
+            # The tags as name AND slug. The slug has to come from here
+            # because slugify folds accents, and reimplementing that in
+            # JavaScript would be a second version of the rule to keep in
+            # step. Same reason the cover travels in this index.
+            "tag_links": tag_link_data(art),
         }
         # We add the English data only if the translation is confirmed.
         translation_confirmed = art.get("translation_confirmed", False)

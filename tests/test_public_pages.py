@@ -66,23 +66,44 @@ def test_parita_delle_card():
     check("site.js ha un solo costruttore di card", funzione is not None)
     if funzione is None:
         return
-    classi_js = set(classi_di(funzione.group(0)))
+    tag_builder = re.search(r"function tagsHtml\(.*?\n  \}", js, re.S)
+    sorgente_js = funzione.group(0)
+    if tag_builder is not None:
+        sorgente_js = sorgente_js + tag_builder.group(0)
+    classi_js = set(classi_di(sorgente_js))
     # These two come from the caller: the plain list passes an excerpt, the
     # search results pass a snippet.
     classi_js.add("card-excerpt")
     classi_js.add("card-snippet")
 
+    # The tag row is a sibling of the card, so it has to be gathered from the
+    # list, not from inside the <a>.
+    riga_tag = re.search(r'<span class="card-tags">.*?</span>\s*</span>',
+                         lista.group(1), re.S)
+    if riga_tag is not None:
+        classi_server = classi_server | set(classi_di(riga_tag.group(0)))
+
     mancanti = classi_server - classi_js
     check("site.js costruisce ogni parte che il generatore scrive",
           len(mancanti) == 0, "mancano in site.js: " + str(sorted(mancanti)))
 
+    check("i tag compaiono anche nei risultati di ricerca",
+          "card-tags" in classi_js and "card-tag" in classi_js,
+          str(sorted(classi_js)))
+
     # Position matters as much as presence: the thumbnail goes between the
-    # opening link and the text block, on both sides.
-    ritorno = re.search(r"return '<a class=\"article-card\".*?';", funzione.group(0), re.S)
+    # opening link and the text block, and the tag row comes after the card.
+    # The return statement is one expression spread over several lines, so it
+    # ends at the first semicolon that closes a line.
+    ritorno = re.search(r"return '<a class=\"article-card\".*?;\n", funzione.group(0), re.S)
+    check("il return della card e' individuabile", ritorno is not None)
+    if ritorno is None:
+        return
+    testo = ritorno.group(0)
     check("la miniatura e' concatenata prima del corpo della card",
-          ritorno is not None
-          and ritorno.group(0).index("copertina") < ritorno.group(0).index("card-corpo"),
-          str(ritorno.group(0)) if ritorno else "")
+          testo.index("copertina") < testo.index("card-corpo"), testo)
+    check("la riga dei tag viene dopo la chiusura della card",
+          "tagsHtml" in testo and testo.index("</a>") < testo.index("tagsHtml"), testo)
 
 
 def test_indice_di_ricerca():
@@ -94,6 +115,9 @@ def test_indice_di_ricerca():
         return
     js = leggi("static/site.js")
     funzione = re.search(r"function cardHtml\(.*?\n  \}", js, re.S).group(0)
+    tag_builder = re.search(r"function tagsHtml\(.*?\n  \}", js, re.S)
+    if tag_builder is not None:
+        funzione = funzione + tag_builder.group(0)
     # Every a.<field> the card builder reads must exist in the index.
     campi_usati = set(re.findall(r"\ba\.([a-z_]+)", funzione))
     campi_indice = set(indice[0].keys())
@@ -121,6 +145,34 @@ def test_copertina_nell_articolo():
               posizioni["<h1>"] < posizioni['class="meta"'] < posizioni["articolo-copertina"],
               str(posizioni))
         check(f"{nome}: la copertina e' ingrandibile", "data-zoom" in testo)
+
+
+def test_zoom_si_chiude_ovunque():
+    """
+    A click anywhere in the overlay must close it, the picture included.
+
+    Excluding the picture meant that on a phone, where it fills nearly the
+    whole screen, almost every tap landed on it and did nothing.
+    """
+    print("\nchiusura dell'ingrandimento")
+    js = leggi("static/site.js")
+    apertura = re.search(r"function apriZoom\(.*?\n\}", js, re.S)
+    check("la funzione esiste", apertura is not None)
+    if apertura is None:
+        return
+    corpo = apertura.group(0)
+    check("un clic sullo sfondo chiude",
+          "sfondo.addEventListener('click', chiudiZoom)" in corpo, corpo[-400:])
+    check("nessuna eccezione per l'immagine",
+          "evento.target !== grande" not in corpo, corpo[-400:])
+    check("Esc chiude", "'Escape'" in corpo)
+    check("il pulsante resta come scorciatoia",
+          "chiudi.addEventListener('click', chiudiZoom)" in corpo)
+
+    css = leggi("static/style.css")
+    regola = re.search(r"\.zoom-immagine img \{([^}]*)\}", css)
+    check("l'immagine mostra il cursore di chiusura",
+          regola is not None and "zoom-out" in regola.group(1), str(regola))
 
 
 def test_zoom_solo_negli_articoli():
@@ -155,6 +207,7 @@ def main():
         test_parita_delle_card()
         test_indice_di_ricerca()
         test_copertina_nell_articolo()
+        test_zoom_si_chiude_ovunque()
         test_zoom_solo_negli_articoli()
     finally:
         if originale == "":

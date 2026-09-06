@@ -100,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Variables that depend on the page language (injected from Python).
   var LINGUA_PAGINA = opzioni.language;
   var PREFISSO_POST = opzioni.post_prefix;
+  var PREFISSO_TAG = opzioni.tag_prefix;
   var ETICHETTA_LEGGI = opzioni.read_label;
   var MSG_SEARCH_UNAVAILABLE = opzioni.msg_unavailable;
   var MSG_NO_RESULTS_FOR = opzioni.msg_no_results;
@@ -293,7 +294,25 @@ document.addEventListener('DOMContentLoaded', function() {
       '<h3 class="card-title">' + titoloHtml + '</h3>' +
       testoSotto +
       '<span class="card-read-more">' + ETICHETTA_LEGGI + ' &rarr;</span>' +
-      '</div></a>';
+      '</div></a>' +
+      tagsHtml(a);
+  }
+
+  // The tag row that goes under a card.
+  //
+  // It sits OUTSIDE the card, because the card is itself a link and one
+  // anchor cannot be nested inside another. The slugs come from the index
+  // rather than being derived here: the generator folds accents when it makes
+  // them, and a second version of that rule in JavaScript would drift.
+  function tagsHtml(a) {
+    if (!a.tag_links || a.tag_links.length === 0) { return ''; }
+    var pezzi = '';
+    for (var i = 0; i < a.tag_links.length; i++) {
+      var tag = a.tag_links[i];
+      pezzi = pezzi + '<a class="card-tag" href="' + PREFISSO_TAG +
+              escapeHtml(tag.slug) + '.html">#' + escapeHtml(tag.name) + '</a>';
+    }
+    return '<span class="card-tags">' + pezzi + '</span>';
   }
 
   // Shows the search results, with highlighted title and snippet.
@@ -599,11 +618,12 @@ function apriZoom(indirizzo, testoAlternativo, opzioni) {
   }
 
   chiudi.addEventListener('click', chiudiZoom);
-  // A click anywhere outside the picture closes it too, which is what
-  // everyone tries first.
-  sfondo.addEventListener('click', function(evento) {
-    if (evento.target !== grande) { chiudiZoom(); }
-  });
+  // A click ANYWHERE closes it, the picture included. Excluding the picture
+  // meant that on a phone, where it fills nearly the whole screen, almost
+  // every tap landed on it and did nothing: the only way out was a small
+  // button in a corner. Tapping what you are looking at to dismiss it is
+  // what people try first, and there is nothing else to do here.
+  sfondo.addEventListener('click', chiudiZoom);
   document.addEventListener('keydown', suTasto);
 
   document.body.appendChild(sfondo);
