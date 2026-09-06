@@ -115,3 +115,18 @@ def js(value):
     """
     text = json.dumps(value, ensure_ascii=False)
     return text.replace("</", "<\\/")
+
+
+def js_attr(value):
+    """
+    Serialise a value for JavaScript that lives inside an HTML attribute,
+    such as onclick="doSomething($value)".
+
+    Two contexts are nested here, so the value has to survive both. js()
+    alone is not enough: json.dumps quotes with double quotes, and an HTML
+    attribute is delimited by double quotes too, so the attribute would end
+    at the first one and the handler would be cut in half. Escaping the JSON
+    for HTML turns those into &quot;, which the HTML parser decodes back into
+    real quotes before the JavaScript parser ever sees them.
+    """
+    return html.escape(js(value))

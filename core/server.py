@@ -39,7 +39,7 @@ from core.config import (CONFIG, CONFIG_FILE, OUTPUT_DIR, PORT, POSTS_DIR,
                          admin_language, load_config, reload_global_config,
                          save_config)
 from core.i18n import T
-from core.render import esc, js
+from core.render import esc, js, js_attr
 
 # Bootstrap version loaded from a CDN for all the administration pages.
 BOOTSTRAP_CSS = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
@@ -404,13 +404,15 @@ def admin_page(articles, csrf):
             etichetta_badge=badge_label,
             badge_en=badge_en,
             slug=esc(art["slug"]),
-            slug_js=js(art["slug"]),
+            # These three land inside an onclick attribute, so they need the
+            # HTML layer on top of the JavaScript one.
+            slug_js=js_attr(art["slug"]),
             titolo=esc(art["title"]),
-            titolo_js=js(art["title"]),
+            titolo_js=js_attr(art["title"]),
             data=format_date(art["date"], la),
             descrizione=esc(art.get("description", "")),
             classe_stato=status_class,
-            azione_stato_js=js(status_action),
+            azione_stato_js=js_attr(status_action),
             etichetta_stato=status_label,
             label_modifica=T("admin_modifica", la),
             label_anteprima=T("admin_anteprima", la),
