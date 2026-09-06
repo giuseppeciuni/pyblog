@@ -616,6 +616,13 @@ def selected_if(value, expected):
     return ""
 
 
+def checked_if(value):
+    """Return the "checked" attribute for a true value."""
+    if value:
+        return "checked"
+    return ""
+
+
 def config_page(csrf):
     """
     Site configuration page:
@@ -745,6 +752,9 @@ def config_page(csrf):
         label_articoli_per_pagina=T("admin_articoli_per_pagina", la),
         hint_articoli_per_pagina=T("admin_articoli_per_pagina_hint", la),
         valore_articoli_per_pagina=esc(config.get("articles_per_page", 10)),
+        checked_home_evidenza=checked_if(config.get("home_featured", True)),
+        label_home_evidenza=T("admin_home_evidenza", la),
+        hint_home_evidenza=T("admin_home_evidenza_hint", la),
         label_seo=T("admin_seo_titolo", la),
         hint_seo=T("admin_seo_intro", la),
         label_seo_autore_url=T("admin_seo_autore_url", la),

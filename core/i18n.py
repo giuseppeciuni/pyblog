@@ -524,6 +524,14 @@ UI_TRANSLATIONS = {
     "ultimi_articoli": {"it": "Ultimi articoli", "en": "Latest articles"},
     "cerca_nel_sito": {"it": "Cerca nel sito", "en": "Search the site"},
     "progresso_lettura": {"it": "Avanzamento della lettura", "en": "Reading progress"},
+    "ultimo_articolo": {"it": "Ultimo articolo", "en": "Latest article"},
+
+    # --- Settings: the highlighted article ---
+    "admin_home_evidenza": {"it": "Metti in evidenza l'ultimo articolo",
+                            "en": "Highlight the latest article"},
+    "admin_home_evidenza_hint": {
+        "it": "(l'articolo pi\u00f9 recente appare in un blocco pi\u00f9 grande in cima all'elenco, con la sua immagine di copertina se ne ha una)",
+        "en": "(the most recent article appears in a larger block at the top of the list, with its cover image if it has one)"},
 }
 
 

@@ -2268,6 +2268,7 @@ function saveConfig(pulsante) {
     language: document.getElementById('language').value,
     home_order: ordineHome,
     articles_per_page: articoliPerPagina,
+    home_featured: document.getElementById('home_featured').checked,
     seo: {
       author_url: document.getElementById('seo_author_url').value.trim(),
       author_image: document.getElementById('seo_author_image').value.trim(),

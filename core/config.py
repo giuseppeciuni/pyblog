@@ -165,6 +165,11 @@ CONFIG_DEFAULT = {
     # the articles. Reorder the list to change the page structure.
     "home_order": ["intro", "cards", "articles"],
 
+    # Highlight the most recent article in a larger block at the top of the
+    # article list, with its cover image when it has one. With False the
+    # homepage is a plain list, as it was before.
+    "home_featured": True,
+
     # Number of articles shown on each page of the homepage.
     # The next pages are generated at /pagina/2.html, /pagina/3.html...
     # With 0, pagination is disabled: all articles on a single page.

@@ -84,6 +84,17 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!input || !info || !lista) { return; }
   if (opzioni.post_prefix === undefined) { return; }
 
+  // The highlighted article, when the homepage has one. A search replaces
+  // the whole list, so leaving "latest article" pinned above a set of
+  // filtered results would be misleading: it hides while a query is running
+  // and comes back when the box is emptied.
+  var bloccoInEvidenza = document.querySelector('.in-evidenza');
+
+  function mostraInEvidenza(visibile) {
+    if (!bloccoInEvidenza) { return; }
+    bloccoInEvidenza.hidden = !visibile;
+  }
+
   var indice = [];
 
   // Variables that depend on the page language (injected from Python).
@@ -214,9 +225,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (termineNorm === '') {
       // Empty query: restore the original full list.
       info.textContent = '';
+      mostraInEvidenza(true);
       renderAll();
       return;
     }
+    mostraInEvidenza(false);
 
     // For each article we check where the term appears.
     var risultati = [];

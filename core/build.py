@@ -905,6 +905,79 @@ def generate_article_page(art, language="it", all_articles=None):
 # HOMEPAGE CARDS AND CARD PAGES
 # ---------------------------------------------------------------------------
 
+def home_featured_enabled():
+    """Tell whether the homepage should highlight its most recent article."""
+    return CONFIG.get("home_featured", True) is True
+
+
+def article_card_fields(art, language):
+    """
+    The title, description, content and reader preview of an article in one
+    language. The homepage cards and the highlighted block both need the same
+    four values, picked the same way.
+    """
+    if language != main_language():
+        return (art.get("title_en", ""), art.get("description_en", ""),
+                art.get("content_en", ""), art.get("preview_en", ""))
+    return (art.get("title", ""), art.get("description", ""),
+            art.get("content", ""), art.get("preview", ""))
+
+
+def card_preview_text(preview, content, description, length):
+    """
+    The text shown under a card title.
+
+    Priority: what the author wrote, then an automatic excerpt of the article,
+    then the SEO description as a last resort.
+    """
+    if preview != "":
+        return preview
+    excerpt = excerpt_from_html(content, length)
+    if excerpt != "":
+        return excerpt
+    return description
+
+
+def generate_featured_article(art, language):
+    """
+    Render the most recent article as a larger block at the top of the list.
+
+    The cover image is used here and nowhere else on the homepage: until now
+    it only fed og:image and the structured data, so an author who filled it
+    in saw nothing for it. When there is no image the block keeps the same
+    markup and simply reads as a wider card, so it never looks half-finished.
+    """
+    prefix = language_url_prefix(language)
+    title_value, description, content, preview = article_card_fields(art, language)
+
+    cover = ""
+    image_url = art.get("image", "").strip()
+    if image_url != "":
+        cover = ('        <img class="in-evidenza-copertina" '
+                 f'src="{esc(image_url)}" alt="{esc(title_value)}" loading="lazy">\n')
+
+    # A longer excerpt than the ordinary cards get: this block has the room
+    # for it, and it is what earns the extra space.
+    excerpt = card_preview_text(preview, content, description, 340)
+
+    tags_row = tag_links(art, language)
+    if tags_row != "":
+        tags_row = "      " + tags_row + "\n"
+
+    return render.render(
+        "public/home_featured.html",
+        etichetta=T("ultimo_articolo", language),
+        url=f"{prefix}/posts/{art['slug']}.html",
+        copertina=cover,
+        titolo=esc(title_value),
+        data=format_date(art["date"], language),
+        tempo_lettura=compute_reading_time(content, language),
+        estratto=esc(excerpt),
+        leggi=T("leggi_articolo", language),
+        tags=tags_row,
+    )
+
+
 def generate_home_cards(language="it"):
     """
     Generate the homepage cards block. Each card is a link leading to its
@@ -1011,30 +1084,27 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         end = len(visibili)
         page_articles = visibili
 
+    # The most recent article gets its own block above the list, on the first
+    # page only. It is REMOVED from the list rather than repeated in it: the
+    # same article twice in a row reads as a mistake. The page still holds the
+    # same number of articles, so the pagination maths is unchanged - only the
+    # slice the browser restores when a search is cleared starts one later.
+    featured_article = None
+    if home_featured_enabled() and page == 1 and len(page_articles) > 0:
+        featured_article = page_articles[0]
+        page_articles = page_articles[1:]
+        start = start + 1
+
     feed_items = []
     for art in page_articles:
         # The translated fields are always the _en ones (translation is IT<->EN).
-        if language != main_language():
-            card_title = art.get("title_en", "")
-            card_description = art.get("description_en", "")
-            card_content = art.get("content_en", "")
-            card_preview = art.get("preview_en", "")
-        else:
-            card_title = art.get("title", "")
-            card_description = art.get("description", "")
-            card_content = art.get("content", "")
-            card_preview = art.get("preview", "")
+        card_title, card_description, card_content, card_preview = \
+            article_card_fields(art, language)
 
-        # Card preview (for readers; this is not the SEO meta description).
-        # Priority: 1) preview written by the author, 2) automatic excerpt
-        # of the content, 3) SEO description as a last resort.
-        preview_text = card_preview
-        if preview_text == "":
-            # Short excerpt: 2-3 lines. A long excerpt turns every card into
-            # a wall of text and makes the homepage impossible to scan.
-            preview_text = excerpt_from_html(card_content, 200)
-        if preview_text == "":
-            preview_text = card_description
+        # Short excerpt: 2-3 lines. A long excerpt turns every card into
+        # a wall of text and makes the homepage impossible to scan.
+        preview_text = card_preview_text(card_preview, card_content,
+                                         card_description, 200)
         excerpt = ""
         if preview_text != "":
             excerpt = f'<p class="card-excerpt">{esc(preview_text)}</p>'
@@ -1055,6 +1125,11 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
 
     if len(feed_items) > 0:
         lista = "\n".join(feed_items)
+    elif featured_article is not None:
+        # Every article of this page went into the highlighted block, so the
+        # list below is empty. That is not an empty blog: saying "no articles
+        # published yet" right under an article would be plainly wrong.
+        lista = ""
     else:
         lista = f'    <p class="no-articles">{T("nessun_articolo", language)}</p>'
 
@@ -1117,11 +1192,16 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         )
 
     # --- Articles section (with search) as a standalone block ---
+    featured_block = ""
+    if featured_article is not None:
+        featured_block = generate_featured_article(featured_article, language)
+
     articles_block = render.render(
         "public/home_articles.html",
         titolo_sezione=T("articles", language),
         placeholder_ricerca=esc(T("cerca_articoli", language)),
         aria_ricerca="Cerca",
+        in_evidenza=block(featured_block),
         lista=lista,
         paginazione=block(pagination_block),
     )
