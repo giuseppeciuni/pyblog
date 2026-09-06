@@ -492,10 +492,14 @@ html[data-tema="dark"] .errore-404-numero {
   transition:transform 0.15s, box-shadow 0.15s;
 }
 .in-evidenza-card:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(0,0,0,0.10); }
-/* The cover image keeps a stable share of the row, so a tall photo and a wide
-   one produce the same layout. */
+/* The cover is a thumbnail, not a column.
+   At 34% in 4:3 it was about 340x255 on a 1000px block, which carried as much
+   weight as the text next to it and turned the block into two competing
+   halves. A square capped at 150px reads as a mark that identifies the
+   article, and gives the text back roughly a third of the width. The square
+   crop also treats a tall photo and a wide one the same way. */
 .in-evidenza-copertina {
-  flex:0 0 34%; max-width:34%; aspect-ratio:4 / 3; object-fit:cover;
+  flex:0 0 20%; max-width:150px; aspect-ratio:1 / 1; object-fit:cover;
   border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,0.10);
 }
 .in-evidenza-testo { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
@@ -515,9 +519,16 @@ html[data-tema="dark"] .in-evidenza-card { border-color:var(--hero-bordo); }
 html[data-tema="dark"] .in-evidenza-estratto,
 html[data-tema="dark"] .in-evidenza-titolo { color:var(--testo); }
 @media (max-width: 720px) {
-  /* One column: a 34% image on a phone is a thumbnail nobody can read. */
-  .in-evidenza-card { flex-direction:column; gap:1rem; padding:1.2rem; }
-  .in-evidenza-copertina { flex:0 0 auto; max-width:100%; width:100%; aspect-ratio:16 / 9; }
-  .in-evidenza-titolo { font-size:1.3rem; }
+  /* The row survives on a phone: a small square beside the text reads like a
+     list item, and stacking it full width would undo the point of shrinking
+     it in the first place. */
+  .in-evidenza-card { gap:1rem; padding:1.2rem; }
+  .in-evidenza-copertina { flex:0 0 26%; max-width:110px; }
+  .in-evidenza-titolo { font-size:1.25rem; }
   .in-evidenza-estratto { -webkit-line-clamp:4; }
+}
+@media (max-width: 420px) {
+  /* On the narrowest screens the text needs every pixel it can get. */
+  .in-evidenza-copertina { flex:0 0 74px; max-width:74px; }
+  .in-evidenza-card { gap:0.8rem; padding:1rem; }
 }

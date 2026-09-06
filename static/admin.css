@@ -300,10 +300,11 @@ button:disabled { opacity: 0.65; cursor: default; }
 
 .campo-copertina { display:flex; flex-direction:column; gap:0.45rem; }
 .copertina-azioni { display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center; }
-/* The thumbnail is cropped to 4:3, the same proportion the highlighted block
-   on the homepage uses, so what you see here is the framing readers get. */
+/* Cropped square, the same proportion the highlighted block on the homepage
+   uses, so what you see here is the framing readers get. It is capped so the
+   preview does not take over the sidebar. */
 .copertina-anteprima {
-  width:100%; aspect-ratio:4 / 3; object-fit:cover;
+  width:100%; max-width:180px; aspect-ratio:1 / 1; object-fit:cover;
   border:1px solid #e4e4e7; border-radius:8px; background:#fff;
 }
 .copertina-anteprima[hidden] { display:none; }
