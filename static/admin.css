@@ -293,3 +293,24 @@ button:disabled { opacity: 0.65; cursor: default; }
 #editor .raw-html-block.ql-align-center .article-table { margin-left: auto; margin-right: auto; }
 #editor .raw-html-block.ql-align-right .article-table { margin-left: auto; margin-right: 0; }
 #editor .raw-html-block.ql-align-justify .article-table { width: 100%; }
+
+/* ===========================================================================
+   COVER IMAGE FIELD
+   =========================================================================== */
+
+.campo-copertina { display:flex; flex-direction:column; gap:0.45rem; }
+.copertina-azioni { display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center; }
+/* The thumbnail is cropped to 4:3, the same proportion the highlighted block
+   on the homepage uses, so what you see here is the framing readers get. */
+.copertina-anteprima {
+  width:100%; aspect-ratio:4 / 3; object-fit:cover;
+  border:1px solid #e4e4e7; border-radius:8px; background:#fff;
+}
+.copertina-anteprima[hidden] { display:none; }
+.btn-rimuovi-cover {
+  background:#fff; color:#b02a37; border:1px solid #f1c2c7;
+  border-radius:var(--pb-radius-sm); padding:0.35rem 0.8rem;
+  font-size:0.82rem; cursor:pointer; white-space:nowrap;
+}
+.btn-rimuovi-cover:hover { background:#fdf2f3; }
+.btn-rimuovi-cover[hidden] { display:none; }

@@ -447,40 +447,113 @@ function fileFitsLimit(file, limiteMb) {
   return false;
 }
 
-// Shared upload routine: sends the chosen file, then inserts the snippet
-// built by costruisciCodice() at the cursor. Used by both the image and the
-// video buttons, on both admin pages.
-function uploadMediaFile(idCampoFile, limiteMb, messaggioInizio, messaggioFine,
-                         costruisciCodice) {
-  if (!PB_MAIN_QUILL) { return; }
+// Uploads the file chosen in a file input and resolves to its URL, or to
+// null when it was refused or the upload failed (the reason is shown to the
+// author here, so the caller only has to check for null).
+//
+// This is the one place that talks to /upload: the buttons that put an image
+// in the article, the one that puts a video in it and the one that sets the
+// cover all go through it.
+function uploadChosenFile(idCampoFile, limiteMb, idStato, messaggioInizio) {
   var campoFile = document.getElementById(idCampoFile);
-  if (!campoFile || campoFile.files.length === 0) { return; }
-
-  var file = campoFile.files[0];
-  if (!fileFitsLimit(file, limiteMb)) {
-    campoFile.value = '';
-    return;
+  if (!campoFile || campoFile.files.length === 0) {
+    return Promise.resolve(null);
   }
+  var file = campoFile.files[0];
+  // Clearing the input now lets the same file be chosen again later: without
+  // this the change event would not fire a second time. FormData already
+  // holds the file, so the upload is unaffected.
+  campoFile.value = '';
+
+  if (!fileFitsLimit(file, limiteMb)) {
+    return Promise.resolve(null);
+  }
+
   var datiForm = new FormData();
   datiForm.append('video', file);
-  pbStatus('upload-status', messaggioInizio);
+  pbStatus(idStato, messaggioInizio);
 
-  pbFetch('/upload', { method: 'POST', body: datiForm })
+  return pbFetch('/upload', { method: 'POST', body: datiForm })
     .then(function(risposta) { return risposta.json(); })
     .then(function(risultato) {
       if (risultato.ok === true) {
-        var codice = costruisciCodice(risultato.url);
-        var posizione = PB_MAIN_QUILL.getSelection(true);
-        PB_MAIN_QUILL.clipboard.dangerouslyPasteHTML(posizione.index, codice);
-        pbStatus('upload-status', messaggioFine);
-      } else {
-        pbStatus('upload-status', t('js_error_prefix') + risultato.error);
+        return risultato.url;
       }
+      pbStatus(idStato, '');
+      pbToast(t('js_error_prefix') + risultato.error, 'danger');
+      return null;
     })
-    .catch(function() { pbStatus('upload-status', t('js_upload_error')); });
-  // The same file can then be chosen again: without this the change event
-  // would not fire a second time.
-  campoFile.value = '';
+    .catch(function() {
+      pbStatus(idStato, '');
+      pbToast(t('js_upload_error'), 'danger');
+      return null;
+    });
+}
+
+// Uploads a file and inserts the snippet built by costruisciCodice() at the
+// cursor. Used by the image and video buttons, on both admin pages.
+function uploadMediaFile(idCampoFile, limiteMb, messaggioInizio, messaggioFine,
+                         costruisciCodice) {
+  if (!PB_MAIN_QUILL) { return; }
+  uploadChosenFile(idCampoFile, limiteMb, 'upload-status', messaggioInizio)
+    .then(function(url) {
+      if (url === null) { return; }
+      var posizione = PB_MAIN_QUILL.getSelection(true);
+      PB_MAIN_QUILL.clipboard.dangerouslyPasteHTML(posizione.index, costruisciCodice(url));
+      pbStatus('upload-status', messaggioFine);
+    });
+}
+
+/* --- The cover image ------------------------------------------------------ */
+
+// Uploads a file and puts its address in the cover field.
+//
+// The field used to be a bare text box: to give an article a cover you had to
+// upload the image into the body, copy the address out of the HTML, paste it
+// here and then delete the image from the body again. This does that in one
+// click, through the same endpoint and the same checks.
+function uploadCoverImage() {
+  uploadChosenFile('file-cover', pbPage('max_image_mb', 10), 'cover-status',
+                   t('js_uploading_image'))
+    .then(function(url) {
+      if (url === null) { return; }
+      document.getElementById('image').value = url;
+      updateCoverPreview();
+      markEditorDirty();
+      pbStatus('cover-status', t('js_image_uploaded'));
+    });
+}
+
+// Shows the cover as a thumbnail, cropped the way the homepage crops it, so
+// the framing is not a surprise once the article is published. Called when
+// the field changes, however it changed.
+function updateCoverPreview() {
+  var campo = document.getElementById('image');
+  var anteprima = document.getElementById('cover-preview');
+  var rimuovi = document.getElementById('btn-rimuovi-cover');
+  if (!campo || !anteprima) { return; }
+
+  var indirizzo = campo.value.trim();
+  if (indirizzo === '') {
+    anteprima.removeAttribute('src');
+    anteprima.hidden = true;
+    if (rimuovi) { rimuovi.hidden = true; }
+    return;
+  }
+  anteprima.src = indirizzo;
+  anteprima.alt = document.getElementById('title').value;
+  anteprima.hidden = false;
+  if (rimuovi) { rimuovi.hidden = false; }
+}
+
+// Clears the cover. The file itself stays in the media folder: another
+// article may be using it, and deleting an upload from here would be a
+// surprise the author did not ask for.
+function removeCoverImage() {
+  document.getElementById('image').value = '';
+  updateCoverPreview();
+  markEditorDirty();
+  pbStatus('cover-status', '');
 }
 
 // Uploads a video file to the server and inserts it into the editor.
@@ -1491,6 +1564,7 @@ function initEditorPage() {
   updateTranslationSection();
   updateDescriptionCounter();
   updatePreviewCounter();
+  updateCoverPreview();
 
   // Every time you type in the editor, update the preview (if it is open).
   quill.on('text-change', function() {

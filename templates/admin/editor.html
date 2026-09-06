@@ -64,7 +64,21 @@
     <input type="text" id="tags" value="$valore_tag" placeholder="AI, Python">
 
     <label>$label_immagine</label>
-    <input type="text" id="image" value="$valore_immagine">
+    <p class="hint" style="margin:0 0 0.3rem">$hint_immagine</p>
+    <div class="campo-copertina">
+      <input type="text" id="image" value="$valore_immagine"
+             placeholder="$ph_immagine" oninput="updateCoverPreview()">
+      <div class="copertina-azioni">
+        <button type="button" class="btn-suggerisci"
+                onclick="document.getElementById('file-cover').click()">$label_carica_copertina</button>
+        <button type="button" class="btn-rimuovi-cover" id="btn-rimuovi-cover" hidden
+                onclick="removeCoverImage()">$label_rimuovi_copertina</button>
+        <span id="cover-status" class="hint"></span>
+      </div>
+      <input type="file" id="file-cover" style="display:none" onchange="uploadCoverImage()"
+             accept="image/png, image/jpeg, image/gif, image/webp, .png, .jpg, .jpeg, .gif, .webp">
+      <img id="cover-preview" class="copertina-anteprima" alt="" hidden>
+    </div>
 
     <div class="card-campo">
       <h2>$label_anteprima_lettori</h2>

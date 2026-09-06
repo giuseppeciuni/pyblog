@@ -193,7 +193,12 @@ UI_TRANSLATIONS = {
     "admin_sezione_pubblicazione": {"it": "Pubblicazione", "en": "Publishing"},
     "admin_sezione_metadati": {"it": "Dettagli articolo", "en": "Article details"},
     "admin_tag": {"it": "Tag (separati da virgola)", "en": "Tags (comma separated)"},
-    "admin_immagine_copertina": {"it": "Immagine di copertina (URL)", "en": "Cover image (URL)"},
+    "admin_immagine_copertina": {"it": "Immagine di copertina", "en": "Cover image"},
+    "admin_immagine_copertina_hint": {
+        "it": "(appare nel blocco \u00abUltimo articolo\u00bb in homepage e nelle anteprime social. Carica un file oppure incolla un indirizzo.)",
+        "en": "(appears in the \u201cLatest article\u201d block on the homepage and in social previews. Upload a file or paste an address.)"},
+    "admin_carica_copertina": {"it": "Carica un'immagine", "en": "Upload an image"},
+    "admin_rimuovi_copertina": {"it": "Rimuovi", "en": "Remove"},
     "admin_contenuto": {"it": "Contenuto", "en": "Content"},
     "admin_stato": {"it": "Stato", "en": "Status"},
     "admin_salva_genera": {"it": "Salva e genera HTML", "en": "Save and generate HTML"},
