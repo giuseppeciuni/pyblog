@@ -270,6 +270,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Builds one article card.
+  //
+  // The same markup the generator writes, because these cards REPLACE the
+  // generated ones the moment you type in the search box: any difference
+  // here would show up as the page changing shape mid-search. That is also
+  // why the thumbnail is here - without it a search silently stripped every
+  // cover from the list.
+  //
+  // titoloHtml arrives ready: the results highlight the search term inside
+  // it, the plain list does not.
+  function cardHtml(a, titoloHtml, testoSotto) {
+    var copertina = '';
+    if (a.image) {
+      copertina = '<img class="card-copertina" src="' + escapeHtml(a.image) +
+                  '" alt="' + escapeHtml(articleTitle(a)) + '" loading="lazy">';
+    }
+    return '<a class="article-card" href="' + PREFISSO_POST + a.slug + '.html">' +
+      copertina +
+      '<div class="card-corpo">' +
+      '<div class="card-date">' + articleDate(a) + '</div>' +
+      '<h3 class="card-title">' + titoloHtml + '</h3>' +
+      testoSotto +
+      '<span class="card-read-more">' + ETICHETTA_LEGGI + ' &rarr;</span>' +
+      '</div></a>';
+  }
+
   // Shows the search results, with highlighted title and snippet.
   function renderResults(risultati, termine) {
     if (risultati.length === 0) {
@@ -284,13 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (snippet !== '') {
         bloccoSnippet = '<p class="card-snippet">' + snippet + '</p>';
       }
-      html = html +
-        '<a class="article-card" href="' + PREFISSO_POST + a.slug + '.html">' +
-        '<div class="card-date">' + articleDate(a) + '</div>' +
-        '<h3 class="card-title">' + highlight(escapeHtml(articleTitle(a)), termine) + '</h3>' +
-        bloccoSnippet +
-        '<span class="card-read-more">' + ETICHETTA_LEGGI + ' &rarr;</span>' +
-        '</a>';
+      html = html + cardHtml(a, highlight(escapeHtml(articleTitle(a)), termine), bloccoSnippet);
     }
     lista.innerHTML = html;
   }
@@ -334,13 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (testoAnteprima) {
         estratto = '<p class="card-excerpt">' + escapeHtml(testoAnteprima) + '</p>';
       }
-      html = html +
-        '<a class="article-card" href="' + PREFISSO_POST + a.slug + '.html">' +
-        '<div class="card-date">' + articleDate(a) + '</div>' +
-        '<h3 class="card-title">' + escapeHtml(articleTitle(a)) + '</h3>' +
-        estratto +
-        '<span class="card-read-more">' + ETICHETTA_LEGGI + ' &rarr;</span>' +
-        '</a>';
+      html = html + cardHtml(a, escapeHtml(articleTitle(a)), estratto);
     }
     lista.innerHTML = html;
   }
@@ -503,3 +517,97 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('resize', pianifica);
   aggiorna();
 });
+
+/* --- 6) Enlarging the article cover --------------------------------------- */
+
+// Opens the article cover at full size when it is clicked.
+//
+// Only the cover INSIDE an article gets this. On the homepage the same
+// picture sits inside the link to the article, and a click there has to mean
+// "open the article": giving one region of a card a different action is a
+// trap, and on a touch screen there is no hover to hint at the difference.
+// In the article the picture is not a link, and its height is capped - so
+// part of it is cropped, and "let me see the whole thing" is a real need
+// rather than an invented one.
+document.addEventListener('DOMContentLoaded', function() {
+  var opzioni = window.PB_SITE;
+  if (!opzioni) { return; }
+
+  var immagini = document.querySelectorAll('.articolo-copertina img[data-zoom]');
+  if (immagini.length === 0) { return; }
+
+  for (var i = 0; i < immagini.length; i++) {
+    preparaZoom(immagini[i], opzioni);
+  }
+});
+
+function preparaZoom(immagine, opzioni) {
+  // The image becomes a real button: it can be reached with the keyboard and
+  // a screen reader announces it as something you can activate.
+  immagine.setAttribute('role', 'button');
+  immagine.setAttribute('tabindex', '0');
+  immagine.setAttribute('aria-label', opzioni.zoom_label);
+
+  function apri() {
+    apriZoom(immagine.getAttribute('data-zoom'), immagine.alt, opzioni);
+  }
+
+  immagine.addEventListener('click', apri);
+  immagine.addEventListener('keydown', function(evento) {
+    if (evento.key === 'Enter' || evento.key === ' ') {
+      evento.preventDefault();
+      apri();
+    }
+  });
+}
+
+// Shows the picture over the page. Built by hand rather than with a library:
+// it is a div, an image and two ways to close it.
+function apriZoom(indirizzo, testoAlternativo, opzioni) {
+  if (document.querySelector('.zoom-immagine')) { return; }
+
+  var sfondo = document.createElement('div');
+  sfondo.className = 'zoom-immagine';
+  sfondo.setAttribute('role', 'dialog');
+  sfondo.setAttribute('aria-modal', 'true');
+  sfondo.setAttribute('aria-label', testoAlternativo || opzioni.zoom_label);
+
+  var grande = document.createElement('img');
+  grande.src = indirizzo;
+  grande.alt = testoAlternativo || '';
+  sfondo.appendChild(grande);
+
+  var chiudi = document.createElement('button');
+  chiudi.type = 'button';
+  chiudi.className = 'zoom-chiudi';
+  chiudi.setAttribute('aria-label', opzioni.close_label);
+  chiudi.textContent = '×';
+  sfondo.appendChild(chiudi);
+
+  // Where the focus was, so it can go back there when the picture closes.
+  var elementoPrecedente = document.activeElement;
+
+  function chiudiZoom() {
+    document.removeEventListener('keydown', suTasto);
+    if (sfondo.parentNode) { sfondo.parentNode.removeChild(sfondo); }
+    document.body.classList.remove('zoom-aperto');
+    if (elementoPrecedente && elementoPrecedente.focus) { elementoPrecedente.focus(); }
+  }
+
+  function suTasto(evento) {
+    if (evento.key === 'Escape') { chiudiZoom(); }
+  }
+
+  chiudi.addEventListener('click', chiudiZoom);
+  // A click anywhere outside the picture closes it too, which is what
+  // everyone tries first.
+  sfondo.addEventListener('click', function(evento) {
+    if (evento.target !== grande) { chiudiZoom(); }
+  });
+  document.addEventListener('keydown', suTasto);
+
+  document.body.appendChild(sfondo);
+  // Stops the page behind from scrolling while the picture is open.
+  document.body.classList.add('zoom-aperto');
+  chiudi.focus();
+}

@@ -36,6 +36,9 @@ from core.render import esc, js
 # takes it itself and callers wrap a save-plus-build sequence in it.
 BUILD_LOCK = threading.RLock()
 
+# A literal newline, for the places where HTML is assembled by hand.
+NEWLINE = "\n"
+
 
 # ---------------------------------------------------------------------------
 # SMALL HELPERS
@@ -385,6 +388,8 @@ def site_options(language, extra=None):
         "copied_label": T("codice_copiato", language),
         "copy_title": T("copia_codice_titolo", language),
         "progress_label": T("progresso_lettura", language),
+        "zoom_label": T("ingrandisci_immagine", language),
+        "close_label": T("chiudi_immagine", language),
     }
     if extra is not None:
         options.update(extra)
@@ -767,6 +772,25 @@ def generate_article_page(art, language="it", all_articles=None):
     content, toc_html = generate_table_of_contents(content, language)
     content = add_lazy_loading(content)
 
+    # The cover inside the article, under the title and the date.
+    #
+    # It sits AFTER the heading and the metadata, never above them: a cover is
+    # usually decorative, and putting it first would push the opening line of
+    # the article off the first screen on a phone. Its height is capped for
+    # the same reason. Because that cap crops the image, a click opens it full
+    # size - which is also why the same click does nothing on the homepage,
+    # where the picture sits inside the link to the article.
+    cover_block = ""
+    if CONFIG.get("article_cover", True) is True:
+        cover_url = art.get("image", "").strip()
+        if cover_url != "":
+            cover_block = render.render(
+                "public/article_cover.html",
+                url=esc(cover_url),
+                alt=esc(title_value),
+                titolo_zoom=esc(T("ingrandisci_immagine", language)),
+            )
+
     # "Related articles" block (in both languages).
     related_block = ""
     if all_articles is not None:
@@ -881,6 +905,7 @@ def generate_article_page(art, language="it", all_articles=None):
         data=format_date(art["date"], language),
         tempo_lettura=reading_time,
         tags_html=tags_html,
+        copertina=block(cover_block),
         toc=toc_html,
         contenuto_articolo=content,
         author_box=generate_author_box(language),
@@ -938,6 +963,22 @@ def card_preview_text(preview, content, description, length):
     return description
 
 
+def card_cover_image(art, title_value, css_class):
+    """
+    The thumbnail of an article for a listing, or an empty string.
+
+    Every card uses it, so an article with a cover looks the same wherever it
+    is listed. Until now only the highlighted block carried one, which made
+    the newest article look different from the rest for a reason the reader
+    could not see.
+    """
+    image_url = art.get("image", "").strip()
+    if image_url == "":
+        return ""
+    return ('<img class="' + css_class + '" src="' + esc(image_url)
+            + '" alt="' + esc(title_value) + '" loading="lazy">')
+
+
 def generate_featured_article(art, language):
     """
     Render the most recent article as a larger block at the top of the list.
@@ -950,11 +991,9 @@ def generate_featured_article(art, language):
     prefix = language_url_prefix(language)
     title_value, description, content, preview = article_card_fields(art, language)
 
-    cover = ""
-    image_url = art.get("image", "").strip()
-    if image_url != "":
-        cover = ('        <img class="in-evidenza-copertina" '
-                 f'src="{esc(image_url)}" alt="{esc(title_value)}" loading="lazy">\n')
+    cover = card_cover_image(art, title_value, "in-evidenza-copertina")
+    if cover != "":
+        cover = "        " + cover + NEWLINE
 
     # A longer excerpt than the ordinary cards get: this block has the room
     # for it, and it is what earns the extra space.
@@ -1116,11 +1155,17 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         if tags_row != "":
             tags_row = "\n    " + tags_row
 
+        thumbnail = card_cover_image(art, card_title, "card-copertina")
+        if thumbnail != "":
+            thumbnail = "      " + thumbnail + NEWLINE
+
         feed_items.append(f"""    <a class="article-card" href="{post_prefix}{art['slug']}.html">
-      <div class="card-date">{format_date(art['date'], language)}</div>
-      <h3 class="card-title">{esc(card_title)}</h3>
-      {excerpt}
-      <span class="card-read-more">{T('leggi_articolo', language)} &rarr;</span>
+{thumbnail}      <div class="card-corpo">
+        <div class="card-date">{format_date(art['date'], language)}</div>
+        <h3 class="card-title">{esc(card_title)}</h3>
+        {excerpt}
+        <span class="card-read-more">{T('leggi_articolo', language)} &rarr;</span>
+      </div>
     </a>{tags_row}""")
 
     if len(feed_items) > 0:
@@ -1576,6 +1621,10 @@ def generate_search_index(articles):
             "title_en": "",
             "text_en": "",
             "preview_en": art.get("preview_en", ""),
+            # The browser rebuilds the cards when you search, so it needs the
+            # cover too: without it a search would quietly drop every
+            # thumbnail from the page.
+            "image": art.get("image", ""),
         }
         # We add the English data only if the translation is confirmed.
         translation_confirmed = art.get("translation_confirmed", False)

@@ -530,6 +530,15 @@ UI_TRANSLATIONS = {
     "cerca_nel_sito": {"it": "Cerca nel sito", "en": "Search the site"},
     "progresso_lettura": {"it": "Avanzamento della lettura", "en": "Reading progress"},
     "ultimo_articolo": {"it": "Ultimo articolo", "en": "Latest article"},
+    "ingrandisci_immagine": {"it": "Ingrandisci l'immagine", "en": "Enlarge the image"},
+    "chiudi_immagine": {"it": "Chiudi l'immagine", "en": "Close the image"},
+
+    # --- Settings: the cover inside the article ---
+    "admin_copertina_articolo": {"it": "Mostra la copertina anche dentro l'articolo",
+                                 "en": "Show the cover inside the article too"},
+    "admin_copertina_articolo_hint": {
+        "it": "(sotto il titolo e la data. Spenta, la copertina resta solo negli elenchi e nell'anteprima social, e l'articolo si apre sulla prima riga di testo.)",
+        "en": "(under the title and the date. When off, the cover stays in the listings and the social preview only, and the article opens on its first line of text.)"},
 
     # --- Settings: the highlighted article ---
     "admin_home_evidenza": {"it": "Metti in evidenza l'ultimo articolo",

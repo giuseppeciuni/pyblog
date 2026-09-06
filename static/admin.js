@@ -2343,6 +2343,7 @@ function saveConfig(pulsante) {
     home_order: ordineHome,
     articles_per_page: articoliPerPagina,
     home_featured: document.getElementById('home_featured').checked,
+    article_cover: document.getElementById('article_cover').checked,
     seo: {
       author_url: document.getElementById('seo_author_url').value.trim(),
       author_image: document.getElementById('seo_author_image').value.trim(),

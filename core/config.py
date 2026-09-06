@@ -170,6 +170,11 @@ CONFIG_DEFAULT = {
     # homepage is a plain list, as it was before.
     "home_featured": True,
 
+    # Show the cover image inside the article page as well, under the title
+    # and the date. With False the cover only appears in the listings and in
+    # the social preview, and the article opens straight on its first line.
+    "article_cover": True,
+
     # Number of articles shown on each page of the homepage.
     # The next pages are generated at /pagina/2.html, /pagina/3.html...
     # With 0, pagination is disabled: all articles on a single page.

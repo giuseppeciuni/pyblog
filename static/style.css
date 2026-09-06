@@ -116,10 +116,29 @@ article.post h1 { font-size:2rem; margin:0 0 0.4rem; }
 .articles-grid {
   display:flex; flex-direction:column; gap:1rem;
 }
+/* The card is a row: thumbnail on the left, text on the right. With no cover
+   the row has a single child and the text simply takes the whole width, so a
+   blog without images looks exactly as it did. */
 .article-card {
-  display:flex; flex-direction:column; text-decoration:none; color:var(--testo);
+  display:flex; flex-direction:row; gap:1.2rem; align-items:flex-start;
+  text-decoration:none; color:var(--testo);
   background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px;
   padding:1.3rem 1.5rem; transition:transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.card-corpo { display:flex; flex-direction:column; flex:1 1 auto; min-width:0; }
+/* Sized exactly like the thumbnail of the highlighted block, and for the same
+   reasons: a declared width so the automatic minimum size of a flex item
+   cannot fall back to the intrinsic width of the file, min-width:0 to remove
+   that minimum outright, and a width rather than a max-width because the
+   global img rule further down carries !important. Smaller than the
+   highlighted one, because these cards are a list to scan. */
+.card-copertina {
+  flex:0 0 auto;
+  width:clamp(56px, 14%, 92px);
+  aspect-ratio:1 / 1; height:auto;
+  min-width:0;
+  object-fit:cover;
+  border-radius:10px;
 }
 .article-card:hover {
   transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.08);
@@ -546,4 +565,50 @@ html[data-tema="dark"] .in-evidenza-titolo { color:var(--testo); }
 }
 @media (max-width: 420px) {
   .in-evidenza-card { gap:0.8rem; padding:1rem; }
+}
+/* --- The cover inside the article ------------------------------------------
+   Under the title and the date, never above them: a cover is usually
+   decorative, and putting it first would push the opening line of the article
+   off the first screen on a phone. The height cap is there for the same
+   reason. Since the cap crops the picture, clicking it opens the whole
+   thing. */
+.articolo-copertina { margin:0 0 2rem; }
+.articolo-copertina img {
+  width:100%; max-height:340px; object-fit:cover;
+  border-radius:12px; display:block;
+  box-shadow:0 4px 18px rgba(0,0,0,0.10);
+  cursor:zoom-in;
+}
+.articolo-copertina img:hover { box-shadow:0 6px 24px rgba(0,0,0,0.16); }
+@media (max-width: 640px) {
+  .articolo-copertina img { max-height:220px; }
+  .articolo-copertina { margin-bottom:1.4rem; }
+}
+/* --- The enlarged picture --------------------------------------------------
+   A div, an image and two ways out. No library: this is the whole feature. */
+.zoom-immagine {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,0.88);
+  display:flex; align-items:center; justify-content:center;
+  padding:2rem 1rem; cursor:zoom-out;
+}
+.zoom-immagine img {
+  max-width:100%; max-height:100%; object-fit:contain;
+  border-radius:6px; cursor:default;
+  box-shadow:0 10px 50px rgba(0,0,0,0.5);
+}
+.zoom-chiudi {
+  position:absolute; top:1rem; right:1rem;
+  width:2.6rem; height:2.6rem; line-height:1;
+  font-size:1.8rem; font-family:inherit;
+  color:#fff; background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.3); border-radius:50%;
+  cursor:pointer;
+}
+.zoom-chiudi:hover { background:rgba(255,255,255,0.24); }
+/* The page behind must not scroll while the picture is open. */
+body.zoom-aperto { overflow:hidden; }
+/* Someone who has asked for less motion gets no hover lift on the cover. */
+@media (prefers-reduced-motion: reduce) {
+  .articolo-copertina img { transition:none; }
 }
