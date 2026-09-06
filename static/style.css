@@ -492,14 +492,32 @@ html[data-tema="dark"] .errore-404-numero {
   transition:transform 0.15s, box-shadow 0.15s;
 }
 .in-evidenza-card:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(0,0,0,0.10); }
-/* The cover is a thumbnail, not a column.
-   At 34% in 4:3 it was about 340x255 on a 1000px block, which carried as much
-   weight as the text next to it and turned the block into two competing
-   halves. A square capped at 150px reads as a mark that identifies the
-   article, and gives the text back roughly a third of the width. The square
-   crop also treats a tall photo and a wide one the same way. */
+/* The cover is a thumbnail, not a column: a square that identifies the
+   article and leaves the text the width it needs. It treats a tall photo and
+   a wide one the same way.
+
+   Its size is written as a clamp, and both ends of that clamp matter:
+
+     - the width is DECLARED, not left to a flex-basis. A flex item's
+       automatic minimum size (min-width:auto) falls back to the size of its
+       CONTENT when no width is specified, and for an image that is its
+       intrinsic width. With flex:0 0 20% and nothing else, an 800px cover
+       claimed 800px, refused to shrink, and pushed the text out of the block
+       entirely. min-width:0 removes that automatic minimum outright, so an
+       upload of any size behaves the same.
+     - the 150px ceiling is a width, not a max-width, because the global
+       "img { max-width:100% !important }" rule further down would override a
+       max-width here and leave the thumbnail with no cap at all.
+
+   The clamp also does the responsive work by itself: 150px on a desktop
+   block, proportional in between, never below 72px on the narrowest phone.
+   That is why the media queries below carry no rule for it. */
 .in-evidenza-copertina {
-  flex:0 0 20%; max-width:150px; aspect-ratio:1 / 1; object-fit:cover;
+  flex:0 0 auto;
+  width:clamp(72px, 20%, 150px);
+  aspect-ratio:1 / 1; height:auto;
+  min-width:0;
+  object-fit:cover;
   border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,0.10);
 }
 .in-evidenza-testo { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
@@ -521,14 +539,11 @@ html[data-tema="dark"] .in-evidenza-titolo { color:var(--testo); }
 @media (max-width: 720px) {
   /* The row survives on a phone: a small square beside the text reads like a
      list item, and stacking it full width would undo the point of shrinking
-     it in the first place. */
+     it. The thumbnail needs no rule here - its clamp already scales it. */
   .in-evidenza-card { gap:1rem; padding:1.2rem; }
-  .in-evidenza-copertina { flex:0 0 26%; max-width:110px; }
   .in-evidenza-titolo { font-size:1.25rem; }
   .in-evidenza-estratto { -webkit-line-clamp:4; }
 }
 @media (max-width: 420px) {
-  /* On the narrowest screens the text needs every pixel it can get. */
-  .in-evidenza-copertina { flex:0 0 74px; max-width:74px; }
   .in-evidenza-card { gap:0.8rem; padding:1rem; }
 }
