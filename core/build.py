@@ -21,7 +21,7 @@ from core.articles import (articles_visible_in_language, card_slug,
                            collect_tags, excerpt_from_html,
                            extract_article_tags, html_content_is_empty,
                            load_articles, plain_text, slugify)
-from core.config import (CONFIG, MEDIA_DIR, OUTPUT_DIR,
+from core.config import (CONFIG, CONFIG_DEFAULT, MEDIA_DIR, OUTPUT_DIR,
                          ai_training_config, archive_file_name,
                          articles_per_page_count, feed_file_name,
                          language_url_prefix, main_language,
@@ -1974,6 +1974,73 @@ def copy_public_assets():
             (OUTPUT_DIR / name).write_text(render.read_static(name), encoding="utf-8")
 
 
+def remove_stale_pages(written_pages, lp, ls, sec_folder):
+    """
+    Delete the generated pages that this build did not write again.
+
+    The folders swept here hold nothing but generated pages, so a file that was
+    not written this time round is a leftover: the article that was deleted, the
+    page of a slug that changed, the index of a tag nobody uses any more, the
+    card that was switched off, a pagination page no longer needed. Left in
+    place, that file keeps answering 200 while having disappeared from the
+    sitemap - a ghost page the search engine goes on showing, and duplicate
+    content every time a slug changed. Removing it turns the old address into a
+    404, which is what makes the engine drop it.
+    """
+    folders = []
+    for root in (OUTPUT_DIR, OUTPUT_DIR / sec_folder):
+        folders.append(root / "posts")
+        folders.append(root / "tag")
+        folders.append(root / "pagine")
+        # The pagination folder is named after the language ("pagina", "page"):
+        # we sweep both names, so that flipping the site language cleans up too.
+        for language in (lp, ls):
+            folders.append(root / pagination_folder(language))
+
+    for folder in folders:
+        if not folder.is_dir():
+            continue
+        keep = written_pages.get(folder, set())
+        for file_value in folder.glob("*.html"):
+            if file_value.name not in keep:
+                file_value.unlink()
+
+    # The archive sits next to pages this function does not manage (index.html,
+    # 404.html, the feeds...), so instead of sweeping the whole folder we only
+    # look at the two names the archive can take: flipping the site language
+    # would otherwise leave the old one behind.
+    archive_names = {archive_file_name("it"), archive_file_name("en")}
+    for root in (OUTPUT_DIR, OUTPUT_DIR / sec_folder):
+        keep = written_pages.get(root, set())
+        for name in archive_names:
+            if name in keep:
+                continue
+            leftover = root / name
+            if leftover.is_file():
+                leftover.unlink()
+
+
+def warn_if_base_url_is_a_placeholder():
+    """
+    Warn when base_url is empty or still the example domain.
+
+    Every address in sitemap.xml, in the canonical tags and in the feeds is
+    built on base_url. Leave it at the example value and the sitemap describes
+    a site at a domain that is not yours: Google fetches it, sees addresses
+    that do not belong to the site it is crawling, and indexes nothing.
+    """
+    base = CONFIG.get("base_url", "").strip()
+    if base == "":
+        print("WARNING: base_url is empty: sitemap.xml and the canonical tags "
+              "will carry relative addresses and search engines will reject "
+              "them. Set it in Settings.")
+    elif base.rstrip("/") == CONFIG_DEFAULT["base_url"].rstrip("/"):
+        print(f"WARNING: base_url is still the example value ({base}): "
+              "sitemap.xml, the canonical tags and the feeds all point to a "
+              "domain that is not yours, so your pages will not be indexed. "
+              "Set it in Settings.")
+
+
 def build():
     """
     Rebuild the whole static site into the output/ folder.
@@ -2011,19 +2078,32 @@ def _build_unlocked():
     tutti = load_articles()
     published_articles = [a for a in tutti if a.get("status") == "published"]
 
+    # Pages written by this build, grouped by folder. At the end
+    # remove_stale_pages() deletes from those folders whatever is left over
+    # from an earlier build: the page of a deleted article, the page of an old
+    # slug, the index of a tag nobody uses any more. Without that sweep the
+    # stale file stays online and answers 200, so a search engine keeps it
+    # indexed even though the sitemap stopped listing it.
+    written_pages = {}
+
+    def write_page(path_value, content):
+        """Write a generated page and record it, so the sweep keeps it."""
+        path_value.parent.mkdir(parents=True, exist_ok=True)
+        path_value.write_text(content, encoding="utf-8")
+        written_pages.setdefault(path_value.parent, set()).add(path_value.name)
+
     # Pages of the individual articles in the main language (at the root).
     for art in published_articles:
         html_art = generate_article_page(art, lp, published_articles)
-        (OUTPUT_DIR / "posts" / f"{art['slug']}.html").write_text(
-            html_art, encoding="utf-8")
+        write_page(OUTPUT_DIR / "posts" / f"{art['slug']}.html", html_art)
 
         # Version in the secondary language: we generate it only if the
         # translation is confirmed and the translated content is not empty.
         # The translation only exists between Italian and English (_en fields).
         if article_has_page_in(art, ls):
             html_sec = generate_article_page(art, ls, published_articles)
-            (OUTPUT_DIR / sec_folder / "posts" / f"{art['slug']}.html").write_text(
-                html_sec, encoding="utf-8")
+            write_page(OUTPUT_DIR / sec_folder / "posts" / f"{art['slug']}.html",
+                       html_sec)
 
     # Tag index pages (one for every tag used in the articles).
     (OUTPUT_DIR / "tag").mkdir(parents=True, exist_ok=True)
@@ -2035,8 +2115,7 @@ def _build_unlocked():
             continue
         # Tags in the main language (at the root).
         html_tag = generate_tag_page(tag_name, tag_articles, lp)
-        (OUTPUT_DIR / "tag" / f"{tag_slug}.html").write_text(
-            html_tag, encoding="utf-8")
+        write_page(OUTPUT_DIR / "tag" / f"{tag_slug}.html", html_tag)
         # Tags in the secondary language, only if at least one article
         # with that tag has a confirmed translation.
         has_translated_articles = False
@@ -2047,8 +2126,8 @@ def _build_unlocked():
         if has_translated_articles:
             (OUTPUT_DIR / sec_folder / "tag").mkdir(parents=True, exist_ok=True)
             html_tag_sec = generate_tag_page(tag_name, tag_articles, ls)
-            (OUTPUT_DIR / sec_folder / "tag" / f"{tag_slug}.html").write_text(
-                html_tag_sec, encoding="utf-8")
+            write_page(OUTPUT_DIR / sec_folder / "tag" / f"{tag_slug}.html",
+                       html_tag_sec)
 
     # Pages of the active cards (Biography, Projects, About...).
     card_lista = CONFIG.get("home_cards", [])
@@ -2061,12 +2140,12 @@ def _build_unlocked():
             continue
         slug = card_slug(card.get("title", ""))
         # Cards in the main language (at the root).
-        (OUTPUT_DIR / "pagine" / f"{slug}.html").write_text(
-            generate_card_page(card, lp), encoding="utf-8")
+        write_page(OUTPUT_DIR / "pagine" / f"{slug}.html",
+                   generate_card_page(card, lp))
         # Cards in the secondary language.
         (OUTPUT_DIR / sec_folder / "pagine").mkdir(parents=True, exist_ok=True)
-        (OUTPUT_DIR / sec_folder / "pagine" / f"{slug}.html").write_text(
-            generate_card_page(card, ls), encoding="utf-8")
+        write_page(OUTPUT_DIR / sec_folder / "pagine" / f"{slug}.html",
+                   generate_card_page(card, ls))
 
     # Homepage in the main language (at the root) and in the secondary one.
     # If pagination is active, we also generate /pagina/2.html, /pagina/3...
@@ -2093,15 +2172,15 @@ def _build_unlocked():
             page_folder = base_folder / pagination_folder(home_language)
             page_folder.mkdir(parents=True, exist_ok=True)
             for number in range(2, totale_pagine + 1):
-                (page_folder / f"{number}.html").write_text(
-                    generate_homepage(published_articles, home_language, number, totale_pagine),
-                    encoding="utf-8")
+                write_page(page_folder / f"{number}.html",
+                           generate_homepage(published_articles, home_language,
+                                             number, totale_pagine))
 
     # Archive page (compact list by year) in both languages.
-    (OUTPUT_DIR / archive_file_name(lp)).write_text(
-        generate_archive_page(published_articles, lp), encoding="utf-8")
-    (OUTPUT_DIR / sec_folder / archive_file_name(ls)).write_text(
-        generate_archive_page(published_articles, ls), encoding="utf-8")
+    write_page(OUTPUT_DIR / archive_file_name(lp),
+               generate_archive_page(published_articles, lp))
+    write_page(OUTPUT_DIR / sec_folder / archive_file_name(ls),
+               generate_archive_page(published_articles, ls))
 
     # RSS feeds: one per language, both at the root. The main language keeps
     # the historical /rss.xml so existing subscriptions do not break.
@@ -2151,6 +2230,13 @@ def _build_unlocked():
     if seo_data().get("favicon", "") == "":
         (OUTPUT_DIR / "favicon.svg").write_text(
             generate_favicon_svg(), encoding="utf-8")
+
+    # A misconfigured base_url makes the whole sitemap useless: say so out loud.
+    warn_if_base_url_is_a_placeholder()
+
+    # Pages left over from an earlier build: the article that was deleted, the slug
+    # that changed, the tag that disappeared, the card that was switched off.
+    remove_stale_pages(written_pages, lp, ls, sec_folder)
 
     # Public CSS and JavaScript, copied straight from static/.
     copy_public_assets()
