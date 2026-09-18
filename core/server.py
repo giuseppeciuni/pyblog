@@ -112,7 +112,7 @@ JS_TRANSLATION_KEYS = (
     "js_recovering_pasted_images", "js_pasted_all_recovered",
     "js_pasted_partial_recovered", "js_uploading", "js_uploading_image",
     "js_video_uploaded", "js_image_uploaded", "js_upload_error",
-    "js_error_prefix",
+    "js_image_resized_local", "js_error_prefix",
     # YouTube
     "js_prompt_youtube_link", "js_youtube_not_recognized",
     # Tables

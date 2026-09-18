@@ -185,6 +185,32 @@ def test_nessun_segnaposto_rimasto():
     config.CONFIG["admin_language"] = "it"
 
 
+def test_chiavi_i18n_esportate():
+    """
+    Every key admin.js asks t() for must travel in window.PB_I18N.
+
+    t() returns the key itself when it is missing, so a forgotten one does
+    not raise: the button simply shows "js_image_resized_local" to the
+    author, in both languages, and nothing in the build complains. That is
+    exactly how one of these reached production once.
+    """
+    import re
+    print("\nchiavi di traduzione usate dal JavaScript")
+    sorgente = (config.STATIC_DIR / "admin.js").read_text(encoding="utf-8")
+    # The call is written t('chiave'); the prefixes below are the families
+    # that exist, which also keeps out the createElement('div') lookalikes.
+    usate = set()
+    for chiave in re.findall(r"\bt\('([a-z0-9_]+)'\)", sorgente):
+        if chiave.startswith(("js_", "admin_", "seo_", "err_", "img_")):
+            usate.add(chiave)
+    esportate = set(server.JS_TRANSLATION_KEYS)
+    esportate.add("js_home_intro_placeholder_it")
+    esportate.add("js_home_intro_placeholder_en")
+    mancanti = sorted(usate - esportate)
+    check(f"tutte esportate ({len(usate)} chiavi usate)",
+          len(mancanti) == 0, "mancanti: " + ", ".join(mancanti))
+
+
 def main():
     creato = save_article({
         "title": TITOLO_OSTILE, "slug": "titolo-ostile",
@@ -194,6 +220,7 @@ def main():
         test_argomenti_dashboard()
         test_json_iniettato()
         test_nessun_segnaposto_rimasto()
+        test_chiavi_i18n_esportate()
     finally:
         delete_article(creato)
 
