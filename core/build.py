@@ -259,6 +259,72 @@ def analytics_snippet():
     return "\n  ".join(parts)
 
 
+# ---------------------------------------------------------------------------
+# CUSTOM CODE
+# ---------------------------------------------------------------------------
+
+def custom_code_list():
+    """
+    Return the custom code snippets of the configuration, skipping anything
+    malformed. A hand-edited config.json is the only way to get a snippet
+    that is not a dictionary here, and one bad entry should not stop a build.
+    """
+    snippets = CONFIG.get("custom_code", [])
+    if not isinstance(snippets, list):
+        return []
+    return [s for s in snippets if isinstance(s, dict)]
+
+
+def article_snippet_ids(art):
+    """The ids of the snippets ticked on an article, as a tuple of strings."""
+    ids = art.get("custom_code_ids", [])
+    if not isinstance(ids, list):
+        return ()
+    return tuple(str(x) for x in ids)
+
+
+def snippet_applies(snippet, page_kind, article_ids):
+    """
+    Tell whether a snippet belongs on the page being generated.
+
+    All three scopes include the homepage; they differ on the articles. A
+    snippet whose id is no longer anywhere in the configuration simply never
+    matches, which is what makes deleting one safe: the articles that ticked
+    it keep the dead id in their JSON and nothing goes wrong.
+    """
+    if snippet.get("enabled", False) is not True:
+        return False
+    scope = snippet.get("scope", "home")
+    if page_kind == "home":
+        return True
+    if page_kind == "article":
+        if scope == "home_articles":
+            return True
+        if scope == "home_optin":
+            return snippet.get("id", "") in article_ids
+    return False
+
+
+def custom_code_block(position, page_kind, article_ids):
+    """
+    Collect the snippets that go into one position of one page.
+
+    The code is injected VERBATIM: escaping it would defeat the point. It is
+    written by whoever can log into the editor, which is the same trust level
+    as "home_content", already raw HTML. It never comes from a reader.
+    """
+    parts = []
+    for snippet in custom_code_list():
+        if snippet.get("position", "head") != position:
+            continue
+        if not snippet_applies(snippet, page_kind, article_ids):
+            continue
+        code = str(snippet.get("code", "")).strip()
+        if code != "":
+            parts.append(code)
+    return "\n".join(parts)
+
+
 def person_jsonld():
     """
     Build the author's schema.org Person, enriched with the configured
@@ -398,16 +464,30 @@ def site_options(language, extra=None):
 
 def render_page(language, titolo_pagina, contenuto, meta_extra="",
                 head_extra="", script_extra="", feed_links=None,
-                site_extra=None):
+                site_extra=None, page_kind="other", article_ids=()):
     """
     Wrap a page body in the shared public layout (templates/base.html).
 
     titolo_pagina is inserted as-is: the caller has already escaped the parts
     that come from the configuration or from an article.
+
+    page_kind ("home", "article" or "other") and article_ids are what the
+    custom code snippets are matched against. A caller that passes neither
+    gets no custom code at all, which is right for the tag, archive, card
+    and 404 pages: no scope reaches them.
     """
     head_extra = block(head_extra) + (
         "  <script>window.PB_SITE = "
         + js(site_options(language, site_extra)) + ";</script>")
+
+    # Custom code goes LAST in its position: in the head after PB_SITE, so a
+    # snippet can read it, and at the end of the body after the scripts of
+    # the page, so a snippet can use what they define.
+    head_extra = block(head_extra) + custom_code_block(
+        "head", page_kind, article_ids)
+    script_extra = block(script_extra) + custom_code_block(
+        "body_end", page_kind, article_ids)
+    body_open = custom_code_block("body_start", page_kind, article_ids)
     if feed_links is None:
         feed_links = ('  <link rel="alternate" type="application/rss+xml" '
                       f'title="{esc(CONFIG["site_title"])}" href="{feed_url(language)}">\n')
@@ -420,6 +500,7 @@ def render_page(language, titolo_pagina, contenuto, meta_extra="",
         meta_extra=block(meta_extra),
         feed_links=block(feed_links),
         head_extra=block(head_extra),
+        body_open=block(body_open),
         header=site_header(language),
         contenuto=block(contenuto),
         footer=site_footer(language),
@@ -923,6 +1004,8 @@ def generate_article_page(art, language="it", all_articles=None):
         head_extra=head_extra,
         script_extra='  <script src="https://cdn.jsdelivr.net/gh/highlightjs/'
                      'cdn-release@11.9.0/build/highlight.min.js"></script>',
+        page_kind="article",
+        article_ids=article_snippet_ids(art),
     )
 
 
@@ -1349,6 +1432,7 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         meta_extra=meta_extra,
         head_extra=head_extra,
         site_extra=search_options,
+        page_kind="home",
     )
 
 

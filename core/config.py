@@ -41,6 +41,22 @@ CONFIG_DEFAULT = {
     # website UUID. Both empty means Umami is disabled.
     "umami_url": "",
     "umami_website_id": "",
+
+    # Custom code injected into the public pages: tracking pixels, chat
+    # widgets, embeds. Each entry is a dictionary:
+    #
+    #   id        stable identifier, generated once and never reused. The
+    #             articles refer to a snippet by this, so renaming one does
+    #             not detach it from the articles that enabled it.
+    #   name      label shown in the admin, free text.
+    #   enabled   False parks a snippet without deleting it.
+    #   position  "head", "body_start" or "body_end".
+    #   scope     "home"          -> homepage only
+    #             "home_articles" -> homepage and every article
+    #             "home_optin"    -> homepage, plus the articles that tick it
+    #   code      the HTML/JS, injected verbatim.
+    "custom_code": [],
+
     "language": "it",
     # Language of the administration interface (it or en).
     "admin_language": "it",

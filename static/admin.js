@@ -2116,6 +2116,19 @@ function translatePiece(testo, quandoFinito) {
     });
 }
 
+// The ids of the custom code snippets ticked for this article. Only the
+// snippets set to "homepage and selected articles" have a checkbox here.
+function articleCustomCodeIds() {
+  var caselle = document.querySelectorAll('.codice-articolo');
+  var ids = [];
+  for (var i = 0; i < caselle.length; i++) {
+    if (caselle[i].checked) {
+      ids.push(caselle[i].value);
+    }
+  }
+  return ids;
+}
+
 // Collects every form field into a single article object.
 // Used both by the save and by the English preview.
 function articleData() {
@@ -2129,6 +2142,7 @@ function articleData() {
     image: document.getElementById('image').value,
     status: document.getElementById('status').value,
     original_slug: slugOriginale,
+    custom_code_ids: articleCustomCodeIds(),
     // Fields of the English version.
     title_en: document.getElementById('title_en').value,
     description_en: document.getElementById('description_en').value,
@@ -2280,6 +2294,8 @@ function initConfigPage() {
   updateAiTrainingGroup();
   updateTranslationGroups();
 
+  updateCustomCodeNote();
+
   // --- Advanced config.json editor ---
   configRawIniziale = pbPage('config_raw', '');
   document.getElementById('config-raw').value = configRawIniziale;
@@ -2349,6 +2365,75 @@ function updateTranslationGroups() {
       elemento.classList.remove('attivo');
     }
   }
+}
+
+// --- Custom code -----------------------------------------------------------
+
+// A new snippet gets its id here, in the browser, so that the checkboxes in
+// the article editor have something stable to point at from the very first
+// save. The timestamp keeps them ordered and the random tail keeps two cards
+// added in the same millisecond apart.
+function newSnippetId() {
+  var casuale = Math.floor(Math.random() * 1679616).toString(36);
+  return 'snip-' + Date.now().toString(36) + '-' + casuale;
+}
+
+function customCodeCards() {
+  return document.querySelectorAll('.codice-config');
+}
+
+// The empty-list note shows only while there are no cards at all.
+function updateCustomCodeNote() {
+  var nota = document.getElementById('codice-vuoto-nota');
+  if (nota === null) { return; }
+  nota.hidden = customCodeCards().length > 0;
+}
+
+function addCustomCode() {
+  var lista = document.getElementById('lista-codice');
+  if (lista === null) { return; }
+
+  // The blank card comes from a <template> the server rendered, so the markup
+  // and its translated labels live in the template file and nowhere else.
+  var modello = document.getElementById('codice-modello');
+  if (modello === null) { return; }
+  var nuova = modello.content.firstElementChild.cloneNode(true);
+  nuova.setAttribute('data-id', newSnippetId());
+  lista.appendChild(nuova);
+  updateCustomCodeNote();
+  nuova.querySelector('.codice-nome').focus();
+}
+
+function removeCustomCode(pulsante) {
+  var card = pulsante.closest('.codice-config');
+  if (card === null) { return; }
+  var nome = card.querySelector('.codice-nome').value.trim();
+  if (nome === '') { nome = t('admin_codice_titolo'); }
+  pbConfirm(t('admin_codice_elimina'), nome, t('admin_codice_elimina'), 'danger',
+    function() {
+      card.remove();
+      updateCustomCodeNote();
+    });
+}
+
+// Reads the custom code cards back into the list that goes into config.json.
+function customCodeData() {
+  var cards = customCodeCards();
+  var dati = [];
+  for (var i = 0; i < cards.length; i++) {
+    var card = cards[i];
+    var id = card.getAttribute('data-id');
+    if (id === null || id === '') { id = newSnippetId(); }
+    dati.push({
+      id: id,
+      name: card.querySelector('.codice-nome').value.trim(),
+      enabled: card.querySelector('.codice-attivo').checked,
+      position: card.querySelector('.codice-posizione').value,
+      scope: card.querySelector('.codice-ambito').value,
+      code: card.querySelector('.codice-testo').value
+    });
+  }
+  return dati;
 }
 
 function saveConfig(pulsante) {
@@ -2426,6 +2511,7 @@ function saveConfig(pulsante) {
     home_content: quillHome.root.innerHTML,
     home_content_en: quillHomeEn.root.innerHTML,
     home_cards: cardDati,
+    custom_code: customCodeData(),
     comments: document.getElementById('commenti').value,
     giscus: {
       repo: document.getElementById('giscus_repo').value,

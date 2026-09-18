@@ -14,6 +14,7 @@ import http.server
 import io
 import json
 import mimetypes
+import secrets
 import time
 import urllib.parse
 import zipfile
@@ -137,6 +138,7 @@ JS_TRANSLATION_KEYS = (
     "js_translating", "js_translated_review", "js_check_api_key",
     "js_net_error_translation", "js_write_intro_first", "js_translated_home",
     # Settings
+    "admin_codice_titolo", "admin_codice_elimina",
     "admin_salvataggio", "admin_config_salvata", "admin_errore_salvataggio",
     "admin_config_raw_salvata", "err_invalid_json_prefix",
     # Shared dialogs, saving, autosave and the Word import
@@ -563,6 +565,9 @@ def editor_page(art, csrf):
         label_anteprima_en=T("admin_anteprima_en", la),
         hint_anteprima_en=T("admin_anteprima_en_hint", la),
         label_conferma_traduzione=T("admin_conferma_traduzione", la),
+        label_codice_titolo=T("admin_codice_articolo_titolo", la),
+        hint_codice=T("admin_codice_articolo_hint", la),
+        codice_articolo_html=article_custom_code_html(art, la),
     )
 
     # The article content and the translation flags travel as JSON, never as
@@ -600,6 +605,167 @@ def editor_page(art, csrf):
                             navbar=admin_navbar("articles", la),
                             head_extra=head_extra, script_extra=script_extra,
                             page_data=page_data)
+
+
+def with_snippet_ids(snippets):
+    """
+    Give an id to every custom code snippet that arrives without one.
+
+    The browser generates the id when you add a card, so normally there is
+    nothing to do here. This is the safety net for a snippet added by hand in
+    the advanced config.json editor: without an id it could never be ticked
+    on an article. Existing ids are left exactly as they are, because the
+    articles refer to them.
+    """
+    if not isinstance(snippets, list):
+        return []
+    # Every id already in the list, including the ones further down that we
+    # have not reached yet: a freshly minted id must avoid those too.
+    taken = set()
+    for snippet in snippets:
+        if isinstance(snippet, dict) and str(snippet.get("id", "")) != "":
+            taken.add(str(snippet["id"]))
+
+    used = set()
+    cleaned = []
+    for snippet in snippets:
+        if not isinstance(snippet, dict):
+            continue
+        snippet_id = str(snippet.get("id", ""))
+        # An id we have already handed out in this pass is a duplicate, so
+        # the second one gets replaced. An id seen only once is kept as is.
+        if snippet_id == "" or snippet_id in used:
+            snippet_id = "snip-" + secrets.token_hex(4)
+            while snippet_id in taken or snippet_id in used:
+                snippet_id = "snip-" + secrets.token_hex(4)
+        used.add(snippet_id)
+        snippet["id"] = snippet_id
+        cleaned.append(snippet)
+    return cleaned
+
+
+def custom_code_card(snippet, index_value, la):
+    """
+    Build one settings card for a custom code snippet.
+
+    The id travels in a data attribute rather than a field: it is machinery,
+    not something to edit. admin.js reads it back when saving so a snippet
+    keeps the same id across saves, and the articles keep pointing at it.
+    """
+    position = snippet.get("position", "head")
+    scope = snippet.get("scope", "home")
+    return render.render(
+        "admin/custom_code_card.html",
+        indice=index_value,
+        id_snippet=esc(snippet.get("id", "")),
+        checked=checked_if(snippet.get("enabled", False)),
+        label_attivo=T("admin_codice_attivo", la),
+        label_elimina=T("admin_codice_elimina", la),
+        label_nome=T("admin_codice_nome", la),
+        nome=esc(snippet.get("name", "")),
+        ph_nome=esc(T("admin_codice_nome_ph", la)),
+        label_posizione=T("admin_codice_posizione", la),
+        sel_head=selected_if(position, "head"),
+        label_pos_head=T("admin_codice_pos_head", la),
+        sel_body_start=selected_if(position, "body_start"),
+        label_pos_body_start=T("admin_codice_pos_body_start", la),
+        sel_body_end=selected_if(position, "body_end"),
+        label_pos_body_end=T("admin_codice_pos_body_end", la),
+        label_ambito=T("admin_codice_ambito", la),
+        sel_home=selected_if(scope, "home"),
+        label_scope_home=T("admin_codice_scope_home", la),
+        sel_articles=selected_if(scope, "home_articles"),
+        label_scope_articles=T("admin_codice_scope_articles", la),
+        sel_optin=selected_if(scope, "home_optin"),
+        label_scope_optin=T("admin_codice_scope_optin", la),
+        hint_ambito=T("admin_codice_scope_hint", la),
+        label_codice=T("admin_codice_codice", la),
+        codice=esc(snippet.get("code", "")),
+    ).rstrip("\n")
+
+
+def custom_code_cards(config, la):
+    """Build the settings card of every configured custom code snippet."""
+    snippets = config.get("custom_code", [])
+    if not isinstance(snippets, list):
+        snippets = []
+
+    parts = []
+    index_value = 0
+    for snippet in snippets:
+        if not isinstance(snippet, dict):
+            continue
+        parts.append(custom_code_card(snippet, index_value, la))
+        index_value = index_value + 1
+    return "\n".join(parts)
+
+
+def custom_code_blank_card(la):
+    """
+    The empty card that the "Add code" button clones, rendered once into a
+    <template>. Cloning beats building the markup in JavaScript: the fields
+    and their translated labels stay defined in the one template file, so
+    they cannot drift apart. A new snippet starts active, because you add one
+    in order to use it.
+    """
+    return custom_code_card({"enabled": True}, 0, la)
+
+
+def article_custom_code_html(art, la):
+    """
+    Build the custom code list shown in the article editor.
+
+    Only the snippets set to "homepage and selected articles" get a checkbox:
+    they are the ones this article decides about. The ones running on every
+    article are listed underneath, as plain text, so you can see what is
+    already on the page without opening the Settings in another tab.
+    """
+    snippets = CONFIG.get("custom_code", [])
+    if not isinstance(snippets, list):
+        snippets = []
+    enabled_ids = build_module.article_snippet_ids(art)
+
+    labels = {
+        "head": T("admin_codice_pos_head", la),
+        "body_start": T("admin_codice_pos_body_start", la),
+        "body_end": T("admin_codice_pos_body_end", la),
+    }
+
+    choices = []
+    always_on = []
+    for snippet in snippets:
+        if not isinstance(snippet, dict):
+            continue
+        if snippet.get("enabled", False) is not True:
+            continue
+        snippet_id = str(snippet.get("id", ""))
+        name = esc(snippet.get("name", "")) or esc(snippet_id)
+        where = esc(labels.get(snippet.get("position", "head"), ""))
+        scope = snippet.get("scope", "home")
+        if scope == "home_optin":
+            checked = ""
+            if snippet_id in enabled_ids:
+                checked = " checked"
+            choices.append(
+                '<label class="riga-flag codice-articolo-riga">'
+                f'<input type="checkbox" class="codice-articolo" '
+                f'value="{esc(snippet_id)}"{checked}> {name} '
+                f'<span class="hint">({where})</span></label>')
+        elif scope == "home_articles":
+            always_on.append(f'<li>{name} <span class="hint">({where})</span></li>')
+
+    if len(choices) == 0:
+        parts = [f'<p class="hint">{T("admin_codice_articolo_vuoto", la)}</p>']
+    else:
+        parts = choices
+
+    if len(always_on) > 0:
+        parts.append(f'<p class="hint" style="margin:0.6rem 0 0.2rem">'
+                     f'{T("admin_codice_articolo_sempre", la)}</p>'
+                     f'<ul class="hint codice-sempre-attivi">'
+                     + "".join(always_on) + "</ul>")
+
+    return "\n".join(parts)
 
 
 def config_placeholders(language):
@@ -754,6 +920,12 @@ def config_page(csrf):
         label_card_home=T("admin_card_home_titolo", la),
         hint_card_home=T("admin_card_home_hint", la),
         card_html="\n".join(card_html_parti),
+        label_codice_titolo=T("admin_codice_titolo", la),
+        hint_codice=T("admin_codice_hint", la),
+        codice_html=custom_code_cards(config, la),
+        codice_modello=custom_code_blank_card(la),
+        label_codice_vuoto=T("admin_codice_vuoto", la),
+        label_codice_aggiungi=T("admin_codice_aggiungi", la),
         label_impostazioni_generali=T("admin_impostazioni_generali", la),
         label_titolo_sito=T("admin_titolo_sito", la),
         valore_titolo_sito=esc(config.get("site_title", "")),
@@ -1407,6 +1579,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def _api_save_config(self, data):
         """Save the settings form and rebuild the site."""
+        if "custom_code" in data:
+            data["custom_code"] = with_snippet_ids(data["custom_code"])
         with BUILD_LOCK:
             # IMPORTANT: we merge with the existing configuration instead of
             # overwriting it. The form of the Settings page does not contain

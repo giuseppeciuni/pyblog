@@ -116,6 +116,15 @@ def save_article(data):
     translation_authorized = data.get("translation_authorized", False)
     translation_confirmed = data.get("translation_confirmed", False)
 
+    # Ids of the custom code snippets ticked for this article. Only the
+    # snippets set to "homepage and selected articles" read this list; the
+    # ids themselves live in config.json. An id of a snippet that has since
+    # been deleted stays here harmlessly: the build simply never finds it.
+    snippet_ids = data.get("custom_code_ids", [])
+    if not isinstance(snippet_ids, list):
+        snippet_ids = []
+    snippet_ids = [str(x) for x in snippet_ids if isinstance(x, (str, int))]
+
     article = {
         "title": title_value,
         "slug": slug,
@@ -127,6 +136,7 @@ def save_article(data):
         "tags": data.get("tags", "").strip(),
         "image": data.get("image", "").strip(),
         "status": data.get("status", "draft"),
+        "custom_code_ids": snippet_ids,
         "date": data.get("date"),
         "date_modified": datetime.now(timezone.utc).isoformat(),
         # --- English version ---

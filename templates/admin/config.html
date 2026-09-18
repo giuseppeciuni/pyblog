@@ -37,6 +37,21 @@
 <p class="hint">$hint_card_home</p>
 $card_html
 
+<h2>$label_codice_titolo</h2>
+<p class="hint">$hint_codice</p>
+<div id="lista-codice">
+$codice_html
+</div>
+<p class="hint" id="codice-vuoto-nota" hidden>$label_codice_vuoto</p>
+<div class="azioni" style="margin-top:0.8rem">
+  <button type="button" class="btn-secondario" onclick="addCustomCode()">$label_codice_aggiungi</button>
+</div>
+<!-- The blank card the button clones. A <template> is inert: its content is
+     not in the page, so the card inside is never collected when saving. -->
+<template id="codice-modello">
+$codice_modello
+</template>
+
 </div><!-- end of the left column -->
 
 <div class="config-col-destra">

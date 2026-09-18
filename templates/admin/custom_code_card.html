@@ -1,0 +1,27 @@
+  <div class="codice-config" data-indice="$indice" data-id="$id_snippet">
+    <div class="codice-intestazione">
+      <label class="riga-flag"><input type="checkbox" class="codice-attivo" $checked> $label_attivo</label>
+      <button type="button" class="btn-rimuovi-cover" onclick="removeCustomCode(this)">$label_elimina</button>
+    </div>
+
+    <label>$label_nome</label>
+    <input type="text" class="codice-nome" value="$nome" placeholder="$ph_nome">
+
+    <label>$label_posizione</label>
+    <select class="codice-posizione">
+      <option value="head" $sel_head>$label_pos_head</option>
+      <option value="body_start" $sel_body_start>$label_pos_body_start</option>
+      <option value="body_end" $sel_body_end>$label_pos_body_end</option>
+    </select>
+
+    <label>$label_ambito</label>
+    <select class="codice-ambito">
+      <option value="home" $sel_home>$label_scope_home</option>
+      <option value="home_articles" $sel_articles>$label_scope_articles</option>
+      <option value="home_optin" $sel_optin>$label_scope_optin</option>
+    </select>
+    <p class="hint" style="margin:0.2rem 0 0">$hint_ambito</p>
+
+    <label>$label_codice</label>
+    <textarea class="codice-testo" rows="8" spellcheck="false">$codice</textarea>
+  </div>
