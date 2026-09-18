@@ -440,6 +440,23 @@ UI_TRANSLATIONS = {
                        "en": "The SVG contains active elements that could not be removed with confidence: rejected."},
     "err_malformed_upload": {"it": "Caricamento malformato.", "en": "Malformed upload."},
 
+    # --- Shrinking uploaded images ---
+    "js_image_resized_local": {
+        "it": "Immagine ridimensionata a {w}\u00d7{h} prima del caricamento.",
+        "en": "Image resized to {w}\u00d7{h} before uploading."},
+    "img_ridimensionata": {
+        "it": "Immagine ridotta da {da} a {a}: {n} KB risparmiati.",
+        "en": "Image reduced from {da} to {a}: {n} KB saved."},
+    "img_metadati_rimossi": {
+        "it": "Rimossi i metadati dell'immagine: {n} KB risparmiati.",
+        "en": "Image metadata removed: {n} KB saved."},
+    "img_jpeg_non_ridimensionabile": {
+        "it": "L'immagine e' grande ma e' un JPEG: il server non puo' ridimensionarlo senza una libreria esterna. Se ti serve piu' piccola, ridimensionala prima di caricarla.",
+        "en": "The image is large but it is a JPEG: the server cannot resize one without an external library. If you need it smaller, resize it before uploading."},
+    "img_troppi_pixel": {
+        "it": "L'immagine e' troppo grande per essere ridimensionata dal server ed e' stata tenuta com'e'.",
+        "en": "The image is too large for the server to resize and was kept as it is."},
+
     # --- Word (.docx) import ---
     "admin_importa_word": {"it": "Importa da Word (.docx)", "en": "Import from Word (.docx)"},
     "tip_import_docx": {

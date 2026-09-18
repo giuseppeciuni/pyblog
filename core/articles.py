@@ -12,7 +12,9 @@ import xml.etree.ElementTree as ElementTree
 from datetime import datetime, timezone
 from pathlib import Path
 
-from core.config import MEDIA_DIR, POSTS_DIR, main_language, migrate_article_schema
+from core import images
+from core.config import (CONFIG, MEDIA_DIR, POSTS_DIR, main_language,
+                         migrate_article_schema)
 
 
 
@@ -409,13 +411,29 @@ def sanitize_svg(binary_data):
     return True, cleaned
 
 
+def max_image_side():
+    """The widest an uploaded image is kept at, from the configuration."""
+    value = CONFIG.get("max_image_width", images.DEFAULT_MAX_SIDE)
+    try:
+        value = int(value)
+    except (ValueError, TypeError):
+        value = images.DEFAULT_MAX_SIDE
+    if value <= 0:
+        return 0
+    return value
+
+
 def validate_upload(file_name, binary_data):
     """
-    Run every check on an uploaded file.
+    Run every check on an uploaded file, and shrink it where we can.
 
-    Return {"ok": True, "data": bytes} with the (possibly sanitised) content
-    to write, or {"ok": False, "error_key": "...", "limit_mb": n} describing
-    why it was refused. The caller turns the key into a translated message.
+    Return {"ok": True, "data": bytes, "optimisation": {...}} with the
+    content to write, or {"ok": False, "error_key": "...", "limit_mb": n}
+    describing why it was refused. The caller turns the key into a translated
+    message.
+
+    The shrinking happens AFTER the checks, never before: an image is only
+    decoded once we know it is really an image of a type we accept.
     """
     kind, limit = upload_kind(file_name)
     if kind is None:
@@ -436,7 +454,14 @@ def validate_upload(file_name, binary_data):
     if not magic_bytes_match(extension, binary_data):
         return {"ok": False, "error_key": "err_file_content_mismatch"}
 
-    return {"ok": True, "data": binary_data}
+    if kind == "video":
+        return {"ok": True, "data": binary_data}
+
+    side = max_image_side()
+    if side == 0:
+        return {"ok": True, "data": binary_data}
+    optimisation = images.optimise_image(file_name, binary_data, side)
+    return {"ok": True, "data": optimisation["data"], "optimisation": optimisation}
 
 
 def sanitize_file_name(name_value):

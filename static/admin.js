@@ -454,29 +454,98 @@ function fileFitsLimit(file, limiteMb) {
 // This is the one place that talks to /upload: the buttons that put an image
 // in the article, the one that puts a video in it and the one that sets the
 // cover all go through it.
+// Downscales an image in the browser before it is uploaded.
+//
+// This is where the JPEGs are dealt with. The server can read and write a
+// PNG with the standard library alone, but not a JPEG: decoding one means an
+// inverse DCT, which this project cannot carry. The browser already has a
+// complete image pipeline, so it does the work here, at native speed and
+// with proper smoothing, and what reaches the server is already the right
+// size.
+//
+// Three formats are deliberately left alone. An SVG would be rasterised and
+// stop being a drawing; an animated GIF would come back as one frame; a WebP
+// may carry transparency that a re-encode would drop. None of those is a
+// trade the author asked for.
+function resizeImageBeforeUpload(file, latoMassimo) {
+  var rimpicciolibili = ['image/png', 'image/jpeg'];
+  if (!latoMassimo || rimpicciolibili.indexOf(file.type) === -1) {
+    return Promise.resolve(file);
+  }
+
+  return new Promise(function(risolvi) {
+    var indirizzo = URL.createObjectURL(file);
+    var immagine = new Image();
+
+    immagine.onload = function() {
+      URL.revokeObjectURL(indirizzo);
+      var larghezza = immagine.naturalWidth;
+      var altezza = immagine.naturalHeight;
+      var lato = Math.max(larghezza, altezza);
+      // The same threshold the server uses: trimming an image by a little is
+      // not worth re-encoding it.
+      if (lato <= latoMassimo * 1.25) { risolvi(file); return; }
+
+      var scala = latoMassimo / lato;
+      var tela = document.createElement('canvas');
+      tela.width = Math.round(larghezza * scala);
+      tela.height = Math.round(altezza * scala);
+      var contesto = tela.getContext('2d');
+      contesto.imageSmoothingEnabled = true;
+      contesto.imageSmoothingQuality = 'high';
+      contesto.drawImage(immagine, 0, 0, tela.width, tela.height);
+
+      tela.toBlob(function(blocco) {
+        // A re-encode that came out bigger, or a browser that refused: keep
+        // what the author chose. The file name is unchanged, so it still
+        // matches the type the server checks it against.
+        if (!blocco || blocco.size >= file.size) { risolvi(file); return; }
+        var ridotto = new File([blocco], file.name, { type: file.type });
+        pbToast(t('js_image_resized_local')
+                  .replace('{w}', tela.width).replace('{h}', tela.height), 'info');
+        risolvi(ridotto);
+      }, file.type, 0.85);
+    };
+
+    immagine.onerror = function() {
+      URL.revokeObjectURL(indirizzo);
+      risolvi(file);
+    };
+    immagine.src = indirizzo;
+  });
+}
+
 function uploadChosenFile(idCampoFile, limiteMb, idStato, messaggioInizio) {
   var campoFile = document.getElementById(idCampoFile);
   if (!campoFile || campoFile.files.length === 0) {
     return Promise.resolve(null);
   }
-  var file = campoFile.files[0];
+  var scelto = campoFile.files[0];
   // Clearing the input now lets the same file be chosen again later: without
   // this the change event would not fire a second time. FormData already
   // holds the file, so the upload is unaffected.
   campoFile.value = '';
 
-  if (!fileFitsLimit(file, limiteMb)) {
+  if (!fileFitsLimit(scelto, limiteMb)) {
     return Promise.resolve(null);
   }
 
+  pbStatus(idStato, messaggioInizio);
+  return resizeImageBeforeUpload(scelto, pbPage('max_image_width', 1600))
+    .then(function(file) { return inviaFile(file, idStato); });
+}
+
+function inviaFile(file, idStato) {
   var datiForm = new FormData();
   datiForm.append('video', file);
-  pbStatus(idStato, messaggioInizio);
 
   return pbFetch('/upload', { method: 'POST', body: datiForm })
     .then(function(risposta) { return risposta.json(); })
     .then(function(risultato) {
       if (risultato.ok === true) {
+        // The server says what it did with the file: shrank it, dropped the
+        // metadata, or left it alone because it could not.
+        if (risultato.note) { pbToast(risultato.note, 'info'); }
         return risultato.url;
       }
       pbStatus(idStato, '');

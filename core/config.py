@@ -170,6 +170,14 @@ CONFIG_DEFAULT = {
     # homepage is a plain list, as it was before.
     "home_featured": True,
 
+    # Widest an uploaded image is kept at, in pixels. The article column is
+    # 720px and the cover is capped at 340px tall, so 1600 covers a
+    # high-density screen at twice the size. Larger uploads are downscaled,
+    # in the browser before they are sent and on the server for the images
+    # pulled out of a Word document. 0 disables it and keeps every upload at
+    # its original size.
+    "max_image_width": 1600,
+
     # Show the cover image inside the article page as well, under the title
     # and the date. With False the cover only appears in the listings and in
     # the social preview, and the article opens straight on its first line.

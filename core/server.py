@@ -25,7 +25,8 @@ from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
 from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, delete_article,
                            html_content_is_empty, load_article, load_articles,
-                           save_article, save_uploaded_file, validate_upload)
+                           max_image_side, save_article, save_uploaded_file,
+                           validate_upload)
 from core.docx_import import convert_docx, looks_like_docx
 from core.auth import (create_session_token, csrf_token_for,
                        csrf_token_is_valid, destroy_all_sessions,
@@ -200,6 +201,34 @@ def js_translations(language):
     result["js_home_intro_placeholder_it"] = T("js_home_intro_placeholder", "it")
     result["js_home_intro_placeholder_en"] = T("js_home_intro_placeholder", "en")
     return result
+
+
+def optimisation_note(optimisation, language):
+    """
+    One sentence describing what was done to an uploaded image, or "".
+
+    The author chose that file; if it comes back smaller, or comes back
+    unchanged when they expected it not to, they should be told which.
+    """
+    if optimisation is None:
+        return ""
+    action = optimisation.get("action", "")
+    saved_kb = optimisation.get("saved", 0) // 1024
+
+    if action == "resized":
+        da = "%dx%d" % optimisation["from"]
+        a = "%dx%d" % optimisation["to"]
+        return (T("img_ridimensionata", language)
+                .replace("{da}", da).replace("{a}", a).replace("{n}", str(saved_kb)))
+    if action == "stripped" and saved_kb > 0:
+        return T("img_metadati_rimossi", language).replace("{n}", str(saved_kb))
+
+    reason = optimisation.get("reason", "")
+    if reason == "jpeg_not_resizable":
+        return T("img_jpeg_non_ridimensionabile", language)
+    if reason == "too_many_pixels":
+        return T("img_troppi_pixel", language)
+    return ""
 
 
 def translate_warnings(warnings, language):
@@ -548,6 +577,9 @@ def editor_page(art, csrf):
         "max_docx_mb": MAX_DOCX_BODY // (1024 * 1024),
         "max_image_mb": MAX_IMAGE_BYTES // (1024 * 1024),
         "max_video_mb": MAX_VIDEO_BYTES // (1024 * 1024),
+        # The browser applies the same cap before sending, which is how a
+        # JPEG gets resized at all: the server cannot decode one.
+        "max_image_width": max_image_side(),
         "slug": art.get("slug", ""),
         "content": art.get("content", ""),
         "title_en": art.get("title_en", ""),
@@ -860,6 +892,9 @@ def config_page(csrf):
         "preview_kind": "home",
         "max_image_mb": MAX_IMAGE_BYTES // (1024 * 1024),
         "max_video_mb": MAX_VIDEO_BYTES // (1024 * 1024),
+        # The browser applies the same cap before sending, which is how a
+        # JPEG gets resized at all: the server cannot decode one.
+        "max_image_width": max_image_side(),
         "home_content": config.get("home_content", ""),
         "home_content_en": config.get("home_content_en", ""),
         "card_contents": card_contents,
@@ -1549,7 +1584,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
 
             url = save_uploaded_file(file_name, check["data"])
-            self._send_json({"ok": True, "url": url})
+            self._send_json({"ok": True, "url": url,
+                             "note": optimisation_note(check.get("optimisation"), la)})
 
         except Exception as e:
             self._send_json({"ok": False, "error": str(e)})
