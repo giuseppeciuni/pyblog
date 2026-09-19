@@ -2,6 +2,7 @@ admin_password.txt
 __pycache__/
 *.pyc
 output/
+output_riferimento/
 test_docx/_media_di_prova/
 test_docx/*.docx
 pyblog_standalone.py
