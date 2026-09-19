@@ -6,8 +6,8 @@ Checks on the custom code injected into the public pages.
 
 The thing worth testing here is the scope, not the injection: getting a
 snippet into a page is one string concatenation, but deciding WHICH pages it
-belongs to is a rule with four outcomes per page, and a mistake there is
-silent. A tracking pixel that quietly lands on every article instead of the
+belongs to is a rule with six scopes and six positions, and a mistake there
+is silent. A tracking pixel that quietly lands on every article instead of the
 three you picked looks exactly like one that works.
 
 The snippets below are HTML comments with unmistakable markers, so a match
@@ -41,6 +41,18 @@ SNIPPET_DI_PROVA = [
     {"id": "prova-spento", "name": "Spento", "enabled": False,
      "position": "head", "scope": "home_articles",
      "code": "<!-- MARCA-SPENTA -->"},
+    # The scopes that leave the homepage out, and the whole-site one. Each
+    # sits in one of the three visible positions, so the same fixture covers
+    # both halves of the feature.
+    {"id": "prova-solo-articoli", "name": "Solo articoli", "enabled": True,
+     "position": "after_header", "scope": "articles",
+     "code": "<!-- MARCA-SOLO-ARTICOLI -->"},
+    {"id": "prova-solo-scelti", "name": "Solo scelti", "enabled": True,
+     "position": "article_end", "scope": "optin",
+     "code": "<!-- MARCA-SOLO-SCELTI -->"},
+    {"id": "prova-ovunque-davvero", "name": "Tutto il sito", "enabled": True,
+     "position": "before_footer", "scope": "all",
+     "code": "<!-- MARCA-OVUNQUE -->"},
 ]
 
 CON_SPUNTA = "come-un-llm-genera-testo"
@@ -108,13 +120,40 @@ def test_ambito_delle_pagine():
         check(f"il codice disattivato non esce nella {nome}",
               not contiene(percorso, "MARCA-SPENTA"))
 
-    # Tag, archive and 404 are outside every scope.
+    # "Solo gli articoli" is the mirror of "solo home": it must skip the home.
+    check("la home NON riceve il 'solo articoli'",
+          not contiene(home, "MARCA-SOLO-ARTICOLI"),
+          "un codice riservato agli articoli e' finito in homepage")
+    check("l'articolo scelto riceve il 'solo articoli'",
+          contiene(scelto, "MARCA-SOLO-ARTICOLI"))
+    check("l'altro articolo riceve il 'solo articoli'",
+          contiene(altro, "MARCA-SOLO-ARTICOLI"))
+
+    # "Solo gli articoli scelti": nemmeno la home, e solo quello spuntato.
+    check("la home NON riceve il 'solo articoli scelti'",
+          not contiene(home, "MARCA-SOLO-SCELTI"))
+    check("l'articolo con la spunta riceve il 'solo articoli scelti'",
+          contiene(scelto, "MARCA-SOLO-SCELTI"))
+    check("l'articolo senza la spunta non lo riceve",
+          not contiene(altro, "MARCA-SOLO-SCELTI"))
+
+    # "Tutto il sito" means every page we generate, the odd ones included.
+    for nome, percorso in (("home", home), ("articolo", scelto),
+                           ("tag", "output/tag/ai.html"),
+                           ("archivio", "output/archivio.html"),
+                           ("404", "output/404.html")):
+        check(f"'tutto il sito' arriva anche su {nome}",
+              contiene(percorso, "MARCA-OVUNQUE"),
+              f"{percorso} non ha ricevuto il codice di tutto il sito")
+
+    # Tag, archive and 404 are outside every scope but "the whole site".
     for percorso in ("output/tag/ai.html", "output/archivio.html", "output/404.html"):
         pulita = True
-        for marcatore in ("MARCA-SOLO-HOME", "MARCA-TUTTI-ARTICOLI", "MARCA-OPTIN"):
+        for marcatore in ("MARCA-SOLO-HOME", "MARCA-TUTTI-ARTICOLI", "MARCA-OPTIN",
+                          "MARCA-SOLO-ARTICOLI", "MARCA-SOLO-SCELTI"):
             if contiene(percorso, marcatore):
                 pulita = False
-        check(f"{percorso}: nessun codice personalizzato", pulita)
+        check(f"{percorso}: nessun altro codice personalizzato", pulita)
 
 
 def test_posizione_nella_pagina():
@@ -133,6 +172,35 @@ def test_posizione_nella_pagina():
     coda = home.split("</footer>")[-1]
     check("'fondo pagina' sta dopo il footer", "MARCA-OPTIN" in coda)
     check("'fondo pagina' sta dentro il body", "MARCA-OPTIN" in home.split("</body>")[0])
+
+    # The three visible positions all exist on an article page, so one page
+    # is enough to check them. We compare offsets rather than splitting: the
+    # question here is the ORDER of the landmarks, and that is what reads.
+    scelto = leggi(f"output/posts/{CON_SPUNTA}.html")
+
+    def prima_di(marcatore, punto_di_riferimento):
+        dove = scelto.find(marcatore)
+        riferimento = scelto.find(punto_di_riferimento)
+        return dove != -1 and riferimento != -1 and dove < riferimento
+
+    def dopo(marcatore, punto_di_riferimento):
+        dove = scelto.find(marcatore)
+        riferimento = scelto.find(punto_di_riferimento)
+        return dove != -1 and riferimento != -1 and dove > riferimento
+
+    check("'sotto l'intestazione' sta dopo la fine dell'header",
+          dopo("MARCA-SOLO-ARTICOLI", "</header>"))
+    check("'sotto l'intestazione' sta prima dell'articolo",
+          prima_di("MARCA-SOLO-ARTICOLI", '<article id="content"'))
+
+    check("'fondo del testo' sta dentro l'articolo",
+          dopo("MARCA-SOLO-SCELTI", '<article id="content"')
+          and prima_di("MARCA-SOLO-SCELTI", "</article>"))
+
+    check("'prima del footer' sta dopo la fine dell'articolo",
+          dopo("MARCA-OVUNQUE", "</article>"))
+    check("'prima del footer' sta prima del footer",
+          prima_di("MARCA-OVUNQUE", "<footer"))
 
 
 def test_codice_inserito_intatto():
@@ -161,6 +229,45 @@ def test_id_mancante_o_morto():
           snippet_applies(senza, "home", ()) and not snippet_applies(senza, "article", ()))
     check("uno snippet spento non esce mai",
           not snippet_applies({"id": "x", "scope": "home"}, "home", ()))
+
+
+def test_regole_di_ambito():
+    """The scope rule on its own, without building a whole site for it."""
+    print("\nla regola dell'ambito, voce per voce")
+
+    def vale(scope, page_kind, ids=()):
+        return snippet_applies(
+            {"id": "x", "enabled": True, "scope": scope}, page_kind, ids)
+
+    atteso = {
+        # scope            home   articolo  altre pagine
+        "home":           (True,  False,    False),
+        "articles":       (False, True,     False),
+        "home_articles":  (True,  True,     False),
+        "all":            (True,  True,     True),
+    }
+    for scope, (in_home, in_articolo, altrove) in atteso.items():
+        check(f"'{scope}': home={in_home}",
+              vale(scope, "home") is in_home)
+        check(f"'{scope}': articolo={in_articolo}",
+              vale(scope, "article") is in_articolo)
+        check(f"'{scope}': altre pagine={altrove}",
+              vale(scope, "other") is altrove)
+
+    # The two opt-in scopes differ only on the homepage.
+    check("'optin' non esce in home", not vale("optin", "home"))
+    check("'home_optin' esce in home", vale("home_optin", "home"))
+    for scope in ("optin", "home_optin"):
+        check(f"'{scope}' esce sull'articolo spuntato",
+              vale(scope, "article", ("x",)))
+        check(f"'{scope}' non esce su un articolo qualsiasi",
+              not vale(scope, "article", ("un-altro",)))
+
+    # An ambito written by hand and misspelled must not make the snippet
+    # disappear without a trace: it falls back to the default, "solo home".
+    check("un ambito sconosciuto si comporta come 'solo home'",
+          vale("ambito-inventato", "home")
+          and not vale("ambito-inventato", "article"))
 
 
 def test_le_spunte_sopravvivono_al_salvataggio():
@@ -206,7 +313,7 @@ def main():
     config = load_config()
     config["custom_code"] = SNIPPET_DI_PROVA
     save_config(config)
-    articolo["custom_code_ids"] = ["prova-scelti"]
+    articolo["custom_code_ids"] = ["prova-scelti", "prova-solo-scelti"]
     save_article(articolo)
     build()
 
@@ -215,6 +322,7 @@ def main():
         test_posizione_nella_pagina()
         test_codice_inserito_intatto()
         test_id_mancante_o_morto()
+        test_regole_di_ambito()
         test_le_spunte_sopravvivono_al_salvataggio()
     finally:
         file_articolo.write_text(articolo_originale, encoding="utf-8")

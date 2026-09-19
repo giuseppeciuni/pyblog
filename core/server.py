@@ -665,19 +665,34 @@ def custom_code_card(snippet, index_value, la):
         nome=esc(snippet.get("name", "")),
         ph_nome=esc(T("admin_codice_nome_ph", la)),
         label_posizione=T("admin_codice_posizione", la),
+        gruppo_tecnico=T("admin_codice_pos_gruppo_tecnico", la),
         sel_head=selected_if(position, "head"),
         label_pos_head=T("admin_codice_pos_head", la),
         sel_body_start=selected_if(position, "body_start"),
         label_pos_body_start=T("admin_codice_pos_body_start", la),
         sel_body_end=selected_if(position, "body_end"),
         label_pos_body_end=T("admin_codice_pos_body_end", la),
+        gruppo_visibile=T("admin_codice_pos_gruppo_visibile", la),
+        sel_after_header=selected_if(position, "after_header"),
+        label_pos_after_header=T("admin_codice_pos_after_header", la),
+        sel_before_footer=selected_if(position, "before_footer"),
+        label_pos_before_footer=T("admin_codice_pos_before_footer", la),
+        sel_article_end=selected_if(position, "article_end"),
+        label_pos_article_end=T("admin_codice_pos_article_end", la),
+        hint_posizione=T("admin_codice_pos_hint", la),
         label_ambito=T("admin_codice_ambito", la),
         sel_home=selected_if(scope, "home"),
         label_scope_home=T("admin_codice_scope_home", la),
+        sel_solo_articoli=selected_if(scope, "articles"),
+        label_scope_solo_articoli=T("admin_codice_scope_solo_articoli", la),
         sel_articles=selected_if(scope, "home_articles"),
         label_scope_articles=T("admin_codice_scope_articles", la),
+        sel_solo_optin=selected_if(scope, "optin"),
+        label_scope_solo_optin=T("admin_codice_scope_solo_optin", la),
         sel_optin=selected_if(scope, "home_optin"),
         label_scope_optin=T("admin_codice_scope_optin", la),
+        sel_tutto=selected_if(scope, "all"),
+        label_scope_tutto=T("admin_codice_scope_tutto", la),
         hint_ambito=T("admin_codice_scope_hint", la),
         label_codice=T("admin_codice_codice", la),
         codice=esc(snippet.get("code", "")),
@@ -715,10 +730,10 @@ def article_custom_code_html(art, la):
     """
     Build the custom code list shown in the article editor.
 
-    Only the snippets set to "homepage and selected articles" get a checkbox:
-    they are the ones this article decides about. The ones running on every
-    article are listed underneath, as plain text, so you can see what is
-    already on the page without opening the Settings in another tab.
+    Only the snippets scoped to the selected articles get a checkbox: they
+    are the ones this article decides about. The ones running on every
+    article anyway are listed underneath, as plain text, so you can see what
+    is already on the page without opening the Settings in another tab.
     """
     snippets = CONFIG.get("custom_code", [])
     if not isinstance(snippets, list):
@@ -729,6 +744,9 @@ def article_custom_code_html(art, la):
         "head": T("admin_codice_pos_head", la),
         "body_start": T("admin_codice_pos_body_start", la),
         "body_end": T("admin_codice_pos_body_end", la),
+        "after_header": T("admin_codice_pos_after_header", la),
+        "before_footer": T("admin_codice_pos_before_footer", la),
+        "article_end": T("admin_codice_pos_article_end", la),
     }
 
     choices = []
@@ -742,7 +760,7 @@ def article_custom_code_html(art, la):
         name = esc(snippet.get("name", "")) or esc(snippet_id)
         where = esc(labels.get(snippet.get("position", "head"), ""))
         scope = snippet.get("scope", "home")
-        if scope == "home_optin":
+        if scope in ("optin", "home_optin"):
             checked = ""
             if snippet_id in enabled_ids:
                 checked = " checked"
@@ -751,7 +769,7 @@ def article_custom_code_html(art, la):
                 f'<input type="checkbox" class="codice-articolo" '
                 f'value="{esc(snippet_id)}"{checked}> {name} '
                 f'<span class="hint">({where})</span></label>')
-        elif scope == "home_articles":
+        elif scope in ("articles", "home_articles", "all"):
             always_on.append(f'<li>{name} <span class="hint">({where})</span></li>')
 
     if len(choices) == 0:

@@ -9,16 +9,27 @@
 
     <label>$label_posizione</label>
     <select class="codice-posizione">
-      <option value="head" $sel_head>$label_pos_head</option>
-      <option value="body_start" $sel_body_start>$label_pos_body_start</option>
-      <option value="body_end" $sel_body_end>$label_pos_body_end</option>
+      <optgroup label="$gruppo_tecnico">
+        <option value="head" $sel_head>$label_pos_head</option>
+        <option value="body_start" $sel_body_start>$label_pos_body_start</option>
+        <option value="body_end" $sel_body_end>$label_pos_body_end</option>
+      </optgroup>
+      <optgroup label="$gruppo_visibile">
+        <option value="after_header" $sel_after_header>$label_pos_after_header</option>
+        <option value="before_footer" $sel_before_footer>$label_pos_before_footer</option>
+        <option value="article_end" $sel_article_end>$label_pos_article_end</option>
+      </optgroup>
     </select>
+    <p class="hint" style="margin:0.2rem 0 0">$hint_posizione</p>
 
     <label>$label_ambito</label>
     <select class="codice-ambito">
       <option value="home" $sel_home>$label_scope_home</option>
+      <option value="articles" $sel_solo_articoli>$label_scope_solo_articoli</option>
       <option value="home_articles" $sel_articles>$label_scope_articles</option>
+      <option value="optin" $sel_solo_optin>$label_scope_solo_optin</option>
       <option value="home_optin" $sel_optin>$label_scope_optin</option>
+      <option value="all" $sel_tutto>$label_scope_tutto</option>
     </select>
     <p class="hint" style="margin:0.2rem 0 0">$hint_ambito</p>
 

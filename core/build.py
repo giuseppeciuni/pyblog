@@ -283,24 +283,47 @@ def article_snippet_ids(art):
     return tuple(str(x) for x in ids)
 
 
+# The scopes a snippet can have, in the order the Settings dropdown lists
+# them. "home", "home_articles" and "home_optin" came first: a configuration
+# written before the list grew keeps behaving exactly as it did.
+SNIPPET_SCOPES = ("home", "articles", "home_articles",
+                  "optin", "home_optin", "all")
+
+# Where a snippet can be injected. The first three are positions in the HTML
+# and exist on every page; the last three are places in the visible layout,
+# and a page that has no such place simply leaves the snippet out.
+SNIPPET_POSITIONS = ("head", "body_start", "body_end",
+                     "after_header", "before_footer", "article_end")
+
+
 def snippet_applies(snippet, page_kind, article_ids):
     """
     Tell whether a snippet belongs on the page being generated.
 
-    All three scopes include the homepage; they differ on the articles. A
-    snippet whose id is no longer anywhere in the configuration simply never
+    Each scope names the pages it wants: the homepage, the articles, both, or
+    the whole site. "optin" and "home_optin" narrow the articles down to the
+    ones that ticked the snippet while being written.
+
+    A snippet whose id is no longer anywhere in the configuration simply never
     matches, which is what makes deleting one safe: the articles that ticked
     it keep the dead id in their JSON and nothing goes wrong.
     """
     if snippet.get("enabled", False) is not True:
         return False
     scope = snippet.get("scope", "home")
-    if page_kind == "home":
+    if scope not in SNIPPET_SCOPES:
+        # A scope typed by hand into config.json that we do not recognise:
+        # fall back to the default rather than letting the snippet vanish
+        # from every page with no sign of why.
+        scope = "home"
+    if scope == "all":
         return True
+    if page_kind == "home":
+        return scope in ("home", "home_articles", "home_optin")
     if page_kind == "article":
-        if scope == "home_articles":
+        if scope in ("articles", "home_articles"):
             return True
-        if scope == "home_optin":
+        if scope in ("optin", "home_optin"):
             return snippet.get("id", "") in article_ids
     return False
 
@@ -315,7 +338,10 @@ def custom_code_block(position, page_kind, article_ids):
     """
     parts = []
     for snippet in custom_code_list():
-        if snippet.get("position", "head") != position:
+        where = snippet.get("position", "head")
+        if where not in SNIPPET_POSITIONS:
+            where = "head"
+        if where != position:
             continue
         if not snippet_applies(snippet, page_kind, article_ids):
             continue
@@ -473,8 +499,8 @@ def render_page(language, titolo_pagina, contenuto, meta_extra="",
 
     page_kind ("home", "article" or "other") and article_ids are what the
     custom code snippets are matched against. A caller that passes neither
-    gets no custom code at all, which is right for the tag, archive, card
-    and 404 pages: no scope reaches them.
+    gets only the snippets scoped to the whole site, which is right for the
+    tag, archive, card and 404 pages: no other scope names them.
     """
     head_extra = block(head_extra) + (
         "  <script>window.PB_SITE = "
@@ -488,6 +514,12 @@ def render_page(language, titolo_pagina, contenuto, meta_extra="",
     script_extra = block(script_extra) + custom_code_block(
         "body_end", page_kind, article_ids)
     body_open = custom_code_block("body_start", page_kind, article_ids)
+
+    # The two visible slots of the shared layout. The third one, the end of
+    # the article text, is filled by generate_article_page: it is the only
+    # page that has such a place.
+    after_header = custom_code_block("after_header", page_kind, article_ids)
+    before_footer = custom_code_block("before_footer", page_kind, article_ids)
     if feed_links is None:
         feed_links = ('  <link rel="alternate" type="application/rss+xml" '
                       f'title="{esc(CONFIG["site_title"])}" href="{feed_url(language)}">\n')
@@ -502,7 +534,9 @@ def render_page(language, titolo_pagina, contenuto, meta_extra="",
         head_extra=block(head_extra),
         body_open=block(body_open),
         header=site_header(language),
+        after_header=block(after_header),
         contenuto=block(contenuto),
+        before_footer=block(before_footer),
         footer=site_footer(language),
         script_extra=block(script_extra),
     )
@@ -989,6 +1023,8 @@ def generate_article_page(art, language="it", all_articles=None):
         copertina=block(cover_block),
         toc=toc_html,
         contenuto_articolo=content,
+        codice_fine_testo=block(custom_code_block(
+            "article_end", "article", article_snippet_ids(art))),
         author_box=generate_author_box(language),
         article_nav=generate_article_nav(art, all_articles, language),
         back_label=back_label,
