@@ -125,6 +125,57 @@ always be somewhat underestimated, whatever system you use.
 Finally, remember backups: the `umami-db` Docker volume holds the whole
 statistics history.
 
+## Custom code (`custom_code`)
+
+Pieces of HTML or JavaScript injected into the public pages: third-party
+widgets, tracking pixels, embeds. They are managed from the Settings
+page, and each piece has three choices: where it goes in the page, which
+pages it appears on, and the code itself.
+
+`custom_code` is a list; each item is an object with these fields:
+
+| Field      | Meaning                                                         |
+|------------|-----------------------------------------------------------------|
+| `id`       | Stable identifier (`snip-xxxxxxxx`), generated on its own. Articles refer to a snippet by this, not by name: renaming one breaks nothing. |
+| `name`     | The name you see in the Settings page. It never reaches the pages. |
+| `enabled`  | `true` or `false`. Off means off everywhere, without deleting it. |
+| `position` | Where it lands in the page (see below).                         |
+| `scope`    | Which pages it appears on (see below).                          |
+| `code`     | The code, injected **verbatim**, with no transformation at all.  |
+
+**The positions (`position`)**
+
+| Value           | Where it lands                                                |
+|-----------------|---------------------------------------------------------------|
+| `head`          | Inside `<head>`. For meta tags and scripts that must start early. |
+| `body_start`    | Right after `<body>`, before the site header.                  |
+| `body_end`      | At the end of the page, after everything else. The right place for `defer` or `async` scripts. |
+| `after_header`  | Below the site header, before the content. Visible.            |
+| `before_footer` | After the content, before the footer. Visible.                 |
+| `article_end`   | At the end of the article text, before the author box. It exists **on articles only**: on any other page the code does not appear. |
+
+**The scopes (`scope`)**
+
+| Value           | Which pages                                                   |
+|-----------------|---------------------------------------------------------------|
+| `home`          | The homepage only.                                            |
+| `articles`      | The articles only, all of them.                               |
+| `home_articles` | The homepage and every article.                               |
+| `optin`         | Only the articles that tick it in the editor.                 |
+| `home_optin`    | The homepage, plus the articles that tick it in the editor.   |
+| `all`           | The whole site: the archive, the tag pages, the cards and the 404 page included. |
+
+Articles keep their own choice in the `custom_code_ids` field of their
+JSON, which holds the `id` of every ticked snippet. Deleting a snippet
+from the Settings page is safe: the id left behind in the articles no
+longer matches anything and is simply ignored.
+
+**A note on trust.** The code is written into the page with no checking
+at all, because checking it would mean stopping it from working. Anyone
+who can log into the administration area can therefore run any
+JavaScript on the public site: only paste code you trust, and keep the
+administration password safe.
+
 ## Automatic translation (Italian -> English)
 
 Inside the `translation` section:

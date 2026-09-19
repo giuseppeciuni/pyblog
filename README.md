@@ -237,6 +237,7 @@ capped at 30 MB.
 - Dashboard with article list, status, search, edit, delete
 - Editor with a sidebar, responsive and mobile friendly
 - Advanced section to edit config.json directly, with validation
+- Custom HTML/JavaScript snippets for third-party widgets and pixels: each one picks where it lands in the page and which pages it appears on, down to the single article
 - One-click backup/export of all content as a ZIP
 
 **Reading**

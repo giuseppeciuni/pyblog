@@ -278,6 +278,55 @@ chiave sbagliata o mancante, credito esaurito, o modello inesistente.
 Consiglio: usa una chiave dedicata alle prove con un tetto di spesa
 basso impostato nella console del provider.
 
+### Passo 2.11 — Mettere il codice di un servizio esterno nelle pagine
+
+Prima o poi un servizio ti dara' una riga da incollare nel sito: un
+widget di assistenza, una chat, un pixel di tracciamento, un modulo di
+iscrizione. Qualcosa di questo genere:
+
+```html
+<script src="https://esempio.com/widget/loader.js" data-widget-id="a7ddc6ff" defer></script>
+```
+
+Non serve toccare i file del programma. Vai in **Impostazioni**, scorri
+fino a **Codice personalizzato** e clicca **Aggiungi codice**. Compili
+quattro cose:
+
+1. **Nome**: come lo chiami tu, per ritrovarlo. Es. "Widget assistenza".
+2. **Dove va nella pagina**: le voci sono divise in due gruppi. Quelle
+   *tecniche* (`head`, inizio body, fondo pagina) non si vedono e vanno
+   bene per script e pixel — per l'esempio qui sopra scegli **in fondo
+   alla pagina**. Quelle *visibili* (sotto l'intestazione, prima del
+   pie' di pagina, in fondo al testo dell'articolo) servono quando il
+   codice deve comparire in un punto preciso, come un banner.
+3. **Su quali pagine**: solo la homepage, solo gli articoli, tutti e
+   due, tutto il sito, oppure **solo gli articoli scelti**. Quest'ultima
+   e' la piu' utile: il codice resta spento finche' non lo accendi su un
+   articolo, uno per uno.
+4. **Codice**: incolli quello che ti ha dato il servizio, senza
+   modificarlo.
+
+Salvi, e il sito viene rigenerato.
+
+**Accendere un codice su un singolo articolo.** Se hai scelto uno degli
+ambiti "articoli scelti", apri l'articolo nell'editor: nella colonna di
+destra, sotto **Codice personalizzato**, trovi l'elenco con una casella
+per ognuno. Spunti quelli che vuoi su quell'articolo e salvi. Sotto
+l'elenco, in grigio, vedi anche quelli che girano su tutti gli articoli
+comunque, cosi' sai cosa c'e' gia' sulla pagina senza aprire le
+Impostazioni in un'altra finestra.
+
+**Per provarlo davvero**, usa l'anteprima dell'articolo, non la pagina
+delle Impostazioni: l'area di amministrazione blocca i domini esterni
+per sicurezza, quindi li' il widget non partirebbe e sembrerebbe rotto.
+Nell'anteprima, e nel sito pubblicato, funziona normalmente.
+
+**Due avvertenze.** Il codice viene inserito nella pagina cosi' com'e',
+senza controlli: incolla solo codice di cui ti fidi, perche' puo' fare
+qualunque cosa sul tuo sito. E se cancelli un codice dalle Impostazioni,
+gli articoli che lo avevano spuntato non si rompono: semplicemente non
+lo ricevono piu'.
+
 ## PARTE 3 — Dove finiscono le cose (per capire, non e' obbligatorio)
 
 - `posts/` : gli articoli che scrivi, salvati come file di testo (in formato JSON).

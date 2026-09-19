@@ -278,6 +278,53 @@ If a call fails, the error message says why: wrong or missing key,
 no credit left, or a non-existent model. Tip: use a key dedicated to
 testing, with a low spending cap set in the provider's console.
 
+### Step 2.11 — Putting a third-party service's code into your pages
+
+Sooner or later a service will hand you a line to paste into your site:
+a support widget, a chat, a tracking pixel, a signup form. Something
+like this:
+
+```html
+<script src="https://example.com/widget/loader.js" data-widget-id="a7ddc6ff" defer></script>
+```
+
+You do not need to touch the program's files. Go to **Settings**, scroll
+down to **Custom code** and click **Add code**. You fill in four things:
+
+1. **Name**: whatever you want to call it, so you can find it again.
+   E.g. "Support widget".
+2. **Where it goes in the page**: the entries are split into two groups.
+   The *technical* ones (`head`, start of the body, end of the page) are
+   invisible and suit scripts and pixels — for the example above, pick
+   **at the end of the page**. The *visible* ones (below the site
+   header, before the footer, at the end of the article text) are for
+   code that must show up in a specific spot, like a banner.
+3. **On which pages**: the homepage only, the articles only, both, the
+   whole site, or **selected articles only**. That last one is the most
+   useful: the code stays off until you switch it on, article by
+   article.
+4. **Code**: paste what the service gave you, unchanged.
+
+Save, and the site is rebuilt.
+
+**Switching a snippet on for a single article.** If you chose one of the
+"selected articles" scopes, open the article in the editor: in the right
+column, under **Custom code**, you will find the list with a checkbox
+for each one. Tick the ones you want on that article and save. Below the
+list, in grey, you also see the snippets that run on every article
+anyway, so you know what is already on the page without opening the
+Settings in another window.
+
+**To really test it**, use the article preview, not the Settings page:
+the administration area blocks external domains for safety, so the
+widget would not start there and would look broken. In the preview, and
+on the published site, it works normally.
+
+**Two warnings.** The code is injected into the page verbatim, with no
+checks: only paste code you trust, because it can do anything on your
+site. And if you delete a snippet from the Settings, the articles that
+had ticked it do not break: they simply stop receiving it.
+
 ## PART 3 — Where things end up (to understand; not mandatory)
 
 - `posts/` : the articles you write, saved as text files (JSON format).

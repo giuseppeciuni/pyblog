@@ -105,6 +105,7 @@ Scrivi nell'editor → PyBlog salva l'articolo come JSON e rigenera tutte le pag
 - Dashboard con elenco articoli, stato, ricerca, modifica, elimina
 - Editor con barra laterale, responsive e mobile friendly
 - Interfaccia admin in italiano o inglese
+- Codice personalizzato HTML/JavaScript per widget e pixel di servizi esterni: per ognuno scegli dove finisce nella pagina e su quali pagine appare, fino al singolo articolo
 - Backup/export di tutti i contenuti in un ZIP
 
 **Lettura**

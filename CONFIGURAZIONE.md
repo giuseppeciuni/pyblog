@@ -122,6 +122,57 @@ saranno sempre un po' sottostimati, e vale per qualunque sistema.
 Ricorda infine il backup: il volume Docker `umami-db` contiene tutto lo
 storico delle statistiche.
 
+## Codice personalizzato (`custom_code`)
+
+Pezzi di HTML o JavaScript inseriti nelle pagine pubbliche: widget di
+servizi esterni, pixel di tracciamento, embed. Si gestiscono dalla pagina
+Impostazioni, e ogni pezzo ha tre scelte: dove va nella pagina, su quali
+pagine appare e il codice vero e proprio.
+
+`custom_code` e' una lista; ogni elemento e' un oggetto con questi campi:
+
+| Campo      | Significato                                                     |
+|------------|-----------------------------------------------------------------|
+| `id`       | Identificatore stabile (`snip-xxxxxxxx`), generato da solo. Gli articoli si riferiscono al codice con questo, non con il nome: rinominarlo non rompe niente. |
+| `name`     | Il nome che vedi tu nelle Impostazioni. Non finisce nelle pagine. |
+| `enabled`  | `true` o `false`. Spento vuol dire spento ovunque, senza cancellarlo. |
+| `position` | Dove finisce nella pagina (vedi sotto).                          |
+| `scope`    | Su quali pagine appare (vedi sotto).                             |
+| `code`     | Il codice, inserito **cosi' com'e'**, senza alcuna trasformazione. |
+
+**Le posizioni (`position`)**
+
+| Valore          | Dove finisce                                                  |
+|-----------------|---------------------------------------------------------------|
+| `head`          | Dentro `<head>`. Per meta tag e script che devono partire presto. |
+| `body_start`    | Subito dopo `<body>`, prima dell'intestazione del sito.        |
+| `body_end`      | In fondo alla pagina, dopo tutto il resto. Il posto giusto per gli script `defer` o `async`. |
+| `after_header`  | Sotto l'intestazione, prima del contenuto. Si vede.            |
+| `before_footer` | Dopo il contenuto, prima del pie' di pagina. Si vede.          |
+| `article_end`   | In fondo al testo dell'articolo, prima della firma dell'autore. Esiste **solo negli articoli**: su qualunque altra pagina il codice non esce. |
+
+**Gli ambiti (`scope`)**
+
+| Valore          | Su quali pagine                                               |
+|-----------------|---------------------------------------------------------------|
+| `home`          | Solo la homepage.                                             |
+| `articles`      | Solo gli articoli, tutti.                                     |
+| `home_articles` | La homepage e tutti gli articoli.                             |
+| `optin`         | Solo gli articoli che lo spuntano nell'editor.                |
+| `home_optin`    | La homepage, piu' gli articoli che lo spuntano nell'editor.   |
+| `all`           | Tutto il sito: anche archivio, pagine dei tag, schede e 404.  |
+
+Gli articoli tengono la propria scelta nel campo `custom_code_ids` del
+loro JSON, che contiene gli `id` dei codici spuntati. Cancellare un
+codice dalle Impostazioni e' sicuro: l'`id` rimasto negli articoli non
+corrisponde piu' a niente e viene semplicemente ignorato.
+
+**Una nota sulla fiducia.** Il codice viene scritto nella pagina senza
+alcun controllo, perche' controllarlo vorrebbe dire impedirgli di
+funzionare. Chi puo' entrare nell'area di amministrazione puo' quindi
+eseguire qualunque JavaScript sul sito pubblico: incolla solo codice di
+cui ti fidi, e tieni la password dell'amministrazione al sicuro.
+
 ## Traduzione automatica (Italiano -> Inglese)
 
 Dentro la sezione `translation`:
