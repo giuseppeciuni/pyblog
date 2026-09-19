@@ -2084,14 +2084,24 @@ function translateArticle(pulsante) {
     document.getElementById('title_en').value = titoloTradotto;
     translatePiece(descrizioneIt, function(descrizioneTradotta) {
       document.getElementById('description_en').value = descrizioneTradotta;
-      translatePiece(contenutoIt, function(contenutoTradotto) {
+      translatePiece(contenutoIt, function(contenutoTradotto, mediaRimesse) {
         quillEn.root.innerHTML = contenutoTradotto;
         markEditorDirty();
-        pbStatus('translation-status', t('js_translated_review'));
+        pbStatus('translation-status', avvisoMedia(t('js_translated_review'), mediaRimesse));
         quandoFinito();
       });
     });
   });
+}
+
+// The images never travel to the translation service: the server swaps them
+// for a marker and puts them back afterwards. When a service loses a marker
+// too, the server still puts the image back, but no longer where it was - so
+// the editor says how many need a second look instead of letting the author
+// find out from a reader.
+function avvisoMedia(messaggio, quante) {
+  if (!quante || quante < 1) { return messaggio; }
+  return messaggio + t('js_media_recovered').replace('{n}', String(quante));
 }
 
 // Translates a single piece of text by calling the backend.
@@ -2103,7 +2113,7 @@ function translatePiece(testo, quandoFinito) {
   pbPostJson('/translate', { text: testo })
     .then(function(res) {
       if (res.ok === true) {
-        quandoFinito(res.text);
+        quandoFinito(res.text, res.media_recovered || 0);
       } else {
         pbStatus('translation-status',
           t('js_error_prefix') + res.error + t('js_check_api_key'));
@@ -2315,7 +2325,8 @@ function translateHome(pulsante) {
       pbBusy(pulsante, false);
       if (res.ok === true) {
         quillHomeEn.root.innerHTML = res.text;
-        pbStatus('home-en-status', t('js_translated_home'));
+        pbStatus('home-en-status',
+          avvisoMedia(t('js_translated_home'), res.media_recovered || 0));
       } else {
         pbStatus('home-en-status', t('js_error_prefix') + res.error);
       }

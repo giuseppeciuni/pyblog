@@ -15,6 +15,7 @@ The last two need a model that can reason about a text, so they only work
 with the LLM services: DeepL and Google can translate, not write.
 """
 import json
+import re
 import urllib.parse
 import urllib.error as _urlerr
 import urllib.request as _urlreq
@@ -23,6 +24,109 @@ from core.articles import load_articles, plain_text
 from core.config import CONFIG, admin_language, secret_setting
 from core.i18n import T
 
+
+
+# ---------------------------------------------------------------------------
+# PROTECTING WHAT MUST NOT BE TRANSLATED
+# ---------------------------------------------------------------------------
+# An image has no text to translate, but it does go through the translator
+# along with the rest of the article, and it does not always come back. DeepL
+# and Google keep the tags; a language model is asked to keep them and mostly
+# does, except when the article is long, or the tag carries a data- attribute,
+# or the model decides the picture was not important. What comes back then is
+# a perfectly good English text with the pictures missing, which nobody
+# notices until a reader opens the English version.
+#
+# So the media never leaves: each tag is swapped for a short marker, the text
+# around it is translated, and the tags are put back exactly as they were.
+# Alt text is the one thing inside them that a reader sees, and it stays
+# untranslated - the alternative is handing the whole tag back to the service
+# that loses it.
+
+MEDIA_TAGS = ("img", "iframe", "video", "audio", "source", "embed", "object")
+
+# <img ...>, <iframe ...>...</iframe>: the pair form has to be caught whole,
+# marker included, or the closing tag would come back on its own.
+MEDIA_PATTERN = re.compile(
+    r"<(" + "|".join(MEDIA_TAGS) + r")\b[^>]*>(?:.*?</\1\s*>)?",
+    re.IGNORECASE | re.DOTALL)
+
+# The marker as it goes out, and as we look for it on the way back. It is
+# read by a machine translator and by a language model, so it is deliberately
+# dull: no words to translate, no punctuation to tidy up. Coming back it is
+# matched loosely, because a model can add a space inside the brackets.
+MARKER = "[[PBM{n}]]"
+MARKER_PATTERN = re.compile(r"\[\[\s*PBM\s*(\d+)\s*\]\]")
+
+
+def shield_media(text):
+    """
+    Replace every media tag with a marker.
+
+    Return the text to translate and the list of the original tags, in the
+    order they appeared: their position in that list is the number in the
+    marker.
+    """
+    originals = []
+
+    def to_marker(match):
+        originals.append(match.group(0))
+        return MARKER.format(n=len(originals) - 1)
+
+    return MEDIA_PATTERN.sub(to_marker, text), originals
+
+
+def restore_media(text, originals):
+    """
+    Put the original tags back where their markers are.
+
+    Return the restored text and how many tags the translator dropped along
+    the way. A dropped tag is put back straight after the previous one that
+    survived - not where it was, but in the same order as the others and
+    still in the article, which is the whole point. The caller says so to
+    the author, because a picture that moved is worth a second look.
+    """
+    if len(originals) == 0:
+        return text, 0
+
+    restored = set()
+
+    def to_tag(match):
+        index_value = int(match.group(1))
+        if index_value < 0 or index_value >= len(originals):
+            return ""
+        restored.add(index_value)
+        return originals[index_value]
+
+    text = MARKER_PATTERN.sub(to_tag, text)
+
+    missing = [i for i in range(len(originals)) if i not in restored]
+    for index_value in missing:
+        tag = originals[index_value]
+        # After the nearest tag that did come back, or before the nearest one
+        # that follows it, so the pictures stay in the order they were
+        # written even when the translator dropped the first of them.
+        previous = None
+        for candidate in range(index_value - 1, -1, -1):
+            if candidate in restored and originals[candidate] in text:
+                previous = candidate
+                break
+        following = None
+        for candidate in range(index_value + 1, len(originals)):
+            if candidate in restored and originals[candidate] in text:
+                following = candidate
+                break
+        if previous is not None:
+            cut = text.index(originals[previous]) + len(originals[previous])
+            text = text[:cut] + tag + text[cut:]
+        elif following is not None:
+            text = text[:text.index(originals[following])] + tag \
+                + text[text.index(originals[following]):]
+        else:
+            text = text + tag
+        restored.add(index_value)
+
+    return text, len(missing)
 
 
 def translate_with_deepl(text, api_key):
@@ -109,6 +213,12 @@ def translate_with_llm(text, api_key, endpoint, modello):
     with _urlreq.urlopen(request, timeout=60) as response:
         body = response.read().decode("utf-8")
     result = json.loads(body)
+    # A translation cut off at the token ceiling is the other way an article
+    # loses its second half, pictures included, without anything looking
+    # wrong: the text that comes back reads fine right up to where it stops.
+    # Better to refuse it and say so than to save half an article.
+    if result.get("stop_reason") == "max_tokens":
+        raise ValueError(T("err_translation_truncated", admin_language()))
     # Claude's response contains a list of blocks; we take the text.
     blocks = result.get("content", [])
     translated_text = ""
@@ -151,6 +261,8 @@ def translate_with_openai_compat(text, api_key, endpoint, modello):
     choices = result.get("choices", [])
     if len(choices) == 0:
         return ""
+    if choices[0].get("finish_reason") == "length":
+        raise ValueError(T("err_translation_truncated", admin_language()))
     messaggio = choices[0].get("message", {})
     translated_text = messaggio.get("content", "")
     return translated_text
@@ -164,6 +276,11 @@ def translate_text(text):
         return {"ok": True, "text": ""}
     if text.strip() == "":
         return {"ok": True, "text": ""}
+
+    # The pictures, the videos and the embeds stay here and are put back
+    # afterwards: see shield_media above for why they are not allowed to
+    # travel to the translator.
+    text, media = shield_media(text)
 
     translation_config = CONFIG.get("translation", {})
     service = translation_config.get("service", "deepl")
@@ -195,7 +312,8 @@ def translate_text(text):
                 translation_config.get("deepseek_model", "deepseek-chat"))
         else:
             return {"ok": False, "error": T("err_unknown_translation_service", admin_language())}
-        return {"ok": True, "text": tradotto}
+        tradotto, spostate = restore_media(tradotto, media)
+        return {"ok": True, "text": tradotto, "media_recovered": spostate}
     except _urlerr.HTTPError as error:
         return {"ok": False, "error": T("err_service_error", admin_language()) + str(error.code)}
     except Exception as error:

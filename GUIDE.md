@@ -206,6 +206,13 @@ section:
    appears on the English homepage (`/en/`), in the English archive and in
    the sitemap.
 
+Images, videos and embeds are not sent to the translation service: they are
+kept aside and put back once the translation is in. Nothing to do, it is
+automatic. If the service loses an image's marker along the way, PyBlog puts
+the image back anyway and says so ("check they are where they belong"): look
+at where it landed before you confirm. The images' alt text stays in Italian,
+because it lives inside the tag that never leaves.
+
 ### Step 2.8 — Pagination, archive and favicon (all automatic)
 
 Three things PyBlog does by itself, with nothing to do on your side:

@@ -137,6 +137,7 @@ JS_TRANSLATION_KEYS = (
     # Translation
     "js_translating", "js_translated_review", "js_check_api_key",
     "js_net_error_translation", "js_write_intro_first", "js_translated_home",
+    "js_media_recovered",
     # Settings
     "admin_codice_titolo", "admin_codice_elimina",
     "admin_salvataggio", "admin_config_salvata", "admin_errore_salvataggio",

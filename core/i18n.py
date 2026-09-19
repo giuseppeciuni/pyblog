@@ -52,6 +52,9 @@ UI_TRANSLATIONS = {
     "js_net_error_generation": {"it": "Errore di rete durante la generazione.", "en": "Network error during generation."},
     "js_translated_review": {"it": "Traduzione completata. Rivedila e poi confermala.", "en": "Translation completed. Review it, then confirm it."},
     "js_translated_home": {"it": "Tradotta: rivedila e modificala come preferisci.", "en": "Translated: review it and edit it as you like."},
+    "js_media_recovered": {
+        "it": " Attenzione: {n} fra immagini e video non sono tornati dalla traduzione, li ho rimessi io: controlla che siano al posto giusto.",
+        "en": " Careful: {n} images or videos did not come back from the translation, so I put them back: check they are where they belong."},
     "js_check_api_key": {"it": " (controlla la chiave API nelle Impostazioni)", "en": " (check the API key in the Settings)"},
     "js_delete_confirm": {"it": "Eliminare definitivamente questo articolo?", "en": "Permanently delete this article?"},
     "js_delete_named": {"it": "Eliminare definitivamente", "en": "Permanently delete"},
@@ -398,6 +401,9 @@ UI_TRANSLATIONS = {
     # Server-side error/success messages (API responses and password pages)
     "err_unknown_translation_service": {"it": "Servizio di traduzione sconosciuto.", "en": "Unknown translation service."},
     "err_service_error": {"it": "Errore dal servizio: ", "en": "Service error: "},
+    "err_translation_truncated": {
+        "it": "La traduzione e' stata troncata dal modello: l'articolo e' troppo lungo. Traducilo a pezzi, oppure scegli un modello con una risposta piu' lunga.",
+        "en": "The model cut the translation short: the article is too long. Translate it in parts, or pick a model with a longer answer."},
     "err_generation_needs_llm": {
         "it": "La generazione richiede un servizio LLM (Anthropic, OpenAI o DeepSeek). Selezionane uno nelle Impostazioni.",
         "en": "Generation requires an LLM service (Anthropic, OpenAI or DeepSeek). Select one in Settings."},

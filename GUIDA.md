@@ -205,6 +205,14 @@ Nell'editor, in fondo alla colonna laterale, c'e' la sezione "Versione inglese":
    la pagina inglese" e salva. Da quel momento l'articolo compare anche nella
    home inglese (`/en/`), nell'archivio inglese e nella sitemap.
 
+Le immagini, i video e i riquadri incorporati non vengono mandati al servizio
+di traduzione: restano da parte e tornano al loro posto a traduzione finita.
+Non c'e' niente da fare, e' automatico. Se il servizio perde per strada il
+segnaposto di un'immagine, PyBlog la rimette comunque nell'articolo e te lo
+dice ("controlla che siano al posto giusto"): in quel caso guarda dov'e'
+finita prima di confermare. Il testo alternativo delle immagini resta in
+italiano, perche' vive dentro il tag che non parte.
+
 ### Passo 2.8 — Paginazione, archivio e favicon (tutto automatico)
 
 Tre cose che PyBlog fa da solo, senza che tu debba fare nulla:
