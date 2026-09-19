@@ -112,6 +112,43 @@ def social_profile_links():
 
 # Matches an <img> tag that does not already carry a loading attribute.
 LAZY_IMAGE_PATTERN = re.compile(r"<img(?![^>]*\bloading=)([^>]*)>", re.IGNORECASE)
+# The src of an image, with the quote it is written with, so the value can be
+# rewritten without touching the rest of the tag.
+IMAGE_SRC_PATTERN = re.compile(r'(<img[^>]*\ssrc=")([^"]*)(")', re.IGNORECASE)
+
+
+# An address that already says where it points: another site, the page's own
+# protocol, the site root, or the file carried inside the page itself.
+ABSOLUTE_URL_PATTERN = re.compile(r"^(?:[a-z][a-z0-9+.-]*:|//|/)", re.IGNORECASE)
+
+
+def media_url(url):
+    """
+    Make a picture's address absolute, when it is one of ours.
+
+    A cover typed as "media/foto.png" works on the homepage and nowhere else.
+    The English homepage lives at /en/, so the browser looks for
+    /en/media/foto.png and finds nothing: the thumbnail is there in Italian
+    and gone in English, which reads as a translation problem and is not one.
+    The same address on an article page asks for /posts/media/foto.png.
+
+    Rather than leave that to whoever fills the field, an address that points
+    nowhere in particular is read as pointing at the site root, which for a
+    static site is the only thing it can sensibly mean.
+    """
+    if url is None:
+        return ""
+    url = url.strip()
+    if url == "" or ABSOLUTE_URL_PATTERN.match(url):
+        return url
+    return "/" + url.lstrip("./")
+
+
+def absolute_image_sources(html_content_value):
+    """Apply media_url to the src of every image of a piece of content."""
+    def fix(match):
+        return match.group(1) + media_url(match.group(2)) + match.group(3)
+    return IMAGE_SRC_PATTERN.sub(fix, html_content_value)
 
 
 def add_lazy_loading(html_content_value):
@@ -122,9 +159,14 @@ def add_lazy_loading(html_content_value):
     pay for the ones below the fold. The attribute is added here rather than
     in the editor so it also covers articles written before this existed, and
     content pasted from Word or imported from Markdown.
+
+    The addresses are made absolute in the same pass, for the reason spelled
+    out in media_url: a relative one shows the picture on the homepage and
+    loses it everywhere else, the English pages included.
     """
     if html_content_value is None or html_content_value == "":
         return ""
+    html_content_value = absolute_image_sources(html_content_value)
     return LAZY_IMAGE_PATTERN.sub(r'<img\1 loading="lazy">', html_content_value)
 
 
@@ -897,7 +939,7 @@ def generate_article_page(art, language="it", all_articles=None):
     # where the picture sits inside the link to the article.
     cover_block = ""
     if CONFIG.get("article_cover", True) is True:
-        cover_url = art.get("image", "").strip()
+        cover_url = media_url(art.get("image", ""))
         if cover_url != "":
             cover_block = render.render(
                 "public/article_cover.html",
@@ -913,7 +955,7 @@ def generate_article_page(art, language="it", all_articles=None):
 
     og_image = ""
     if art.get("image"):
-        og_image = (f'  <meta property="og:image" content="{esc(art["image"])}">\n'
+        og_image = (f'  <meta property="og:image" content="{esc(media_url(art["image"]))}">\n'
                     '  <meta name="twitter:card" content="summary_large_image">')
 
     # Meta keywords from the article tags (a light SEO help).
@@ -978,7 +1020,7 @@ def generate_article_page(art, language="it", all_articles=None):
         "publisher": publisher,
     }
     if art.get("image"):
-        jsonld_data["image"] = art["image"]
+        jsonld_data["image"] = media_url(art["image"])
     if art.get("tags"):
         # The tags become the article's keywords.
         keywords = []
@@ -1117,7 +1159,7 @@ def card_cover_image(art, title_value, css_class):
     the newest article look different from the rest for a reason the reader
     could not see.
     """
-    image_url = art.get("image", "").strip()
+    image_url = media_url(art.get("image", ""))
     if image_url == "":
         return ""
     return ('<img class="' + css_class + '" src="' + esc(image_url)
@@ -1782,7 +1824,7 @@ def generate_search_index(articles):
             # The browser rebuilds the cards when you search, so it needs the
             # cover too: without it a search would quietly drop every
             # thumbnail from the page.
-            "image": art.get("image", ""),
+            "image": media_url(art.get("image", "")),
             # The tags as name AND slug. The slug has to come from here
             # because slugify folds accents, and reimplementing that in
             # JavaScript would be a second version of the rule to keep in

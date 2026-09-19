@@ -20,7 +20,7 @@ RADICE = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RADICE))
 
 from core.articles import load_article, save_article  # noqa: E402
-from core.build import build  # noqa: E402
+from core.build import absolute_image_sources, build, media_url  # noqa: E402
 
 PASSED = 0
 FAILED = 0
@@ -190,6 +190,37 @@ def test_zoom_solo_negli_articoli():
         check(f"{pagina}: nessuno zoom", "data-zoom" not in testo)
 
 
+def test_indirizzi_delle_immagini():
+    """
+    Una copertina scritta "media/foto.png" funziona sulla homepage italiana e
+    da nessun'altra parte: la home inglese sta sotto /en/, quindi il browser
+    cerca /en/media/foto.png e non trova niente. Sembra un problema di
+    traduzione e non lo e'. Da qui in poi un indirizzo cosi' viene letto come
+    se partisse dalla radice del sito.
+    """
+    print("\nindirizzi delle immagini")
+    check("una copertina relativa diventa assoluta",
+          media_url("media/foto.png") == "/media/foto.png", media_url("media/foto.png"))
+    check("il ./ davanti non sopravvive",
+          media_url("./media/foto.png") == "/media/foto.png", media_url("./media/foto.png"))
+    check("una gia' assoluta resta com'e'",
+          media_url("/media/foto.png") == "/media/foto.png")
+    check("un indirizzo di un altro sito non viene toccato",
+          media_url("https://cdn.tld/a.png") == "https://cdn.tld/a.png")
+    check("nemmeno uno senza protocollo",
+          media_url("//cdn.tld/a.png") == "//cdn.tld/a.png")
+    check("nemmeno un'immagine dentro la pagina",
+          media_url("data:image/png;base64,AAA") == "data:image/png;base64,AAA")
+    check("il campo vuoto resta vuoto", media_url("") == "")
+
+    contenuto = '<p><img src="media/dentro.png"></p><p><img src="https://cdn.tld/b.png"></p>'
+    sistemato = absolute_image_sources(contenuto)
+    check("l'immagine dentro l'articolo viene sistemata",
+          'src="/media/dentro.png"' in sistemato, sistemato)
+    check("e quella esterna no",
+          'src="https://cdn.tld/b.png"' in sistemato, sistemato)
+
+
 def main():
     # Give an article a cover so the checks have something to look at, then
     # put it back exactly as it was.
@@ -209,6 +240,7 @@ def main():
         test_copertina_nell_articolo()
         test_zoom_si_chiude_ovunque()
         test_zoom_solo_negli_articoli()
+        test_indirizzi_delle_immagini()
     finally:
         if originale == "":
             articolo = load_article(slug)
