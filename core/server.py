@@ -110,7 +110,8 @@ ADMIN_GET_ROUTES = ("/admin", "/config", "/edit", "/change-password",
 JS_TRANSLATION_KEYS = (
     # Pasting from Word and uploads
     "js_recovering_pasted_images", "js_pasted_all_recovered",
-    "js_pasted_partial_recovered", "js_uploading", "js_uploading_image",
+    "js_pasted_partial_recovered", "js_pasted_word_image_unavailable",
+    "js_uploading", "js_uploading_image",
     "js_video_uploaded", "js_image_uploaded", "js_upload_error",
     "js_image_resized_local", "js_error_prefix",
     # YouTube

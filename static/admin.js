@@ -248,11 +248,22 @@ function attachImageOverlay(istanzaQuill) {
 // actual image data in the clipboard as separate, real image items (this
 // is how "paste image" works everywhere). We read those real images,
 // upload each one to the server, and splice the resulting URLs into the
-// pasted HTML in place of the broken ones, matching them in the order
-// they appear. This works reliably for the common case (each embedded
-// image becomes one clipboard image item, in document order); it is not
-// a byte-for-byte guarantee for very unusual documents, but it recovers
-// what previously vanished silently.
+// pasted HTML in place of the broken ones.
+//
+// BUG FIXED: we used to pair the n-th clipboard image with the n-th <img>
+// tag purely by position, in the order both lists happened to come in.
+// That breaks when the source document mixes text and images: some
+// applications place, as the clipboard's image item for that portion, a
+// flattened screenshot of the text AND the image together, instead of the
+// isolated picture the <img> tag actually points to. Paired by position,
+// that screenshot landed inside the first <img> tag, so the text before
+// the first picture visually turned into a single image, while the later
+// pictures (each with a clean clipboard item of their own) still came out
+// fine. The fix: whenever a pasted <img> tag declares its width/height
+// (Word and Google Docs normally write them), we only pair it with a
+// clipboard image whose real pixel size matches. Only tags with no
+// declared size, and only when the remaining tags and remaining images
+// are equal in number, fall back to the old position-based pairing.
 function handlePastedImages(istanzaQuill, statusElementId) {
   istanzaQuill.root.addEventListener('paste', function(evento) {
     if (!evento.clipboardData) { return; }
@@ -266,7 +277,21 @@ function handlePastedImages(istanzaQuill, statusElementId) {
     }
     // No embedded images in this paste: let Quill handle it as usual
     // (plain text, or a paste that already has no images at all).
-    if (elementiImmagine.length === 0) { return; }
+    if (elementiImmagine.length === 0) {
+      // Some sources (Word on Windows, when you copy text together with a
+      // picture) put in the clipboard only a broken local reference
+      // ("file:///C:/Users/.../image1.png") and no actual image data at
+      // all: a web page has no way to read a local file path for security
+      // reasons, so there is nothing here to recover. We at least warn the
+      // author instead of letting the picture disappear with no
+      // explanation (a plain web page copy does not have this problem:
+      // browsers normally embed the picture itself in that HTML).
+      var statoAvviso = statusElementId ? document.getElementById(statusElementId) : null;
+      if (statoAvviso && contieneImmagineNonRecuperabile(evento.clipboardData.getData('text/html'))) {
+        statoAvviso.textContent = t('js_pasted_word_image_unavailable');
+      }
+      return;
+    }
 
     var htmlIncollato = evento.clipboardData.getData('text/html');
     // No HTML at all: a single image was copied on its own (e.g. from
@@ -284,40 +309,184 @@ function handlePastedImages(istanzaQuill, statusElementId) {
     }
     if (stato) { stato.textContent = t('js_recovering_pasted_images'); }
 
-    var caricamenti = [];
-    for (var j = 0; j < elementiImmagine.length; j++) {
-      caricamenti.push(uploadImageBlob(elementiImmagine[j].getAsFile()));
+    // The <img> tags found in the pasted HTML, in the order they appear,
+    // together with the width/height they declare (if any). This is what
+    // lets us pair each tag with the right clipboard image further down,
+    // instead of just trusting the order they came in.
+    var tagImmagine = [];
+    var regexTagImg = /<img\b[^>]*>/gi;
+    var trovato = regexTagImg.exec(htmlIncollato);
+    while (trovato !== null) {
+      tagImmagine.push({
+        larghezza: leggiLarghezzaDichiarata(trovato[0]),
+        altezza: leggiAltezzaDichiarata(trovato[0])
+      });
+      trovato = regexTagImg.exec(htmlIncollato);
     }
 
-    Promise.all(caricamenti).then(function(url) {
-      var htmlFinale = htmlIncollato;
-      var indiceUrl = 0;
-      // We replace each <img ...> tag, in order of appearance, with one
-      // of the freshly uploaded URLs. Any leftover <img> tags (more tags
-      // than real images, an unusual case) are left untouched.
-      htmlFinale = htmlFinale.replace(/<img\b[^>]*>/gi, function(tagOriginale) {
-        if (indiceUrl >= url.length) { return tagOriginale; }
-        var urlCaricato = url[indiceUrl];
-        indiceUrl = indiceUrl + 1;
-        // A failed upload for this image: remove the tag rather than
-        // leaving a broken src="null" reference. The status message
-        // already tells the author how many images were recovered.
-        if (urlCaricato === null) { return ''; }
-        return '<img src="' + urlCaricato + '">';
+    // We upload every clipboard image and, in parallel, decode it locally
+    // to read its real pixel size: we need that size to pair it safely
+    // with the right <img> tag.
+    var operazioni = [];
+    for (var j = 0; j < elementiImmagine.length; j++) {
+      var blobCorrente = elementiImmagine[j].getAsFile();
+      operazioni.push(Promise.all([uploadImageBlob(blobCorrente), leggiDimensioneBlob(blobCorrente)]));
+    }
+
+    Promise.all(operazioni).then(function(risultati) {
+      var immaginiCaricate = [];
+      for (var k = 0; k < risultati.length; k++) {
+        var dimensioneReale = risultati[k][1];
+        immaginiCaricate.push({
+          url: risultati[k][0],
+          larghezza: dimensioneReale ? dimensioneReale.larghezza : null,
+          altezza: dimensioneReale ? dimensioneReale.altezza : null,
+          usata: false
+        });
+      }
+
+      // 1) Tags with a declared size are paired only with a clipboard
+      //    image whose real size matches (within a small tolerance for
+      //    Word/Google Docs rounding). This is what stops a flattened
+      //    text+image screenshot from being mistaken for a real picture.
+      var assegnazioni = [];
+      for (var t1 = 0; t1 < tagImmagine.length; t1++) {
+        assegnazioni.push(null);
+      }
+      for (var t2 = 0; t2 < tagImmagine.length; t2++) {
+        var tagCorrente = tagImmagine[t2];
+        if (tagCorrente.larghezza === null || tagCorrente.altezza === null) { continue; }
+        var indiceTrovato = trovaImmagineDiTagliaCorrispondente(tagCorrente, immaginiCaricate);
+        if (indiceTrovato !== null) {
+          assegnazioni[t2] = immaginiCaricate[indiceTrovato].url;
+          immaginiCaricate[indiceTrovato].usata = true;
+        }
+      }
+
+      // 2) Tags with no declared size cannot be verified: we fall back to
+      //    pairing them in order with whatever images are still unused,
+      //    but only if their counts match exactly. This keeps the old,
+      //    simple behaviour for the common case (a plain paste with no
+      //    size hints at all, where there is no ambiguity to resolve).
+      var tagScoperti = [];
+      for (var t3 = 0; t3 < tagImmagine.length; t3++) {
+        if (assegnazioni[t3] === null) { tagScoperti.push(t3); }
+      }
+      var immaginiLibere = immaginiCaricate.filter(function(im) { return !im.usata; });
+      if (tagScoperti.length === immaginiLibere.length) {
+        for (var m = 0; m < tagScoperti.length; m++) {
+          assegnazioni[tagScoperti[m]] = immaginiLibere[m].url;
+        }
+      }
+
+      // We rebuild the HTML: each <img> tag with a safe pairing is
+      // replaced with its uploaded URL; the others are dropped rather
+      // than risking a wrong image ending up in their place.
+      var indiceTag = 0;
+      var htmlFinale = htmlIncollato.replace(/<img\b[^>]*>/gi, function() {
+        var urlAssegnato = assegnazioni[indiceTag];
+        indiceTag = indiceTag + 1;
+        if (urlAssegnato === null || urlAssegnato === undefined) { return ''; }
+        return '<img src="' + urlAssegnato + '">';
       });
       var posizione = istanzaQuill.getSelection(true) || { index: istanzaQuill.getLength() };
       istanzaQuill.clipboard.dangerouslyPasteHTML(posizione.index, htmlFinale);
       if (stato) {
-        var riuscite = url.filter(function(u) { return u !== null; }).length;
-        if (riuscite === elementiImmagine.length) {
+        var riuscite = 0;
+        for (var n = 0; n < assegnazioni.length; n++) {
+          if (assegnazioni[n] !== null && assegnazioni[n] !== undefined) { riuscite = riuscite + 1; }
+        }
+        if (riuscite === tagImmagine.length) {
           stato.textContent = t('js_pasted_all_recovered').replace('{n}', riuscite);
         } else {
           stato.textContent = t('js_pasted_partial_recovered')
-            .replace('{ok}', riuscite).replace('{tot}', elementiImmagine.length);
+            .replace('{ok}', riuscite).replace('{tot}', tagImmagine.length);
         }
       }
     });
   }, true);  // capture phase: we need to run before Quill's own paste handler.
+}
+
+// Detects a pasted <img> tag whose src is not a real, loadable address.
+// Word (and similar word processors) leave all sorts of placeholders in
+// the clipboard HTML instead of a usable picture: a local file path
+// ("file:///C:/Users/...", unreadable by a web page for security reasons),
+// or a bare "//:0" (the placeholder Word writes for some pictures and
+// shapes when the clipboard does not carry a matching bitmap for them).
+// Rather than list every placeholder we have seen, we accept only the
+// addresses that are actually loadable in a browser (http/https/data, or
+// a path relative to this site, like the "/media/..." PyBlog itself
+// generates) and treat anything else as unrecoverable.
+function contieneImmagineNonRecuperabile(html) {
+  if (!html) { return false; }
+  var regexTag = /<img\b[^>]*>/gi;
+  var tag = regexTag.exec(html);
+  while (tag !== null) {
+    var corrispondenzaSrc = tag[0].match(/\bsrc\s*=\s*["']([^"']*)["']/i);
+    var indirizzo = corrispondenzaSrc ? corrispondenzaSrc[1] : '';
+    if (!/^(https?:|data:|\/)/i.test(indirizzo)) {
+      return true;
+    }
+    tag = regexTag.exec(html);
+  }
+  return false;
+}
+
+// Reads the width a pasted <img> tag declares, either as a plain HTML
+// attribute (width="200") or as an inline style (style="width:200px").
+// Returns null when the tag declares no width at all.
+function leggiLarghezzaDichiarata(tag) {
+  var corrispondenzaAttributo = tag.match(/\bwidth\s*=\s*"(\d+)/i);
+  if (corrispondenzaAttributo) { return parseInt(corrispondenzaAttributo[1], 10); }
+  var corrispondenzaStile = tag.match(/width\s*:\s*(\d+)px/i);
+  if (corrispondenzaStile) { return parseInt(corrispondenzaStile[1], 10); }
+  return null;
+}
+
+// Same as leggiLarghezzaDichiarata, for the height.
+function leggiAltezzaDichiarata(tag) {
+  var corrispondenzaAttributo = tag.match(/\bheight\s*=\s*"(\d+)/i);
+  if (corrispondenzaAttributo) { return parseInt(corrispondenzaAttributo[1], 10); }
+  var corrispondenzaStile = tag.match(/height\s*:\s*(\d+)px/i);
+  if (corrispondenzaStile) { return parseInt(corrispondenzaStile[1], 10); }
+  return null;
+}
+
+// Decodes an image blob locally to read its real pixel size. Resolves to
+// null if the blob turns out not to be a valid image.
+function leggiDimensioneBlob(blob) {
+  return new Promise(function(resolve) {
+    var indirizzoTemporaneo = URL.createObjectURL(blob);
+    var immagine = new Image();
+    immagine.onload = function() {
+      URL.revokeObjectURL(indirizzoTemporaneo);
+      resolve({ larghezza: immagine.naturalWidth, altezza: immagine.naturalHeight });
+    };
+    immagine.onerror = function() {
+      URL.revokeObjectURL(indirizzoTemporaneo);
+      resolve(null);
+    };
+    immagine.src = indirizzoTemporaneo;
+  });
+}
+
+// Looks, among the uploaded images not yet paired, for one whose real
+// pixel size matches the size declared by the pasted tag (with a small
+// tolerance for Word/Google Docs rounding). Returns its index in
+// immaginiCaricate, or null when none matches closely enough.
+function trovaImmagineDiTagliaCorrispondente(tagCorrente, immaginiCaricate) {
+  var tolleranza = 3; // pixel di margine per arrotondamenti/DPI
+  for (var i = 0; i < immaginiCaricate.length; i++) {
+    var immagine = immaginiCaricate[i];
+    if (immagine.usata) { continue; }
+    if (immagine.larghezza === null) { continue; }
+    var differenzaLarghezza = Math.abs(immagine.larghezza - tagCorrente.larghezza);
+    var differenzaAltezza = Math.abs(immagine.altezza - tagCorrente.altezza);
+    if (differenzaLarghezza <= tolleranza && differenzaAltezza <= tolleranza) {
+      return i;
+    }
+  }
+  return null;
 }
 
 // Uploads a single pasted image blob to the server, reusing the same

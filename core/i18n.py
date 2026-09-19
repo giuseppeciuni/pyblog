@@ -453,6 +453,9 @@ UI_TRANSLATIONS = {
     "js_pasted_all_recovered": {"it": "Incollato: {n} immagine/i recuperata/e.", "en": "Pasted with {n} image(s) recovered."},
     "js_pasted_partial_recovered": {"it": "Incollato: {ok} di {tot} immagine/i recuperata/e.",
                                     "en": "Pasted: {ok} of {tot} image(s) recovered."},
+    "js_pasted_word_image_unavailable": {
+        "it": "Il testo e' stato incollato, ma il tuo sistema non ha fornito alla pagina il file dell'immagine copiata (solo un riferimento che il browser non puo' caricare): salva l'immagine come file e usa \"Carica immagine\".",
+        "en": "The text was pasted, but your system did not give the page the file for the copied image (only a reference the browser cannot load): save the image as a file and use \"Upload image\"."},
 
     # --- Strings added when the admin JavaScript moved to static/admin.js ---
     # Everything the browser shows now comes from here through window.PB_I18N:
