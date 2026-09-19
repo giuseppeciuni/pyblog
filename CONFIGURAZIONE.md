@@ -31,7 +31,8 @@ Impostazioni. Ma se vuoi capirlo o modificarlo via SSH, ecco ogni parametro.
 | Parametro        | Significato                                                      |
 |------------------|-----------------------------------------------------------------|
 | `home_content` | HTML della parte alta della homepage (biografia, presentazione). Si scrive con l'editor visuale, non a mano. |
-| `home_cards`      | Lista delle "card" editoriali sotto la presentazione (Biografia, Progetti, ecc.). Ogni card ha `active` (true/false), `title` e `content`. |
+| `home_cards_enabled` | Interruttore generale del blocco delle card (default `true`). Con `false` l'intero blocco sparisce dalla homepage, qualunque cosa dicano le singole card, e le loro pagine non vengono generate. Si imposta anche dalla pagina Impostazioni, sezione "Card della homepage". |
+| `home_cards`      | Lista delle "card" editoriali sotto la presentazione (Biografia, Progetti, ecc.). Ogni card ha `active` (true/false), `title` e `content`. Una card con `active` a `false`, o senza contenuto, non appare in homepage e non ha una sua pagina. |
 
 ## SEO e dati dell'autore (`seo`)
 

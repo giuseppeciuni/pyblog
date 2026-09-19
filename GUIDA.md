@@ -92,14 +92,21 @@ Clicca su "Impostazioni e homepage". Qui imposti tutto senza toccare codice.
 3. Puoi anche inserire un video YouTube (pulsante "Inserisci video YouTube",
    incolli il link) o caricare un video dal computer ("Carica un video").
 4. Clicca "Mostra/nascondi anteprima homepage" per vedere subito come verra'.
-5. Più sotto, compila le "Impostazioni generali": titolo del sito, sottotitolo,
+5. Nella sezione "Card della homepage" decidi cosa mostrare sotto la
+   presentazione. Ogni card (Biografia, Progetti, Informazioni in evidenza,
+   Comunicazioni di servizio) ha la sua spunta "Mostra questa card": con la
+   spunta appare in homepage e ha una sua pagina, senza spunta sparisce.
+   La spunta in cima, "Mostra la sezione delle card", vale per tutto il
+   blocco: se la togli spariscono tutte insieme, e quando la rimetti ogni
+   card torna come l'avevi lasciata.
+6. Più sotto, compila le "Impostazioni generali": titolo del sito, sottotitolo,
    il tuo nome, il dominio (es. https://miosito.it) e la lingua.
-6. Nella sezione "Struttura della homepage" decidi l'ordine delle tre sezioni
+7. Nella sezione "Struttura della homepage" decidi l'ordine delle tre sezioni
    della home (Presentazione, Articoli, Card): di default le card con
    biografia e progetti stanno subito dopo la presentazione, ma puoi
    spostarle dove preferisci. Qui imposti anche
    quanti articoli mostrare per pagina (vedi "Paginazione e archivio" più sotto).
-7. Nella sezione "SEO e dati dell'autore" inserisci i tuoi dati professionali:
+8. Nella sezione "SEO e dati dell'autore" inserisci i tuoi dati professionali:
    pagina personale, foto, ruolo, breve biografia e soprattutto i tuoi profili
    pubblici (GitHub, LinkedIn...), uno per riga. Questi dati finiscono nei
    "dati strutturati" delle pagine e aiutano Google a riconoscerti come autore
@@ -107,9 +114,9 @@ Clicca su "Impostazioni e homepage". Qui imposti tutto senza toccare codice.
    Qui puoi anche indicare un logo, l'account X/Twitter del sito e una favicon
    personalizzata (se non ne metti una, PyBlog ne genera una in automatico con
    l'iniziale del titolo del sito).
-8. Nella sezione "Commenti" scegli se usare Giscus, Disqus o nessuno
+9. Nella sezione "Commenti" scegli se usare Giscus, Disqus o nessuno
    (vedi la PARTE 5 per come ottenere i dati).
-9. Clicca "Salva e rigenera sito". Fatto: la configurazione e' salvata.
+10. Clicca "Salva e rigenera sito". Fatto: la configurazione e' salvata.
 
 ### Passo 2.4 — Scrivi il tuo primo articolo
 

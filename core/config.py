@@ -204,6 +204,12 @@ CONFIG_DEFAULT = {
     # With 0, pagination is disabled: all articles on a single page.
     "articles_per_page": 10,
 
+    # Master switch of the cards block. With False the whole block
+    # disappears from the homepage, whatever each card says: it is the way
+    # to put the section aside for a while without having to switch off the
+    # cards one by one and switch them back on later.
+    "home_cards_enabled": True,
+
     # Editorial cards of the homepage, shown below the introduction.
     # Each card has a title and HTML content (written with the editor).
     # You can enable/disable and edit them from the Settings page.

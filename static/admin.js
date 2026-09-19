@@ -2510,6 +2510,7 @@ function saveConfig(pulsante) {
     },
     home_content: quillHome.root.innerHTML,
     home_content_en: quillHomeEn.root.innerHTML,
+    home_cards_enabled: document.getElementById('home_cards_enabled').checked,
     home_cards: cardDati,
     custom_code: customCodeData(),
     comments: document.getElementById('commenti').value,

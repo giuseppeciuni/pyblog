@@ -1054,6 +1054,32 @@ def home_featured_enabled():
     return CONFIG.get("home_featured", True) is True
 
 
+def home_cards_enabled():
+    """Tell whether the homepage should show the block of editorial cards."""
+    return CONFIG.get("home_cards_enabled", True) is True
+
+
+def published_home_cards():
+    """
+    The cards that go online: the ones switched on, with something written
+    in them, and only if the block itself is switched on.
+
+    The homepage, the sitemap and the page writer all need the same list. Read
+    separately in three places, they would sooner or later disagree, and a card
+    left out of the homepage would still have its page and its sitemap entry.
+    """
+    if not home_cards_enabled():
+        return []
+    published = []
+    for card in CONFIG.get("home_cards", []):
+        if not card.get("active", False):
+            continue
+        if html_content_is_empty(card.get("content", "")):
+            continue
+        published.append(card)
+    return published
+
+
 def article_card_fields(art, language):
     """
     The title, description, content and reader preview of an article in one
@@ -1139,7 +1165,8 @@ def generate_featured_article(art, language):
 def generate_home_cards(language="it"):
     """
     Generate the homepage cards block. Each card is a link leading to its
-    own dedicated page. It only shows the active cards that have content.
+    own dedicated page. It only shows the published cards, and nothing at all
+    when the block is switched off.
     """
     prefix = language_url_prefix(language) + "/pagine/"
     if language == "en":
@@ -1147,15 +1174,9 @@ def generate_home_cards(language="it"):
     else:
         open_label = "Apri"
 
-    card_lista = CONFIG.get("home_cards", [])
     card_html = []
-    for card in card_lista:
-        active = card.get("active", False)
-        if not active:
-            continue
+    for card in published_home_cards():
         content = card.get("content", "")
-        if html_content_is_empty(content):
-            continue
         title_value = card.get("title", "")
         slug = card_slug(title_value)
         excerpt = excerpt_from_html(content)
@@ -1884,15 +1905,8 @@ def generate_sitemap(articles):
                 lines.append(url_entry(sec_prefix + "/tag/" + tag_slug + ".html"))
                 break
 
-    # Pages of the active cards (both languages: build() always generates them).
-    card_lista = CONFIG.get("home_cards", [])
-    for card in card_lista:
-        active = card.get("active", False)
-        if not active:
-            continue
-        content = card.get("content", "")
-        if html_content_is_empty(content):
-            continue
+    # Pages of the published cards (both languages: build() always writes them).
+    for card in published_home_cards():
         slug = card_slug(card.get("title", ""))
         lines.append(url_entry(main_prefix + "/pagine/" + slug + ".html"))
         lines.append(url_entry(sec_prefix + "/pagine/" + slug + ".html"))
@@ -2249,15 +2263,10 @@ def _build_unlocked():
             write_page(OUTPUT_DIR / sec_folder / "tag" / f"{tag_slug}.html",
                        html_tag_sec)
 
-    # Pages of the active cards (Biography, Projects, About...).
-    card_lista = CONFIG.get("home_cards", [])
-    for card in card_lista:
-        active = card.get("active", False)
-        if not active:
-            continue
-        content = card.get("content", "")
-        if html_content_is_empty(content):
-            continue
+    # Pages of the published cards (Biography, Projects, About...). A card
+    # switched off, or left empty, or with the whole block switched off, has
+    # no page: the sweep at the end of build() then removes the file it had.
+    for card in published_home_cards():
         slug = card_slug(card.get("title", ""))
         # Cards in the main language (at the root).
         write_page(OUTPUT_DIR / "pagine" / f"{slug}.html",

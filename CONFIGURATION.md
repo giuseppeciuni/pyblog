@@ -32,7 +32,8 @@ is every parameter.
 | Parameter        | Meaning                                                          |
 |------------------|-------------------------------------------------------------------|
 | `home_content` | HTML of the top part of the homepage (biography, introduction). Written with the visual editor, not by hand. |
-| `home_cards`      | List of the editorial "cards" below the introduction (Biography, Projects, etc.). Each card has `active` (true/false), `title` and `content`. |
+| `home_cards_enabled` | Master switch of the cards block (default `true`). With `false` the whole block disappears from the homepage, whatever each card says, and their pages are not generated. Can also be set from the Settings page, "Homepage cards" section. |
+| `home_cards`      | List of the editorial "cards" below the introduction (Biography, Projects, etc.). Each card has `active` (true/false), `title` and `content`. A card with `active` set to `false`, or with no content, does not appear on the homepage and has no page of its own. |
 
 ## SEO and author data (`seo`)
 

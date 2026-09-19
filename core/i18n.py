@@ -234,6 +234,11 @@ UI_TRANSLATIONS = {
     "admin_card_home_titolo": {"it": "Card della homepage", "en": "Homepage cards"},
     "admin_card_home_hint": {"it": "Sezioni mostrate sotto la presentazione: biografia, progetti, foto, avvisi. Spunta \"Mostra questa card\" per renderle visibili. Scrivi il contenuto con l'editor visuale; per le foto usa il pulsante immagine.",
                              "en": "Sections shown below the introduction: biography, projects, photos, notices. Check \"Show this card\" to make them visible. Write the content with the visual editor; for photos use the image button."},
+    "admin_card_home_attiva": {"it": "Mostra la sezione delle card",
+                               "en": "Show the cards section"},
+    "admin_card_home_attiva_hint": {
+        "it": "(se togli la spunta l'intero blocco sparisce dalla homepage; le singole card restano come le hai impostate)",
+        "en": "(unchecked, the whole block disappears from the homepage; each card keeps the setting you gave it)"},
     "admin_mostra_card": {"it": "Mostra questa card", "en": "Show this card"},
     "admin_titolo_card": {"it": "Titolo della card", "en": "Card title"},
 

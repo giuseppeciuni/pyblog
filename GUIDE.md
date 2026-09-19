@@ -91,15 +91,22 @@ Click "Settings and homepage". Here you set everything without touching code.
 3. You can also embed a YouTube video ("Insert YouTube video" button, paste
    the link) or upload a video from your computer ("Upload a video").
 4. Click "Show/hide homepage preview" to see right away how it will look.
-5. Further down, fill in the "General settings": site title, subtitle,
+5. In the "Homepage cards" section, decide what to show below the
+   introduction. Each card (Biography, Projects, Highlights, Service
+   notices) has its own "Show this card" checkbox: checked, it appears on
+   the homepage and gets a page of its own; unchecked, it disappears.
+   The checkbox at the top, "Show the cards section", covers the whole
+   block: uncheck it and they all go at once, and when you check it again
+   every card comes back the way you left it.
+6. Further down, fill in the "General settings": site title, subtitle,
    your name, the domain (e.g. https://mysite.com) and the language.
-6. In the "Homepage structure" section, choose the order of the three home
+7. In the "Homepage structure" section, choose the order of the three home
    sections (Introduction, Articles, Cards): by default the cards with
    your biography and projects sit right after the introduction, but you
    can move them wherever you prefer. Here
    you also set how many articles to show per page (see "Pagination and
    archive" below).
-7. In the "SEO and author data" section, enter your professional details:
+8. In the "SEO and author data" section, enter your professional details:
    personal page, photo, job title, short bio and above all your public
    profiles (GitHub, LinkedIn...), one per line. This data goes into the
    pages' "structured data" and helps Google recognise you as a real author
@@ -107,9 +114,9 @@ Click "Settings and homepage". Here you set everything without touching code.
    also set a logo, the site's X/Twitter account and a custom favicon (if
    you leave it empty, PyBlog generates one automatically with the initial
    of the site title).
-8. In the "Comments" section, choose Giscus, Disqus or none
+9. In the "Comments" section, choose Giscus, Disqus or none
    (see PART 5 for how to get the values).
-9. Click "Save and rebuild site". Done: the configuration is saved.
+10. Click "Save and rebuild site". Done: the configuration is saved.
 
 ### Step 2.4 — Write your first article
 
