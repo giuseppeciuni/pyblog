@@ -1128,9 +1128,26 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if with_csp:
             self.send_header("Content-Security-Policy", ADMIN_CSP)
 
+    def _no_store(self):
+        """
+        Forbid the browser from keeping a copy of an administration response.
+
+        The editor page and admin.js are served from fixed addresses with no
+        version in them and no validator, so the browser is free to reuse the
+        copy it already has. After an update that means the page is the new
+        one and its JavaScript is the old one: a field added to the Settings
+        form is drawn by the server, the reader sees it and ticks it, and the
+        save silently leaves it out because the script collecting the fields
+        knows nothing about it. Nothing looks broken, so the hunt goes to the
+        code that is in fact correct. The editor runs on a local machine and
+        has nothing to gain from a cache, so it asks not to be cached at all.
+        """
+        self.send_header("Cache-Control", "no-store")
+
     def _send(self, content, tipo="text/html", with_csp=True):
         self.send_response(200)
         self.send_header("Content-Type", f"{tipo}; charset=utf-8")
+        self._no_store()
         self._security_headers(with_csp)
         self.end_headers()
         self.wfile.write(content.encode("utf-8"))
@@ -1140,6 +1157,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(payload)))
+        self._no_store()
         self._security_headers(False)
         self.end_headers()
         self.wfile.write(payload)
