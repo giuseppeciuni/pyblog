@@ -8,6 +8,8 @@
   --bordo:var(--pb-border); --codice-bg:var(--pb-code-bg); --larghezza:var(--pb-width-text);
   --larghezza-home:var(--pb-width-wide); --card-bg:var(--pb-surface); --card-hover:var(--pb-surface-alt);
   --sfondo:var(--pb-bg); --hero-1:var(--pb-hero-1); --hero-2:var(--pb-hero-2); --hero-bordo:var(--pb-hero-border);
+  --evidenza-1:var(--pb-featured-1); --evidenza-2:var(--pb-featured-2);
+  --evidenza-bordo:var(--pb-featured-border); --evidenza-accento:var(--pb-featured-accent);
 }
 /* In dark mode, the elements with fixed colours must be adapted by hand,
    otherwise they stay dark on dark and become unreadable. */
@@ -494,20 +496,25 @@ html[data-tema="dark"] .errore-404-numero {
 /* --- The most recent article, highlighted ---------------------------------
    It sits below the search box on purpose: hiding it while a search is
    running must not make the box jump. The block is removed from the list
-   below rather than repeated in it. */
+   below rather than repeated in it.
+
+   Its colours are its own (--evidenza-*), warm where the hero is cold. They
+   used to be the hero's own gradient, which made the two panels identical:
+   the reader scrolling past met the same box twice and read the second one
+   as another header rather than as an article. */
 .in-evidenza { margin:0 0 1.6rem; }
 .in-evidenza[hidden] { display:none; }
 .in-evidenza-etichetta {
   font-size:0.72rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase;
-  color:var(--link); margin:0 0 0.5rem; padding-left:0.9rem;
-  border-left:3px solid var(--link);
+  color:var(--evidenza-accento); margin:0 0 0.5rem; padding-left:0.9rem;
+  border-left:3px solid var(--evidenza-accento);
 }
 .in-evidenza-card {
   display:flex; gap:1.5rem; align-items:flex-start; text-decoration:none;
   color:var(--testo); background:var(--card-bg);
-  border:1px solid var(--hero-bordo); border-radius:16px;
+  border:1px solid var(--evidenza-bordo); border-radius:16px;
   padding:1.6rem 1.8rem;
-  background-image:linear-gradient(135deg, var(--hero-1) 0%, var(--hero-2) 100%);
+  background-image:linear-gradient(135deg, var(--evidenza-1) 0%, var(--evidenza-2) 100%);
   transition:transform 0.15s, box-shadow 0.15s;
 }
 .in-evidenza-card:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(0,0,0,0.10); }
@@ -550,9 +557,9 @@ html[data-tema="dark"] .errore-404-numero {
 }
 .in-evidenza .card-read-more { margin-top:auto; font-size:0.92rem; }
 .in-evidenza .card-tags { margin-top:0.6rem; }
-/* In dark mode the hero gradient is dark, so the text has to come back to the
-   body colour or it would sit at the muted grey on a dark panel. */
-html[data-tema="dark"] .in-evidenza-card { border-color:var(--hero-bordo); }
+/* In dark mode the panel is dark, so the text has to come back to the body
+   colour or it would sit at the muted grey on a dark panel. */
+html[data-tema="dark"] .in-evidenza-card { border-color:var(--evidenza-bordo); }
 html[data-tema="dark"] .in-evidenza-estratto,
 html[data-tema="dark"] .in-evidenza-titolo { color:var(--testo); }
 @media (max-width: 720px) {

@@ -23,6 +23,15 @@
   --pb-hero-1:#f0f6ff;
   --pb-hero-2:#f7f4ff;
   --pb-hero-border:#e8eefc;
+  /* The highlighted article. A warm tint on purpose: the hero is the only
+     other tinted panel on the homepage, and when the two shared the hero
+     gradient the block halfway down the page read as a second hero. Warm
+     against cold is a difference of hue rather than of lightness, so the
+     page keeps its light, quiet look and the two panels stop looking alike. */
+  --pb-featured-1:#fff8ed;
+  --pb-featured-2:#fffdf6;
+  --pb-featured-border:#f3e3c8;
+  --pb-featured-accent:#b45309;
 
   /* --- Typography --- */
   --pb-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -56,6 +65,10 @@ html[data-tema="dark"] {
   --pb-hero-1:#15203a;
   --pb-hero-2:#1d1733;
   --pb-hero-border:#2a2f45;
+  --pb-featured-1:#241b0f;
+  --pb-featured-2:#1b1710;
+  --pb-featured-border:#3b2f1c;
+  --pb-featured-accent:#f0b661;
 }
 
 /* --- Shared primitives ---------------------------------------------------- */
