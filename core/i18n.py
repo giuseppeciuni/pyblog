@@ -258,6 +258,7 @@ UI_TRANSLATIONS = {
     "admin_codice_pos_body_end": {"it": "In fondo alla pagina", "en": "At the end of the page"},
     "admin_codice_pos_gruppo_tecnico": {"it": "Tecniche (non si vedono)", "en": "Technical (invisible)"},
     "admin_codice_pos_gruppo_visibile": {"it": "Visibili nella pagina", "en": "Visible in the page"},
+    "admin_codice_pos_nav": {"it": "Nel menu dell'intestazione", "en": "In the header menu"},
     "admin_codice_pos_after_header": {"it": "Sotto l'intestazione", "en": "Below the site header"},
     "admin_codice_pos_before_footer": {"it": "Prima del piè di pagina", "en": "Before the footer"},
     "admin_codice_pos_article_end": {"it": "In fondo al testo dell'articolo", "en": "At the end of the article text"},

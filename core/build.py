@@ -332,10 +332,12 @@ SNIPPET_SCOPES = ("home", "articles", "home_articles",
                   "optin", "home_optin", "all")
 
 # Where a snippet can be injected. The first three are positions in the HTML
-# and exist on every page; the last three are places in the visible layout,
-# and a page that has no such place simply leaves the snippet out.
+# and exist on every page; the others are places in the visible layout, and a
+# page that has no such place simply leaves the snippet out. "nav" is the
+# header menu, next to Home, Articles, Archive and RSS: made for a link such as
+# a chat widget's "Ask the assistant". It came last, so it is last here too.
 SNIPPET_POSITIONS = ("head", "body_start", "body_end",
-                     "after_header", "before_footer", "article_end")
+                     "after_header", "before_footer", "article_end", "nav")
 
 
 def snippet_applies(snippet, page_kind, article_ids):
@@ -455,8 +457,14 @@ def hreflang_links(path_it, path_en):
     )
 
 
-def site_header(language="it"):
-    """The header shared by every public page, with the language switcher."""
+def site_header(language="it", nav_extra=""):
+    """
+    The header shared by every public page, with the language switcher.
+
+    nav_extra is the custom code for the "nav" position: extra entries of the
+    menu, after RSS and before the language switcher, so they sit with the
+    other links and pick up their style.
+    """
     prefix = language_url_prefix(language)
 
     # Language switcher in the navbar (top right, where users
@@ -476,6 +484,7 @@ def site_header(language="it"):
         url_archivio=prefix + "/" + archive_file_name(language),
         label_archivio=T("archivio", language),
         url_feed=feed_url(language),
+        voci_extra=("\n      " + nav_extra.strip()) if nav_extra.strip() else "",
         url_altra_lingua=language_url_prefix(other_language) + "/",
         altra_lingua=other_language,
         altra_lingua_label=other_language.upper(),
@@ -562,6 +571,7 @@ def render_page(language, titolo_pagina, contenuto, meta_extra="",
     # page that has such a place.
     after_header = custom_code_block("after_header", page_kind, article_ids)
     before_footer = custom_code_block("before_footer", page_kind, article_ids)
+    nav_extra = custom_code_block("nav", page_kind, article_ids)
     if feed_links is None:
         feed_links = ('  <link rel="alternate" type="application/rss+xml" '
                       f'title="{esc(CONFIG["site_title"])}" href="{feed_url(language)}">\n')
@@ -575,7 +585,7 @@ def render_page(language, titolo_pagina, contenuto, meta_extra="",
         feed_links=block(feed_links),
         head_extra=block(head_extra),
         body_open=block(body_open),
-        header=site_header(language),
+        header=site_header(language, nav_extra),
         after_header=block(after_header),
         contenuto=block(contenuto),
         before_footer=block(before_footer),

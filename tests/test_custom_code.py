@@ -53,6 +53,10 @@ SNIPPET_DI_PROVA = [
     {"id": "prova-ovunque-davvero", "name": "Tutto il sito", "enabled": True,
      "position": "before_footer", "scope": "all",
      "code": "<!-- MARCA-OVUNQUE -->"},
+    # The header menu: a link, because that is what goes there.
+    {"id": "prova-menu", "name": "Voce di menu", "enabled": True,
+     "position": "nav", "scope": "all",
+     "code": '<a href="#" data-vaitony-apri>MARCA-MENU</a>'},
 ]
 
 CON_SPUNTA = "come-un-llm-genera-testo"
@@ -201,6 +205,19 @@ def test_posizione_nella_pagina():
           dopo("MARCA-OVUNQUE", "</article>"))
     check("'prima del footer' sta prima del footer",
           prima_di("MARCA-OVUNQUE", "<footer"))
+
+    # "Nel menu" must sit INSIDE the nav, among the links: after RSS and before
+    # the language switcher. On every page, English ones included, because the
+    # header is shared.
+    for percorso in ("output/index.html", f"output/posts/{CON_SPUNTA}.html",
+                     "output/404.html", "output/en/index.html"):
+        pagina = leggi(percorso)
+        menu = pagina.split('<nav class="site-nav">', 1)[-1].split("</nav>", 1)[0]
+        check(f"{percorso}: 'nel menu' sta dentro il <nav>", "MARCA-MENU" in menu)
+        check(f"{percorso}: 'nel menu' sta dopo RSS e prima della lingua",
+              menu.find(">RSS</a>") < menu.find("MARCA-MENU") < menu.find("nav-lingua"))
+    check("'nel menu' esce una volta sola per pagina",
+          leggi("output/index.html").count("MARCA-MENU") == 1)
 
 
 def test_codice_inserito_intatto():

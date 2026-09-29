@@ -674,6 +674,8 @@ def custom_code_card(snippet, index_value, la):
         sel_body_end=selected_if(position, "body_end"),
         label_pos_body_end=T("admin_codice_pos_body_end", la),
         gruppo_visibile=T("admin_codice_pos_gruppo_visibile", la),
+        sel_nav=selected_if(position, "nav"),
+        label_pos_nav=T("admin_codice_pos_nav", la),
         sel_after_header=selected_if(position, "after_header"),
         label_pos_after_header=T("admin_codice_pos_after_header", la),
         sel_before_footer=selected_if(position, "before_footer"),
@@ -746,6 +748,7 @@ def article_custom_code_html(art, la):
         "body_start": T("admin_codice_pos_body_start", la),
         "body_end": T("admin_codice_pos_body_end", la),
         "after_header": T("admin_codice_pos_after_header", la),
+        "nav": T("admin_codice_pos_nav", la),
         "before_footer": T("admin_codice_pos_before_footer", la),
         "article_end": T("admin_codice_pos_article_end", la),
     }
