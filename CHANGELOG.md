@@ -37,6 +37,11 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Custom code in the header menu.** A new position, "In the header menu",
+  puts a snippet among the menu links, after RSS and before the language
+  switcher, with their style. Made for an extra entry such as an "Ask the
+  assistant" link that opens a chat widget instead of its floating bubble.
+
 - **Word paste: layout tables are unwrapped.** Word represents "text
   next to an image" as an HTML table on the clipboard; every pasted
   table used to become one atomic, non-editable block. Pasted tables are

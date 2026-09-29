@@ -310,9 +310,12 @@ down to **Custom code** and click **Add code**. You fill in four things:
 2. **Where it goes in the page**: the entries are split into two groups.
    The *technical* ones (`head`, start of the body, end of the page) are
    invisible and suit scripts and pixels — for the example above, pick
-   **at the end of the page**. The *visible* ones (below the site
-   header, before the footer, at the end of the article text) are for
-   code that must show up in a specific spot, like a banner.
+   **at the end of the page**. The *visible* ones (in the header menu,
+   below the site header, before the footer, at the end of the article
+   text) are for code that must show up in a specific spot, like a
+   banner. **In the header menu** is for one more entry next to Home,
+   Articles and Archive: for instance an "Ask the assistant" link that
+   opens a chat widget.
 3. **On which pages**: the homepage only, the articles only, both, the
    whole site, or **selected articles only**. That last one is the most
    useful: the code stays off until you switch it on, article by

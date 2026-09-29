@@ -151,6 +151,7 @@ pagine appare e il codice vero e proprio.
 | `after_header`  | Sotto l'intestazione, prima del contenuto. Si vede.            |
 | `before_footer` | Dopo il contenuto, prima del pie' di pagina. Si vede.          |
 | `article_end`   | In fondo al testo dell'articolo, prima della firma dell'autore. Esiste **solo negli articoli**: su qualunque altra pagina il codice non esce. |
+| `nav`           | Nel menu dell'intestazione, dopo RSS e prima del cambio di lingua. Per una voce in piu', per esempio `<a href="#" data-vaitony-apri>Chiedi all'assistente</a>` che apre la chat di un widget: prende lo stile degli altri link del menu. |
 
 **Gli ambiti (`scope`)**
 

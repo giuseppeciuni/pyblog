@@ -154,6 +154,7 @@ pages it appears on, and the code itself.
 | `after_header`  | Below the site header, before the content. Visible.            |
 | `before_footer` | After the content, before the footer. Visible.                 |
 | `article_end`   | At the end of the article text, before the author box. It exists **on articles only**: on any other page the code does not appear. |
+| `nav`           | In the header menu, after RSS and before the language switcher. For an extra entry, such as `<a href="#" data-vaitony-apri>Ask the assistant</a>` opening a chat widget: it takes the style of the other menu links. |
 
 **The scopes (`scope`)**
 

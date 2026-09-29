@@ -311,9 +311,12 @@ quattro cose:
 2. **Dove va nella pagina**: le voci sono divise in due gruppi. Quelle
    *tecniche* (`head`, inizio body, fondo pagina) non si vedono e vanno
    bene per script e pixel — per l'esempio qui sopra scegli **in fondo
-   alla pagina**. Quelle *visibili* (sotto l'intestazione, prima del
-   pie' di pagina, in fondo al testo dell'articolo) servono quando il
-   codice deve comparire in un punto preciso, come un banner.
+   alla pagina**. Quelle *visibili* (nel menu dell'intestazione, sotto
+   l'intestazione, prima del pie' di pagina, in fondo al testo
+   dell'articolo) servono quando il codice deve comparire in un punto
+   preciso, come un banner. **Nel menu dell'intestazione** e' per una
+   voce in piu' accanto a Home, Articoli e Archivio: per esempio un link
+   "Chiedi all'assistente" che apre la chat di un widget.
 3. **Su quali pagine**: solo la homepage, solo gli articoli, tutti e
    due, tutto il sito, oppure **solo gli articoli scelti**. Quest'ultima
    e' la piu' utile: il codice resta spento finche' non lo accendi su un
