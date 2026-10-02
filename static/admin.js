@@ -1927,6 +1927,7 @@ function initEditorPage() {
   updatePreviewCounter();
   updateCoverPreview();
 
+  labelQuillEditors();
   quill.on('text-change', markEditorDirty);
   quillEn.on('text-change', markEditorDirty);
   watchEditorFields();
@@ -2715,7 +2716,7 @@ function initConfigPage() {
 // Quill writes into a div of its own: the name and the help the template
 // gave the editor's box go onto that div, where screen readers look.
 function labelQuillEditors() {
-  var scatole = document.querySelectorAll('.impostazioni .ql-container');
+  var scatole = document.querySelectorAll('.ql-container');
   for (var i = 0; i < scatole.length; i++) {
     var area = scatole[i].querySelector('.ql-editor');
     var attributi = ['aria-labelledby', 'aria-describedby'];

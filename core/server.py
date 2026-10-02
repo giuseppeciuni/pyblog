@@ -810,7 +810,7 @@ def editor_page(art, csrf):
     return admin_page_shell(page_title, contenuto, la, csrf=csrf,
                             navbar=admin_navbar(menu_item, la),
                             head_extra=head_extra, script_extra=script_extra,
-                            page_data=page_data)
+                            page_data=page_data, body_class="menu-compatto")
 
 
 def with_snippet_ids(snippets):
