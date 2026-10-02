@@ -1792,6 +1792,12 @@ function initEditorPage() {
     }
   });
   quill.root.innerHTML = pbPage('content', '');
+  // Quill notices the content just put in on its next update and reports it
+  // as typed by the author, after the page has already declared itself
+  // clean: an article opened and left untouched still asked to confirm
+  // leaving, and a draft got a pointless autosave. Taking the content in
+  // silently, here, makes loading the page what it is: no change at all.
+  quill.update(Quill.sources.SILENT);
   PB_MAIN_QUILL = quill;
   attachImageOverlay(quill);
   handlePastedImages(quill, 'upload-status');
@@ -1813,6 +1819,7 @@ function initEditorPage() {
   document.getElementById('description_en').value = pbPage('description_en', '');
   document.getElementById('preview_en').value = pbPage('preview_en', '');
   quillEn.root.innerHTML = pbPage('content_en', '');
+  quillEn.update(Quill.sources.SILENT);
   document.getElementById('translation_authorized').checked = pbPage('translation_authorized', false);
   document.getElementById('translation_confirmed').checked = pbPage('translation_confirmed', false);
   slugOriginale = pbPage('slug', '');
