@@ -85,6 +85,7 @@ Scrivi nell'editor → PyBlog salva l'articolo come JSON e rigenera tutte le pag
 - Immagini ridimensionabili trascinando gli angoli; upload PNG/JPEG/SVG
 - Blocchi di codice con evidenziazione sintassi (Python, JS e altri)
 - Tabelle (manuali o copia-incolla da Word), video YouTube e upload video
+- Import di documenti Word (.docx): titoli, elenchi annidati, tabelle con celle unite, immagini con testo alternativo, note, link
 - Anteprima dal vivo con la grafica del sito vero
 
 **Pubblicazione e SEO**
@@ -96,22 +97,24 @@ Scrivi nell'editor → PyBlog salva l'articolo come JSON e rigenera tutte le pag
 
 **Multilingua**
 - Sito bilingue IT/EN con selettore di lingua
-- La lingua principale si sceglie in configurazione (l'altra va in sottocartella)
+- La lingua principale si sceglie in configurazione (l'altra va in sottocartella): con l'inglese, la traduzione va verso l'italiano
 - Traduzione automatica con 5 provider: DeepL, Google, Claude, OpenAI, DeepSeek
 - Le traduzioni si rivedono e confermano prima di pubblicarle
 
 **Amministrazione**
-- Area admin protetta da password (hash SHA-256 con sale, sessioni via cookie)
+- Area admin protetta da password (hash SHA-256 con sale, sessioni via cookie); chi sbaglia la password blocca solo il proprio indirizzo
 - Dashboard con elenco articoli, stato, ricerca, modifica, elimina
 - Editor con barra laterale, responsive e mobile friendly
 - Interfaccia admin in italiano o inglese
-- Codice personalizzato HTML/JavaScript per widget e pixel di servizi esterni: per ognuno scegli dove finisce nella pagina e su quali pagine appare, fino al singolo articolo
+- Codici esterni e annunci: modelli pronti per Google Analytics, Tag Manager, AdSense, Google Ads, Meta Pixel e Clarity; posizioni per gli annunci (barra laterale, inizio e metà dell'articolo, tra gli articoli); scelta articolo per articolo e codice proprio del singolo articolo; ads.txt
+- Banner dei cookie integrato: statistiche e pubblicità partono solo dopo il consenso, con Consent Mode di Google
 - Backup/export di tutti i contenuti in un ZIP
 
 **Lettura**
 - Ricerca full-text lato browser con snippet ed evidenziazione (IT ed EN)
 - Tema chiaro/scuro con preferenza salvata
-- Homepage con presentazione, card editoriali (bio, progetti) e griglia articoli
+- Homepage a due colonne: articoli con miniatura e anteprima, barra laterale con presentazione, ricerca, pagine e argomenti
+- Nell'articolo, l'indice nella barra laterale segue la lettura; sul telefono, menu a scomparsa
 - Commenti via Giscus o Disqus, a scelta
 
 **Sotto il cofano**

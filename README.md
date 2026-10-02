@@ -210,7 +210,7 @@ capped at 30 MB.
 
 **Writing**
 - WYSIWYG editor (Quill): fonts, sizes, colors, alignment
-- Import from Word (.docx): headings, formatting, lists, tables, images, links
+- Import from Word (.docx): headings, formatting, nested lists, tables with merged cells, images with alt text, footnotes, links, text boxes
 - Save without leaving the editor, autosave of drafts, Ctrl+S, unsaved-changes warning
 - Resizable images by dragging the corners; PNG/JPEG/SVG upload
 - Syntax-highlighted code blocks (Python, JS and more)
@@ -227,17 +227,18 @@ capped at 30 MB.
 
 **Multilingual**
 - Bilingual site (e.g. Italian/English) with a language switcher
-- The main language is chosen in the configuration (the other goes in a subfolder)
+- The main language is chosen in the configuration (the other goes in a subfolder): with English, translation goes towards Italian
 - Automatic translation with 5 providers: DeepL, Google, Claude, OpenAI, DeepSeek
 - Translations are reviewed and confirmed before publishing
 - The entire admin interface can run in English or Italian
 
 **Administration**
-- Password-protected admin area (PBKDF2 hashing, expiring sessions, CSRF tokens)
+- Password-protected admin area (PBKDF2 hashing, expiring sessions, CSRF tokens); wrong passwords lock out only the address that types them
 - Dashboard with article list, status, search, edit, delete
 - Editor with a sidebar, responsive and mobile friendly
 - Advanced section to edit config.json directly, with validation
-- Custom HTML/JavaScript snippets for third-party widgets and pixels: each one picks where it lands in the page and which pages it appears on, down to the single article
+- External code and ads: ready-made templates for Google Analytics, Tag Manager, AdSense, Google Ads, Meta Pixel and Clarity; ad positions (sidebar, start and middle of the article, between the articles); per-article choices and code of a single article's own; ads.txt
+- Built-in cookie banner: statistics and advertising start only after consent, with Google Consent Mode
 - One-click backup/export of all content as a ZIP
 
 **Reading**
@@ -245,7 +246,8 @@ capped at 30 MB.
 - Copy button on code blocks and a reading progress bar on articles
 - A 404 page that helps: search box plus the latest articles
 - Light/dark theme with saved preference
-- Homepage with introduction, editorial cards (bio, projects) and article grid
+- Two-column homepage: articles with thumbnail and preview, a sidebar with introduction, search, pages and topics
+- On an article, the sidebar's table of contents follows the reading; on a phone, a collapsible menu
 - Comments via Giscus or Disqus, your choice
 
 **Under the hood**

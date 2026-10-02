@@ -83,6 +83,12 @@ degli articoli (per ora vuota).
 
 Clicca su "Impostazioni e homepage". Qui imposti tutto senza toccare codice.
 
+La homepage e' a due colonne: a sinistra gli articoli, ognuno con la sua
+miniatura e qualche riga di anteprima; a destra una barra laterale con la tua
+presentazione, la ricerca, il riquadro "Esplora" con le tue pagine, gli
+argomenti e i tuoi profili. Sul telefono la barra scende sotto gli articoli e
+il menu si apre da un pulsante.
+
 1. Nella parte alta c'e' un editor visuale per la HOME: scrivi qui la tua
    presentazione o biografia. Puoi mettere in grassetto, fare titoli, elenchi.
 2. Per aggiungere un'immagine: clicca l'icona immagine nella barra dell'editor.
@@ -92,20 +98,21 @@ Clicca su "Impostazioni e homepage". Qui imposti tutto senza toccare codice.
 3. Puoi anche inserire un video YouTube (pulsante "Inserisci video YouTube",
    incolli il link) o caricare un video dal computer ("Carica un video").
 4. Clicca "Mostra/nascondi anteprima homepage" per vedere subito come verra'.
-5. Nella sezione "Card della homepage" decidi cosa mostrare sotto la
-   presentazione. Ogni card (Biografia, Progetti, Informazioni in evidenza,
-   Comunicazioni di servizio) ha la sua spunta "Mostra questa card": con la
-   spunta appare in homepage e ha una sua pagina, senza spunta sparisce.
+5. Nella sezione "Card della homepage" decidi quali pagine elencare nel
+   riquadro "Esplora" della barra laterale. Ogni card (Biografia, Progetti,
+   Informazioni in evidenza, Comunicazioni di servizio) ha la sua spunta
+   "Mostra questa card": con la spunta compare in "Esplora" e ha una sua
+   pagina, senza spunta sparisce.
    La spunta in cima, "Mostra la sezione delle card", vale per tutto il
    blocco: se la togli spariscono tutte insieme, e quando la rimetti ogni
    card torna come l'avevi lasciata.
 6. Più sotto, compila le "Impostazioni generali": titolo del sito, sottotitolo,
    il tuo nome, il dominio (es. https://miosito.it) e la lingua.
-7. Nella sezione "Struttura della homepage" decidi l'ordine delle tre sezioni
-   della home (Presentazione, Articoli, Card): di default le card con
-   biografia e progetti stanno subito dopo la presentazione, ma puoi
-   spostarle dove preferisci. Qui imposti anche
-   quanti articoli mostrare per pagina (vedi "Paginazione e archivio" più sotto).
+7. Nella sezione "Homepage" scegli dove va la presentazione: nella barra
+   laterale (cosi' gli articoli partono dall'alto) oppure sopra gli articoli.
+   Qui imposti anche quante parole mostrare per gli articoli senza anteprima,
+   se mettere in evidenza l'ultimo articolo e quanti articoli mostrare per
+   pagina (vedi "Paginazione e archivio" più sotto).
 8. Nella sezione "SEO e dati dell'autore" inserisci i tuoi dati professionali:
    pagina personale, foto, ruolo, breve biografia e soprattutto i tuoi profili
    pubblici (GitHub, LinkedIn...), uno per riga. Questi dati finiscono nei
@@ -124,6 +131,9 @@ Torna alla redazione (link in alto) e clicca "Nuovo articolo".
 
 1. Scrivi il Titolo.
 2. Lo Slug (la parte finale dell'indirizzo web) si genera da solo: lascialo vuoto.
+   Se un altro articolo usa gia' quell'indirizzo, il nuovo ne prende uno
+   libero (con "-2" in fondo, per esempio) e un messaggio te lo dice: un
+   articolo non ne sovrascrive mai un altro.
 3. Scrivi la Descrizione SEO: una frase breve che riassume l'articolo. Comparira'
    nei risultati di Google, quindi rendila invitante (max 160 caratteri).
 4. Scrivi il Contenuto nell'editor visuale. **Se non ricordi a cosa serve un
@@ -158,6 +168,16 @@ Torna alla redazione (link in alto) e clicca "Nuovo articolo".
    (che da solo non basterebbe), e l'editor li usa per inserire le immagini
    vere nei punti giusti. Un messaggio ti conferma quante immagini sono
    state recuperate.
+8c. Se l'articolo esiste gia' come documento Word, il pulsante "Importa da
+   Word (.docx)" sopra l'editor lo carica tutto: titoli, elenchi anche
+   annidati, tabelle con le celle unite, immagini con il loro testo
+   alternativo, note a pie' di pagina, link, apici e pedici, caselle di
+   testo. Il titolo del documento (stile Titolo o Titolo 1 all'inizio)
+   diventa il titolo dell'articolo, e il sottotitolo la descrizione se e'
+   vuota. Il sommario di Word e il testo nascosto restano fuori, e un
+   avviso ti dice cosa e' stato saltato (per esempio un'equazione, da
+   riscrivere). L'articolo importato non e' ancora salvato: rivedilo, poi
+   si modifica e si salva come tutti gli altri.
 9. Puoi inserire video YouTube o caricare video dal computer con i pulsanti
    sotto l'editor.
 10. Clicca "Mostra/nascondi anteprima" per vedere come apparira' l'articolo
@@ -212,6 +232,12 @@ segnaposto di un'immagine, PyBlog la rimette comunque nell'articolo e te lo
 dice ("controlla che siano al posto giusto"): in quel caso guarda dov'e'
 finita prima di confermare. Il testo alternativo delle immagini resta in
 italiano, perche' vive dentro il tag che non parte.
+
+**Se il tuo sito e' in inglese** (Impostazioni generali, "Lingua principale
+del sito": English) tutto si rovescia: scrivi gli articoli in inglese, la
+sezione diventa "Versione in italiano", la traduzione va dall'inglese
+all'italiano e le pagine tradotte stanno in `/it/`. Commenti, date, banner
+dei cookie e anteprime seguono la lingua di ciascuna pagina.
 
 ### Passo 2.8 — Paginazione, archivio e favicon (tutto automatico)
 
@@ -295,44 +321,71 @@ basso impostato nella console del provider.
 
 ### Passo 2.11 — Mettere il codice di un servizio esterno nelle pagine
 
-Prima o poi un servizio ti dara' una riga da incollare nel sito: un
-widget di assistenza, una chat, un pixel di tracciamento, un modulo di
-iscrizione. Qualcosa di questo genere:
+Prima o poi un servizio ti dara' una riga da incollare nel sito: Google
+Analytics, AdSense, un widget di assistenza, una chat, un pixel di
+tracciamento. Qualcosa di questo genere:
 
 ```html
 <script src="https://esempio.com/widget/loader.js" data-widget-id="a7ddc6ff" defer></script>
 ```
 
 Non serve toccare i file del programma. Vai in **Impostazioni**, scorri
-fino a **Codice personalizzato** e clicca **Aggiungi codice**. Compili
-quattro cose:
+fino a **Codici esterni e annunci** e clicca **Aggiungi codice**: ti viene
+chiesto che cosa vuoi aggiungere.
+
+**I servizi piu' comuni sono pronti.** Scegli dall'elenco Google Analytics 4,
+Google Tag Manager, AdSense (annunci automatici oppure un'unita'
+pubblicitaria), Google Ads, Meta Pixel o Microsoft Clarity, scrivi l'ID che
+ti ha dato il servizio (per esempio `G-ABC123DEF4` per Analytics) e clicca
+**Crea**. Il codice viene preparato con la posizione, le pagine e il
+consenso adatti; se l'ID ha una forma sbagliata te lo dice prima. Con
+AdSense viene aggiunta da sola anche la riga del file `ads.txt` (vedi
+sotto). Puoi sempre cambiare tutto dopo.
+
+**Per tutto il resto c'e' "Codice libero"**: una scheda vuota da compilare.
 
 1. **Nome**: come lo chiami tu, per ritrovarlo. Es. "Widget assistenza".
 2. **Dove va nella pagina**: le voci sono divise in due gruppi. Quelle
-   *tecniche* (`head`, inizio body, fondo pagina) non si vedono e vanno
-   bene per script e pixel — per l'esempio qui sopra scegli **in fondo
-   alla pagina**. Quelle *visibili* (nel menu dell'intestazione, sotto
-   l'intestazione, prima del pie' di pagina, in fondo al testo
-   dell'articolo) servono quando il codice deve comparire in un punto
-   preciso, come un banner. **Nel menu dell'intestazione** e' per una
-   voce in piu' accanto a Home, Articoli e Archivio: per esempio un link
-   "Chiedi all'assistente" che apre la chat di un widget.
-3. **Su quali pagine**: solo la homepage, solo gli articoli, tutti e
-   due, tutto il sito, oppure **solo gli articoli scelti**. Quest'ultima
-   e' la piu' utile: il codice resta spento finche' non lo accendi su un
+   *nel codice della pagina* (`head`, inizio, fondo) non si vedono e vanno
+   bene per script e pixel: per l'esempio qui sopra scegli **il fondo della
+   pagina**. Quelle *visibili* servono quando il codice deve comparire in un
+   punto preciso: nel menu dell'intestazione, sotto l'intestazione, nella
+   barra laterale (il posto di un annuncio 300x250), tra gli articoli della
+   home, all'inizio, a meta' o in fondo al testo dell'articolo, prima del
+   pie' di pagina. **Nel menu dell'intestazione** e' per una voce in piu'
+   accanto a Home, Articoli e Archivio: per esempio un link "Chiedi
+   all'assistente" che apre la chat di un widget.
+3. **Su quali pagine**: tutto il sito, solo la homepage, solo gli articoli,
+   homepage e articoli, oppure **solo gli articoli scelti**: con
+   quest'ultima il codice resta spento finche' non lo accendi su un
    articolo, uno per uno.
-4. **Codice**: incolli quello che ti ha dato il servizio, senza
-   modificarlo.
+4. **Consenso del visitatore**: "Necessario" se il codice non usa cookie
+   (un widget, un embed), "Statistiche" per Analytics, Clarity e simili,
+   "Pubblicita'" per AdSense, Google Ads e i pixel. Conta solo con il
+   banner dei cookie acceso (passo 2.12).
+5. **Codice**: incolli quello che ti ha dato il servizio, senza
+   modificarlo. Il riquadro colora il codice e numera le righe, come un
+   editor di programmazione.
 
-Salvi, e il sito viene rigenerato.
+Salvi, e il sito viene rigenerato. Quando riapri la pagina ogni codice e'
+chiuso su una riga sola, che dice dove va, su quali pagine e con quale
+consenso: clicca la riga per aprirlo.
 
-**Accendere un codice su un singolo articolo.** Se hai scelto uno degli
-ambiti "articoli scelti", apri l'articolo nell'editor: nella colonna di
-destra, sotto **Codice personalizzato**, trovi l'elenco con una casella
-per ognuno. Spunti quelli che vuoi su quell'articolo e salvi. Sotto
-l'elenco, in grigio, vedi anche quelli che girano su tutti gli articoli
-comunque, cosi' sai cosa c'e' gia' sulla pagina senza aprire le
-Impostazioni in un'altra finestra.
+**Il codice sul singolo articolo.** Apri l'articolo nell'editor: nella
+colonna di destra, sotto **Codici esterni**, trovi i codici del sito che
+possono uscire su quell'articolo, con una casella ciascuno. Quelli "da
+spuntare" (ambito "articoli scelti") escono solo se li spunti; quelli "di
+serie" escono su tutti gli articoli, e togliendo la spunta li spegni solo
+su questo: utile, per esempio, per un articolo che non deve avere
+pubblicita'. Sotto, **Solo per questo articolo** accoglie codice che esce
+soltanto li': un annuncio dedicato, un embed, un widget. Salvi l'articolo
+e basta.
+
+**ads.txt.** E' un file che dice chi puo' vendere pubblicita' sul tuo
+sito: AdSense lo cerca all'indirizzo `/ads.txt` e limita gli annunci
+finche' non lo trova. Lo scrivi nel campo **ads.txt** sotto i codici (il
+modello di AdSense ci mette gia' la sua riga); vuoto, il file non viene
+pubblicato.
 
 **Per provarlo davvero**, usa l'anteprima dell'articolo, non la pagina
 delle Impostazioni: l'area di amministrazione blocca i domini esterni
@@ -345,11 +398,47 @@ qualunque cosa sul tuo sito. E se cancelli un codice dalle Impostazioni,
 gli articoli che lo avevano spuntato non si rompono: semplicemente non
 lo ricevono piu'.
 
+### Passo 2.12 — Il banner dei cookie
+
+In Europa statistiche e pubblicita' che usano cookie possono partire solo
+dopo il consenso del visitatore. PyBlog ha un banner suo: in
+**Impostazioni**, sezione **Consenso ai cookie**, spunta "Mostra il banner
+del consenso ai visitatori", metti l'indirizzo della tua informativa
+privacy e salva.
+
+Da quel momento:
+
+- i codici segnati "Statistiche" o "Pubblicita'", e Google Analytics,
+  arrivano nella pagina fermi: non partono, non scrivono cookie e non
+  chiamano nessuno finche' il visitatore non accetta;
+- il visitatore puo' accettare tutto, rifiutare tutto o scegliere, e i due
+  pulsanti hanno lo stesso peso; la scelta resta nel suo browser e non
+  gli viene chiesta di nuovo a ogni pagina;
+- i tag di Google ricevono la scelta tramite Consent Mode;
+- in fondo a ogni pagina compare "Preferenze cookie", per cambiare idea.
+
+Il banner compare solo se c'e' qualche codice che ne ha bisogno. Il testo
+lo puoi cambiare (vuoto = quello predefinito), anche per la versione
+nell'altra lingua. Quando aggiungi un servizio nuovo, clicca **Chiedi di
+nuovo il consenso a tutti** e salva: ogni visitatore rivedra' il banner.
+
+**AdSense in Europa** chiede anche un "CMP certificato". Hai due strade:
+accendere il messaggio gratuito di Google dal pannello di AdSense ("Privacy
+e messaggi") e lasciare il codice di AdSense su "Necessario"; oppure usare
+questo banner con AdSense su "Pubblicita'": gli annunci partono dopo il
+consenso.
+
+Il banner e' uno strumento, non una consulenza legale: l'informativa
+privacy e le scelte su quali servizi usare restano tue.
+
 ## PARTE 3 — Dove finiscono le cose (per capire, non e' obbligatorio)
 
 - `posts/` : gli articoli che scrivi, salvati come file di testo (in formato JSON).
   Sono le tue "fonti". Conviene fare un backup di questa cartella ogni tanto.
 - `config.json` : le impostazioni del sito e il contenuto della homepage.
+  Contiene anche le chiavi dei servizi di traduzione, per questo non va su
+  git. Se un giorno diventa illeggibile, PyBlog ne mette una copia in
+  `config.broken.json` e riparte con i valori predefiniti.
 - `output/` : i file HTML generati, cioe' il sito vero e proprio.
   Questa e' la cartella che andrà online.
 - `output/media/` : i video che carichi.
@@ -574,7 +663,8 @@ pubbliche, mai nell'editor):
   `umami-docker-compose.yml` pronto all'uso.
 - **Google Analytics 4**: basta incollare l'ID misurazione
   (`G-XXXXXXXXXX`) nel campo dedicato. Ricorda che in Europa GA
-  richiede un banner di consenso cookie.
+  richiede il consenso ai cookie: accendi il banner di PyBlog (passo
+  2.12) e GA parte solo dopo che il visitatore ha accettato.
 
 In alternativa (o in aggiunta), nginx registra comunque ogni visita nel
 file `/var/log/nginx/blog-access.log`, senza script nelle pagine.

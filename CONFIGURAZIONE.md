@@ -24,7 +24,9 @@ Impostazioni. Ma se vuoi capirlo o modificarlo via SSH, ecco ogni parametro.
 | `language`       | **Lingua principale del sito** (`it` o `en`). Decide quale lingua sta alla radice `/`; l'altra va in una sottocartella (`/en/` o `/it/`). |
 | `admin_language` | Lingua dell'interfaccia di amministrazione (`it` o `en`). Si cambia anche col pulsante EN/IT nella barra admin. |
 | `articles_per_page` | Quanti articoli mostrare in ogni pagina della homepage (default `10`). Le pagine successive vengono generate in `/pagina/2.html`, `/pagina/3.html`... (in inglese `/en/page/2.html`). Con `0` la paginazione e' disattivata e tutti gli articoli stanno in una pagina. |
-| `home_order`  | Ordine delle sezioni della homepage, dall'alto in basso. Lista di tre valori tra `"intro"` (presentazione), `"articles"` e `"cards"`. Default: `["intro", "cards", "articles"]` (presentazione, poi le card, poi gli articoli). Si imposta anche dalla pagina Impostazioni, sezione "Struttura della homepage". |
+| `home_intro_position` | Dove va la presentazione della homepage (`home_content`): `"sidebar"` (default) nel primo riquadro della barra laterale, cosi' gli articoli partono dall'alto; `"top"` sopra l'elenco degli articoli. Si imposta dalle Impostazioni, sezione "Homepage". |
+| `home_excerpt_words` | Quante parole dell'articolo mostrano gli elenchi (home, tag, archivio) quando non hai scritto un'anteprima (default `40`). L'estratto prende solo il testo, senza titoletti, e si ferma alla fine di una parola. |
+| `home_order`  | Non piu' usato. Ordinava le sezioni della vecchia homepage a una colonna; con le due colonne gli articoli stanno a sinistra e il resto nella barra laterale, quindi non c'e' piu' un ordine da scegliere. Nei config vecchi resta e viene ignorato. |
 
 ## Contenuto della homepage
 
@@ -32,7 +34,7 @@ Impostazioni. Ma se vuoi capirlo o modificarlo via SSH, ecco ogni parametro.
 |------------------|-----------------------------------------------------------------|
 | `home_content` | HTML della parte alta della homepage (biografia, presentazione). Si scrive con l'editor visuale, non a mano. |
 | `home_cards_enabled` | Interruttore generale del blocco delle card (default `true`). Con `false` l'intero blocco sparisce dalla homepage, qualunque cosa dicano le singole card, e le loro pagine non vengono generate. Si imposta anche dalla pagina Impostazioni, sezione "Card della homepage". |
-| `home_cards`      | Lista delle "card" editoriali sotto la presentazione (Biografia, Progetti, ecc.). Ogni card ha `active` (true/false), `title` e `content`. Una card con `active` a `false`, o senza contenuto, non appare in homepage e non ha una sua pagina. |
+| `home_cards`      | Lista delle "card" editoriali (Biografia, Progetti, ecc.), elencate nel riquadro "Esplora" della barra laterale: ognuna ha la sua pagina. Ogni card ha `active` (true/false), `title` e `content`. Una card con `active` a `false`, o senza contenuto, non appare e non ha una sua pagina. |
 
 ## SEO e dati dell'autore (`seo`)
 
@@ -80,6 +82,10 @@ banner di consenso preventivo (GDPR). Umami non usa cookie: niente
 banner, i dati restano sul tuo server e le pagine sono piu' veloci. Per
 un blog personale e' la scelta consigliata.
 
+Se usi Google Analytics, PyBlog ha il suo banner: con il consenso acceso
+(vedi [Consenso ai cookie](#consenso-ai-cookie-consent)) lo script di GA
+parte solo dopo che il visitatore ha accettato le statistiche.
+
 ### Tutorial: installare Umami con Docker
 
 Nel repository trovi `umami-docker-compose.yml` pronto all'uso.
@@ -123,12 +129,19 @@ saranno sempre un po' sottostimati, e vale per qualunque sistema.
 Ricorda infine il backup: il volume Docker `umami-db` contiene tutto lo
 storico delle statistiche.
 
-## Codice personalizzato (`custom_code`)
+## Codici esterni e annunci (`custom_code`)
 
-Pezzi di HTML o JavaScript inseriti nelle pagine pubbliche: widget di
-servizi esterni, pixel di tracciamento, embed. Si gestiscono dalla pagina
-Impostazioni, e ogni pezzo ha tre scelte: dove va nella pagina, su quali
-pagine appare e il codice vero e proprio.
+Pezzi di HTML o JavaScript inseriti nelle pagine pubbliche: Google
+Analytics, AdSense, Tag Manager, pixel, widget di chat, embed. Si gestiscono
+dalla pagina Impostazioni, sezione "Codici esterni e annunci", e ogni pezzo
+ha quattro scelte: dove va nella pagina, su quali pagine appare, se deve
+aspettare il consenso del visitatore e il codice vero e proprio.
+
+Il pulsante "Aggiungi codice" propone i servizi piu' comuni (Google
+Analytics 4, Google Tag Manager, AdSense automatico o con un'unita'
+pubblicitaria, Google Ads, Meta Pixel, Microsoft Clarity): basta scrivere
+l'ID e il codice viene preparato con posizione, pagine e consenso adatti.
+"Codice libero" e' la scheda vuota, per tutto il resto.
 
 `custom_code` e' una lista; ogni elemento e' un oggetto con questi campi:
 
@@ -139,6 +152,7 @@ pagine appare e il codice vero e proprio.
 | `enabled`  | `true` o `false`. Spento vuol dire spento ovunque, senza cancellarlo. |
 | `position` | Dove finisce nella pagina (vedi sotto).                          |
 | `scope`    | Su quali pagine appare (vedi sotto).                             |
+| `consent`  | Il consenso che aspetta: `necessary` (parte sempre, il default), `statistics` o `marketing` (pubblicita'). Conta solo con il banner del consenso acceso. |
 | `code`     | Il codice, inserito **cosi' com'e'**, senza alcuna trasformazione. |
 
 **Le posizioni (`position`)**
@@ -152,6 +166,10 @@ pagine appare e il codice vero e proprio.
 | `before_footer` | Dopo il contenuto, prima del pie' di pagina. Si vede.          |
 | `article_end`   | In fondo al testo dell'articolo, prima della firma dell'autore. Esiste **solo negli articoli**: su qualunque altra pagina il codice non esce. |
 | `nav`           | Nel menu dell'intestazione, dopo RSS e prima del cambio di lingua. Per una voce in piu', per esempio `<a href="#" data-vaitony-apri>Chiedi all'assistente</a>` che apre la chat di un widget: prende lo stile degli altri link del menu. |
+| `sidebar`       | Nella barra laterale, dopo la presentazione: il posto di un annuncio 300x250 o di un widget. C'e' su homepage, articoli, tag, archivio e schede. |
+| `home_feed`     | Tra gli articoli della homepage, dopo il terzo. Esiste **solo in homepage**. |
+| `article_start` | All'inizio dell'articolo, dopo il titolo e la copertina, prima del testo. **Solo negli articoli**. |
+| `article_middle`| A meta' dell'articolo, dopo il paragrafo piu' vicino alla meta' del testo: mai dentro una tabella o un elenco, mai fra un titoletto e il suo paragrafo. Un articolo troppo corto lo riceve in fondo al testo. **Solo negli articoli**. |
 
 **Gli ambiti (`scope`)**
 
@@ -164,10 +182,31 @@ pagine appare e il codice vero e proprio.
 | `home_optin`    | La homepage, piu' gli articoli che lo spuntano nell'editor.   |
 | `all`           | Tutto il sito: anche archivio, pagine dei tag, schede e 404.  |
 
-Gli articoli tengono la propria scelta nel campo `custom_code_ids` del
-loro JSON, che contiene gli `id` dei codici spuntati. Cancellare un
-codice dalle Impostazioni e' sicuro: l'`id` rimasto negli articoli non
-corrisponde piu' a niente e viene semplicemente ignorato.
+**Le scelte del singolo articolo.** Nell'editor, il riquadro "Codici
+esterni" elenca i codici del sito che possono uscire su quell'articolo:
+quelli "da spuntare" (ambito `optin` o `home_optin`) escono solo con la
+spunta; quelli "di serie" (tutti gli altri) escono finche' non togli la
+spunta, e cosi' un articolo puo' fare a meno, per esempio, di un annuncio
+che gli altri hanno. Sotto, "Solo per questo articolo" accoglie codice
+che esce soltanto li': un annuncio dedicato, un embed. Nel JSON
+dell'articolo:
+
+| Campo                 | Significato                                           |
+|-----------------------|-------------------------------------------------------|
+| `custom_code_ids`     | Gli `id` dei codici "da spuntare" spuntati.           |
+| `custom_code_off_ids` | Gli `id` dei codici "di serie" spenti su questo articolo. |
+| `custom_code`         | I codici propri dell'articolo, con gli stessi campi di quelli del sito tranne `scope` (la loro unica pagina e' l'articolo); `id` comincia con `art-`. |
+
+L'editor mostra solo i codici attivi, ma le scelte su quelli spenti
+restano salvate: quando li riaccendi, ogni articolo li ritrova come li
+aveva lasciati. Cancellare un codice dalle Impostazioni e' sicuro: l'`id`
+rimasto negli articoli non corrisponde piu' a niente e viene ignorato.
+
+**ads.txt (`ads_txt`).** Il testo del file `/ads.txt`, che dice chi puo'
+vendere pubblicita' sul sito: AdSense lo cerca e limita gli annunci
+finche' non lo trova. Il modello di AdSense ci aggiunge da solo la sua
+riga (`google.com, pub-..., DIRECT, f08c47fec0942fa0`). Vuoto, il file
+non viene pubblicato (e se c'era viene tolto).
 
 **Una nota sulla fiducia.** Il codice viene scritto nella pagina senza
 alcun controllo, perche' controllarlo vorrebbe dire impedirgli di
@@ -175,7 +214,44 @@ funzionare. Chi puo' entrare nell'area di amministrazione puo' quindi
 eseguire qualunque JavaScript sul sito pubblico: incolla solo codice di
 cui ti fidi, e tieni la password dell'amministrazione al sicuro.
 
-## Traduzione automatica (Italiano -> Inglese)
+## Consenso ai cookie (`consent`)
+
+In Europa statistiche e pubblicita' che usano cookie possono partire solo
+dopo il consenso del visitatore. PyBlog ha un banner suo: lo accendi dalle
+Impostazioni, sezione "Consenso ai cookie".
+
+| Campo         | Significato                                                |
+|---------------|------------------------------------------------------------|
+| `enabled`     | `true` mostra il banner ai visitatori (default `false`).   |
+| `text`        | Il testo del banner nella lingua principale. Vuoto = il testo predefinito. |
+| `text_en`     | Il testo del banner nell'altra lingua del sito. Vuoto = il testo predefinito. |
+| `privacy_url` | L'indirizzo dell'informativa privacy, linkata dal banner.  |
+| `version`     | Un numero che cresce col pulsante "Chiedi di nuovo il consenso a tutti": chi ha scelto con un numero vecchio rivede il banner. Da usare quando aggiungi un servizio. |
+
+**Come funziona.** Con il banner acceso, i codici segnati `statistics` o
+`marketing` (e Google Analytics) arrivano nella pagina dentro un
+`<template>`, che il browser non esegue: niente script, niente cookie,
+niente richieste. Quando il visitatore accetta una categoria, `site.js`
+li trasforma in codice vivo al loro posto. I tag di Google ricevono la
+scelta tramite **Consent Mode** (tutto negato finche' il visitatore non
+decide). La scelta resta nel browser del visitatore; il link "Preferenze
+cookie" nel pie' di pagina riapre il banner, e ritirare un consenso
+ricarica la pagina senza quel codice.
+
+Il banner compare solo se qualche codice ne ha bisogno: con il consenso
+acceso ma tutti i codici `necessary`, non esce niente.
+
+**AdSense.** Per mostrare annunci in Europa Google chiede anche un CMP
+certificato (TCF). Puoi accendere il messaggio gratuito di Google dal
+pannello di AdSense ("Privacy e messaggi") e lasciare il codice di
+AdSense su `necessary`, oppure usare il banner di PyBlog con AdSense su
+`marketing`: in quel caso gli annunci partono solo dopo il consenso.
+
+## Traduzione automatica (dalla lingua principale all'altra)
+
+La traduzione va sempre dalla lingua principale del sito (`language`)
+all'altra: dall'italiano all'inglese, o dall'inglese all'italiano se il
+sito e' in inglese.
 
 Dentro la sezione `translation`:
 
@@ -193,7 +269,7 @@ Dentro la sezione `translation`:
 | `deepseek_model` | Modello DeepSeek (es. `deepseek-chat`).                      |
 
 Se non inserisci nessuna chiave, la traduzione resta disattivata e il blog
-funziona normalmente in italiano. Le chiavi restano sul server e non sono
+funziona normalmente nella sua lingua principale. Le chiavi restano sul server e non sono
 mai visibili nelle pagine pubbliche.
 
 ### Chiavi API da variabile d'ambiente
@@ -225,6 +301,13 @@ Le versioni precedenti usavano chiavi italiane (`titolo_sito`, `stato`,
 il vecchio formato, converte `config.json` e i file degli articoli al nuovo
 schema inglese e li riscrive su disco. La migrazione avviene una sola volta
 ed e' automatica.
+
+**Un `config.json` illeggibile** (JSON rotto, per esempio dopo una modifica
+a mano) non blocca piu' il sito: PyBlog avvisa sul terminale, ne mette una
+copia in `config.broken.json` e parte con i valori predefiniti. Recupera i
+tuoi dati dalla copia prima di salvare di nuovo le Impostazioni. I file
+vengono sempre scritti "tutto o niente": un'interruzione a meta' lascia la
+versione vecchia, mai un file a meta'.
 
 ## Diritti di addestramento AI (`ai_training`)
 

@@ -6,6 +6,31 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **A new article no longer overwrites an existing one.** Saving a new
+  article whose title matched an existing article replaced it, autosave
+  included. A new article now takes a free address and the editor says
+  so; renaming an article onto another's address is refused.
+- **Safe writes.** `config.json` and the articles are written to a
+  temporary file and renamed into place, so an interruption leaves the old
+  version instead of half a file. An unreadable `config.json` is copied to
+  `config.broken.json` and the site starts on the defaults instead of not
+  starting at all.
+- **The login can no longer be locked by anyone.** The lock after wrong
+  passwords was global: anybody could keep the author out. It now applies
+  to the address that keeps failing, grows with each failure and is
+  forgotten after an hour. Behind nginx the address comes from
+  `X-Real-IP`, which `nginx.conf.example` now sets.
+- **English as the main language.** Translation went from Italian to
+  English whatever the main language was, and comments, previews and the
+  editor's labels assumed Italian. Everything now follows `language`.
+- **The editor no longer looks modified as soon as it opens.** Quill
+  reported the content it had just loaded as typed by the author, so an
+  untouched article asked to confirm leaving and a draft got a pointless
+  autosave.
+- **Ticks on inactive snippets survive an article save.** The editor only
+  lists active snippets, and saving an article dropped its choices about
+  the others.
+
 - **Fixed lost tags on legacy articles.** The automatic schema migration
   from the old Italian keys did not map `tag` to `tags`: articles written
   before the rename lost their tags on the public pages, in the search
@@ -36,6 +61,40 @@ All notable changes to PyBlog are documented in this file.
   published articles), regardless of the size chosen when resizing.
 
 ### New features
+
+- **Two-column layout.** The homepage lists the articles on the left, each
+  with a thumbnail and a short preview, and keeps a sidebar on the right:
+  the introduction, the search, the "Explore" box with the card pages, the
+  topics and the author's profiles. On an article the sidebar carries the
+  table of contents, which follows the reading. On a phone the sidebar
+  moves below and the menu opens from a button. `home_intro_position`
+  ("sidebar" or "top") and `home_excerpt_words` replace `home_order`,
+  which is kept in old configurations and ignored.
+- **External code: templates, ad positions, per-article code.** "Add code"
+  offers Google Analytics 4, Google Tag Manager, AdSense (auto ads or an
+  ad unit), Google Ads, Meta Pixel and Microsoft Clarity: type the id and
+  the code is written with a suitable position, scope and consent, and
+  AdSense adds its line to `ads.txt`, which the build publishes. Four new
+  positions for ads: `article_start`, `article_middle`, `home_feed` and
+  `sidebar`. Each card folds to one line saying where the code goes, on
+  which pages and with which consent; the code is edited in CodeMirror,
+  with the textarea as a fallback. An article can switch off a snippet
+  that goes on every article (`custom_code_off_ids`) and carry code of
+  its own (`custom_code`).
+- **Cookie consent banner.** With `consent.enabled`, the snippets marked
+  `statistics` or `marketing`, and Google Analytics, reach the page as
+  inert `<template>` elements and come alive when the visitor accepts
+  their category; Google's tags are told through Consent Mode. The choice
+  is kept in the visitor's browser, a "Cookie preferences" link in the
+  footer reopens the banner, and raising `consent.version` asks everyone
+  again.
+- **Word import rewritten.** Nested lists, fields with links, text boxes,
+  footnotes, superscripts and subscripts, alternative text and merged
+  table cells now survive the import; hidden text and Word's table of
+  contents no longer reach the article. The subtitle becomes the
+  description when that is empty, and the notices about what was skipped
+  arrive in one message. An imported article can be edited and saved
+  without losses.
 
 - **Custom code in the header menu.** A new position, "In the header menu",
   puts a snippet among the menu links, after RSS and before the language

@@ -83,6 +83,12 @@ list (empty for now).
 
 Click "Settings and homepage". Here you set everything without touching code.
 
+The homepage has two columns: on the left the articles, each with its
+thumbnail and a few lines of preview; on the right a sidebar with your
+introduction, the search, the "Explore" box with your pages, the topics and
+your profiles. On a phone the sidebar moves below the articles and the menu
+opens from a button.
+
 1. At the top there is a visual editor for the HOME: write your introduction
    or biography here. You can use bold, headings, lists.
 2. To add an image: click the image icon in the editor toolbar. To place it
@@ -91,21 +97,21 @@ Click "Settings and homepage". Here you set everything without touching code.
 3. You can also embed a YouTube video ("Insert YouTube video" button, paste
    the link) or upload a video from your computer ("Upload a video").
 4. Click "Show/hide homepage preview" to see right away how it will look.
-5. In the "Homepage cards" section, decide what to show below the
-   introduction. Each card (Biography, Projects, Highlights, Service
-   notices) has its own "Show this card" checkbox: checked, it appears on
-   the homepage and gets a page of its own; unchecked, it disappears.
+5. In the "Homepage cards" section, decide which pages to list in the
+   "Explore" box of the sidebar. Each card (Biography, Projects,
+   Highlights, Service notices) has its own "Show this card" checkbox:
+   checked, it appears in "Explore" and gets a page of its own; unchecked,
+   it disappears.
    The checkbox at the top, "Show the cards section", covers the whole
    block: uncheck it and they all go at once, and when you check it again
    every card comes back the way you left it.
 6. Further down, fill in the "General settings": site title, subtitle,
    your name, the domain (e.g. https://mysite.com) and the language.
-7. In the "Homepage structure" section, choose the order of the three home
-   sections (Introduction, Articles, Cards): by default the cards with
-   your biography and projects sit right after the introduction, but you
-   can move them wherever you prefer. Here
-   you also set how many articles to show per page (see "Pagination and
-   archive" below).
+7. In the "Homepage" section, choose where the introduction goes: in the
+   sidebar (so the articles start at the top) or above the articles. Here
+   you also set how many words to show for the articles without a preview,
+   whether to highlight the latest article and how many articles to show
+   per page (see "Pagination and archive" below).
 8. In the "SEO and author data" section, enter your professional details:
    personal page, photo, job title, short bio and above all your public
    profiles (GitHub, LinkedIn...), one per line. This data goes into the
@@ -124,7 +130,9 @@ Go back to the newsroom (link at the top) and click "New article".
 
 1. Write the Title.
 2. The Slug (the final part of the web address) is generated automatically:
-   leave it empty.
+   leave it empty. If another article already uses that address, the new
+   one takes a free one (with "-2" at the end, for instance) and a message
+   tells you so: an article never overwrites another.
 3. Write the SEO Description: a short sentence summarising the article. It
    will appear in Google results, so make it inviting (max 160 characters).
 4. Write the Content in the visual editor. **If you cannot remember what a
@@ -157,6 +165,16 @@ Go back to the newsroom (link at the top) and click "New article".
    the real image data alongside the (unusable) text, and the editor picks
    it up and inserts proper images in the right places. A status message
    confirms how many images were recovered.
+8c. If the article already exists as a Word document, the "Import from
+   Word (.docx)" button above the editor loads all of it: headings, lists
+   (nested ones too), tables with merged cells, images with their
+   alternative text, footnotes, links, superscripts and subscripts, text
+   boxes. The document's title (Title or Heading 1 style at the start)
+   becomes the article's title, and the subtitle becomes the description
+   when that is empty. Word's table of contents and hidden text stay out,
+   and a notice tells you what was skipped (an equation, say, to write
+   again). The imported article is not saved yet: review it, then edit and
+   save it like any other.
 9. You can embed YouTube videos or upload videos from your computer with
    the buttons below the editor.
 10. Click "Show/hide preview" to see how the published article will look,
@@ -212,6 +230,12 @@ automatic. If the service loses an image's marker along the way, PyBlog puts
 the image back anyway and says so ("check they are where they belong"): look
 at where it landed before you confirm. The images' alt text stays in Italian,
 because it lives inside the tag that never leaves.
+
+**If your site is in English** (General settings, "Main site language":
+English) everything turns around: you write the articles in English, the
+section becomes "Italian version", translation goes from English to Italian
+and the translated pages live under `/it/`. Comments, dates, the cookie
+banner and the previews follow the language of each page.
 
 ### Step 2.8 — Pagination, archive and favicon (all automatic)
 
@@ -295,58 +319,117 @@ testing, with a low spending cap set in the provider's console.
 ### Step 2.11 — Putting a third-party service's code into your pages
 
 Sooner or later a service will hand you a line to paste into your site:
-a support widget, a chat, a tracking pixel, a signup form. Something
-like this:
+Google Analytics, AdSense, a support widget, a chat, a tracking pixel.
+Something like this:
 
 ```html
 <script src="https://example.com/widget/loader.js" data-widget-id="a7ddc6ff" defer></script>
 ```
 
 You do not need to touch the program's files. Go to **Settings**, scroll
-down to **Custom code** and click **Add code**. You fill in four things:
+down to **External code and ads** and click **Add code**: you are asked
+what you want to add.
+
+**The most common services are ready.** Pick Google Analytics 4, Google
+Tag Manager, AdSense (auto ads or a single ad unit), Google Ads, Meta
+Pixel or Microsoft Clarity from the list, type the id the service gave
+you (for instance `G-ABC123DEF4` for Analytics) and click **Create**. The
+code is prepared with a suitable position, pages and consent; an id of
+the wrong shape is caught first. With AdSense the line of the `ads.txt`
+file is added too (see below). You can change everything afterwards.
+
+**For everything else there is "Your own code"**: an empty card to fill in.
 
 1. **Name**: whatever you want to call it, so you can find it again.
    E.g. "Support widget".
 2. **Where it goes in the page**: the entries are split into two groups.
-   The *technical* ones (`head`, start of the body, end of the page) are
-   invisible and suit scripts and pixels — for the example above, pick
-   **at the end of the page**. The *visible* ones (in the header menu,
-   below the site header, before the footer, at the end of the article
-   text) are for code that must show up in a specific spot, like a
-   banner. **In the header menu** is for one more entry next to Home,
-   Articles and Archive: for instance an "Ask the assistant" link that
-   opens a chat widget.
-3. **On which pages**: the homepage only, the articles only, both, the
-   whole site, or **selected articles only**. That last one is the most
-   useful: the code stays off until you switch it on, article by
-   article.
-4. **Code**: paste what the service gave you, unchanged.
+   The ones *in the page code* (`head`, start, end) are invisible and suit
+   scripts and pixels: for the example above, pick **the end of the
+   page**. The *visible* ones are for code that must show up in a precise
+   spot: in the header menu, below the site header, in the sidebar (the
+   place for a 300x250 ad), between the homepage articles, at the start,
+   half way or at the end of the article text, before the footer. **In
+   the header menu** is for one more entry next to Home, Articles and
+   Archive: for instance an "Ask the assistant" link that opens a chat
+   widget.
+3. **On which pages**: the whole site, the homepage only, the articles
+   only, homepage and articles, or **selected articles only**: with the
+   last one the code stays off until you switch it on, article by article.
+4. **Visitor consent**: "Necessary" if the code sets no cookies (a widget,
+   an embed), "Statistics" for Analytics, Clarity and the like,
+   "Advertising" for AdSense, Google Ads and pixels. It only matters with
+   the cookie banner switched on (step 2.12).
+5. **Code**: paste what the service gave you, unchanged. The box colours
+   the code and numbers the lines, like a programmer's editor.
 
-Save, and the site is rebuilt.
+Save, and the site is rebuilt. When you come back to the page each piece
+of code is folded to a single line that says where it goes, on which pages
+and with which consent: click the line to open it.
 
-**Switching a snippet on for a single article.** If you chose one of the
-"selected articles" scopes, open the article in the editor: in the right
-column, under **Custom code**, you will find the list with a checkbox
-for each one. Tick the ones you want on that article and save. Below the
-list, in grey, you also see the snippets that run on every article
-anyway, so you know what is already on the page without opening the
-Settings in another window.
+**Code on a single article.** Open the article in the editor: in the right
+column, under **External code**, you find the site's code that may appear
+on that article, with a checkbox each. The "tick to enable" ones (scope
+"selected articles") appear only when ticked; the "by default" ones appear
+on every article, and unticking one switches it off on this article only:
+useful, for instance, for an article that must carry no ads. Below it,
+**For this article only** holds code that appears there and nowhere else:
+a dedicated ad, an embed, a widget. Save the article and that is it.
 
-**To really test it**, use the article preview, not the Settings page:
-the administration area blocks external domains for safety, so the
+**ads.txt.** It is a file that says who may sell advertising on your site:
+AdSense looks for it at `/ads.txt` and limits the ads until it finds it.
+Write it in the **ads.txt** field under the code (the AdSense template
+already puts its line there); when empty, the file is not published.
+
+**To actually try it**, use the article preview, not the Settings page:
+the administration area blocks external domains for security, so the
 widget would not start there and would look broken. In the preview, and
 on the published site, it works normally.
 
-**Two warnings.** The code is injected into the page verbatim, with no
-checks: only paste code you trust, because it can do anything on your
-site. And if you delete a snippet from the Settings, the articles that
-had ticked it do not break: they simply stop receiving it.
+**Two warnings.** The code is injected into the page as it is, with no
+checking: only paste code you trust, because it can do anything on your
+site. And if you delete a snippet from the Settings page, the articles
+that had ticked it do not break: they simply stop receiving it.
+
+### Step 2.12 — The cookie banner
+
+In Europe, statistics and advertising that use cookies may start only
+after the visitor consents. PyBlog has a banner of its own: in
+**Settings**, section **Cookie consent**, tick "Show the consent banner to
+visitors", enter the address of your privacy policy and save.
+
+From then on:
+
+- the code marked "Statistics" or "Advertising", and Google Analytics,
+  reaches the page on hold: it does not start, sets no cookies and calls
+  nobody until the visitor accepts;
+- the visitor can accept everything, refuse everything or choose, and the
+  two buttons weigh the same; the choice stays in their browser and is not
+  asked again on every page;
+- Google's tags receive the choice through Consent Mode;
+- a "Cookie preferences" link at the bottom of every page lets the visitor
+  change their mind.
+
+The banner appears only when some code needs it. You can change its text
+(empty = the default one), for the version in the other language too.
+When you add a new service, click **Ask everyone for consent again** and
+save: every visitor will see the banner again.
+
+**AdSense in Europe** also asks for a "certified CMP". You have two roads:
+switch on Google's free message from the AdSense dashboard ("Privacy &
+messaging") and leave the AdSense code on "Necessary"; or use this banner
+with AdSense on "Advertising": the ads start after consent.
+
+The banner is a tool, not legal advice: the privacy policy and the choice
+of which services to use remain yours.
 
 ## PART 3 — Where things end up (to understand; not mandatory)
 
 - `posts/` : the articles you write, saved as text files (JSON format).
   They are your "sources". It is wise to back up this folder now and then.
 - `config.json` : the site settings and the homepage content.
+  It also holds the keys of the translation services, which is why it
+  stays out of git. Should it ever become unreadable, PyBlog keeps a copy
+  in `config.broken.json` and starts again on the default values.
 - `output/` : the generated HTML files, i.e. the actual site.
   This is the folder that goes online.
 - `output/media/` : the videos you upload.
@@ -571,7 +654,8 @@ editor):
   `umami-docker-compose.yml`.
 - **Google Analytics 4**: just paste the measurement ID
   (`G-XXXXXXXXXX`) into the dedicated field. Remember that in Europe
-  GA requires a cookie consent banner.
+  GA requires cookie consent: switch on PyBlog's banner (step 2.12) and
+  GA starts only after the visitor accepts.
 
 Alternatively (or additionally), nginx still records every visit in
 `/var/log/nginx/blog-access.log`, with no script in the pages.
