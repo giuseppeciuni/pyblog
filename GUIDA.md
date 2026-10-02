@@ -75,13 +75,33 @@ Apri il browser (Chrome, Firefox...) e vai su:
 
     http://localhost:8000
 
-Questa e' la tua redazione. Vedrai i pulsanti: "Nuovo articolo",
-"Impostazioni e homepage", "Rigenera sito", "Vedi blog", e la lista
-degli articoli (per ora vuota).
+Questa e' la tua redazione. A sinistra c'e' il menu: "Articoli" (con
+quanti ne hai), "Nuovo articolo" e "Impostazioni"; piu' in basso gli
+strumenti ("Rigenera il sito", "Scarica il backup") e le voci del tuo
+account ("Vedi il blog", "Cambia password", la lingua, "Esci"). Sul
+telefono il menu diventa una barra in fondo allo schermo, e "Altro" apre
+il resto.
+
+La pagina "Articoli" elenca i tuoi articoli: in alto scegli se vederli
+tutti, solo i pubblicati o solo le bozze, e puoi cercarli per titolo.
+Ogni riga ha "Modifica"; il pulsante "⋯" accanto apre le azioni piu'
+rare: anteprima, pubblica o ritira, elimina.
 
 ### Passo 2.3 — Configura prima la homepage e il sito
 
-Clicca su "Impostazioni e homepage". Qui imposti tutto senza toccare codice.
+Clicca su "Impostazioni". Qui imposti tutto senza toccare codice.
+
+Le impostazioni sono divise in sezioni, una per cosa da fare, e nel menu
+a sinistra compaiono una sotto l'altra: "Sito e autore", "Home page",
+"Pagine", "Commenti", "Traduzione", "Statistiche e annunci", "Cookie e
+privacy", "Addestramento AI", "Avanzate". Sul telefono la pagina apre
+l'elenco delle sezioni; dentro una sezione, la freccia in alto torna
+all'elenco.
+
+La barra in fondo dice se ci sono modifiche non salvate: "Salva e
+rigenera sito" le salva tutte, di qualunque sezione, e "Annulla le
+modifiche" riporta tutto all'ultimo salvataggio. Se lasci la pagina con
+modifiche non salvate, il browser te lo chiede prima.
 
 La homepage e' a due colonne: a sinistra gli articoli, ognuno con la sua
 miniatura e qualche riga di anteprima; a destra una barra laterale con la tua
@@ -89,45 +109,44 @@ presentazione, la ricerca, il riquadro "Esplora" con le tue pagine, gli
 argomenti e i tuoi profili. Sul telefono la barra scende sotto gli articoli e
 il menu si apre da un pulsante.
 
-1. Nella parte alta c'e' un editor visuale per la HOME: scrivi qui la tua
-   presentazione o biografia. Puoi mettere in grassetto, fare titoli, elenchi.
-2. Per aggiungere un'immagine: clicca l'icona immagine nella barra dell'editor.
-   Per posizionarla a sinistra o a destra del testo, clicca sull'immagine e poi
-   usa i pulsanti di allineamento (le righe a sinistra/destra) nella barra: il
-   testo le scorrera' intorno.
-3. Puoi anche inserire un video YouTube (pulsante "Inserisci video YouTube",
-   incolli il link) o caricare un video dal computer ("Carica un video").
-4. Clicca "Mostra/nascondi anteprima homepage" per vedere subito come verra'.
-5. Nella sezione "Card della homepage" decidi quali pagine elencare nel
-   riquadro "Esplora" della barra laterale. Ogni card (Biografia, Progetti,
-   Informazioni in evidenza, Comunicazioni di servizio) ha la sua spunta
-   "Mostra questa card": con la spunta compare in "Esplora" e ha una sua
-   pagina, senza spunta sparisce.
-   La spunta in cima, "Mostra la sezione delle card", vale per tutto il
-   blocco: se la togli spariscono tutte insieme, e quando la rimetti ogni
-   card torna come l'avevi lasciata.
-6. Più sotto, compila le "Impostazioni generali": titolo del sito, sottotitolo,
-   il tuo nome, il dominio (es. https://miosito.it) e la lingua.
-7. Nella sezione "Homepage" scegli dove va la presentazione: nella barra
-   laterale (cosi' gli articoli partono dall'alto) oppure sopra gli articoli.
-   Qui imposti anche quante parole mostrare per gli articoli senza anteprima,
-   se mettere in evidenza l'ultimo articolo e quanti articoli mostrare per
-   pagina (vedi "Paginazione e archivio" più sotto).
-8. Nella sezione "SEO e dati dell'autore" inserisci i tuoi dati professionali:
-   pagina personale, foto, ruolo, breve biografia e soprattutto i tuoi profili
-   pubblici (GitHub, LinkedIn...), uno per riga. Questi dati finiscono nei
-   "dati strutturati" delle pagine e aiutano Google a riconoscerti come autore
-   reale e a collegare tra loro i tuoi profili. Tutti i campi sono facoltativi.
-   Qui puoi anche indicare un logo, l'account X/Twitter del sito e una favicon
-   personalizzata (se non ne metti una, PyBlog ne genera una in automatico con
-   l'iniziale del titolo del sito).
-9. Nella sezione "Commenti" scegli se usare Giscus, Disqus o nessuno
+1. In "Sito e autore" scrivi il titolo del sito, il sottotitolo, il dominio
+   (es. https://miosito.it) e la lingua in cui scrivi. Sotto, in "Chi
+   scrive", metti il tuo nome e, se vuoi, ruolo, una breve biografia, una
+   foto, la tua pagina personale e soprattutto i tuoi profili pubblici
+   (GitHub, LinkedIn...), uno per riga. Questi dati finiscono nei "dati
+   strutturati" delle pagine e aiutano Google a riconoscerti come autore
+   reale e a collegare tra loro i tuoi profili. Tutti i campi sono
+   facoltativi. In "Logo e icona" puoi indicare un logo e una favicon
+   personalizzata (se non ne metti una, PyBlog ne genera una in automatico
+   con l'iniziale del titolo del sito).
+2. In "Home page" c'e' un editor visuale per la presentazione: scrivi qui
+   chi sei. Puoi mettere in grassetto, fare titoli, elenchi.
+   Per aggiungere un'immagine clicca l'icona immagine nella barra
+   dell'editor; per posizionarla a sinistra o a destra del testo, clicca
+   sull'immagine e poi usa i pulsanti di allineamento: il testo le scorrera'
+   intorno. Puoi anche inserire un video YouTube ("Inserisci video YouTube")
+   o caricare un video dal computer ("Carica un video"), e con "Mostra/
+   nascondi anteprima homepage" vedi subito come verra'.
+3. Sempre in "Home page", in "Disposizione", scegli dove va la
+   presentazione: nella barra laterale (cosi' gli articoli partono
+   dall'alto) oppure sopra gli articoli. Qui imposti anche se mettere in
+   evidenza l'ultimo articolo, quante parole mostrare per gli articoli
+   senza anteprima e quanti articoli mostrare per pagina (vedi
+   "Paginazione e archivio" piu' sotto).
+4. In "Pagine" decidi quali pagine elencare nel riquadro "Esplora" della
+   barra laterale. Ogni pagina (Biografia, Progetti, Informazioni in
+   evidenza, Comunicazioni di servizio) ha la sua spunta "Mostra questa
+   card": con la spunta compare in "Esplora" e ha una sua pagina, senza
+   spunta sparisce. La spunta in cima, "Mostra la sezione delle card", vale
+   per tutto il blocco: se la togli spariscono tutte insieme, e quando la
+   rimetti ogni card torna come l'avevi lasciata.
+5. In "Commenti" scegli se usare Giscus, Disqus o nessuno
    (vedi la PARTE 5 per come ottenere i dati).
-10. Clicca "Salva e rigenera sito". Fatto: la configurazione e' salvata.
+6. Clicca "Salva e rigenera sito". Fatto: la configurazione e' salvata.
 
 ### Passo 2.4 — Scrivi il tuo primo articolo
 
-Torna alla redazione (link in alto) e clicca "Nuovo articolo".
+Clicca "Nuovo articolo" nel menu a sinistra.
 
 1. Scrivi il Titolo.
 2. Lo Slug (la parte finale dell'indirizzo web) si genera da solo: lascialo vuoto.
@@ -220,7 +239,7 @@ Per ogni articolo hai queste azioni rapide:
 
 ### Passo 2.6 — Controlla il risultato
 
-Dalla redazione clicca "Vedi blog", oppure apri `http://localhost:8000/posts/`.
+Dalla redazione clicca "Vedi il blog", oppure apri `http://localhost:8000/posts/`.
 Vedrai la tua homepage con la presentazione in alto e gli articoli sotto.
 
 ### Passo 2.7 — La versione inglese di un articolo
@@ -245,7 +264,7 @@ dice ("controlla che siano al posto giusto"): in quel caso guarda dov'e'
 finita prima di confermare. Il testo alternativo delle immagini resta in
 italiano, perche' vive dentro il tag che non parte.
 
-**Se il tuo sito e' in inglese** (Impostazioni generali, "Lingua principale
+**Se il tuo sito e' in inglese** (Impostazioni, "Sito e autore", "Lingua principale
 del sito": English) tutto si rovescia: scrivi gli articoli in inglese, la
 sezione diventa "Versione in italiano", la traduzione va dall'inglese
 all'italiano e le pagine tradotte stanno in `/it/`. Commenti, date, banner
@@ -341,8 +360,9 @@ tracciamento. Qualcosa di questo genere:
 <script src="https://esempio.com/widget/loader.js" data-widget-id="a7ddc6ff" defer></script>
 ```
 
-Non serve toccare i file del programma. Vai in **Impostazioni**, scorri
-fino a **Codici esterni e annunci** e clicca **Aggiungi codice**: ti viene
+Non serve toccare i file del programma. Vai in **Impostazioni**, sezione
+**Statistiche e annunci**, e in **Codici esterni e annunci** clicca
+**Aggiungi codice**: ti viene
 chiesto che cosa vuoi aggiungere.
 
 **I servizi piu' comuni sono pronti.** Scegli dall'elenco Google Analytics 4,
@@ -414,7 +434,7 @@ lo ricevono piu'.
 
 In Europa statistiche e pubblicita' che usano cookie possono partire solo
 dopo il consenso del visitatore. PyBlog ha un banner suo: in
-**Impostazioni**, sezione **Consenso ai cookie**, spunta "Mostra il banner
+**Impostazioni**, sezione **Cookie e privacy**, spunta "Mostra il banner
 del consenso ai visitatori", metti l'indirizzo della tua informativa
 privacy e salva.
 
@@ -653,7 +673,7 @@ Usa le Discussioni di un repository GitHub come archivio dei commenti.
 3. Installa l'app Giscus: https://github.com/apps/giscus
 4. Vai su https://giscus.app, inserisci il nome del repo e copia i quattro
    valori che ti mostra (repo, repo id, category, category id).
-5. Incollali nella pagina "Impostazioni e homepage", scegli "Giscus", salva.
+5. Incollali in Impostazioni, sezione "Commenti", scegli "Giscus", salva.
 
 ### Disqus (piu' facile per chi commenta, ma con pubblicita')
 

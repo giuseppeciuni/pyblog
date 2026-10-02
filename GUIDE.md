@@ -75,13 +75,31 @@ Open your browser (Chrome, Firefox...) and go to:
 
     http://localhost:8000
 
-This is your newsroom. You will see the buttons: "New article",
-"Settings and homepage", "Rebuild site", "View blog", and the article
-list (empty for now).
+This is your newsroom. On the left is the menu: "Articles" (with how many
+you have), "New article" and "Settings"; further down the tools ("Rebuild
+the site", "Download the backup") and your account ("View the blog",
+"Change password", the language, "Log out"). On a phone the menu becomes a
+bar at the bottom of the screen, and "More" opens the rest.
+
+The "Articles" page lists your articles: at the top choose whether to see
+all of them, only the published ones or only the drafts, and search them by
+title. Each row has "Edit"; the "⋯" button next to it opens the rarer
+actions: preview, publish or unpublish, delete.
 
 ### Step 2.3 — Configure the homepage and the site first
 
-Click "Settings and homepage". Here you set everything without touching code.
+Click "Settings". Here you set everything without touching code.
+
+The settings are split into sections, one per job, and the menu on the
+left lists them one under the other: "Site and author", "Homepage",
+"Pages", "Comments", "Translation", "Analytics and ads", "Cookies and
+privacy", "AI training", "Advanced". On a phone the page opens on the list
+of sections; inside a section, the arrow at the top goes back to the list.
+
+The bar at the bottom tells you whether there are unsaved changes: "Save
+and rebuild site" saves them all, from any section, and "Discard changes"
+puts everything back as it was last saved. If you leave the page with
+unsaved changes, the browser asks you first.
 
 The homepage has two columns: on the left the articles, each with its
 thumbnail and a few lines of preview; on the right a sidebar with your
@@ -89,44 +107,42 @@ introduction, the search, the "Explore" box with your pages, the topics and
 your profiles. On a phone the sidebar moves below the articles and the menu
 opens from a button.
 
-1. At the top there is a visual editor for the HOME: write your introduction
-   or biography here. You can use bold, headings, lists.
-2. To add an image: click the image icon in the editor toolbar. To place it
+1. In "Site and author" write the site title, the subtitle, the domain
+   (e.g. https://mysite.com) and the language you write in. Below, in "Who
+   writes", put your name and, if you like, your job title, a short bio, a
+   photo, your personal page and above all your public profiles (GitHub,
+   LinkedIn...), one per line. This data goes into the pages' "structured
+   data" and helps Google recognise you as a real author and connect your
+   profiles together. All fields are optional. In "Logo and icon" you can
+   set a logo and a custom favicon (if you leave it empty, PyBlog generates
+   one automatically with the initial of the site title).
+2. In "Homepage" there is a visual editor for the introduction: write here
+   who you are. You can use bold, headings, lists.
+   To add an image click the image icon in the editor toolbar; to place it
    left or right of the text, click the image and then use the alignment
-   buttons (the left/right lines) in the toolbar: text will flow around it.
-3. You can also embed a YouTube video ("Insert YouTube video" button, paste
-   the link) or upload a video from your computer ("Upload a video").
-4. Click "Show/hide homepage preview" to see right away how it will look.
-5. In the "Homepage cards" section, decide which pages to list in the
-   "Explore" box of the sidebar. Each card (Biography, Projects,
-   Highlights, Service notices) has its own "Show this card" checkbox:
-   checked, it appears in "Explore" and gets a page of its own; unchecked,
-   it disappears.
-   The checkbox at the top, "Show the cards section", covers the whole
-   block: uncheck it and they all go at once, and when you check it again
-   every card comes back the way you left it.
-6. Further down, fill in the "General settings": site title, subtitle,
-   your name, the domain (e.g. https://mysite.com) and the language.
-7. In the "Homepage" section, choose where the introduction goes: in the
-   sidebar (so the articles start at the top) or above the articles. Here
-   you also set how many words to show for the articles without a preview,
-   whether to highlight the latest article and how many articles to show
+   buttons: text will flow around it. You can also embed a YouTube video
+   ("Insert YouTube video") or upload a video from your computer ("Upload a
+   video"), and "Show/hide homepage preview" shows right away how it will
+   look.
+3. Still in "Homepage", under "Layout", choose where the introduction goes:
+   in the sidebar (so the articles start at the top) or above the articles.
+   Here you also set whether to highlight the latest article, how many words
+   to show for the articles without a preview and how many articles to show
    per page (see "Pagination and archive" below).
-8. In the "SEO and author data" section, enter your professional details:
-   personal page, photo, job title, short bio and above all your public
-   profiles (GitHub, LinkedIn...), one per line. This data goes into the
-   pages' "structured data" and helps Google recognise you as a real author
-   and connect your profiles together. All fields are optional. Here you can
-   also set a logo, the site's X/Twitter account and a custom favicon (if
-   you leave it empty, PyBlog generates one automatically with the initial
-   of the site title).
-9. In the "Comments" section, choose Giscus, Disqus or none
+4. In "Pages" decide which pages to list in the "Explore" box of the
+   sidebar. Each page (Biography, Projects, Highlights, Service notices) has
+   its own "Show this card" checkbox: checked, it appears in "Explore" and
+   gets a page of its own; unchecked, it disappears. The checkbox at the
+   top, "Show the cards section", covers the whole block: uncheck it and
+   they all go at once, and when you check it again every card comes back
+   the way you left it.
+5. In "Comments" choose Giscus, Disqus or none
    (see PART 5 for how to get the values).
-10. Click "Save and rebuild site". Done: the configuration is saved.
+6. Click "Save and rebuild site". Done: the configuration is saved.
 
 ### Step 2.4 — Write your first article
 
-Go back to the newsroom (link at the top) and click "New article".
+Click "New article" in the menu on the left.
 
 1. Write the Title.
 2. The Slug (the final part of the web address) is generated automatically:
@@ -217,7 +233,7 @@ For each article you have these quick actions:
 
 ### Step 2.6 — Check the result
 
-From the newsroom click "View blog", or open `http://localhost:8000/posts/`.
+From the newsroom click "View the blog", or open `http://localhost:8000/posts/`.
 You will see your homepage with the introduction at the top and the
 articles below.
 
@@ -243,7 +259,7 @@ the image back anyway and says so ("check they are where they belong"): look
 at where it landed before you confirm. The images' alt text stays in Italian,
 because it lives inside the tag that never leaves.
 
-**If your site is in English** (General settings, "Main site language":
+**If your site is in English** (Settings, "Site and author", "Main site language":
 English) everything turns around: you write the articles in English, the
 section becomes "Italian version", translation goes from English to Italian
 and the translated pages live under `/it/`. Comments, dates, the cookie
@@ -338,8 +354,9 @@ Something like this:
 <script src="https://example.com/widget/loader.js" data-widget-id="a7ddc6ff" defer></script>
 ```
 
-You do not need to touch the program's files. Go to **Settings**, scroll
-down to **External code and ads** and click **Add code**: you are asked
+You do not need to touch the program's files. Go to **Settings**, section
+**Analytics and ads**, and under **External code and ads** click
+**Add code**: you are asked
 what you want to add.
 
 **The most common services are ready.** Pick Google Analytics 4, Google
@@ -406,7 +423,7 @@ that had ticked it do not break: they simply stop receiving it.
 
 In Europe, statistics and advertising that use cookies may start only
 after the visitor consents. PyBlog has a banner of its own: in
-**Settings**, section **Cookie consent**, tick "Show the consent banner to
+**Settings**, section **Cookies and privacy**, tick "Show the consent banner to
 visitors", enter the address of your privacy policy and save.
 
 From then on:
@@ -644,13 +661,13 @@ Uses the Discussions of a GitHub repository as the comment store.
 3. Install the Giscus app: https://github.com/apps/giscus
 4. Go to https://giscus.app, enter the repo name and copy the four values
    it shows (repo, repo id, category, category id).
-5. Paste them in the "Settings and homepage" page, choose "Giscus", save.
+5. Paste them in Settings, "Comments" section, choose "Giscus", save.
 
 ### Disqus (easier for commenters, but with ads)
 
 1. Sign up at https://disqus.com and choose to install it on your site.
 2. You will be assigned a "shortname".
-3. Enter it in the Settings page, choose "Disqus", save.
+3. Enter it in Settings, "Comments" section, choose "Disqus", save.
 
 ---
 

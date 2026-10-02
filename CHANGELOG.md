@@ -6,6 +6,10 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **The editor no longer looks shrunk on a phone.** The help bubbles of the
+  buttons were always there, just invisible, and the ones near the right
+  edge made the page wider than the screen: the browser shrank the whole
+  editor to fit.
 - **A new article no longer overwrites an existing one.** Saving a new
   article whose title matched an existing article replaced it, autosave
   included. A new article now takes a free address and the editor says
@@ -61,6 +65,29 @@ All notable changes to PyBlog are documented in this file.
   published articles), regardless of the size chosen when resizing.
 
 ### New features
+
+- **A side menu for the administration.** The top bar put pages and rare
+  tools on the same level, and the tools came back as buttons on the
+  dashboard. A side menu now keeps the pages at the top (Articles with
+  their count, New article, Settings) and tools and account at the bottom;
+  on a phone it becomes a bar at the bottom of the screen with "More" for
+  the rest. In the editor it shrinks to icons, and on a phone it gives way
+  to the publishing panel, fixed at the bottom of the screen.
+- **A lighter dashboard.** The count boxes became All / Published / Drafts
+  filters, the search has a label, and each row keeps only Edit in sight:
+  preview, publish or unpublish and delete are in a "⋯" menu that works
+  from the keyboard too.
+- **Settings split by task.** One long page on two columns became nine
+  sections - Site and author, Homepage, Pages, Comments, Translation,
+  Analytics and ads, Cookies and privacy, AI training, Advanced - one at a
+  time, listed in the side menu and, on a phone, in a list to open them
+  from. Every field has its label with the help under it, and the save bar
+  says whether something is waiting to be saved, can discard it, and warns
+  before leaving the page.
+- **Accessible administration.** Every field has a linked label, editors
+  included; focus is visible everywhere; help texts reach 4.5:1 contrast;
+  buttons are 40px tall on a computer and 44px on a phone, and fields use
+  16px text so phones do not zoom in on them.
 
 - **The editor's buttons follow the state of the article.** "Save and
   generate HTML" and "Save and close", with the status in a dropdown further

@@ -6,7 +6,7 @@ All site parameters are stored in a single file: **`config.json`**,
 in the project's main folder.
 
 - The file is created automatically the first time you save the settings
-  from the admin area ("Settings and homepage" page).
+  from the admin area ("Settings" page).
 - It contains secret API keys, so it is excluded from git (see `.gitignore`).
 - You will find a complete template with every field in **`config.example.json`**.
 
@@ -34,7 +34,7 @@ is every parameter.
 | Parameter        | Meaning                                                          |
 |------------------|-------------------------------------------------------------------|
 | `home_content` | HTML of the top part of the homepage (biography, introduction). Written with the visual editor, not by hand. |
-| `home_cards_enabled` | Master switch of the cards block (default `true`). With `false` the whole block disappears from the homepage, whatever each card says, and their pages are not generated. Can also be set from the Settings page, "Homepage cards" section. |
+| `home_cards_enabled` | Master switch of the cards block (default `true`). With `false` the whole block disappears from the homepage, whatever each card says, and their pages are not generated. Can also be set from the Settings page, "Pages" section. |
 | `home_cards`      | List of the editorial "cards" (Biography, Projects, etc.), listed in the "Explore" box of the sidebar: each one has a page of its own. Each card has `active` (true/false), `title` and `content`. A card with `active` set to `false`, or with no content, does not appear and has no page of its own. |
 
 ## SEO and author data (`seo`)
@@ -43,7 +43,7 @@ This data feeds the schema.org structured data (Person, WebSite, Article)
 and the social meta tags of every page. It helps Google recognise the author
 as a real person (E-E-A-T signals) and connect their public profiles
 together. All fields are optional and can also be set from the Settings
-page, "SEO and author data" section.
+page, "Site and author" section.
 
 | Parameter         | Meaning                                                      |
 |-------------------|---------------------------------------------------------------|
@@ -136,7 +136,7 @@ statistics history.
 
 Pieces of HTML or JavaScript injected into the public pages: Google
 Analytics, AdSense, Tag Manager, pixels, chat widgets, embeds. They are
-managed from the Settings page, "External code and ads" section, and each
+managed from the Settings page, "Analytics and ads" section, and each
 piece has four choices: where it goes in the page, which pages it appears
 on, whether it must wait for the visitor's consent, and the code itself.
 
@@ -221,7 +221,7 @@ administration password safe.
 
 In Europe, statistics and advertising that use cookies may start only
 after the visitor consents. PyBlog has a banner of its own: switch it on
-from the Settings page, "Cookie consent" section.
+from the Settings page, "Cookies and privacy" section.
 
 | Field         | Meaning                                                    |
 |---------------|------------------------------------------------------------|
@@ -314,8 +314,7 @@ half a file.
 ## AI training rights (`ai_training`)
 
 Declares whether and under what conditions the blog's content may be used
-to train AI models. Set from the Settings page, "AI training rights"
-section.
+to train AI models. Set from the Settings page, "AI training" section.
 
 | Parameter        | Meaning                                                          |
 |------------------|--------------------------------------------------------------------|

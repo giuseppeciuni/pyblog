@@ -6,7 +6,7 @@ Tutti i parametri del sito sono salvati in un unico file: **`config.json`**,
 nella cartella principale del progetto.
 
 - Il file viene creato in automatico la prima volta che salvi le impostazioni
-  dall'area admin (pagina "Impostazioni e homepage").
+  dall'area admin (pagina "Impostazioni").
 - Contiene chiavi API segrete, quindi e' escluso da git (vedi `.gitignore`).
 - Trovi un modello completo con tutti i campi in **`config.example.json`**.
 
@@ -24,7 +24,7 @@ Impostazioni. Ma se vuoi capirlo o modificarlo via SSH, ecco ogni parametro.
 | `language`       | **Lingua principale del sito** (`it` o `en`). Decide quale lingua sta alla radice `/`; l'altra va in una sottocartella (`/en/` o `/it/`). |
 | `admin_language` | Lingua dell'interfaccia di amministrazione (`it` o `en`). Si cambia anche col pulsante EN/IT nella barra admin. |
 | `articles_per_page` | Quanti articoli mostrare in ogni pagina della homepage (default `10`). Le pagine successive vengono generate in `/pagina/2.html`, `/pagina/3.html`... (in inglese `/en/page/2.html`). Con `0` la paginazione e' disattivata e tutti gli articoli stanno in una pagina. |
-| `home_intro_position` | Dove va la presentazione della homepage (`home_content`): `"sidebar"` (default) nel primo riquadro della barra laterale, cosi' gli articoli partono dall'alto; `"top"` sopra l'elenco degli articoli. Si imposta dalle Impostazioni, sezione "Homepage". |
+| `home_intro_position` | Dove va la presentazione della homepage (`home_content`): `"sidebar"` (default) nel primo riquadro della barra laterale, cosi' gli articoli partono dall'alto; `"top"` sopra l'elenco degli articoli. Si imposta dalle Impostazioni, sezione "Home page". |
 | `home_excerpt_words` | Quante parole dell'articolo mostrano gli elenchi (home, tag, archivio) quando non hai scritto un'anteprima (default `40`). L'estratto prende solo il testo, senza titoletti, e si ferma alla fine di una parola. |
 | `home_order`  | Non piu' usato. Ordinava le sezioni della vecchia homepage a una colonna; con le due colonne gli articoli stanno a sinistra e il resto nella barra laterale, quindi non c'e' piu' un ordine da scegliere. Nei config vecchi resta e viene ignorato. |
 
@@ -33,7 +33,7 @@ Impostazioni. Ma se vuoi capirlo o modificarlo via SSH, ecco ogni parametro.
 | Parametro        | Significato                                                      |
 |------------------|-----------------------------------------------------------------|
 | `home_content` | HTML della parte alta della homepage (biografia, presentazione). Si scrive con l'editor visuale, non a mano. |
-| `home_cards_enabled` | Interruttore generale del blocco delle card (default `true`). Con `false` l'intero blocco sparisce dalla homepage, qualunque cosa dicano le singole card, e le loro pagine non vengono generate. Si imposta anche dalla pagina Impostazioni, sezione "Card della homepage". |
+| `home_cards_enabled` | Interruttore generale del blocco delle card (default `true`). Con `false` l'intero blocco sparisce dalla homepage, qualunque cosa dicano le singole card, e le loro pagine non vengono generate. Si imposta anche dalla pagina Impostazioni, sezione "Pagine". |
 | `home_cards`      | Lista delle "card" editoriali (Biografia, Progetti, ecc.), elencate nel riquadro "Esplora" della barra laterale: ognuna ha la sua pagina. Ogni card ha `active` (true/false), `title` e `content`. Una card con `active` a `false`, o senza contenuto, non appare e non ha una sua pagina. |
 
 ## SEO e dati dell'autore (`seo`)
@@ -42,7 +42,7 @@ Questi dati alimentano i dati strutturati schema.org (Person, WebSite,
 Article) e i meta tag social di tutte le pagine. Aiutano Google a
 riconoscere l'autore come persona reale (segnali E-E-A-T) e a collegare
 tra loro i suoi profili pubblici. Tutti i campi sono facoltativi e si
-impostano anche dalla pagina Impostazioni, sezione "SEO e dati dell'autore".
+impostano anche dalla pagina Impostazioni, sezione "Sito e autore".
 
 | Parametro         | Significato                                                  |
 |-------------------|--------------------------------------------------------------|
@@ -133,7 +133,7 @@ storico delle statistiche.
 
 Pezzi di HTML o JavaScript inseriti nelle pagine pubbliche: Google
 Analytics, AdSense, Tag Manager, pixel, widget di chat, embed. Si gestiscono
-dalla pagina Impostazioni, sezione "Codici esterni e annunci", e ogni pezzo
+dalla pagina Impostazioni, sezione "Statistiche e annunci", e ogni pezzo
 ha quattro scelte: dove va nella pagina, su quali pagine appare, se deve
 aspettare il consenso del visitatore e il codice vero e proprio.
 
@@ -218,7 +218,7 @@ cui ti fidi, e tieni la password dell'amministrazione al sicuro.
 
 In Europa statistiche e pubblicita' che usano cookie possono partire solo
 dopo il consenso del visitatore. PyBlog ha un banner suo: lo accendi dalle
-Impostazioni, sezione "Consenso ai cookie".
+Impostazioni, sezione "Cookie e privacy".
 
 | Campo         | Significato                                                |
 |---------------|------------------------------------------------------------|
@@ -313,7 +313,7 @@ versione vecchia, mai un file a meta'.
 
 Dichiara se e a quali condizioni i contenuti del blog possono essere usati
 per addestrare modelli di intelligenza artificiale. Si imposta dalla pagina
-Impostazioni, sezione "Diritti di addestramento AI".
+Impostazioni, sezione "Addestramento AI".
 
 | Parametro        | Significato                                                      |
 |------------------|--------------------------------------------------------------------|
