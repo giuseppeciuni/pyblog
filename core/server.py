@@ -314,48 +314,124 @@ def translate_warnings(warnings, language):
 # ADMIN PAGES
 # ---------------------------------------------------------------------------
 
-def admin_navbar(active_page, language):
-    """
-    Shared navigation bar of the admin area.
-    active_page highlights the current item ("articles" or "config").
-    """
-    voci = [
-        ("articles", "/admin", T("admin_articoli", language)),
-        ("config", "/config", T("admin_impostazioni", language)),
-    ]
-    link_html = []
-    for key, url, label in voci:
-        classe = "nav-link"
-        if key == active_page:
-            classe = "nav-link active"
-        link_html.append(
-            f'<li class="nav-item"><a class="{classe}" href="{url}">{label}</a></li>')
+def icon(path, size=18):
+    """An inline SVG icon drawn with lines, in the colour of the text around it."""
+    return (f'<svg class="icona" width="{size}" height="{size}" viewBox="0 0 24 24" '
+            'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+            f'stroke-linejoin="round" aria-hidden="true" focusable="false">{path}</svg>')
 
-    # The language switch shows the language you are switching to.
+
+# The icons of the admin menu, as SVG paths on a 24x24 grid.
+ICON_ARTICLES = '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'
+ICON_NEW = '<path d="M12 5v14M5 12h14"/>'
+ICON_SETTINGS = ('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8'
+                 'l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5'
+                 'V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1'
+                 '-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1'
+                 'a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1'
+                 'a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5'
+                 ' 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9'
+                 'a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>')
+ICON_REBUILD = '<path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/>'
+ICON_BACKUP = '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'
+ICON_BLOG = ('<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>')
+ICON_PASSWORD = ('<rect x="4" y="11" width="16" height="10" rx="2"/>'
+                 '<path d="M8 11V7a4 4 0 0 1 8 0v4"/>')
+ICON_LANGUAGE = ('<circle cx="12" cy="12" r="9"/>'
+                 '<path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>')
+ICON_LOGOUT = '<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l-4-4 4-4M6 12h10"/>'
+ICON_MORE = ('<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/>'
+             '<circle cx="19" cy="12" r="1"/>')
+
+
+def admin_navbar(active_page, language, articles_count=None):
+    """
+    The side menu of the admin area, and the bar that replaces it at the
+    bottom of a phone screen.
+    active_page marks the current item: "articles", "new", "config" or
+    "password". articles_count is the number shown next to Articles; the
+    pages that already hold the list pass it, the others leave it to us.
+    """
+    if articles_count is None:
+        articles_count = len(load_articles())
+
+    voci = [
+        ("articles", "/admin", ICON_ARTICLES, T("admin_articoli", language),
+         T("admin_articoli", language), str(articles_count)),
+        ("new", "/edit", ICON_NEW, T("admin_nuovo_articolo_titolo", language),
+         T("admin_nuovo", language), ""),
+        ("config", "/config", ICON_SETTINGS, T("admin_impostazioni", language),
+         T("admin_impostazioni", language), ""),
+    ]
+    menu_html = []
+    bar_html = []
+    for key, url, path, label, short_label, count in voci:
+        current = ""
+        if key == active_page:
+            current = ' aria-current="page"'
+        count_html = ""
+        if count != "":
+            count_html = f'<span class="voce-conta">{count}</span>'
+        menu_html.append(
+            f'    <a class="voce"{current} href="{url}">{icon(path)}'
+            f'<span class="voce-testo">{label}</span>{count_html}</a>')
+        bar_html.append(
+            f'  <a class="barra-voce"{current} href="{url}">{icon(path, 22)}'
+            f'<span>{short_label}</span></a>')
+
+    # The language switch names the language you are switching to, in that
+    # language: whoever cannot read the current one can still find theirs.
     if language == "it":
         next_language = "en"
-        language_label = "EN"
+        next_language_name = "English"
     else:
         next_language = "it"
-        language_label = "IT"
+        next_language_name = "Italiano"
+
+    current_password = ""
+    if active_page == "password":
+        current_password = ' aria-current="page"'
 
     return render.render(
         "admin/navbar.html",
-        voci="\n".join(link_html),
-        vedi_blog=T("admin_vedi_blog", language),
-        password=T("admin_password", language),
-        esci=T("admin_esci", language),
+        label_menu=T("admin_menu", language),
+        titolo_sito=esc(CONFIG["site_title"]),
+        voci="\n".join(menu_html),
+        voci_barra="\n".join(bar_html),
+        label_strumenti=T("admin_strumenti", language),
+        icona_rigenera=icon(ICON_REBUILD),
+        label_rigenera=T("admin_rigenera", language),
+        icona_backup=icon(ICON_BACKUP),
+        label_backup=T("admin_scarica_backup", language),
+        icona_blog=icon(ICON_BLOG),
+        label_vedi_blog=T("admin_vedi_blog", language),
+        label_nuova_scheda=T("admin_nuova_scheda", language),
+        corrente_password=current_password,
+        icona_password=icon(ICON_PASSWORD),
+        label_password=T("admin_cambia_password", language),
         prossima_lingua=next_language,
-        title_lingua="Lingua interfaccia",
-        etichetta_lingua=language_label,
+        icona_lingua=icon(ICON_LANGUAGE),
+        nome_prossima_lingua=next_language_name,
+        label_lingua=esc(T("admin_lingua_interfaccia", language)),
+        icona_esci=icon(ICON_LOGOUT),
+        label_esci=T("admin_esci", language),
+        icona_altro=icon(ICON_MORE, 22),
+        label_altro=T("admin_altro", language),
     )
 
 
 def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
-                     head_extra="", script_extra="", page_data=None):
+                     head_extra="", script_extra="", page_data=None,
+                     body_class=""):
     """Wrap an admin page body in templates/admin/base.html."""
     if page_data is None:
         page_data = {}
+    # The skip link only makes sense when there is a menu to skip.
+    skip_link = ""
+    if navbar != "":
+        skip_link = (f'<a class="salta-contenuto" href="#contenuto">'
+                     f'{T("admin_salta_contenuto", language)}</a>\n')
+        body_class = (body_class + " con-menu").strip()
     return render.render(
         "admin/base.html",
         lang=language,
@@ -363,6 +439,8 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
         bootstrap_css=BOOTSTRAP_CSS,
         bootstrap_js=BOOTSTRAP_JS,
         head_extra=build_module.block(head_extra),
+        classe_body=body_class,
+        salta_contenuto=skip_link,
         navbar=build_module.block(navbar),
         label_chiudi=T("admin_chiudi", language),
         label_annulla=T("admin_annulla", language),
@@ -424,16 +502,17 @@ def change_password_page(csrf, error_message="", success_message=""):
         label_conferma=T("admin_conferma_nuova", la),
     )
     return admin_page_shell(T("admin_cambia_password", la), contenuto, la,
-                            csrf=csrf, navbar=admin_navbar("", la))
+                            csrf=csrf, navbar=admin_navbar("password", la))
 
 
 def admin_page(articles, csrf):
     """
     Administration dashboard: the list of every article with its status,
-    a search box, and quick actions (edit, preview, delete).
+    filters by status, a search box, and the actions on each article (edit
+    in sight, the rarer ones in a small menu).
     """
     la = admin_language()
-    # We count published and drafts to show some statistics at the top.
+    # We count published and drafts for the summary and the filters.
     published_count = 0
     draft_count = 0
     for art in articles:
@@ -442,60 +521,58 @@ def admin_page(articles, csrf):
         else:
             draft_count = draft_count + 1
 
+    other = secondary_language()
+    other_name = LANGUAGE_NAMES[other].get(la, LANGUAGE_NAMES[other]["it"])
+
     # We build one row for each article.
     lines = []
-    for art in articles:
+    for number, art in enumerate(articles):
         if art.get("status") == "published":
-            classe_badge = "pb-badge-pubblicato"
-            badge_label = T("admin_pubblicato", la)
-            # If it is published, the button puts it back to draft. Same
+            pill_class = "pill-pubblicato"
+            status_label = T("admin_pubblicato", la)
+            # If it is published, the menu puts it back to draft. Same
             # words as the editor's link, from the same key, so the two
             # cannot drift apart again.
             status_action = "draft"
-            status_label = T("admin_ritira", la)
-            status_class = "btn-outline-warning"
+            status_action_label = T("admin_ritira", la)
+            # Sorting happens in the browser, so every row carries the keys
+            # it can be sorted by. Drafts sort first, because they are the
+            # ones still waiting for work.
+            status_order = "1"
         else:
-            classe_badge = "pb-badge-bozza"
-            badge_label = T("admin_bozza", la)
-            # If it is a draft, the button publishes it.
+            pill_class = "pill-bozza"
+            status_label = T("admin_bozza", la)
             status_action = "published"
-            status_label = T("admin_pubblica", la)
-            status_class = "btn-outline-success"
+            status_action_label = T("admin_pubblica", la)
+            status_order = "0"
 
-        # We show a badge if the article has a translated version.
-        other = secondary_language()
-        badge_en = ""
+        # The translated version, said in words next to the date.
+        also_in = ""
         if art.get("translation_confirmed", False):
-            badge_en = ('<span class="badge bg-info-subtle text-info-emphasis ms-1">'
-                        + other.upper() + '</span>')
+            also_in = " &middot; " + T("admin_anche_in", la).replace("{language}", other_name)
 
         # Preview of the translated page: the link appears as soon as some
         # translated content exists (even if not confirmed yet), so that you
         # can check the translation BEFORE confirming it.
-        preview_en_link = ""
+        preview_other_link = ""
         if not html_content_is_empty(art.get("content_en", "")):
-            preview_en_link = (
-                f'<a class="btn btn-sm btn-outline-secondary" '
-                f'href="/preview?slug={esc(art["slug"])}&amp;language={other}" target="_blank">'
-                f'{T("admin_anteprima", la)} {other.upper()}</a>')
-
-        # Sorting happens in the browser, so every row carries the keys it
-        # can be sorted by. Drafts sort first, because they are the ones
-        # still waiting for work.
-        if art.get("status") == "published":
-            status_order = "1"
-        else:
-            status_order = "0"
+            preview_label = T("admin_anteprima_lingua", la).replace("{language}", other_name)
+            preview_other_link = (
+                f'<a role="menuitem" tabindex="-1" '
+                f'href="/preview?slug={esc(art["slug"])}&amp;language={other}" '
+                f'target="_blank" rel="noopener">{preview_label}'
+                f'<span class="icona-esterna" aria-hidden="true"></span></a>')
 
         lines.append(render.render(
             "admin/dashboard_row.html",
+            numero=number,
             titolo_minuscolo=esc(art["title"].lower()),
             data_iso=esc(art.get("date", "")),
             ordine_stato=status_order,
             tempo_lettura=compute_reading_time(art.get("content", ""), la),
-            classe_badge=classe_badge,
-            etichetta_badge=badge_label,
-            badge_en=badge_en,
+            classe_pill=pill_class,
+            etichetta_stato=status_label,
+            anche_in=also_in,
             slug=esc(art["slug"]),
             # These three land inside an onclick attribute, so they need the
             # HTML layer on top of the JavaScript one.
@@ -503,37 +580,38 @@ def admin_page(articles, csrf):
             titolo=esc(art["title"]),
             titolo_js=js_attr(art["title"]),
             data=format_date(art["date"], la),
-            descrizione=esc(art.get("description", "")),
-            classe_stato=status_class,
-            azione_stato_js=js_attr(status_action),
-            etichetta_stato=status_label,
             label_modifica=T("admin_modifica", la),
+            label_altre_azioni=esc(T("admin_altre_azioni", la).replace("{title}", art["title"])),
+            icona_altro=icon(ICON_MORE, 20),
             label_anteprima=T("admin_anteprima", la),
-            link_anteprima_en=preview_en_link,
+            link_anteprima_lingua=preview_other_link,
+            azione_stato_js=js_attr(status_action),
+            etichetta_azione_stato=status_action_label,
             label_elimina=T("admin_elimina", la),
         ).rstrip("\n"))
 
     if len(lines) > 0:
         listing = "\n".join(lines)
     else:
-        listing = ('<div class="text-center text-secondary p-5 border border-dashed '
-                   f'rounded bg-white">{T("admin_nessun_articolo", la)}</div>')
+        listing = f'<p class="elenco-vuoto">{T("admin_nessun_articolo", la)}</p>'
+
+    summary = (T("admin_riepilogo_articoli", la)
+               .replace("{p}", str(published_count))
+               .replace("{b}", str(draft_count)))
 
     contenuto = render.render(
         "admin/dashboard.html",
         label_articoli=T("admin_articoli", la),
-        titolo_sito=esc(CONFIG["site_title"]),
-        nuovo_articolo=T("admin_nuovo_articolo", la),
+        riepilogo=summary,
+        nuovo_articolo=T("admin_nuovo_articolo_titolo", la),
+        label_mostra=T("admin_mostra_gruppo", la),
+        label_tutti=T("admin_filtro_tutti", la),
         totale=len(articles),
-        label_totali=T("admin_totali", la),
-        pubblicati=published_count,
         label_pubblicati=T("admin_pubblicati", la),
-        bozze=draft_count,
+        pubblicati=published_count,
         label_bozze=T("admin_bozze", la),
-        label_impostazioni=T("admin_impostazioni_home", la),
-        label_rigenera=T("admin_rigenera", la),
-        label_backup=T("admin_scarica_backup", la),
-        placeholder_filtro=esc(T("admin_filtra", la)),
+        bozze=draft_count,
+        label_cerca=esc(T("admin_cerca_articoli", la)),
         label_ordina=T("admin_ordina", la),
         ordina_recenti=T("admin_ordina_recenti", la),
         ordina_vecchi=T("admin_ordina_vecchi", la),
@@ -545,7 +623,8 @@ def admin_page(articles, csrf):
 
     return admin_page_shell(
         T("admin_titolo_pagina", la) + " - " + CONFIG["site_title"],
-        contenuto, la, csrf=csrf, navbar=admin_navbar("articles", la),
+        contenuto, la, csrf=csrf,
+        navbar=admin_navbar("articles", la, len(articles)),
         page_data={"page": "dashboard"})
 
 
@@ -562,6 +641,7 @@ def editor_page(art, csrf):
     # If instead this is a new article (art is None), we start from empty fields.
     if art is not None:
         page_title = T("admin_modifica_articolo_titolo", la)
+        menu_item = "articles"
         # Deleting sits at the very bottom of the sidebar, small: it used to
         # be a red button as big as Save, right under it.
         delete_button = (f'<button type="button" class="btn-elimina-articolo" '
@@ -569,6 +649,7 @@ def editor_page(art, csrf):
     else:
         art = {}
         page_title = T("admin_nuovo_articolo_titolo", la)
+        menu_item = "new"
         delete_button = ""
 
     # The buttons follow the state of the article: a draft can be saved or
@@ -694,7 +775,7 @@ def editor_page(art, csrf):
                     + codemirror_scripts())
 
     return admin_page_shell(page_title, contenuto, la, csrf=csrf,
-                            navbar=admin_navbar("articles", la),
+                            navbar=admin_navbar(menu_item, la),
                             head_extra=head_extra, script_extra=script_extra,
                             page_data=page_data)
 

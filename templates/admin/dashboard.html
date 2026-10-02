@@ -1,46 +1,25 @@
-<div class="pb-content">
+<div class="pagina">
 
-  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+  <div class="pagina-testata">
     <div>
-      <h1 class="h3 mb-0">$label_articoli</h1>
-      <p class="text-secondary small mb-0">$titolo_sito</p>
+      <h1 class="pagina-titolo">$label_articoli</h1>
+      <p class="pagina-sottotitolo">$riepilogo</p>
     </div>
-    <a class="btn btn-primary" href="/edit">$nuovo_articolo</a>
+    <a class="pulsante pulsante-primario" href="/edit">$nuovo_articolo</a>
   </div>
 
-  <div class="row g-3 mb-4">
-    <div class="col">
-      <div class="card pb-card text-center"><div class="card-body py-3">
-        <div class="fs-3 fw-semibold">$totale</div>
-        <div class="text-secondary small">$label_totali</div>
-      </div></div>
+  <div class="elenco-strumenti">
+    <div class="segmenti" role="group" aria-label="$label_mostra" id="filtro-stato">
+      <button type="button" class="segmento" aria-pressed="true" data-filtro="tutti" onclick="filterByStatus(this)">$label_tutti<span class="segmento-conta">$totale</span></button>
+      <button type="button" class="segmento" aria-pressed="false" data-filtro="1" onclick="filterByStatus(this)">$label_pubblicati<span class="segmento-conta">$pubblicati</span></button>
+      <button type="button" class="segmento" aria-pressed="false" data-filtro="0" onclick="filterByStatus(this)">$label_bozze<span class="segmento-conta">$bozze</span></button>
     </div>
-    <div class="col">
-      <div class="card pb-card text-center"><div class="card-body py-3">
-        <div class="fs-3 fw-semibold">$pubblicati</div>
-        <div class="text-secondary small">$label_pubblicati</div>
-      </div></div>
-    </div>
-    <div class="col">
-      <div class="card pb-card text-center"><div class="card-body py-3">
-        <div class="fs-3 fw-semibold">$bozze</div>
-        <div class="text-secondary small">$label_bozze</div>
-      </div></div>
-    </div>
-  </div>
-
-  <div class="d-flex gap-2 flex-wrap mb-3">
-    <a class="btn btn-outline-secondary btn-sm" href="/config">$label_impostazioni</a>
-    <button class="btn btn-outline-secondary btn-sm" onclick="rebuildSite(this)">$label_rigenera</button>
-    <a class="btn btn-outline-secondary btn-sm" href="/export">$label_backup</a>
-  </div>
-
-  <div class="d-flex gap-2 flex-wrap align-items-center mb-3">
-    <input type="search" class="form-control" style="flex:1 1 16rem" id="search-box-admin"
-           placeholder="$placeholder_filtro" oninput="filterArticles()">
-    <div class="pb-toolbar">
+    <label for="search-box-admin" class="vh">$label_cerca</label>
+    <input type="search" class="campo-input elenco-cerca" id="search-box-admin"
+           placeholder="$label_cerca" oninput="filterArticles()">
+    <div class="elenco-ordina">
       <label for="ordina-articoli">$label_ordina</label>
-      <select class="form-select" id="ordina-articoli" onchange="sortArticles()">
+      <select class="campo-input" id="ordina-articoli" onchange="sortArticles()">
         <option value="recenti">$ordina_recenti</option>
         <option value="vecchi">$ordina_vecchi</option>
         <option value="titolo">$ordina_titolo</option>
@@ -49,10 +28,8 @@
     </div>
   </div>
 
-  <div id="elenco-articoli">
+  <div class="elenco-articoli" id="elenco-articoli">
 $elenco
   </div>
-  <div class="text-center text-secondary p-4" id="nessun-risultato" style="display:none">
-    $nessun_corrisponde
-  </div>
+  <p class="elenco-vuoto" id="nessun-risultato" hidden>$nessun_corrisponde</p>
 </div>

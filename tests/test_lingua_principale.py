@@ -158,8 +158,9 @@ def test_etichette_dell_editor():
     check("l'anteprima della traduzione apre la lingua giusta",
           '"secondary_language": "it"' in editor)
     dashboard = server.admin_page([dict(ARTICOLO)], "TOKEN")
-    check("la dashboard mostra il badge IT", ">IT</span>" in dashboard)
-    check("e l'anteprima in italiano", "language=it" in dashboard)
+    check("la dashboard dice che c'è anche in italiano", "anche in italiano" in dashboard)
+    check("e l'anteprima in italiano", "language=it" in dashboard
+          and "Anteprima in italiano" in dashboard)
     CONFIG["language"] = "it"
 
 

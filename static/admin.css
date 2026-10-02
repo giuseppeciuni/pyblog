@@ -1,6 +1,11 @@
 /* The admin area loads common.css first: here we only give the historical
    admin variable names their value from the shared palette. */
-:root { --pb-blu:var(--pb-accent); --pb-viola:#6b3df5; --pb-viola-scuro:#5a30d0; }
+:root { --pb-blu:var(--pb-accent); --pb-viola:#6b3df5; --pb-viola-scuro:#5a30d0;
+  /* The admin palette: every text colour reaches 4.5:1 on its background. */
+  --a-testo:#1f2328; --a-testo-2:#5b6470; --a-sfondo:#f6f7f9; --a-superficie:#fff;
+  --a-bordo:#e3e6ea; --a-bordo-campo:#c9ced6; --a-accento:#0066cc; --a-accento-scuro:#0057ad;
+  --a-attivo:#e8f1fb; --a-pericolo:#b42318; --a-fuoco:0 0 0 3px rgba(0,102,204,0.35);
+  --a-larghezza-menu:248px; --a-altezza-barra:64px; }
 /* Explanatory bubble on the toolbar buttons (and any element carrying a
    data-tooltip attribute). Pure CSS: it appears instantly on hover, unlike
    the browser's native title, which waits about a second. */
@@ -31,9 +36,7 @@
   left:0; transform:none;
 }
 .ql-toolbar span.ql-formats:first-child > [data-tooltip]::before { left:14px; }
-body { background:#f5f6f8; }
-.pb-navbar { background:#fff; border-bottom:1px solid #e4e4e7; }
-.pb-navbar .navbar-brand { font-weight:600; }
+body { background:var(--a-sfondo); color:var(--a-testo); }
 .pb-content { max-width:960px; margin:0 auto; padding:1.5rem 1rem 4rem; }
 .pb-card { background:#fff; border:1px solid #e4e4e7; border-radius:12px; }
 .pb-editor-quill { height:380px; background:#fff; }
@@ -55,7 +58,7 @@ body { background:#f5f6f8; }
 .config-layout { display:grid; grid-template-columns:1.4fr 1fr; gap:2rem; align-items:start; }
 .config-col-destra { position:sticky; top:1rem; }
 /* Save bar fixed at the bottom, always within reach. */
-.config-save-bar { position:sticky; bottom:0; background:#fff; border-top:1px solid #e4e4e7; padding:1rem 0; margin-top:1.5rem; display:flex; gap:0.8rem; align-items:center; z-index:10; }
+.config-save-bar { position:sticky; bottom:var(--a-sotto, 0); background:#fff; border-top:1px solid #e4e4e7; padding:1rem 0; margin-top:1.5rem; display:flex; gap:0.8rem; align-items:center; z-index:10; }
 @media (max-width: 1000px) {
   .config-layout { grid-template-columns:1fr; gap:1rem; }
   .config-col-destra { position:static; }
@@ -261,7 +264,7 @@ body { background:#f5f6f8; }
    =========================================================================== */
 
 a.back-link { color:var(--pb-blu); text-decoration:none; }
-.hint { color:#888; font-size:0.8rem; font-weight:400; }
+.hint { color:var(--a-testo-2); font-size:0.8rem; font-weight:400; }
 .video-bar { margin-top:0.6rem; display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; }
 .video-bar button { background:#eee; color:#333; padding:0.5rem 1rem; font-size:0.9rem; border:none; border-radius:var(--pb-radius-sm); cursor:pointer; }
 .preview-bar { margin-top:1rem; display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; }
@@ -297,7 +300,7 @@ button:disabled { opacity: 0.65; cursor: default; }
 .pb-toolbar { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .pb-toolbar label { font-size: 0.85rem; color: #666; margin: 0; }
 .pb-toolbar select { width: auto; padding: 0.25rem 1.8rem 0.25rem 0.5rem; font-size: 0.85rem; }
-.pb-reading-time { color: #888; }
+.pb-reading-time { color: inherit; }
 
 /* The Word import button: it belongs with the media buttons but deserves to
    stand out, because it is the entry point for a whole document. */
@@ -377,3 +380,161 @@ button:disabled { opacity: 0.65; cursor: default; }
 /* A toast can carry several lines (the warnings of a Word import, one per
    line): the line breaks of the message are kept. */
 #pb-toasts .toast-body { white-space:pre-line; }
+
+/* ===========================================================================
+   THE SHELL: side menu, bottom bar on phones, shared components
+   =========================================================================== */
+
+.vh { position:absolute !important; width:1px; height:1px; margin:-1px; padding:0;
+      overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+.salta-contenuto { position:absolute; left:1rem; top:-4rem; z-index:3000; background:var(--a-superficie);
+                   color:var(--a-accento-scuro); padding:0.6rem 1rem; border-radius:8px; font-weight:600; }
+.salta-contenuto:focus { top:1rem; }
+.guscio { display:flex; min-height:100vh; }
+.guscio-main { flex:1 1 auto; min-width:0; }
+.guscio-main:focus { outline:none; }
+
+/* The menu stays in sight while the page scrolls, and scrolls by itself
+   when the window is shorter than the menu. */
+.menu { position:sticky; top:0; height:100vh; overflow-y:auto; width:var(--a-larghezza-menu); flex:none;
+        box-sizing:border-box; background:var(--a-superficie); border-right:1px solid var(--a-bordo);
+        padding:1.25rem 0.75rem; display:flex; flex-direction:column; gap:2px; }
+.menu-marchio { display:flex; flex-direction:column; padding:0.25rem 0.75rem 1rem; color:var(--a-testo); text-decoration:none; }
+.menu-marchio-nome { font-weight:700; font-size:1.125rem; }
+.menu-marchio-sito { font-size:0.875rem; color:var(--a-testo-2); overflow-wrap:anywhere; }
+.menu-principale, .menu-voci { display:flex; flex-direction:column; gap:2px; }
+.menu-spazio { flex:1; min-height:1.5rem; }
+.menu-gruppo { font-size:0.8125rem; font-weight:600; color:var(--a-testo-2); text-transform:uppercase;
+               letter-spacing:0.04em; margin:0; padding:0.5rem 0.75rem 0.25rem; }
+.menu-separatore { height:1px; background:var(--a-bordo); margin:0.5rem 0.75rem; }
+.voce { display:flex; align-items:center; gap:0.625rem; min-height:40px; padding:0 0.75rem; border-radius:8px;
+        color:var(--a-testo); text-decoration:none; font:inherit; font-size:0.9375rem; background:none;
+        border:0; width:100%; text-align:left; cursor:pointer; }
+.voce:hover { background:var(--a-sfondo); color:var(--a-testo); }
+.voce[aria-current="page"] { background:var(--a-attivo); color:var(--a-accento-scuro); font-weight:600; }
+.voce .icona { flex:none; }
+.voce-testo { flex:1; min-width:0; }
+.voce-conta { margin-left:auto; font-size:0.8125rem; color:var(--a-testo-2); font-weight:400; }
+.voce-pericolo, .voce-pericolo:hover { color:var(--a-pericolo); }
+.menu-velo, .barra-basso { display:none; }
+
+/* Visible focus on everything the shell draws. */
+.voce:focus-visible, .barra-voce:focus-visible, .pulsante:focus-visible, .segmento:focus-visible,
+.menu-tendina [role="menuitem"]:focus-visible, .riga-titolo:focus-visible, .salta-contenuto:focus-visible,
+.menu-marchio:focus-visible { outline:3px solid var(--a-accento); outline-offset:2px; }
+.campo-input:focus { outline:none; border-color:var(--a-accento); box-shadow:var(--a-fuoco); }
+
+/* Phones and narrow tablets: the menu leaves the side and becomes a sheet
+   opened by "More" in a bar at the bottom of the screen. */
+@media (max-width: 860px) {
+  .guscio { display:block; }
+  body.con-menu { --a-sotto:var(--a-altezza-barra); }
+  body.con-menu .guscio-main { padding-bottom:var(--a-altezza-barra); }
+  .menu { position:fixed; left:0; right:0; top:auto; bottom:var(--a-altezza-barra); width:auto; height:auto;
+          max-height:calc(100vh - var(--a-altezza-barra) - 2rem); border-right:0; border-top:1px solid var(--a-bordo);
+          border-radius:16px 16px 0 0; box-shadow:0 -8px 24px rgba(0,0,0,0.12); z-index:1045;
+          transform:translateY(calc(100% + var(--a-altezza-barra))); visibility:hidden;
+          transition:transform 0.2s ease, visibility 0s linear 0.2s; }
+  .menu.aperto { transform:none; visibility:visible; transition:transform 0.2s ease; }
+  /* The bar already holds the main items. */
+  .menu-principale, .menu-spazio { display:none; }
+  .menu-velo:not([hidden]) { display:block; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:1040; }
+  .voce { min-height:44px; }
+  .barra-basso { display:flex; position:fixed; left:0; right:0; bottom:0; z-index:1050; height:var(--a-altezza-barra);
+                 background:var(--a-superficie); border-top:1px solid var(--a-bordo);
+                 padding-bottom:env(safe-area-inset-bottom); }
+  .barra-voce { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+                font:inherit; font-size:0.75rem; color:var(--a-testo-2); text-decoration:none;
+                background:none; border:0; min-width:0; }
+  .barra-voce[aria-current="page"], .barra-voce[aria-expanded="true"] { color:var(--a-accento-scuro); font-weight:600; }
+}
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) {
+  .menu, .menu.aperto { transition:none; }
+}
+
+/* Buttons and fields of the new pages. Bootstrap stays loaded for the
+   modal and the toasts, so these use their own names instead of .btn. */
+.pulsante { display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; min-height:40px;
+            padding:0 1rem; border-radius:8px; border:1px solid var(--a-bordo-campo); background:var(--a-superficie);
+            color:var(--a-testo); font:inherit; font-size:0.9375rem; font-weight:600; text-decoration:none;
+            cursor:pointer; flex:none; white-space:nowrap; }
+.pulsante:hover { background:var(--a-sfondo); color:var(--a-testo); }
+.pulsante-primario { background:var(--a-accento); border-color:var(--a-accento); color:#fff; }
+.pulsante-primario:hover { background:var(--a-accento-scuro); border-color:var(--a-accento-scuro); color:#fff; }
+.pulsante-icona { width:40px; padding:0; }
+.campo-input { height:40px; padding:0 0.75rem; border:1px solid var(--a-bordo-campo); border-radius:8px;
+               font:inherit; font-size:1rem; background:var(--a-superficie); color:var(--a-testo); box-sizing:border-box; }
+select.campo-input { padding-right:2rem; }
+.pill { display:inline-flex; align-items:center; gap:0.375rem; font-size:0.8125rem; font-weight:600;
+        padding:0.125rem 0.625rem; border-radius:999px; white-space:nowrap; }
+.pill-pallino { width:8px; height:8px; border-radius:50%; background:currentColor; }
+.pill-pubblicato { background:#e6f4ea; color:#15703a; }
+.pill-bozza { background:#fff1dc; color:#9a4d07; }
+@media (max-width: 860px) {
+  .pulsante, .campo-input { min-height:44px; }
+  .campo-input { height:44px; }
+  .pulsante-icona { width:44px; }
+}
+
+/* ===========================================================================
+   DASHBOARD (/admin)
+   =========================================================================== */
+
+.pagina { max-width:1000px; margin:0 auto; padding:2rem 2.5rem 4rem; display:flex; flex-direction:column; gap:1.25rem; }
+.pagina-testata { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:1rem; }
+.pagina-titolo { margin:0; font-size:1.5rem; font-weight:650; }
+.pagina-sottotitolo { margin:0; color:var(--a-testo-2); }
+.elenco-strumenti { display:flex; flex-wrap:wrap; align-items:center; gap:0.75rem; }
+.segmenti { display:inline-flex; background:#eceef1; border-radius:10px; padding:4px; gap:4px; flex-wrap:wrap; }
+.segmento { min-height:36px; padding:0 0.875rem; border:0; border-radius:8px; background:transparent;
+            font:inherit; font-size:0.9375rem; color:var(--a-testo); cursor:pointer; }
+.segmento[aria-pressed="true"] { background:var(--a-superficie); box-shadow:0 1px 2px rgba(0,0,0,0.1); font-weight:600; }
+.segmento-conta { color:var(--a-testo-2); font-weight:400; margin-left:0.25rem; }
+.elenco-cerca { flex:1 1 15rem; min-width:0; }
+.elenco-ordina { display:flex; align-items:center; gap:0.5rem; }
+.elenco-ordina label { font-size:0.9375rem; color:var(--a-testo-2); }
+.elenco-articoli { background:var(--a-superficie); border:1px solid var(--a-bordo); border-radius:12px; }
+.elenco-articoli:empty { display:none; }
+.elenco-vuoto { margin:0; padding:2rem 1rem; text-align:center; color:var(--a-testo-2); }
+.elenco-vuoto[hidden] { display:none; }
+.riga-articolo { position:relative; display:flex; align-items:center; gap:1rem; padding:0.875rem 1.25rem;
+                 border-top:1px solid #eef0f3; }
+.riga-articolo:first-child { border-top:0; border-radius:12px 12px 0 0; }
+.riga-articolo:last-child { border-radius:0 0 12px 12px; }
+.riga-articolo[hidden] { display:none; }
+.riga-articolo:hover { background:#fafbfc; }
+.riga-stato { width:7rem; flex:none; }
+.riga-testo { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
+.riga-titolo { font-weight:600; color:var(--a-testo); text-decoration:none; overflow-wrap:anywhere; }
+.riga-titolo:hover { color:var(--a-accento-scuro); text-decoration:underline; }
+/* The title's link covers the whole row; the buttons sit above it. */
+.riga-titolo::after { content:""; position:absolute; inset:0; }
+.riga-meta { font-size:0.875rem; color:var(--a-testo-2); }
+.riga-modifica, .riga-menu { position:relative; z-index:1; }
+.riga-menu.aperto { z-index:30; }
+.menu-tendina { position:absolute; right:0; top:calc(100% + 4px); z-index:20; width:15rem; background:var(--a-superficie);
+                border:1px solid var(--a-bordo); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.12);
+                padding:6px; display:flex; flex-direction:column; }
+.menu-tendina[hidden] { display:none; }
+.menu-tendina.verso-alto { top:auto; bottom:calc(100% + 4px); }
+.menu-tendina [role="menuitem"] { display:flex; align-items:center; min-height:40px; padding:0 0.75rem; border-radius:6px;
+                                  color:var(--a-testo); text-decoration:none; font:inherit; font-size:0.9375rem;
+                                  background:none; border:0; text-align:left; cursor:pointer; }
+.menu-tendina [role="menuitem"]:hover, .menu-tendina [role="menuitem"]:focus { background:var(--a-sfondo); }
+.menu-tendina .voce-pericolo { color:var(--a-pericolo); }
+.menu-tendina-separatore { height:1px; background:var(--a-bordo); margin:4px 6px; }
+@media (max-width: 860px) {
+  .pagina { padding:1rem 1rem 2rem; gap:1rem; }
+  .pagina-titolo { font-size:1.375rem; }
+  .elenco-cerca { flex-basis:100%; order:-1; }
+}
+@media (max-width: 600px) {
+  /* The whole row opens the editor already: Edit would only take room. */
+  .riga-modifica { display:none; }
+  .riga-articolo { flex-wrap:wrap; gap:0.25rem 0.5rem; padding:0.75rem 0.5rem 0.75rem 1rem; }
+  .riga-stato { width:100%; }
+  .riga-testo { flex:1 1 0; }
+  .menu-tendina [role="menuitem"] { min-height:44px; }
+  .segmenti { width:100%; }
+  .segmento { flex:1; min-height:40px; }
+}

@@ -1,20 +1,21 @@
-    <div class="card pb-card mb-2 articolo-card" data-titolo="$titolo_minuscolo"
+    <div class="riga-articolo articolo-card" data-titolo="$titolo_minuscolo"
          data-data="$data_iso" data-stato="$ordine_stato">
-      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="badge $classe_badge">$etichetta_badge</span>$badge_en
-            <a class="fw-semibold text-decoration-none text-dark fs-6" href="/edit?slug=$slug">$titolo</a>
-          </div>
-          <div class="text-secondary small">$data &middot; <span class="pb-reading-time">$tempo_lettura</span></div>
-          <div class="text-secondary small">$descrizione</div>
-        </div>
-        <div class="d-flex gap-2 flex-wrap">
-          <button class="btn btn-sm $classe_stato" onclick="changeStatus(this, $slug_js, $azione_stato_js)">$etichetta_stato</button>
-          <a class="btn btn-sm btn-primary" href="/edit?slug=$slug">$label_modifica</a>
-          <a class="btn btn-sm btn-outline-secondary" href="/preview?slug=$slug" target="_blank">$label_anteprima</a>
-          $link_anteprima_en
-          <button class="btn btn-sm btn-outline-danger" onclick="deleteArticle($slug_js, $titolo_js)">$label_elimina</button>
+      <span class="riga-stato"><span class="pill $classe_pill"><span class="pill-pallino"></span>$etichetta_stato</span></span>
+      <div class="riga-testo">
+        <a class="riga-titolo" href="/edit?slug=$slug">$titolo</a>
+        <span class="riga-meta">$data &middot; <span class="pb-reading-time">$tempo_lettura</span>$anche_in</span>
+      </div>
+      <a class="pulsante riga-modifica" href="/edit?slug=$slug">$label_modifica</a>
+      <div class="riga-menu">
+        <button type="button" class="pulsante pulsante-icona" id="azioni-$numero"
+                aria-haspopup="menu" aria-expanded="false" aria-controls="menu-$numero"
+                aria-label="$label_altre_azioni" onclick="toggleRowMenu(this)">$icona_altro</button>
+        <div class="menu-tendina" role="menu" id="menu-$numero" aria-labelledby="azioni-$numero" hidden>
+          <a role="menuitem" tabindex="-1" href="/preview?slug=$slug" target="_blank" rel="noopener">$label_anteprima<span class="icona-esterna" aria-hidden="true"></span></a>
+          $link_anteprima_lingua
+          <button role="menuitem" tabindex="-1" type="button" onclick="changeStatus(this, $slug_js, $azione_stato_js)">$etichetta_azione_stato</button>
+          <div class="menu-tendina-separatore" role="separator"></div>
+          <button role="menuitem" tabindex="-1" type="button" class="voce-pericolo" onclick="deleteArticle($slug_js, $titolo_js)">$label_elimina</button>
         </div>
       </div>
     </div>

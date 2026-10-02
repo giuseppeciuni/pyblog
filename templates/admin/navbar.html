@@ -1,21 +1,29 @@
-<nav class="navbar navbar-expand-lg pb-navbar">
-  <div class="container-fluid pb-content" style="padding-top:0.5rem;padding-bottom:0.5rem;">
-    <a class="navbar-brand" href="/admin">PyBlog</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-            data-bs-target="#navAdmin" aria-controls="navAdmin"
-            aria-expanded="false" aria-label="Menu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navAdmin">
-      <ul class="navbar-nav me-auto">
+<nav class="menu" id="menu-admin" aria-label="$label_menu">
+  <a class="menu-marchio" href="/admin">
+    <span class="menu-marchio-nome">PyBlog</span>
+    <span class="menu-marchio-sito">$titolo_sito</span>
+  </a>
+  <div class="menu-principale">
 $voci
-      </ul>
-      <ul class="navbar-nav align-items-lg-center">
-        <li class="nav-item"><a class="nav-link" href="/" target="_blank">$vedi_blog</a></li>
-        <li class="nav-item"><a class="nav-link" href="/change-password">$password</a></li>
-        <li class="nav-item"><a class="nav-link text-danger" href="/logout">$esci</a></li>
-        <li class="nav-item"><button class="btn btn-sm btn-outline-secondary ms-lg-2" onclick="changeAdminLanguage('$prossima_lingua')" title="$title_lingua">$etichetta_lingua</button></li>
-      </ul>
-    </div>
   </div>
+  <div class="menu-spazio"></div>
+  <p class="menu-gruppo" id="menu-strumenti">$label_strumenti</p>
+  <div class="menu-voci" role="group" aria-labelledby="menu-strumenti">
+    <button class="voce" type="button" onclick="rebuildSite(this)">$icona_rigenera<span class="voce-testo">$label_rigenera</span></button>
+    <a class="voce" href="/export">$icona_backup<span class="voce-testo">$label_backup</span></a>
+  </div>
+  <div class="menu-separatore"></div>
+  <div class="menu-voci">
+    <a class="voce" href="/" target="_blank" rel="noopener">$icona_blog<span class="voce-testo">$label_vedi_blog<span class="icona-esterna" aria-hidden="true"></span><span class="vh"> $label_nuova_scheda</span></span></a>
+    <a class="voce"$corrente_password href="/change-password">$icona_password<span class="voce-testo">$label_password</span></a>
+    <button class="voce" type="button" lang="$prossima_lingua" onclick="changeAdminLanguage('$prossima_lingua')" aria-describedby="menu-lingua-aiuto">$icona_lingua<span class="voce-testo">$nome_prossima_lingua</span></button>
+    <span class="vh" id="menu-lingua-aiuto">$label_lingua</span>
+    <a class="voce voce-pericolo" href="/logout">$icona_esci<span class="voce-testo">$label_esci</span></a>
+  </div>
+</nav>
+<div class="menu-velo" id="menu-velo" hidden onclick="toggleAdminMenu(false)"></div>
+<nav class="barra-basso" aria-label="$label_menu">
+$voci_barra
+  <button class="barra-voce" type="button" id="barra-altro" aria-controls="menu-admin"
+          aria-expanded="false" onclick="toggleAdminMenu()">$icona_altro<span>$label_altro</span></button>
 </nav>

@@ -1570,27 +1570,122 @@ function changeAdminLanguage(lingua) {
 
 /* --- Dashboard (the article list) ---------------------------------------- */
 
-// Filters the article cards based on the typed text.
+// Shows the rows that match both the typed text and the chosen status.
+// Hidden rows get the hidden attribute, so sorting can keep moving them.
 function filterArticles() {
   var termine = document.getElementById('search-box-admin').value.toLowerCase().trim();
+  var scelto = document.querySelector('#filtro-stato [aria-pressed="true"]');
+  var stato = scelto ? scelto.getAttribute('data-filtro') : 'tutti';
   var carte = document.querySelectorAll('.articolo-card');
   var visibili = 0;
   for (var i = 0; i < carte.length; i++) {
     var titolo = carte[i].getAttribute('data-titolo');
-    if (titolo.indexOf(termine) !== -1) {
-      carte[i].style.display = 'block';
+    var statoOk = stato === 'tutti' || carte[i].getAttribute('data-stato') === stato;
+    if (statoOk && titolo.indexOf(termine) !== -1) {
+      carte[i].hidden = false;
       visibili = visibili + 1;
     } else {
-      carte[i].style.display = 'none';
+      carte[i].hidden = true;
     }
   }
-  var avviso = document.getElementById('nessun-risultato');
-  if (visibili === 0) {
-    avviso.style.display = 'block';
-  } else {
-    avviso.style.display = 'none';
+  // With no article at all the list already says so: the message is for a
+  // search or a filter that leaves nothing.
+  document.getElementById('nessun-risultato').hidden = visibili > 0 || carte.length === 0;
+}
+
+// The All / Published / Drafts buttons: one pressed at a time.
+function filterByStatus(pulsante) {
+  var gruppo = pulsante.parentNode.querySelectorAll('.segmento');
+  for (var i = 0; i < gruppo.length; i++) {
+    gruppo[i].setAttribute('aria-pressed', gruppo[i] === pulsante ? 'true' : 'false');
+  }
+  filterArticles();
+}
+
+/* --- Menus: the "..." of each article and the phone's "More" ------------- */
+
+// Opens or closes the small menu of an article row. Only one stays open.
+function toggleRowMenu(pulsante) {
+  var menu = document.getElementById(pulsante.getAttribute('aria-controls'));
+  var apri = pulsante.getAttribute('aria-expanded') !== 'true';
+  closeRowMenus();
+  if (!apri) { return; }
+  pulsante.setAttribute('aria-expanded', 'true');
+  // The open menu has to cover the buttons of the rows below it.
+  pulsante.parentNode.classList.add('aperto');
+  menu.hidden = false;
+  // Near the bottom of the window - or of the phone's bottom bar, which
+  // would cover it - the menu opens upwards.
+  var fondo = window.innerHeight;
+  var barra = document.querySelector('.barra-basso');
+  if (barra && barra.offsetHeight > 0) {
+    fondo = barra.getBoundingClientRect().top;
+  }
+  var spazioSotto = fondo - pulsante.getBoundingClientRect().bottom;
+  menu.classList.toggle('verso-alto', spazioSotto < menu.offsetHeight + 16);
+  menu.querySelector('[role="menuitem"]').focus();
+}
+
+// Closes every open row menu; with ritornaFuoco, focus goes back to the
+// button that opened it, as after Esc.
+function closeRowMenus(ritornaFuoco) {
+  var aperti = document.querySelectorAll('.riga-menu [aria-expanded="true"]');
+  for (var i = 0; i < aperti.length; i++) {
+    aperti[i].setAttribute('aria-expanded', 'false');
+    aperti[i].parentNode.classList.remove('aperto');
+    document.getElementById(aperti[i].getAttribute('aria-controls')).hidden = true;
+    if (ritornaFuoco) { aperti[i].focus(); }
   }
 }
+
+// On a phone the side menu becomes a sheet that rises above the bottom bar.
+// Called with no argument it switches; with true or false it opens or closes.
+function toggleAdminMenu(apri) {
+  var menu = document.getElementById('menu-admin');
+  var pulsante = document.getElementById('barra-altro');
+  if (!menu || !pulsante) { return; }
+  if (apri === undefined) {
+    apri = !menu.classList.contains('aperto');
+  }
+  menu.classList.toggle('aperto', apri);
+  document.getElementById('menu-velo').hidden = !apri;
+  pulsante.setAttribute('aria-expanded', apri ? 'true' : 'false');
+  if (apri) {
+    var prima = menu.querySelector('.menu-voci .voce');
+    if (prima) { prima.focus(); }
+  }
+}
+
+document.addEventListener('click', function(evento) {
+  if (!evento.target.closest('.riga-menu')) { closeRowMenus(); }
+});
+
+document.addEventListener('keydown', function(evento) {
+  var menu = evento.target.closest ? evento.target.closest('.menu-tendina') : null;
+  if (evento.key === 'Escape') {
+    if (document.querySelector('.riga-menu [aria-expanded="true"]')) {
+      closeRowMenus(true);
+    } else if (document.querySelector('.menu.aperto')) {
+      toggleAdminMenu(false);
+      document.getElementById('barra-altro').focus();
+    }
+    return;
+  }
+  if (!menu) { return; }
+  // Arrows move between the items of a row menu; Tab leaves it closed.
+  var voci = Array.prototype.slice.call(menu.querySelectorAll('[role="menuitem"]'));
+  var posizione = voci.indexOf(evento.target);
+  if (evento.key === 'ArrowDown' || evento.key === 'ArrowUp') {
+    evento.preventDefault();
+    var passo = evento.key === 'ArrowDown' ? 1 : -1;
+    voci[(posizione + passo + voci.length) % voci.length].focus();
+  } else if (evento.key === 'Home' || evento.key === 'End') {
+    evento.preventDefault();
+    voci[evento.key === 'Home' ? 0 : voci.length - 1].focus();
+  } else if (evento.key === 'Tab') {
+    closeRowMenus(true);
+  }
+});
 
 // Rebuilds the static site.
 function rebuildSite(pulsante) {
