@@ -448,9 +448,11 @@ def admin_page(articles, csrf):
         if art.get("status") == "published":
             classe_badge = "pb-badge-pubblicato"
             badge_label = T("admin_pubblicato", la)
-            # If it is published, the button puts it back to draft.
+            # If it is published, the button puts it back to draft. Same
+            # words as the editor's link, from the same key, so the two
+            # cannot drift apart again.
             status_action = "draft"
-            status_label = T("admin_metti_bozza", la)
+            status_label = T("admin_ritira", la)
             status_class = "btn-outline-warning"
         else:
             classe_badge = "pb-badge-bozza"

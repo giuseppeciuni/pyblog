@@ -208,6 +208,8 @@ From here you see:
 For each article you have these quick actions:
 - "Edit": opens the article in the editor. Make your changes and click
   "Update the article" (or "Save draft", if it is not published yet).
+- "Publish" / "Unpublish": changes the state of the article without
+  opening it, with the same words as the editor's buttons.
 - "Preview": opens the published page in a new tab.
 - "Preview EN": appears only if the article has English content, and opens
   the English page. Useful to check the translation before confirming it.

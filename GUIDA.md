@@ -211,6 +211,8 @@ amministrazione. Da qui vedi:
 Per ogni articolo hai queste azioni rapide:
 - "Modifica": apre l'articolo nell'editor. Fai le tue modifiche e clicca
   "Aggiorna l'articolo" (o "Salva bozza", se non e' ancora pubblicato).
+- "Pubblica" / "Ritira dalla pubblicazione": cambia lo stato dell'articolo
+  senza aprirlo, con le stesse parole dei pulsanti dell'editor.
 - "Anteprima": apre la pagina pubblicata in una nuova scheda.
 - "Anteprima EN": compare solo se l'articolo ha del contenuto inglese, e apre
   la pagina inglese. Utile per controllare la traduzione prima di confermarla.

@@ -24,7 +24,10 @@ RADICE = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RADICE))
 
 from core import server  # noqa: E402
-from core.articles import delete_article, load_article, save_article  # noqa: E402
+from core.articles import (delete_article, load_article, load_articles,  # noqa: E402
+                           save_article)
+from core.config import admin_language  # noqa: E402
+from core.i18n import T  # noqa: E402
 from core.auth import create_session_token, csrf_token_for  # noqa: E402
 from core.build import build  # noqa: E402
 from core.config import POSTS_DIR  # noqa: E402
@@ -73,6 +76,22 @@ def test_pannello_per_stato():
     pubblicato = server.editor_page(load_article(SLUG), "TOKEN")
     check("un articolo pubblicato si apre come pubblicato", 'data-stato="published"' in pubblicato)
     check("con il link alla sua pagina", f'href="/posts/{SLUG}.html"' in pubblicato)
+    articolo["status"] = "draft"
+    save_article(articolo)
+
+
+def test_stesse_parole_della_dashboard():
+    """The dashboard and the editor call taking an article back the same way."""
+    print("\nla dashboard usa le parole dell'editor")
+    articolo = load_article(SLUG)
+    articolo["status"] = "published"
+    save_article(articolo)
+    dashboard = server.admin_page(load_articles(), "TOKEN")
+    editor = server.editor_page(load_article(SLUG), "TOKEN")
+    ritira = T("admin_ritira", admin_language())
+    check(f'la dashboard dice "{ritira}"', ritira in dashboard)
+    check("come l'editor", ritira in editor)
+    check('"Metti in bozza" non c\'è più', "Metti in bozza" not in dashboard)
     articolo["status"] = "draft"
     save_article(articolo)
 
@@ -145,6 +164,7 @@ def main():
                   "content": "<p>Contenuto di prova.</p>", "status": "draft", "tags": "Test"})
     try:
         test_pannello_per_stato()
+        test_stesse_parole_della_dashboard()
         test_salvataggio_dice_dove()
         test_anteprima_non_salva()
     finally:

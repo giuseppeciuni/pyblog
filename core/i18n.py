@@ -165,7 +165,6 @@ UI_TRANSLATIONS = {
     "admin_pubblicato": {"it": "Pubblicato", "en": "Published"},
     "admin_bozza": {"it": "Bozza", "en": "Draft"},
     "admin_pubblica": {"it": "Pubblica", "en": "Publish"},
-    "admin_metti_bozza": {"it": "Metti in bozza", "en": "Move to draft"},
     "admin_modifica": {"it": "Modifica", "en": "Edit"},
     "admin_anteprima": {"it": "Anteprima", "en": "Preview"},
     "admin_elimina": {"it": "Elimina", "en": "Delete"},
