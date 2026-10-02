@@ -127,7 +127,7 @@ Crea `/etc/nginx/sites-available/ciunix`:
 
         # L'area di amministrazione viene gestita dal programma Python.
         # Inoltriamo a Python tutte le rotte riservate.
-        location ~ ^/(admin|login|logout|set-password|change-password|edit|config|preview|save|delete|save-config|save-config-raw|rebuild|toggle-status|export|upload|translate|generate-description|generate-preview|analyze-seo|admin-language)$ {
+        location ~ ^/(admin|login|logout|set-password|change-password|edit|config|preview|save|delete|save-config|save-config-raw|rebuild|toggle-status|export|upload|import-docx|translate|generate-description|generate-preview|analyze-seo|admin-language)$ {
             proxy_pass http://127.0.0.1:8000;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
@@ -136,7 +136,8 @@ Crea `/etc/nginx/sites-available/ciunix`:
             proxy_set_header X-Forwarded-Proto $scheme;
             # L'analisi SEO e le traduzioni possono durare fino a un minuto.
             proxy_read_timeout 120s;
-            client_max_body_size 50m;
+            # I video caricati arrivano fino a 100 MB, come il limite di PyBlog.
+            client_max_body_size 100m;
         }
 
         # Tutto il resto: prima prova i file statici, poi passa a Python.

@@ -76,7 +76,7 @@ CONFIG_DEFAULT = {
         '<p><br></p>'
         '<p>Per personalizzare questa presentazione, vai nella pagina '
         '<em>Impostazioni e homepage</em> della redazione: puoi scrivere la tua '
-        'biografia, aggiungere una foto, cambiare i testi e impostare il titolo del site.</p>'
+        'biografia, aggiungere una foto, cambiare i testi e impostare il titolo del sito.</p>'
     ),
     # English version of the homepage introduction. If empty, the English
     # home shows the Italian version above.

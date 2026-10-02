@@ -102,7 +102,7 @@ Scrivi nell'editor → PyBlog salva l'articolo come JSON e rigenera tutte le pag
 - Le traduzioni si rivedono e confermano prima di pubblicarle
 
 **Amministrazione**
-- Area admin protetta da password (hash SHA-256 con sale, sessioni via cookie); chi sbaglia la password blocca solo il proprio indirizzo
+- Area admin protetta da password (hash PBKDF2, sessioni che scadono, token CSRF); chi sbaglia la password blocca solo il proprio indirizzo
 - Dashboard con elenco articoli, stato, ricerca, modifica, elimina
 - Editor con barra laterale, responsive e mobile friendly
 - Interfaccia admin in italiano o inglese
