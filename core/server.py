@@ -181,7 +181,9 @@ JS_TRANSLATION_KEYS = (
     "admin_pubblica", "admin_ritira", "js_bozza_salvata", "js_pubblicato",
     "js_aggiornato", "js_ritirato", "js_pubblica_titolo", "js_pubblica_corpo",
     "js_ritira_titolo", "js_ritira_corpo", "js_titolo_per_pubblicare",
-    "js_modifiche_da_salvare", "js_aggiornato_alle",
+    "js_modifiche_da_salvare", "admin_annulla_modifiche",
+    "js_annulla_modifiche_titolo", "js_annulla_modifiche_corpo",
+    "js_impostazioni_non_salvate", "js_aggiornato_alle",
 )
 
 # Toolbar tooltips: CSS selector of the Quill button -> translated label.
@@ -340,6 +342,22 @@ ICON_PASSWORD = ('<rect x="4" y="11" width="16" height="10" rx="2"/>'
 ICON_LANGUAGE = ('<circle cx="12" cy="12" r="9"/>'
                  '<path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>')
 ICON_LOGOUT = '<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l-4-4 4-4M6 12h10"/>'
+ICON_BACK = '<path d="M15 18l-6-6 6-6"/>'
+ICON_NEXT = '<path d="M9 18l6-6-6-6"/>'
+
+# The sections of the Settings page, in the order of the menu: the things
+# set once and looked at often first, the technical ones last.
+CONFIG_SECTIONS = [
+    ("sito", "admin_sez_sito"),
+    ("home", "admin_sez_home"),
+    ("pagine", "admin_sez_pagine"),
+    ("commenti", "admin_sez_commenti"),
+    ("traduzione", "admin_sez_traduzione"),
+    ("codici", "admin_sez_codici"),
+    ("cookie", "admin_sez_cookie"),
+    ("ai", "admin_sez_ai"),
+    ("avanzate", "admin_sez_avanzate"),
+]
 ICON_MORE = ('<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/>'
              '<circle cx="19" cy="12" r="1"/>')
 
@@ -372,9 +390,24 @@ def admin_navbar(active_page, language, articles_count=None):
         count_html = ""
         if count != "":
             count_html = f'<span class="voce-conta">{count}</span>'
-        menu_html.append(
-            f'    <a class="voce"{current} href="{url}">{icon(path)}'
-            f'<span class="voce-testo">{label}</span>{count_html}</a>')
+        if key == "config" and active_page == "config":
+            # On the Settings page the item opens up into its sections;
+            # admin.js marks the one on screen.
+            menu_html.append(
+                f'    <a class="voce voce-genitore" href="{url}">{icon(path)}'
+                f'<span class="voce-testo">{label}</span></a>')
+            menu_html.append(
+                f'    <div class="voce-sotto-gruppo" role="group" aria-label="{label}">')
+            for section, label_key in CONFIG_SECTIONS:
+                menu_html.append(
+                    f'      <a class="voce voce-sotto" href="{url}#{section}" '
+                    f'data-sezione="{section}"><span class="voce-testo">'
+                    f'{T(label_key, language)}</span></a>')
+            menu_html.append('    </div>')
+        else:
+            menu_html.append(
+                f'    <a class="voce"{current} href="{url}">{icon(path)}'
+                f'<span class="voce-testo">{label}</span>{count_html}</a>')
         bar_html.append(
             f'  <a class="barra-voce"{current} href="{url}">{icon(path, 22)}'
             f'<span>{short_label}</span></a>')
@@ -931,7 +964,7 @@ def custom_code_card(snippet, index_value, la, own=False, open_card=False):
         "solo_sito": " hidden disabled" if own else "",
         "hint_posizione": T("admin_codice_pos_hint_proprio" if own else "admin_codice_pos_hint", la),
         "hint_consenso": T("admin_codice_consenso_hint_proprio" if own else "admin_codice_consenso_hint", la),
-        "label_codice": T("admin_codice_codice", la),
+        "label_codice": esc(T("admin_codice_codice", la)),
         "codice": esc(snippet.get("code", "")),
     }
     for key, label_key in POSITION_LABEL_KEYS.items():
@@ -1089,6 +1122,48 @@ def checked_if(value):
     return ""
 
 
+def help_text(text):
+    """
+    A hint written to sit in brackets after a label, turned into a sentence
+    for under the field: "(es. CTO e docente)" becomes "Es. CTO e docente".
+    """
+    text = text.strip()
+    if text.startswith("(") and text.endswith(")"):
+        text = text[1:-1].strip()
+        text = text[:1].upper() + text[1:]
+    return text
+
+
+def config_sections_list(la):
+    """The list of the Settings sections, what /config opens on a phone."""
+    rows = []
+    for key, label_key in CONFIG_SECTIONS:
+        rows.append(
+            f'    <li><a class="sezioni-voce" href="#{key}">'
+            f'<span class="sezioni-voce-nome">{T(label_key, la)}</span>'
+            f'<span class="sezioni-voce-desc">{TL(label_key + "_desc", la)}</span>'
+            f'{icon(ICON_NEXT, 20)}</a></li>')
+    return "\n".join(rows)
+
+
+def config_section_header(key, la):
+    """
+    The top of a Settings section: on a phone a link back to the list, then
+    the name of the section and one line about what it holds.
+    """
+    label_key = dict(CONFIG_SECTIONS)[key]
+    return (
+        '  <div class="sezione-testata">\n'
+        f'    <a class="pulsante pulsante-icona sezione-indietro" href="#elenco" '
+        f'aria-label="{esc(T("admin_torna_impostazioni", la))}">{icon(ICON_BACK, 22)}</a>\n'
+        '    <div>\n'
+        f'      <p class="sezione-occhiello">{T("admin_impostazioni", la)}</p>\n'
+        f'      <h1 class="pagina-titolo" id="titolo-{key}">{T(label_key, la)}</h1>\n'
+        f'      <p class="pagina-sottotitolo">{TL(label_key + "_desc", la)}</p>\n'
+        '    </div>\n'
+        '  </div>')
+
+
 def config_page(csrf):
     """
     Site configuration page:
@@ -1153,9 +1228,19 @@ def config_page(csrf):
     # html.escape on the placeholders too: they end up in an HTML attribute.
     ph = {k: esc(v) for k, v in ph.items()}
 
-    contenuto = render.render(
-        "admin/config.html",
-        titolo_pagina_h1=T("admin_impostazioni_titolo", la),
+    context = dict(
+        titolo_impostazioni=T("admin_impostazioni", la),
+        elenco_sezioni=config_sections_list(la),
+        label_gr_sito=T("admin_gr_sito", la),
+        label_gr_autore=T("admin_gr_autore", la),
+        label_gr_immagini=T("admin_gr_immagini", la),
+        label_gr_disposizione=T("admin_gr_disposizione", la),
+        label_gr_pagina_articolo=T("admin_gr_pagina_articolo", la),
+        label_gr_statistiche=T("admin_gr_statistiche", la),
+        label_umami_url=T("admin_umami_url", la),
+        label_umami_id=T("admin_umami_id", la),
+        hint_giscus="https://giscus.app",
+        label_annulla_modifiche=T("admin_annulla_modifiche", la),
         label_parte_alta=T("admin_parte_alta_home", la),
         hint_parte_alta=T("admin_parte_alta_hint", la),
         tip_upload_image=esc(T("tip_upload_image", la)),
@@ -1170,7 +1255,6 @@ def config_page(csrf):
         label_presentazione_inglese=TL("admin_presentazione_inglese", la),
         hint_presentazione_en=TL("admin_presentazione_en_hint", la),
         label_traduci_italiano=TL("admin_traduci_dall_italiano", la),
-        label_card_home=T("admin_card_home_titolo", la),
         hint_card_home=T("admin_card_home_hint", la),
         checked_card_home_attiva=checked_if(config.get("home_cards_enabled", True)),
         label_card_home_attiva=T("admin_card_home_attiva", la),
@@ -1194,7 +1278,6 @@ def config_page(csrf):
         label_ads_txt=T("admin_ads_txt", la),
         hint_ads_txt=T("admin_ads_txt_hint", la),
         valore_ads_txt=esc(config.get("ads_txt", "")),
-        label_consenso_titolo=T("admin_consenso_titolo", la),
         hint_consenso=T("admin_consenso_intro", la),
         checked_consenso=checked_if(consent["enabled"]),
         label_consenso_attivo=T("admin_consenso_attivo", la),
@@ -1210,7 +1293,6 @@ def config_page(csrf):
         ph_consenso_privacy=ph["base_url"] + "/privacy.html",
         label_consenso_rinnova=T("admin_consenso_rinnova", la),
         hint_consenso_rinnova=T("admin_consenso_rinnova_hint", la),
-        label_impostazioni_generali=T("admin_impostazioni_generali", la),
         label_titolo_sito=T("admin_titolo_sito", la),
         valore_titolo_sito=esc(config.get("site_title", "")),
         ph_site_title=ph["site_title"],
@@ -1238,7 +1320,6 @@ def config_page(csrf):
         hint_lingua_principale=T("admin_lingua_principale_hint", la),
         sel_lingua_it=selected_if(site_language, "it"),
         sel_lingua_en=selected_if(site_language, "en"),
-        label_layout=T("admin_layout_titolo", la),
         hint_layout=T("admin_layout_hint", la),
         label_intro_posizione=T("admin_intro_posizione", la),
         hint_intro_posizione=T("admin_intro_posizione_hint", la),
@@ -1258,7 +1339,6 @@ def config_page(csrf):
         checked_copertina_articolo=checked_if(config.get("article_cover", True)),
         label_copertina_articolo=T("admin_copertina_articolo", la),
         hint_copertina_articolo=T("admin_copertina_articolo_hint", la),
-        label_seo=T("admin_seo_titolo", la),
         hint_seo=T("admin_seo_intro", la),
         label_seo_autore_url=T("admin_seo_autore_url", la),
         hint_seo_autore_url=T("admin_seo_autore_url_hint", la),
@@ -1288,7 +1368,6 @@ def config_page(csrf):
         label_seo_favicon=T("admin_seo_favicon", la),
         hint_seo_favicon=T("admin_seo_favicon_hint", la),
         valore_seo_favicon=esc(seo.get("favicon", "")),
-        label_ai_training=T("admin_ai_training_titolo", la),
         hint_ai_training=T("admin_ai_training_intro", la),
         label_ai_policy=T("admin_ai_training_policy", la),
         sel_ai_open=selected_if(ai_policy, "open"),
@@ -1307,7 +1386,6 @@ def config_page(csrf):
         hint_ai_statement=T("admin_ai_training_statement_hint", la),
         valore_ai_statement=esc(ai_training.get("statement", "")),
         nota_ai_standard=T("admin_ai_training_nota_standard", la),
-        label_commenti=T("admin_commenti_titolo", la),
         label_sistema_commenti=T("admin_sistema_commenti", la),
         sel_commenti_nessuno=selected_if(commenti, "none"),
         label_commenti_nessuno=T("admin_commenti_nessuno", la),
@@ -1348,6 +1426,14 @@ def config_page(csrf):
         label_salva_config_raw=T("admin_salva_config_raw", la),
         label_ripristina=T("admin_ripristina", la),
     )
+    for key, _ in CONFIG_SECTIONS:
+        context["testata_" + key] = config_section_header(key, la)
+    # The hints used to sit in brackets after the label; under the field
+    # they read as a sentence of their own.
+    for key in context:
+        if key.startswith("hint_"):
+            context[key] = help_text(context[key])
+    contenuto = render.render("admin/config.html", **context)
 
     page_data = {
         "page": "config",
@@ -1372,10 +1458,10 @@ def config_page(csrf):
                     f'<script src="{BLOT_FORMATTER_JS}"></script>\n'
                     + codemirror_scripts())
 
-    return admin_page_shell(T("admin_impostazioni_titolo", la), contenuto, la,
+    return admin_page_shell(T("admin_impostazioni", la), contenuto, la,
                             csrf=csrf, navbar=admin_navbar("config", la),
                             head_extra=head_extra, script_extra=script_extra,
-                            page_data=page_data)
+                            page_data=page_data, body_class="pagina-config")
 
 
 # ---------------------------------------------------------------------------

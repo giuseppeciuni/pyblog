@@ -51,39 +51,87 @@ body { background:var(--a-sfondo); color:var(--a-testo); }
    SETTINGS PAGE (/config)
    =========================================================================== */
 
-.config-wrap { max-width:1400px; margin:0 auto; padding:1.5rem 1rem 6rem; }
-/* Two-column layout: on the left the editorial content (introduction,
-   cards) which needs room for the editors; on the right the compact
-   technical settings (general, comments, translation). */
-.config-layout { display:grid; grid-template-columns:1.4fr 1fr; gap:2rem; align-items:start; }
-.config-col-destra { position:sticky; top:1rem; }
-/* Save bar fixed at the bottom, always within reach. */
-.config-save-bar { position:sticky; bottom:var(--a-sotto, 0); background:#fff; border-top:1px solid #e4e4e7; padding:1rem 0; margin-top:1.5rem; display:flex; gap:0.8rem; align-items:center; z-index:10; }
-@media (max-width: 1000px) {
-  .config-layout { grid-template-columns:1fr; gap:1rem; }
-  .config-col-destra { position:static; }
+/* One section at a time, in white cards, one column: a form reads top to
+   bottom and every help line sits under its own field. */
+.pagina.pagina-stretta { max-width:760px; }
+.impostazioni { padding-bottom:0; }
+.impostazioni .sezione { display:flex; flex-direction:column; gap:1.25rem; }
+.impostazioni .sezione[hidden], .sezioni-elenco[hidden], .barra-salva[hidden] { display:none; }
+.sezione-testata { display:flex; align-items:flex-start; gap:0.25rem; }
+.sezione-testata .sezione-indietro { display:none; border-color:transparent; background:transparent; color:var(--a-accento); margin-left:-0.5rem; }
+.sezione-occhiello { margin:0; font-size:0.875rem; color:var(--a-testo-2); }
+.sezione-testata h1:focus { outline:none; }
+.gruppo { background:var(--a-superficie); border:1px solid var(--a-bordo); border-radius:12px; padding:1.5rem;
+          display:flex; flex-direction:column; gap:1.125rem; min-width:0; }
+.gruppo h2 { margin:0; font-size:1.125rem; font-weight:650; }
+.gruppo h2 label { font:inherit; margin:0; }
+.campo { display:flex; flex-direction:column; gap:0.375rem; min-width:0; }
+.campi-due { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1.125rem 1rem; }
+.campo-titolo { margin:0; font-size:0.875rem; font-weight:600; }
+.aiuto { margin:0; font-size:0.875rem; color:var(--a-testo-2); }
+.impostazioni label { display:block; font-weight:600; font-size:0.875rem; margin:0; }
+.impostazioni :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  width:100%; padding:0.6rem 0.75rem; border:1px solid var(--a-bordo-campo); border-radius:8px;
+  font-size:1rem; font-family:inherit; background:var(--a-superficie); color:var(--a-testo); box-sizing:border-box; }
+.impostazioni .campo-input { height:auto; min-height:44px; }
+.impostazioni :is(input, select, textarea):focus { outline:none; border-color:var(--a-accento); box-shadow:var(--a-fuoco); }
+.impostazioni textarea { resize:vertical; line-height:1.55; }
+.campo-spunta { display:flex; align-items:flex-start; gap:0.75rem; }
+.campo-spunta input { width:1.25rem; height:1.25rem; margin-top:0.1rem; flex:none; accent-color:var(--a-accento); }
+.campo-spunta label { font-size:1rem; cursor:pointer; }
+.campo-spunta .aiuto { margin-top:0.125rem; }
+.impostazioni .azioni { display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center; }
+.pulsante.pulsante-testo { border-color:transparent; background:transparent; color:var(--a-accento); padding:0 0.5rem; }
+.pulsante.pulsante-testo:hover { background:var(--a-attivo); color:var(--a-accento-scuro); }
+/* Labels that wrap their field: the cards of code are cloned in the browser,
+   where ids would have to be invented. */
+label.campo-etichettato { display:block; font-weight:400; margin:0; }
+label.campo-etichettato > .etichetta { display:block; font-weight:600; font-size:0.875rem; margin:1rem 0 0.3rem; }
+.editor-wrap label.campo-etichettato { font-weight:400; margin:0; }
+
+/* The list of sections that /config opens on a phone. */
+.sezioni-elenco ul { list-style:none; margin:1rem 0 0; padding:0; background:var(--a-superficie);
+                     border:1px solid var(--a-bordo); border-radius:12px; }
+.sezioni-elenco li + li { border-top:1px solid #eef0f3; }
+.sezioni-voce { display:grid; grid-template-columns:1fr auto; align-items:center; gap:0 0.75rem; padding:0.875rem 1rem;
+                min-height:44px; color:var(--a-testo); text-decoration:none; }
+.sezioni-voce:hover { background:#fafbfc; color:var(--a-testo); }
+.sezioni-voce:focus-visible { outline:3px solid var(--a-accento); outline-offset:-3px; border-radius:12px; }
+.sezioni-voce-nome { font-weight:600; }
+.sezioni-voce-desc { grid-column:1; font-size:0.875rem; color:var(--a-testo-2); }
+.sezioni-voce .icona { grid-column:2; grid-row:1 / span 2; color:var(--a-testo-2); }
+
+/* The save bar stays at the bottom of the window. The page keeps room
+   under the fields, so a focused field is never hidden behind it. */
+.barra-salva { position:sticky; bottom:var(--a-sotto, 0); z-index:10; margin-top:1.5rem; background:var(--a-superficie);
+               border:1px solid var(--a-bordo); border-bottom:0; border-radius:12px 12px 0 0; padding:0.875rem 1.25rem;
+               display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.75rem;
+               box-shadow:0 -4px 16px rgba(0,0,0,0.06); }
+.barra-salva-stato { font-size:0.875rem; font-weight:600; color:#9a4d07; display:inline-flex; align-items:center; gap:0.5rem; }
+.barra-salva.modificata .barra-salva-stato::before { content:""; width:8px; height:8px; border-radius:50%; background:currentColor; }
+.barra-salva-info { display:flex; align-items:center; gap:0.25rem 0.75rem; flex-wrap:wrap; min-height:40px; }
+.barra-salva #salva-impostazioni { margin-left:auto; }
+html:has(body.pagina-config) { scroll-padding-bottom:7rem; }
+@media (max-width: 860px) {
+  .sezione-testata .sezione-indietro { display:inline-flex; }
+  .gruppo { padding:1rem; }
+  .campi-due { grid-template-columns:1fr; }
+  .barra-salva { margin-left:-1rem; margin-right:-1rem; border-radius:0; padding:0.75rem 1rem; }
+  .barra-salva { gap:0.25rem; }
+  .barra-salva-info { width:100%; justify-content:space-between; flex-wrap:nowrap; }
+  .barra-salva-info .pulsante-testo { margin-right:-0.5rem; }
+  .barra-salva-info:has(#save-status:empty) { display:none; }
+  .barra-salva #salva-impostazioni { width:100%; }
 }
-/* Advanced section to edit config.json by hand. */
-.config-avanzata { margin-top:2rem; border:1px solid #e4e4e7; border-radius:8px; background:#fafafa; }
-.config-avanzata summary { cursor:pointer; padding:1rem; font-weight:600; user-select:none; }
-.config-avanzata-corpo { padding:0 1rem 1rem; }
-.config-avanzata textarea { width:100%; font-family:var(--pb-font-mono); font-size:0.85rem; line-height:1.5; background:#fff; border:1px solid #ccc; border-radius:var(--pb-radius-sm); padding:0.8rem; resize:vertical; }
-.config-wrap .btn-secondario { background:#eee; color:#333; padding:0.7rem 1.4rem; border:none; border-radius:var(--pb-radius-sm); font-size:1rem; cursor:pointer; }
-.config-wrap h1 { font-size:1.5rem; }
-.config-wrap h2 { font-size:1.15rem; margin-top:2.5rem; border-top:1px solid #eee; padding-top:1.5rem; }
-.config-wrap label { display:block; font-weight:600; margin:1rem 0 0.3rem; font-size:0.9rem; }
-.config-wrap input, .config-wrap select, .config-wrap textarea { width:100%; padding:0.6rem; border:1px solid #ccc; border-radius:var(--pb-radius-sm); font-size:1rem; font-family:inherit; }
-.config-wrap input:focus, .config-wrap select:focus, .config-wrap textarea:focus { outline:none; border-color:var(--pb-blu); box-shadow:0 0 0 3px rgba(0,102,204,0.12); }
-.config-wrap textarea { resize:vertical; line-height:1.55; }
 /* Author bio: comfortable room for 2-4 sentences, consistent with the site style. */
 #seo_author_bio { min-height:5.5rem; }
 /* Social profiles: one URL per line, a slightly monospaced font to read them
    more easily, and a comfortable height for 4-5 profiles without scrolling. */
 #seo_profili { min-height:7rem; font-family:var(--pb-font-mono); font-size:0.88rem; line-height:1.7; }
-#editor-home { height:320px; background:#fff; margin-top:0.3rem; }
-#editor-home-en { height:300px; background:#fff; margin-top:0.3rem; }
-.card-config { background:#f7f7f7; border:1px solid #e4e4e7; border-radius:8px; padding:1rem; margin-bottom:1rem; }
-.card-editor { height:160px; background:#fff; margin-top:0.3rem; }
+#editor-home { height:320px; background:#fff; }
+#editor-home-en { height:300px; background:#fff; }
+#config-raw { font-family:var(--pb-font-mono); font-size:0.85rem; line-height:1.5; }
+.card-editor { height:160px; background:#fff; }
 
 /* Custom code: each snippet is a card that folds down to one line - its
    name, where it goes, on which pages, which consent - so a long list reads
@@ -127,10 +175,10 @@ body { background:var(--a-sfondo); color:var(--a-testo); }
 .editor-sidebar .codice-corpo { padding:0 0.7rem 0.8rem; }
 .editor-sidebar .codice-griglia { grid-template-columns:1fr; }
 .codice-articolo-riga { align-items:flex-start; margin:0.1rem 0; }
-.gruppo-commenti { display:none; padding:1rem; background:#f7f7f7; border-radius:var(--pb-radius-sm); margin-top:0.5rem; }
-.gruppo-commenti.attivo { display:block; }
-.translation-group { display:none; padding:1rem; background:#f7f7f7; border-radius:var(--pb-radius-sm); margin-top:0.5rem; }
-.translation-group.attivo { display:block; }
+.gruppo-commenti { display:none; flex-direction:column; gap:1.125rem; }
+.gruppo-commenti.attivo { display:flex; }
+.translation-group { display:none; flex-direction:column; gap:1.125rem; }
+.translation-group.attivo { display:flex; }
 .preview-box { border:1px dashed #ccc; padding:1rem; border-radius:var(--pb-radius-sm); margin-top:0.5rem; }
 .preview-box img { max-width:100%; border-radius:8px; }
 

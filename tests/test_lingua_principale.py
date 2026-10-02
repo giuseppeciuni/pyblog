@@ -178,7 +178,8 @@ def test_lingua_principale_e_una_scelta():
         pagina = server.config_page("TOKEN")
     finally:
         server.load_config = originale
-    check("la lingua principale si sceglie da un menu", '<select id="language">' in pagina)
+    check("la lingua principale si sceglie da un menu",
+          re.search(r'<select[^>]* id="language"', pagina) is not None)
     check("con l'inglese gia' selezionato",
           re.search(r'<option value="en"\s+selected>', pagina) is not None)
 

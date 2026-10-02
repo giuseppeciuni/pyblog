@@ -10,12 +10,11 @@
         <button type="button" class="btn-rimuovi-cover" onclick="removeCustomCode(this)">$label_elimina</button>
       </div>
 
-      <label>$label_nome</label>
-      <input type="text" class="codice-nome" value="$nome" placeholder="$ph_nome">
+      <label class="campo-etichettato"><span class="etichetta">$label_nome</span>
+      <input type="text" class="codice-nome" value="$nome" placeholder="$ph_nome"></label>
 
       <div class="codice-griglia">
-        <div>
-          <label>$label_posizione</label>
+        <label class="campo-etichettato"><span class="etichetta">$label_posizione</span>
           <select class="codice-posizione">
             <optgroup label="$gruppo_tecnico">
               <option value="head" $sel_head>$label_pos_head</option>
@@ -33,20 +32,19 @@
               <option value="before_footer" $sel_before_footer>$label_pos_before_footer</option>
             </optgroup>
           </select>
-        </div>
-$blocco_ambito        <div>
-          <label>$label_consenso</label>
+        </label>
+$blocco_ambito        <label class="campo-etichettato"><span class="etichetta">$label_consenso</span>
           <select class="codice-consenso">
             <option value="necessary" $sel_necessary>$label_cons_necessary</option>
             <option value="statistics" $sel_statistics>$label_cons_statistics</option>
             <option value="marketing" $sel_marketing>$label_cons_marketing</option>
           </select>
-        </div>
+        </label>
       </div>
       <p class="hint codice-aiuto">$hint_posizione</p>
       <p class="hint codice-aiuto">$hint_consenso</p>
 
-      <label>$label_codice</label>
-      <textarea class="codice-testo" rows="8" spellcheck="false">$codice</textarea>
+      <p class="campo-titolo" aria-hidden="true">$label_codice</p>
+      <textarea class="codice-testo" rows="8" spellcheck="false" aria-label="$label_codice">$codice</textarea>
     </div>
   </details>

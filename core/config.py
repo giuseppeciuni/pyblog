@@ -65,7 +65,7 @@ CONFIG_DEFAULT = {
     # Free-form content of the top of the homepage (written with the WYSIWYG).
     # This is where the biography, aligned images, videos, etc. go.
     # This is a presentable starting content: it shows until you
-    # customise it from the "Settings and homepage" page.
+    # customise it from Settings > Homepage.
     "home_content": (
         '<h2 class="ql-align-center">Benvenuto su Inside the Machine</h2>'
         '<p class="ql-align-center">Un blog tecnico su intelligenza artificiale, '
@@ -74,8 +74,8 @@ CONFIG_DEFAULT = {
         'per chi costruisce con la tecnologia.</p>'
         '<p class="ql-align-center"><strong>Scorri in basso per leggere gli ultimi articoli.</strong></p>'
         '<p><br></p>'
-        '<p>Per personalizzare questa presentazione, vai nella pagina '
-        '<em>Impostazioni e homepage</em> della redazione: puoi scrivere la tua '
+        '<p>Per personalizzare questa presentazione, vai in '
+        '<em>Impostazioni &rsaquo; Home page</em> nell\'amministrazione: puoi scrivere la tua '
         'biografia, aggiungere una foto, cambiare i testi e impostare il titolo del sito.</p>'
     ),
     # English version of the homepage introduction. If empty, the English
@@ -88,8 +88,8 @@ CONFIG_DEFAULT = {
         'for those who build with technology.</p>'
         '<p class="ql-align-center"><strong>Scroll down to read the latest articles.</strong></p>'
         '<p><br></p>'
-        '<p>To customize this introduction, go to the '
-        '<em>Settings and homepage</em> page in the admin area: you can write your '
+        '<p>To customize this introduction, go to '
+        '<em>Settings &rsaquo; Homepage</em> in the admin area: you can write your '
         'biography, add a photo, change the texts and set the site title.</p>'
     ),
 

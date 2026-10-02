@@ -2648,6 +2648,7 @@ function initConfigPage() {
     modules: { blotFormatter: {}, toolbar: TOOLBAR_HOME }
   });
   quillHome.root.innerHTML = pbPage('home_content', '');
+  quillHome.update(Quill.sources.SILENT);
   PB_MAIN_QUILL = quillHome;
   attachImageOverlay(quillHome);
   handlePastedImages(quillHome, 'upload-status');
@@ -2659,6 +2660,7 @@ function initConfigPage() {
     modules: { blotFormatter: {}, toolbar: TOOLBAR_HOME }
   });
   quillHomeEn.root.innerHTML = pbPage('home_content_en', '');
+  quillHomeEn.update(Quill.sources.SILENT);
   attachImageOverlay(quillHomeEn);
   handlePastedImages(quillHomeEn, null);
 
@@ -2671,6 +2673,7 @@ function initConfigPage() {
       modules: { blotFormatter: {}, toolbar: TOOLBAR_CARD }
     });
     editorCardSingolo.root.innerHTML = contenutiCard[c];
+    editorCardSingolo.update(Quill.sources.SILENT);
     attachImageOverlay(editorCardSingolo);
     handlePastedImages(editorCardSingolo, null);
     editorCard.push(editorCardSingolo);
@@ -2699,6 +2702,137 @@ function initConfigPage() {
   // --- Advanced config.json editor ---
   configRawIniziale = pbPage('config_raw', '');
   document.getElementById('config-raw').value = configRawIniziale;
+
+  labelQuillEditors();
+  watchConfigChanges();
+  showConfigSection(false);
+  window.addEventListener('hashchange', function() { showConfigSection(true); });
+  // Turning a tablet round can cross the phone width: the page without a
+  // section shows the list on a phone and the first section on a computer.
+  PB_TELEFONO.addEventListener('change', function() { showConfigSection(false); });
+}
+
+// Quill writes into a div of its own: the name and the help the template
+// gave the editor's box go onto that div, where screen readers look.
+function labelQuillEditors() {
+  var scatole = document.querySelectorAll('.impostazioni .ql-container');
+  for (var i = 0; i < scatole.length; i++) {
+    var area = scatole[i].querySelector('.ql-editor');
+    var attributi = ['aria-labelledby', 'aria-describedby'];
+    for (var j = 0; j < attributi.length; j++) {
+      var valore = scatole[i].getAttribute(attributi[j]);
+      if (valore) { area.setAttribute(attributi[j], valore); }
+    }
+    area.setAttribute('role', 'textbox');
+    area.setAttribute('aria-multiline', 'true');
+  }
+}
+
+/* --- Settings: one section at a time ------------------------------------- */
+
+var PB_TELEFONO = window.matchMedia('(max-width: 860px)');
+
+// Shows the section named in the address (#sito, #home...). With none, a
+// phone shows the list of sections and a computer the first one, since its
+// side menu already lists them. After a click in the menu (spostaFuoco) the
+// focus moves to the section's title, so a screen reader starts from there.
+function showConfigSection(spostaFuoco) {
+  var richiesta = window.location.hash.replace('#', '');
+  var sezioni = document.querySelectorAll('.impostazioni .sezione');
+  var trovata = null;
+  for (var i = 0; i < sezioni.length; i++) {
+    if (sezioni[i].getAttribute('data-sezione') === richiesta) { trovata = sezioni[i]; }
+  }
+  if (trovata === null && richiesta !== 'elenco' && !PB_TELEFONO.matches) {
+    trovata = sezioni[0];
+  }
+  for (var j = 0; j < sezioni.length; j++) {
+    sezioni[j].hidden = sezioni[j] !== trovata;
+  }
+  document.getElementById('sezione-elenco').hidden = trovata !== null;
+
+  var chiave = trovata ? trovata.getAttribute('data-sezione') : 'elenco';
+  document.getElementById('impostazioni').setAttribute('data-sezione', chiave);
+  var voci = document.querySelectorAll('.voce-sotto[data-sezione]');
+  for (var k = 0; k < voci.length; k++) {
+    if (voci[k].getAttribute('data-sezione') === chiave) {
+      voci[k].setAttribute('aria-current', 'page');
+    } else {
+      voci[k].removeAttribute('aria-current');
+    }
+  }
+  updateSaveBar();
+
+  if (trovata !== null) {
+    // CodeMirror measures itself when created: inside a hidden section it
+    // measured nothing, so it has to look again now that it can be seen.
+    var codici = trovata.querySelectorAll('.CodeMirror');
+    for (var c = 0; c < codici.length; c++) { codici[c].CodeMirror.refresh(); }
+  }
+  if (spostaFuoco) {
+    window.scrollTo(0, 0);
+    var titolo = trovata ? trovata.querySelector('h1') : document.getElementById('sezioni-elenco-titolo');
+    titolo.setAttribute('tabindex', '-1');
+    titolo.focus({ preventScroll: true });
+  }
+}
+
+/* --- Settings: unsaved changes ------------------------------------------- */
+
+var configModificata = false;
+
+// Every field of the sections counts, except the hand-edited config.json,
+// which has its own button, and the template chooser, which only prepares
+// a card. Adding or removing a card of code counts too.
+function watchConfigChanges() {
+  var pagina = document.getElementById('impostazioni');
+  var segna = function(evento) {
+    if (evento.target.closest('#sezione-avanzate, #codice-modelli')) { return; }
+    markConfigDirty();
+  };
+  pagina.addEventListener('input', segna);
+  pagina.addEventListener('change', segna);
+  var editors = [quillHome, quillHomeEn].concat(editorCard);
+  for (var i = 0; i < editors.length; i++) {
+    editors[i].on('text-change', markConfigDirty);
+  }
+  new MutationObserver(markConfigDirty)
+    .observe(document.getElementById('lista-codice'), { childList: true });
+
+  window.addEventListener('beforeunload', function(evento) {
+    if (!configModificata) { return undefined; }
+    evento.preventDefault();
+    evento.returnValue = t('js_impostazioni_non_salvate');
+    return t('js_impostazioni_non_salvate');
+  });
+}
+
+function markConfigDirty() {
+  if (configModificata) { return; }
+  configModificata = true;
+  updateSaveBar();
+}
+
+// The save bar says whether something is waiting to be saved. Where there
+// is nothing to save - the list of sections, the raw config.json with its
+// own button - it only shows up once something has changed.
+function updateSaveBar() {
+  var barra = document.getElementById('barra-salva');
+  var sezione = document.getElementById('impostazioni').getAttribute('data-sezione');
+  barra.hidden = !configModificata && (sezione === 'avanzate' || sezione === 'elenco');
+  barra.classList.toggle('modificata', configModificata);
+  document.getElementById('annulla-modifiche').hidden = !configModificata;
+  document.getElementById('save-status').textContent =
+    configModificata ? t('js_modifiche_da_salvare') : '';
+}
+
+// Throws the changes away by loading the page again, as it was saved.
+function discardConfigChanges() {
+  pbConfirm(t('js_annulla_modifiche_titolo'), t('js_annulla_modifiche_corpo'),
+            t('admin_annulla_modifiche'), 'danger', function() {
+    configModificata = false;
+    window.location.reload();
+  });
 }
 
 // Translates the home introduction from Italian to English with AI.
@@ -2819,6 +2953,8 @@ function startCodeEditor(card) {
     viewportMargin: Infinity
   });
   area.pbEditor = editor;
+  // The field CodeMirror types into takes the textarea's name.
+  editor.getInputField().setAttribute('aria-label', area.getAttribute('aria-label') || '');
   // Every change goes back into the textarea and is announced the way
   // typing would be, so the summary and the unsaved-changes guard hear
   // about it like they hear about any other field.
@@ -3220,6 +3356,7 @@ var versioneConsenso = 1;
 
 function renewConsent() {
   versioneConsenso = versioneConsensoSalvata + 1;
+  markConfigDirty();
   pbToast(t('js_consenso_rinnovato'), 'success');
 }
 
@@ -3330,17 +3467,18 @@ function saveConfig(pulsante) {
   pbPostJson('/save-config', config)
     .then(function(res) {
       pbBusy(pulsante, false);
-      pbStatus('save-status', '');
       if (res.ok === true) {
         versioneConsensoSalvata = config.consent.version;
+        configModificata = false;
         pbToast(t('admin_config_salvata'), 'success');
       } else {
         pbToast(t('js_error_prefix') + res.error, 'danger');
       }
+      updateSaveBar();
     })
     .catch(function() {
       pbBusy(pulsante, false);
-      pbStatus('save-status', '');
+      updateSaveBar();
       pbToast(t('admin_errore_salvataggio'), 'danger');
     });
 }

@@ -1,7 +1,12 @@
-  <div class="card-config" data-indice="$indice">
-    <label><input type="checkbox" class="card-attiva" $checked> $label_mostra</label>
-    <label>$label_titolo</label>
-    <input type="text" class="card-title" value="$titolo">
-    <label>$label_contenuto</label>
-    <div class="card-editor" id="card-editor-$indice"></div>
+  <div class="gruppo card-config" data-indice="$indice">
+    <div class="campo-spunta">
+      <input type="checkbox" class="card-attiva" id="card-attiva-$indice" $checked>
+      <div><label for="card-attiva-$indice">$label_mostra</label></div>
+    </div>
+    <div class="campo">
+      <label for="card-titolo-$indice">$label_titolo</label>
+      <input class="campo-input card-title" type="text" id="card-titolo-$indice" value="$titolo">
+    </div>
+    <p class="campo-titolo" id="card-contenuto-$indice">$label_contenuto</p>
+    <div class="card-editor" id="card-editor-$indice" aria-labelledby="card-contenuto-$indice"></div>
   </div>
