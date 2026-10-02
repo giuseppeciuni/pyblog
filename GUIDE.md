@@ -177,12 +177,22 @@ Go back to the newsroom (link at the top) and click "New article".
    save it like any other.
 9. You can embed YouTube videos or upload videos from your computer with
    the buttons below the editor.
-10. Click "Show/hide preview" to see how the published article will look,
-   with the same design as the real site. The preview updates as you write.
-11. Add Tags separated by commas (e.g. "Python, tutorial").
-12. The status: "Draft" if you do not want to publish it yet, "Published"
-   to make it visible on the site.
-13. Click "Save and generate HTML".
+10. Add Tags separated by commas (e.g. "Python, tutorial").
+11. At the top of the right column you see the state of the article. While
+   it is a **draft** ("readers cannot see it") you have three buttons:
+   - **Save draft** (or Ctrl+S): saves without publishing. Drafts also save
+     themselves, every minute;
+   - **Preview**: opens the page as it is now in a new tab, with the real
+     site's design, without saving anything;
+   - **Publish**: after a confirmation, puts the article on the site, on the
+     homepage, in the archive and in the RSS feed.
+12. Once the article is **published**, "View online" appears at the top and
+   the buttons change: **Update the article** (or Ctrl+S) saves and puts
+   the changes online right away; **Preview** shows the changes before you
+   do; **Unpublish** takes the page off the site and the article becomes a
+   draft again. Under the buttons a line tells you about "Unsaved changes".
+   To go back to the list use "All articles" at the top: if something is
+   still to be saved, the browser reminds you.
 
 ### Step 2.5 — Managing and updating articles from the dashboard
 
@@ -197,7 +207,7 @@ From here you see:
 
 For each article you have these quick actions:
 - "Edit": opens the article in the editor. Make your changes and click
-  "Save and generate HTML": the article is updated and the page regenerated.
+  "Update the article" (or "Save draft", if it is not published yet).
 - "Preview": opens the published page in a new tab.
 - "Preview EN": appears only if the article has English content, and opens
   the English page. Useful to check the translation before confirming it.
@@ -217,8 +227,8 @@ section:
 1. Tick "Allow creating the English version".
 2. Click "Translate automatically" (an API key is needed in Settings,
    Translation section) or write the translation by hand in the EN fields.
-3. Click "Preview English page": the article is saved and the English page
-   opens in a new tab, exactly as readers will see it.
+3. Click "Preview the English page": the English page opens in a new tab,
+   exactly as readers will see it, without saving anything.
 4. When you are happy with the translation, tick "Confirm the translation
    and publish the English page" and save. From that moment the article also
    appears on the English homepage (`/en/`), in the English archive and in

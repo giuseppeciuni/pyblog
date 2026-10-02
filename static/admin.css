@@ -149,8 +149,34 @@ body { background:#f5f6f8; }
    that sets them apart visually from the rest of the metadata. */
 .card-campo { background:#fff; border:1px solid #e4e4e7; border-radius:8px; padding:0.9rem; margin:0.8rem 0; }
 .card-campo h2 { margin-top:0 !important; }
-.sidebar-azioni { display:flex; flex-direction:column; gap:0.6rem; margin-top:1rem; padding-top:1rem; border-top:1px solid #e4e4e7; }
-.sidebar-azioni button { width:100%; }
+/* Publishing, at the top of the sidebar: the state of the article first,
+   then only the buttons that make sense in that state. The state lives in
+   data-stato, and admin.js changes it after publishing or taking back. */
+.pannello-pubblica { display:flex; flex-direction:column; gap:0.55rem; padding-bottom:1rem; margin-bottom:0.3rem; border-bottom:1px solid #e4e4e7; }
+.pannello-pubblica[data-stato="draft"] .solo-pubblicato,
+.pannello-pubblica[data-stato="published"] .solo-bozza { display:none; }
+.stato-articolo { margin:0; font-size:0.88rem; color:#555; display:flex; align-items:baseline; gap:0.45rem; flex-wrap:wrap; }
+.stato-articolo strong { color:#222; }
+.stato-pallino { width:0.6rem; height:0.6rem; border-radius:50%; background:#d97706; flex:none; align-self:center; }
+.pannello-pubblica[data-stato="published"] .stato-pallino { background:#16a34a; }
+/* The one action of the state: Publish for a draft, Update for a published article. */
+.btn-azione-primaria { width:100%; background:var(--pb-blu); color:#fff; border:none; border-radius:var(--pb-radius-sm); padding:0.7rem 1rem; font-size:1rem; font-weight:600; cursor:pointer; }
+.btn-azione-primaria:hover { filter:brightness(0.93); }
+.riga-azioni { display:flex; gap:0.5rem; }
+.btn-azione { flex:1; background:#fff; color:var(--pb-blu); border:1px solid var(--pb-blu); border-radius:var(--pb-radius-sm); padding:0.5rem 0.6rem; font-size:0.9rem; cursor:pointer; white-space:nowrap; }
+.btn-azione:hover { background:#f0f6ff; }
+/* Taking an article back and deleting it are rare: links, not buttons. */
+.link-azione, .btn-elimina-articolo { background:none; border:none; padding:0; font-size:0.85rem; text-decoration:underline; cursor:pointer; align-self:flex-start; }
+.link-azione { color:#666; }
+.btn-elimina-articolo { color:#b02a37; margin-top:1.5rem; }
+/* "Opens in a new tab", drawn: the arrow character turns into a colour
+   emoji on systems whose interface fonts lack it. */
+.icona-esterna { display:inline-block; width:0.78em; height:0.78em; margin-left:0.3em; vertical-align:-0.04em;
+  background-color:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M9 1.5h5.5V7H13V4.06L7.53 9.53 6.47 8.47 11.94 3H9zM2 3.5h5.5V5H3.5v7.5H11V8.5h1.5V14H2z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M9 1.5h5.5V7H13V4.06L7.53 9.53 6.47 8.47 11.94 3H9zM2 3.5h5.5V5H3.5v7.5H11V8.5h1.5V14H2z'/%3E%3C/svg%3E") center / contain no-repeat; }
+.torna-articoli { display:inline-block; font-size:0.9rem; color:var(--pb-blu); text-decoration:none; margin-bottom:0.3rem; }
+.torna-articoli:hover { text-decoration:underline; }
 /* On medium screens (tablet) we give the sidebar more room: 25% would be too
    narrow for the fields. We switch to roughly 70/30. */
 @media (max-width: 1200px) and (min-width: 901px) {
@@ -207,22 +233,6 @@ body { background:#f5f6f8; }
 .riga-flag input { width:auto; margin-top:0.2rem; }
 .translation-bar { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; margin:0.8rem 0; }
 .translation-bar button { background:var(--pb-blu); color:#fff; padding:0.5rem 1rem; font-size:0.85rem; border:none; border-radius:var(--pb-radius-sm); cursor:pointer; }
-/* The big blue buttons are the sidebar actions: save, save and close, delete.
-   This rule used to be scoped to .editor-wrap, which was a mistake: at
-   specificity 0-1-1 it beat .btn-suggerisci and .btn-importa-word (0-1-0),
-   so the three AI buttons and the Word import button were drawn full size in
-   blue instead of small and purple, and it beat .translation-bar button too.
-   Scoping it to the action stack is what the original bare "button" rule
-   effectively did, and it takes the fight with those classes away. */
-.sidebar-azioni button { background:var(--pb-blu); color:#fff; padding:0.7rem 1.4rem; border:none; border-radius:var(--pb-radius-sm); font-size:1rem; cursor:pointer; }
-.sidebar-azioni button.delete-btn { background:#cc0000; }
-/* "Save and close" is the secondary of the two: it leaves the editor, so it
-   should not compete with the one you press twenty times while writing. */
-.sidebar-azioni button.btn-salva-chiudi {
-  background:#fff; color:var(--pb-blu); border:1px solid var(--pb-blu);
-  font-size:0.92rem; padding:0.55rem 1.2rem;
-}
-.sidebar-azioni button.btn-salva-chiudi:hover { background:#f0f6ff; }
 /* Readable code blocks in the editor: Quill's native style makes them
    black on black. We force a light background and dark text, as on the public site. */
 .ql-editor pre, .ql-editor pre.ql-syntax {

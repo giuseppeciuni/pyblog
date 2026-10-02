@@ -25,9 +25,10 @@ from core import i18n, render
 from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
 from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, SlugTakenError,
-                           delete_article, html_content_is_empty, load_article,
-                           load_articles, max_image_side, requested_slug,
-                           save_article, save_uploaded_file, validate_upload)
+                           article_for_preview, delete_article,
+                           html_content_is_empty, load_article, load_articles,
+                           max_image_side, requested_slug, save_article,
+                           save_uploaded_file, validate_upload)
 from core.docx_import import convert_docx, looks_like_docx
 from core.auth import (create_session_token, csrf_token_for,
                        csrf_token_is_valid, destroy_all_sessions,
@@ -104,7 +105,7 @@ CSRF_PROTECTED_ROUTES = (
     "/save", "/delete", "/save-config", "/save-config-raw", "/toggle-status",
     "/rebuild", "/upload", "/admin-language", "/change-password",
     "/translate", "/generate-description", "/generate-preview", "/analyze-seo",
-    "/import-docx",
+    "/import-docx", "/preview",
 )
 
 # The files the administration area serves from static/. Naming them makes
@@ -168,7 +169,7 @@ JS_TRANSLATION_KEYS = (
     "js_modello_ads_txt", "js_modello_ga4_doppio", "js_consenso_rinnovato",
     # Shared dialogs, saving, autosave and the Word import
     "admin_chiudi", "admin_annulla", "admin_elimina",
-    "js_article_saved", "js_save_error", "js_unsaved_changes", "js_slug_was_taken",
+    "js_save_error", "js_unsaved_changes", "js_slug_was_taken",
     "js_autosaving", "js_autosaved_at", "js_autosave_failed",
     "js_autosave_needs_title", "js_delete_title", "js_delete_body",
     "js_site_rebuilt_error",
@@ -176,6 +177,11 @@ JS_TRANSLATION_KEYS = (
     "js_docx_overwrite_title", "js_docx_overwrite_body",
     "js_docx_overwrite_confirm", "js_docx_warnings_title",
     "js_docx_wrong_extension", "err_file_too_large",
+    # Editor: publishing, the state of the article
+    "admin_pubblica", "admin_ritira", "js_bozza_salvata", "js_pubblicato",
+    "js_aggiornato", "js_ritirato", "js_pubblica_titolo", "js_pubblica_corpo",
+    "js_ritira_titolo", "js_ritira_corpo", "js_titolo_per_pubblicare",
+    "js_modifiche_da_salvare", "js_aggiornato_alle",
 )
 
 # Toolbar tooltips: CSS selector of the Quill button -> translated label.
@@ -554,20 +560,24 @@ def editor_page(art, csrf):
     # If instead this is a new article (art is None), we start from empty fields.
     if art is not None:
         page_title = T("admin_modifica_articolo_titolo", la)
-        delete_button = (f'<button class="delete-btn" onclick="deleteItem()">'
-                         f'{T("admin_elimina", la)}</button>')
+        # Deleting sits at the very bottom of the sidebar, small: it used to
+        # be a red button as big as Save, right under it.
+        delete_button = (f'<button type="button" class="btn-elimina-articolo" '
+                         f'onclick="deleteItem()">{T("admin_elimina_articolo", la)}</button>')
     else:
         art = {}
         page_title = T("admin_nuovo_articolo_titolo", la)
         delete_button = ""
 
+    # The buttons follow the state of the article: a draft can be saved or
+    # published, a published article updated or taken back. Anything else
+    # on disk is treated as a draft, as everywhere else.
     status = art.get("status", "draft")
-    published_selected = ""
-    draft_selected = ""
-    if status == "published":
-        published_selected = "selected"
-    else:
-        draft_selected = "selected"
+    if status != "published":
+        status = "draft"
+    url_online = ""
+    if art.get("slug", "") != "":
+        url_online = build_module.article_url(art, main_language())
 
     contenuto = render.render(
         "admin/editor.html",
@@ -586,17 +596,23 @@ def editor_page(art, csrf):
         label_carica_video=T("admin_carica_video", la),
         tip_table=esc(T("tip_table", la)),
         label_tabella=T("admin_inserisci_tabella", la),
-        tip_preview=esc(T("tip_preview", la)),
-        label_anteprima=T("admin_mostra_anteprima", la),
-        label_salva=T("admin_salva_genera", la),
-        label_salva_chiudi=T("admin_salva_chiudi", la),
+        label_torna_articoli=T("admin_torna_articoli", la),
+        stato=status,
+        label_stato_bozza=T("admin_stato_bozza", la),
+        hint_stato_bozza=T("admin_stato_bozza_hint", la),
+        label_stato_pubblicato=T("admin_stato_pubblicato", la),
+        url_online=esc(url_online),
+        label_vedi_online=T("admin_vedi_online", la),
+        label_pubblica=T("admin_pubblica", la),
+        tip_pubblica=esc(T("tip_pubblica_articolo", la)),
+        label_aggiorna=T("admin_aggiorna_articolo", la),
+        tip_aggiorna=esc(T("tip_aggiorna_articolo", la)),
+        label_salva_bozza=T("admin_salva_bozza", la),
+        tip_salva_bozza=esc(T("tip_salva_bozza", la)),
+        label_anteprima=T("admin_anteprima_pagina", la),
+        tip_anteprima=esc(T("tip_anteprima_pagina", la)),
+        label_ritira=T("admin_ritira", la),
         bottone_elimina=delete_button,
-        label_sezione_pubblicazione=T("admin_sezione_pubblicazione", la),
-        label_stato=T("admin_stato", la),
-        selected_bozza=draft_selected,
-        label_bozza=T("admin_bozza", la),
-        selected_pubblicato=published_selected,
-        label_pubblicato=T("admin_pubblicato", la),
         label_sezione_metadati=T("admin_sezione_metadati", la),
         valore_slug=esc(art.get("slug", "")),
         label_tag=T("admin_tag", la),
@@ -658,6 +674,8 @@ def editor_page(art, csrf):
         "content_en": art.get("content_en", ""),
         "translation_authorized": art.get("translation_authorized", False),
         "translation_confirmed": art.get("translation_confirmed", False),
+        "status": status,
+        "main_language": main_language(),
         "secondary_language": secondary_language(),
         # The article's choices about the site's code, as saved: admin.js
         # keeps the ones about snippets the editor does not list.
@@ -1730,6 +1748,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if route == "/import-docx":
             self._handle_import_docx()
             return
+        if route == "/preview":
+            self._handle_preview_post()
+            return
 
         data, error = self._read_json_body()
         if error is not None:
@@ -1765,7 +1786,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         form, which is a plain HTML form, sends it as a hidden field.
         """
         submitted = self.headers.get("X-CSRF-Token", "")
-        if submitted == "" and route == "/change-password":
+        if submitted == "" and route in ("/change-password", "/preview"):
             # A form body can only be read once, so we keep it for the handler.
             self._pending_form = self._read_form()
             submitted = self._pending_form.get("csrf_token", [""])[0]
@@ -1814,7 +1835,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if old_slug and old_slug != new_slug:
                 delete_article(old_slug)
             build()  # rebuilds the static HTML right away
-        result = {"ok": True, "slug": new_slug}
+        # The address of the public page, for the editor's "View online".
+        result = {"ok": True, "slug": new_slug,
+                  "url": build_module.article_url({"slug": new_slug}, main_language())}
         wanted = requested_slug(data)
         if old_slug == "" and new_slug != wanted:
             result["notice"] = (T("js_slug_was_taken", la)
@@ -1909,6 +1932,32 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return {"ok": True, "articles": build()}
 
     # --- Password and upload ------------------------------------------------
+
+    def _handle_preview_post(self):
+        """
+        The preview of the article as it is in the editor, unsaved.
+
+        The editor posts its fields in a form that opens in a new tab, and the
+        page comes back as a public page, without the admin CSP, which would
+        block the CDNs and the custom code of the public pages. Nothing is
+        written: previewing a published article must not put its half-done
+        changes online.
+        """
+        form = self._pending_form
+        if form is None:
+            form = self._read_form()
+        try:
+            data = json.loads(form.get("data", ["{}"])[0])
+        except json.JSONDecodeError:
+            data = None
+        if not isinstance(data, dict):
+            self.send_error(400, "Article data missing or malformed.")
+            return
+        language = form.get("language", [main_language()])[0]
+        if language not in ("it", "en"):
+            language = main_language()
+        self._send(generate_article_page(article_for_preview(data), language),
+                   with_csp=False)
 
     def _handle_set_password(self):
         """First run: create the administration password."""

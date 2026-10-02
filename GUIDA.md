@@ -180,13 +180,22 @@ Torna alla redazione (link in alto) e clicca "Nuovo articolo".
    si modifica e si salva come tutti gli altri.
 9. Puoi inserire video YouTube o caricare video dal computer con i pulsanti
    sotto l'editor.
-10. Clicca "Mostra/nascondi anteprima" per vedere come apparira' l'articolo
-   pubblicato, con la stessa grafica del sito vero. L'anteprima si aggiorna
-   mentre scrivi.
-8. Aggiungi i Tag separati da virgola (es. "Python, tutorial").
-9. Lo stato: "Bozza" se non vuoi ancora pubblicarlo, "Pubblicato" per renderlo
-   visibile sul sito.
-10. Clicca "Salva e genera HTML".
+10. Aggiungi i Tag separati da virgola (es. "Python, tutorial").
+11. In cima alla colonna di destra vedi lo stato dell'articolo. Finche' e'
+   una **bozza** ("i lettori non la vedono") hai tre pulsanti:
+   - **Salva bozza** (o Ctrl+S): salva senza pubblicare. Le bozze si
+     salvano anche da sole, ogni minuto;
+   - **Anteprima**: apre in una nuova scheda la pagina com'e' adesso, con la
+     grafica del sito vero, senza salvare niente;
+   - **Pubblica**: dopo una conferma mette l'articolo sul sito, in homepage,
+     nell'archivio e nel feed RSS.
+12. Quando l'articolo e' **pubblicato**, in cima trovi "Vedi online" e i
+   pulsanti cambiano: **Aggiorna l'articolo** (o Ctrl+S) salva e mette
+   subito online le modifiche; **Anteprima** fa vedere le modifiche prima di
+   farlo; **Ritira dalla pubblicazione** toglie la pagina dal sito e
+   l'articolo torna bozza. Sotto i pulsanti una riga ti dice se ci sono
+   "Modifiche non salvate". Per tornare all'elenco usa "Tutti gli articoli"
+   in alto: se c'e' qualcosa da salvare, il browser te lo ricorda.
 
 ### Passo 2.5 — Gestire e aggiornare gli articoli dalla dashboard
 
@@ -201,7 +210,7 @@ amministrazione. Da qui vedi:
 
 Per ogni articolo hai queste azioni rapide:
 - "Modifica": apre l'articolo nell'editor. Fai le tue modifiche e clicca
-  "Salva e genera HTML": l'articolo viene aggiornato e la pagina rigenerata.
+  "Aggiorna l'articolo" (o "Salva bozza", se non e' ancora pubblicato).
 - "Anteprima": apre la pagina pubblicata in una nuova scheda.
 - "Anteprima EN": compare solo se l'articolo ha del contenuto inglese, e apre
   la pagina inglese. Utile per controllare la traduzione prima di confermarla.
@@ -219,8 +228,9 @@ Nell'editor, in fondo alla colonna laterale, c'e' la sezione "Versione inglese":
 1. Spunta "Autorizza la creazione della versione inglese".
 2. Clicca "Traduci automaticamente" (serve una chiave API nelle Impostazioni,
    sezione Traduzione) oppure scrivi la traduzione a mano nei campi EN.
-3. Clicca "Anteprima pagina inglese": l'articolo viene salvato e la pagina
-   inglese si apre in una nuova scheda, esattamente come la vedranno i lettori.
+3. Clicca "Anteprima della pagina in inglese": la pagina inglese si apre in
+   una nuova scheda, esattamente come la vedranno i lettori, senza salvare
+   niente.
 4. Quando la traduzione ti convince, spunta "Conferma la traduzione e pubblica
    la pagina inglese" e salva. Da quel momento l'articolo compare anche nella
    home inglese (`/en/`), nell'archivio inglese e nella sitemap.

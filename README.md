@@ -211,7 +211,7 @@ capped at 30 MB.
 **Writing**
 - WYSIWYG editor (Quill): fonts, sizes, colors, alignment
 - Import from Word (.docx): headings, formatting, nested lists, tables with merged cells, images with alt text, footnotes, links, text boxes
-- Save without leaving the editor, autosave of drafts, Ctrl+S, unsaved-changes warning
+- Buttons that follow the state of the article: Save draft and Publish for a draft, Update and Unpublish for a published one; a preview of the real page that saves nothing; autosave of drafts, Ctrl+S, unsaved-changes warning
 - Resizable images by dragging the corners; PNG/JPEG/SVG upload
 - Syntax-highlighted code blocks (Python, JS and more)
 - Tables (manual or paste from Word), YouTube videos and video upload

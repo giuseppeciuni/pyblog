@@ -1763,8 +1763,10 @@ var slugOriginale = '';
 
 // Whether the editor holds changes that are not on disk yet. It drives three
 // things: the warning when you leave the page, whether the autosave has any
-// work to do, and whether Ctrl+S needs to do anything at all.
+// work to do, and the "Unsaved changes" line under the buttons.
 var editorDirty = false;
+// "draft" or "published", as saved. The buttons of the sidebar follow it.
+var statoArticolo = 'draft';
 // Set while a save is in flight, so the autosave and a manual save cannot
 // overlap and race each other's writes.
 var salvataggioInCorso = false;
@@ -1823,17 +1825,14 @@ function initEditorPage() {
   document.getElementById('translation_authorized').checked = pbPage('translation_authorized', false);
   document.getElementById('translation_confirmed').checked = pbPage('translation_confirmed', false);
   slugOriginale = pbPage('slug', '');
+  statoArticolo = pbPage('status', 'draft');
 
   updateTranslationSection();
   updateDescriptionCounter();
   updatePreviewCounter();
   updateCoverPreview();
 
-  // Every time you type in the editor, update the preview (if it is open).
-  quill.on('text-change', function() {
-    updatePreview();
-    markEditorDirty();
-  });
+  quill.on('text-change', markEditorDirty);
   quillEn.on('text-change', markEditorDirty);
   watchEditorFields();
   // The code of the article: its checkboxes and its own cards.
@@ -1850,7 +1849,7 @@ function initEditorPage() {
 
 // Every field of the form marks the article as changed when it is touched.
 function watchEditorFields() {
-  var campi = ['title', 'slug', 'tags', 'image', 'status', 'description',
+  var campi = ['title', 'slug', 'tags', 'image', 'description',
                'reader_preview', 'title_en', 'description_en', 'preview_en',
                'translation_authorized', 'translation_confirmed'];
   for (var i = 0; i < campi.length; i++) {
@@ -1861,8 +1860,14 @@ function watchEditorFields() {
   }
 }
 
+// A change not on disk yet is said under the buttons: on a published article
+// nothing saves it on its own, and the author should not have to guess.
 function markEditorDirty() {
   editorDirty = true;
+  var riga = document.getElementById('autosave-status');
+  if (riga && !riga.classList.contains('pb-autosave-error')) {
+    riga.textContent = t('js_modifiche_da_salvare');
+  }
 }
 
 function markEditorClean() {
@@ -1882,13 +1887,18 @@ function installUnsavedChangesGuard() {
 }
 
 // Ctrl+S (Cmd+S on a Mac) saves without leaving the editor, which is what
-// the muscle memory of anyone who has used a word processor expects.
+// the muscle memory of anyone who has used a word processor expects: a
+// draft stays a draft, a published article is updated. It never publishes.
 function installSaveShortcut() {
   document.addEventListener('keydown', function(evento) {
     var modificatore = evento.ctrlKey || evento.metaKey;
     if (!modificatore || evento.key.toLowerCase() !== 's') { return; }
     evento.preventDefault();
-    saveArticle(document.getElementById('btn-salva'));
+    if (statoArticolo === 'published') {
+      updateArticle(document.getElementById('btn-aggiorna'));
+    } else {
+      saveDraft(document.getElementById('btn-salva-bozza'));
+    }
   });
 }
 
@@ -1907,8 +1917,7 @@ function startAutosave() {
 
 function autosaveDraft() {
   if (!editorDirty || salvataggioInCorso) { return; }
-  var stato = document.getElementById('status');
-  if (!stato || stato.value !== 'draft') { return; }
+  if (statoArticolo !== 'draft') { return; }
   if (document.getElementById('title').value.trim() === '') {
     pbStatus('autosave-status', t('js_autosave_needs_title'));
     return;
@@ -1916,7 +1925,7 @@ function autosaveDraft() {
 
   salvataggioInCorso = true;
   pbStatus('autosave-status', t('js_autosaving'));
-  pbPostJson('/save', articleData())
+  pbPostJson('/save', articleData('draft'))
     .then(function(res) {
       salvataggioInCorso = false;
       if (res.ok) {
@@ -2357,9 +2366,9 @@ function addOwnCode() {
   card.querySelector('.codice-nome').focus();
 }
 
-// Collects every form field into a single article object.
-// Used both by the save and by the English preview.
-function articleData() {
+// Collects every form field into a single article object, for a save or a
+// preview. stato is the status to save with; without it, the current one.
+function articleData(stato) {
   return {
     title: document.getElementById('title').value,
     slug: document.getElementById('slug').value,
@@ -2368,7 +2377,7 @@ function articleData() {
     content: quill.root.innerHTML,
     tags: document.getElementById('tags').value,
     image: document.getElementById('image').value,
-    status: document.getElementById('status').value,
+    status: stato || statoArticolo,
     original_slug: slugOriginale,
     custom_code_ids: articleCodeIds('optin', true, pbPage('custom_code_ids', [])),
     custom_code_off_ids: articleCodeIds('sempre', false, pbPage('custom_code_off_ids', [])),
@@ -2395,24 +2404,57 @@ function applySavedSlug(res) {
   if (res.notice) { pbToast(res.notice, 'warning'); }
 }
 
-// Saves and STAYS in the editor. Losing the page you were working on after
-// every save is the single most annoying thing a writing tool can do; the
-// toast is enough to tell you it worked.
-function saveArticle(pulsante) {
-  submitArticle(pulsante, false);
+// The panel at the top of the sidebar shows the buttons of the state the
+// article is in, and where the published page lives.
+function updateStatePanel(indirizzo) {
+  var pannello = document.getElementById('pannello-pubblica');
+  if (pannello) { pannello.setAttribute('data-stato', statoArticolo); }
+  var link = document.getElementById('link-online');
+  if (link && indirizzo) { link.setAttribute('href', indirizzo); }
 }
 
-// Saves and goes back to the article list, for when you really are done.
-function saveAndClose(pulsante) {
-  submitArticle(pulsante, true);
+// --- The four things the sidebar can do with an article ---------------------
+// A draft is saved or published; a published article is updated (its
+// changes go online) or taken back to the drafts. Every one of them is a
+// save with a status: what changes is the status and what the author is told.
+
+function saveDraft(pulsante) {
+  saveWithStatus('draft', pulsante, t('js_bozza_salvata'));
 }
 
-function submitArticle(pulsante, chiudiDopo) {
+function updateArticle(pulsante) {
+  saveWithStatus('published', pulsante, t('js_aggiornato'));
+}
+
+// Publishing puts the article on the homepage and in the RSS feed, where a
+// feed reader may pick it up within minutes: it asks first.
+function publishArticle(pulsante) {
+  var titolo = document.getElementById('title').value.trim();
+  if (titolo === '') {
+    pbToast(t('js_titolo_per_pubblicare'), 'warning');
+    document.getElementById('title').focus();
+    return;
+  }
+  pbConfirm(t('js_pubblica_titolo'), t('js_pubblica_corpo').replace('{title}', titolo),
+            t('admin_pubblica'), 'primary', function() {
+    saveWithStatus('published', pulsante, t('js_pubblicato'));
+  });
+}
+
+function unpublishArticle(pulsante) {
+  var titolo = document.getElementById('title').value.trim();
+  pbConfirm(t('js_ritira_titolo'), t('js_ritira_corpo').replace('{title}', titolo),
+            t('admin_ritira'), 'danger', function() {
+    saveWithStatus('draft', pulsante, t('js_ritirato'));
+  });
+}
+
+function saveWithStatus(stato, pulsante, messaggio) {
   if (salvataggioInCorso) { return; }
   salvataggioInCorso = true;
   pbBusy(pulsante, true);
 
-  pbPostJson('/save', articleData())
+  pbPostJson('/save', articleData(stato))
     .then(function(res) {
       salvataggioInCorso = false;
       pbBusy(pulsante, false);
@@ -2421,19 +2463,18 @@ function submitArticle(pulsante, chiudiDopo) {
         return;
       }
       applySavedSlug(res);
+      statoArticolo = stato;
+      updateStatePanel(res.url);
       markEditorClean();
-      setAutosaveIndicator('', false);
-      if (chiudiDopo) {
-        window.location.href = '/admin';
-        return;
-      }
+      var ora = stato === 'published' ? t('js_aggiornato_alle') : t('js_autosaved_at');
+      setAutosaveIndicator(ora.replace('{time}', currentTime()), false);
       // The address bar still says "new article" after the first save of a
       // new one; correcting it means a reload would reopen the right article.
       if (window.history && window.history.replaceState) {
         window.history.replaceState(null, '',
           '/edit?slug=' + encodeURIComponent(res.slug));
       }
-      pbToast(t('js_article_saved'), 'success');
+      pbToast(messaggio, 'success');
     })
     .catch(function() {
       salvataggioInCorso = false;
@@ -2442,28 +2483,36 @@ function submitArticle(pulsante, chiudiDopo) {
     });
 }
 
-// Preview of the translated page: it first SAVES the article (otherwise
-// you would see the version on disk, not the one you are writing), then it
-// opens /preview in the translation's language in a new tab. You stay in the
-// editor.
-function previewEnglish(pulsante) {
-  pbBusy(pulsante, true);
-  pbPostJson('/save', articleData())
-    .then(function(res) {
-      pbBusy(pulsante, false);
-      if (res.ok) {
-        applySavedSlug(res);
-        markEditorClean();
-        window.open('/preview?slug=' + encodeURIComponent(res.slug) + '&language='
-                    + encodeURIComponent(pbPage('secondary_language', 'en')), '_blank');
-      } else {
-        pbToast(t('js_save_error') + ' ' + res.error, 'danger');
-      }
-    })
-    .catch(function() {
-      pbBusy(pulsante, false);
-      pbToast(t('js_save_error'), 'danger');
-    });
+// --- Preview -------------------------------------------------------------------
+
+// Opens the page as it is in the editor right now, in a new tab, and saves
+// nothing: the fields travel in a form posted to /preview, which answers
+// with the public page. Saving first, as the preview of the translation used
+// to, would put the half-done changes of a published article online.
+function previewArticle(lingua) {
+  var modulo = document.createElement('form');
+  modulo.method = 'post';
+  modulo.action = '/preview';
+  modulo.target = '_blank';
+  var campi = {
+    csrf_token: window.PB_CSRF,
+    language: lingua || pbPage('main_language', 'it'),
+    data: JSON.stringify(articleData())
+  };
+  for (var nome in campi) {
+    var campo = document.createElement('input');
+    campo.type = 'hidden';
+    campo.name = nome;
+    campo.value = campi[nome];
+    modulo.appendChild(campo);
+  }
+  document.body.appendChild(modulo);
+  modulo.submit();
+  modulo.remove();
+}
+
+function previewTranslation() {
+  previewArticle(pbPage('secondary_language', 'en'));
 }
 
 function deleteItem() {

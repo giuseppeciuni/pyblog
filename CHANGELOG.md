@@ -62,6 +62,20 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **The editor's buttons follow the state of the article.** "Save and
+  generate HTML" and "Save and close", with the status in a dropdown further
+  down, left the author guessing whether saving would change the live site.
+  The top of the sidebar now says what the article is - a draft readers
+  cannot see, or published, with a link to its page - and offers what makes
+  sense in that state: Save draft, Preview and Publish for a draft; Update,
+  Preview and Unpublish for a published article. Publishing and unpublishing
+  ask for confirmation, a line under the buttons tells about unsaved
+  changes, "All articles" replaces "Save and close", and deleting moved to
+  the bottom of the sidebar.
+- **A preview that saves nothing.** Preview opens the real page as it is in
+  the editor, in a new tab, without writing anything. The preview of the
+  translation used to save the article first, which on a published article
+  put the half-done changes online.
 - **Two-column layout.** The homepage lists the articles on the left, each
   with a thumbnail and a short preview, and keeps a sidebar on the right:
   the introduction, the search, the "Explore" box with the card pages, the

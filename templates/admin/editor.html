@@ -1,4 +1,5 @@
 <div class="editor-wrap">
+<a class="torna-articoli" href="/admin">$label_torna_articoli</a>
 <h1 class="mb-3">$titolo_pagina_h1</h1>
 
 <div class="editor-layout">
@@ -32,29 +33,34 @@
       <input type="file" id="file-video" accept="video/mp4, video/webm, .mp4, .webm" style="display:none" onchange="uploadVideo()">
       <span id="upload-status" class="hint"></span>
     </div>
-
-    <div class="preview-bar">
-      <button type="button" data-tooltip="$tip_preview" onclick="togglePreview()">$label_anteprima</button>
-    </div>
-    <iframe id="preview-iframe" class="preview-frame" style="display:none"></iframe>
   </div>
 
   <!-- SIDEBAR: metadata, reader preview, SEO, status, actions -->
   <aside class="editor-sidebar">
 
-    <div class="sidebar-azioni" style="margin-top:0; padding-top:0; border-top:none">
-      <button id="btn-salva" onclick="saveArticle(this)">$label_salva</button>
-      <button class="btn-salva-chiudi" onclick="saveAndClose(this)">$label_salva_chiudi</button>
+    <!-- Publishing. Every button is in the page; the state of the article,
+         in data-stato, decides which ones show. admin.js changes it after
+         publishing or taking back, without reloading. -->
+    <div class="pannello-pubblica" id="pannello-pubblica" data-stato="$stato">
+      <p class="stato-articolo">
+        <span class="stato-pallino" aria-hidden="true"></span>
+        <span class="solo-bozza"><strong>$label_stato_bozza</strong> &middot; $hint_stato_bozza</span>
+        <span class="solo-pubblicato"><strong>$label_stato_pubblicato</strong> &middot;
+          <a id="link-online" href="$url_online" target="_blank" rel="noopener">$label_vedi_online<span class="icona-esterna" aria-hidden="true"></span></a></span>
+      </p>
+      <button type="button" id="btn-pubblica" class="btn-azione-primaria solo-bozza"
+              title="$tip_pubblica" onclick="publishArticle(this)">$label_pubblica</button>
+      <button type="button" id="btn-aggiorna" class="btn-azione-primaria solo-pubblicato"
+              title="$tip_aggiorna" onclick="updateArticle(this)">$label_aggiorna</button>
+      <div class="riga-azioni">
+        <button type="button" id="btn-salva-bozza" class="btn-azione solo-bozza"
+                title="$tip_salva_bozza" onclick="saveDraft(this)">$label_salva_bozza</button>
+        <button type="button" id="btn-anteprima" class="btn-azione"
+                title="$tip_anteprima" onclick="previewArticle()">$label_anteprima<span class="icona-esterna" aria-hidden="true"></span></button>
+      </div>
       <span id="autosave-status" class="pb-autosave" role="status" aria-live="polite"></span>
-      $bottone_elimina
+      <button type="button" class="link-azione solo-pubblicato" onclick="unpublishArticle(this)">$label_ritira</button>
     </div>
-
-    <h2>$label_sezione_pubblicazione</h2>
-    <label>$label_stato</label>
-    <select id="status">
-      <option value="draft" $selected_bozza>$label_bozza</option>
-      <option value="published" $selected_pubblicato>$label_pubblicato</option>
-    </select>
 
     <h2>$label_sezione_metadati</h2>
     <label>Slug <span class="hint">(URL)</span></label>
@@ -153,7 +159,7 @@ $codice_proprio_modello
         <div id="editor-en"></div>
 
         <div class="translation-bar" style="margin-top:1rem">
-          <button type="button" onclick="previewEnglish(this)">$label_anteprima_en</button>
+          <button type="button" onclick="previewTranslation()">$label_anteprima_en</button>
           <span class="hint">$hint_anteprima_en</span>
         </div>
 
@@ -164,6 +170,7 @@ $codice_proprio_modello
       </div>
     </div>
 
+    $bottone_elimina
   </aside>
 </div>
 </div>

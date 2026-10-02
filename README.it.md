@@ -82,6 +82,7 @@ Scrivi nell'editor → PyBlog salva l'articolo come JSON e rigenera tutte le pag
 
 **Scrittura**
 - Editor WYSIWYG (Quill): font, dimensioni, colori, allineamento
+- Pulsanti che seguono lo stato dell'articolo: Salva bozza e Pubblica per una bozza, Aggiorna e Ritira per un articolo pubblicato; anteprima della pagina vera senza salvare; salvataggio automatico delle bozze, Ctrl+S, avviso per le modifiche non salvate
 - Immagini ridimensionabili trascinando gli angoli; upload PNG/JPEG/SVG
 - Blocchi di codice con evidenziazione sintassi (Python, JS e altri)
 - Tabelle (manuali o copia-incolla da Word), video YouTube e upload video

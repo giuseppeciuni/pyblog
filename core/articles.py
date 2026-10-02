@@ -193,31 +193,25 @@ def own_snippets(value):
     return cleaned
 
 
-def save_article(data, new_article=False):
-    """
-    Save an article as a JSON file. Return the slug it was saved under.
-    The article holds both the main-language and the translated version.
+def original_slug(data):
+    """The slug the article has on disk, as the editor reports it, or ""."""
+    original_text = str(data.get("original_slug", "") or "").strip()
+    if original_text == "":
+        return ""
+    return slugify(original_text)
 
-    Two articles can never share a file, and that is what this function
-    guards. With new_article=True (the first save of an article written in
-    the editor, an imported document) a slug that is already taken gets a
-    number on the end instead of replacing the article that owns it. An
-    existing article renamed onto someone else's slug - original_slug says
-    where it was - raises SlugTakenError before anything is written.
+
+def article_from_data(data, slug):
+    """
+    The article dictionary from what the editor sent, every field cleaned
+    the way a save cleans it. Nothing is written here, and the date is the
+    one the data carries, or None.
+
+    The article holds both the main-language and the translated version.
     """
     title_value = data.get("title", "").strip()
     if title_value == "":
         title_value = "Senza titolo"
-
-    slug = requested_slug(data)
-    original = ""
-    original_text = str(data.get("original_slug", "") or "").strip()
-    if original_text != "":
-        original = slugify(original_text)
-    if new_article:
-        slug = free_slug(slug)
-    elif original != "" and original != slug and (POSTS_DIR / f"{slug}.json").exists():
-        raise SlugTakenError(slug)
 
     # We recover any fields of the English translation.
     # If they are missing, they stay empty strings.
@@ -246,7 +240,7 @@ def save_article(data, new_article=False):
     if status not in ("draft", "published"):
         status = "draft"
 
-    article = {
+    return {
         "title": title_value,
         "slug": slug,
         "description": data.get("description", "").strip(),
@@ -270,24 +264,69 @@ def save_article(data, new_article=False):
         "translation_authorized": translation_authorized,
         "translation_confirmed": translation_confirmed,
     }
-    # If the date was not present, we first try to keep the date of the
-    # article already on disk (the editor does not send the date field:
-    # without this step, every save would reset the publication date).
+
+
+def saved_date(slug, original):
+    """
+    The publication date of the article already on disk, or None.
+
+    The editor does not send the date field: without this, every save would
+    reset the publication date. A renamed article finds it under the slug it
+    had before.
+    """
+    candidates = [POSTS_DIR / f"{slug}.json"]
+    if original != "" and original != slug:
+        candidates.append(POSTS_DIR / f"{original}.json")
+    for candidate in candidates:
+        existing = read_article_file(candidate)
+        if existing is not None:
+            return existing.get("date")
+    return None
+
+
+def save_article(data, new_article=False):
+    """
+    Save an article as a JSON file. Return the slug it was saved under.
+
+    Two articles can never share a file, and that is what this function
+    guards. With new_article=True (the first save of an article written in
+    the editor, an imported document) a slug that is already taken gets a
+    number on the end instead of replacing the article that owns it. An
+    existing article renamed onto someone else's slug - original_slug says
+    where it was - raises SlugTakenError before anything is written.
+    """
+    slug = requested_slug(data)
+    original = original_slug(data)
+    if new_article:
+        slug = free_slug(slug)
+    elif original != "" and original != slug and (POSTS_DIR / f"{slug}.json").exists():
+        raise SlugTakenError(slug)
+
+    article = article_from_data(data, slug)
     if article["date"] is None:
-        candidates = [POSTS_DIR / f"{slug}.json"]
-        if original != "" and original != slug:
-            candidates.append(POSTS_DIR / f"{original}.json")
-        for candidate in candidates:
-            existing = read_article_file(candidate)
-            if existing is not None:
-                article["date"] = existing.get("date")
-                break
+        article["date"] = saved_date(slug, original)
     # If the article is genuinely new, we use the current time.
     if article["date"] is None:
         article["date"] = datetime.now(timezone.utc).isoformat()
 
     write_json_atomically(POSTS_DIR / f"{slug}.json", article)
     return slug
+
+
+def article_for_preview(data):
+    """
+    The article as the editor holds it right now, for the preview: built
+    exactly like a save, and never written. Previewing a published article
+    must not put its half-done changes online. One already on disk keeps
+    its date; a new one gets today's.
+    """
+    original = original_slug(data)
+    article = article_from_data(data, requested_slug(data))
+    if article["date"] is None and original != "":
+        article["date"] = saved_date(original, original)
+    if article["date"] is None:
+        article["date"] = datetime.now(timezone.utc).isoformat()
+    return article
 
 
 def read_article_file(path_value):
