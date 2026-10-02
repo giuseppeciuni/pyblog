@@ -1,39 +1,52 @@
-  <div class="codice-config" data-indice="$indice" data-id="$id_snippet">
-    <div class="codice-intestazione">
-      <label class="riga-flag"><input type="checkbox" class="codice-attivo" $checked> $label_attivo</label>
-      <button type="button" class="btn-rimuovi-cover" onclick="removeCustomCode(this)">$label_elimina</button>
+  <details class="codice-config" data-indice="$indice" data-id="$id_snippet"$aperto>
+    <summary class="codice-sommario">
+      <span class="codice-sommario-nome">$nome_mostrato</span>
+      <span class="codice-sommario-dove">$riassunto</span>
+      <span class="codice-sommario-stato$classe_spento">$stato</span>
+    </summary>
+    <div class="codice-corpo">
+      <div class="codice-intestazione">
+        <label class="riga-flag"><input type="checkbox" class="codice-attivo" $checked> $label_attivo</label>
+        <button type="button" class="btn-rimuovi-cover" onclick="removeCustomCode(this)">$label_elimina</button>
+      </div>
+
+      <label>$label_nome</label>
+      <input type="text" class="codice-nome" value="$nome" placeholder="$ph_nome">
+
+      <div class="codice-griglia">
+        <div>
+          <label>$label_posizione</label>
+          <select class="codice-posizione">
+            <optgroup label="$gruppo_tecnico">
+              <option value="head" $sel_head>$label_pos_head</option>
+              <option value="body_start" $sel_body_start>$label_pos_body_start</option>
+              <option value="body_end" $sel_body_end>$label_pos_body_end</option>
+            </optgroup>
+            <optgroup label="$gruppo_visibile">
+              <option value="nav" $sel_nav>$label_pos_nav</option>
+              <option value="after_header" $sel_after_header>$label_pos_after_header</option>
+              <option value="sidebar" $sel_sidebar>$label_pos_sidebar</option>
+              <option value="home_feed" $sel_home_feed$solo_sito>$label_pos_home_feed</option>
+              <option value="article_start" $sel_article_start>$label_pos_article_start</option>
+              <option value="article_middle" $sel_article_middle>$label_pos_article_middle</option>
+              <option value="article_end" $sel_article_end>$label_pos_article_end</option>
+              <option value="before_footer" $sel_before_footer>$label_pos_before_footer</option>
+            </optgroup>
+          </select>
+        </div>
+$blocco_ambito        <div>
+          <label>$label_consenso</label>
+          <select class="codice-consenso">
+            <option value="necessary" $sel_necessary>$label_cons_necessary</option>
+            <option value="statistics" $sel_statistics>$label_cons_statistics</option>
+            <option value="marketing" $sel_marketing>$label_cons_marketing</option>
+          </select>
+        </div>
+      </div>
+      <p class="hint codice-aiuto">$hint_posizione</p>
+      <p class="hint codice-aiuto">$hint_consenso</p>
+
+      <label>$label_codice</label>
+      <textarea class="codice-testo" rows="8" spellcheck="false">$codice</textarea>
     </div>
-
-    <label>$label_nome</label>
-    <input type="text" class="codice-nome" value="$nome" placeholder="$ph_nome">
-
-    <label>$label_posizione</label>
-    <select class="codice-posizione">
-      <optgroup label="$gruppo_tecnico">
-        <option value="head" $sel_head>$label_pos_head</option>
-        <option value="body_start" $sel_body_start>$label_pos_body_start</option>
-        <option value="body_end" $sel_body_end>$label_pos_body_end</option>
-      </optgroup>
-      <optgroup label="$gruppo_visibile">
-        <option value="nav" $sel_nav>$label_pos_nav</option>
-        <option value="after_header" $sel_after_header>$label_pos_after_header</option>
-        <option value="before_footer" $sel_before_footer>$label_pos_before_footer</option>
-        <option value="article_end" $sel_article_end>$label_pos_article_end</option>
-      </optgroup>
-    </select>
-    <p class="hint" style="margin:0.2rem 0 0">$hint_posizione</p>
-
-    <label>$label_ambito</label>
-    <select class="codice-ambito">
-      <option value="home" $sel_home>$label_scope_home</option>
-      <option value="articles" $sel_solo_articoli>$label_scope_solo_articoli</option>
-      <option value="home_articles" $sel_articles>$label_scope_articles</option>
-      <option value="optin" $sel_solo_optin>$label_scope_solo_optin</option>
-      <option value="home_optin" $sel_optin>$label_scope_optin</option>
-      <option value="all" $sel_tutto>$label_scope_tutto</option>
-    </select>
-    <p class="hint" style="margin:0.2rem 0 0">$hint_ambito</p>
-
-    <label>$label_codice</label>
-    <textarea class="codice-testo" rows="8" spellcheck="false">$codice</textarea>
-  </div>
+  </details>

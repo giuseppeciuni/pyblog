@@ -1,13 +1,13 @@
-  <section id="articles" class="articles-section">
-    <h2 class="articles-heading">$titolo_sezione</h2>
-
-    <div class="search-box">
-      <input type="search" id="search-box-input" placeholder="$placeholder_ricerca"
-             autocomplete="off" aria-label="$aria_ricerca">
-      <p id="search-box-info"></p>
-    </div>
-
-$in_evidenza    <div class="articles-grid" id="lista-articoli">
+      <section id="articles" class="articles-section">
+        <div class="articles-head">
+          <h2 class="articles-heading">$titolo_sezione</h2>
+          <div class="search-box" role="search">
+            <input type="search" id="search-box-input" placeholder="$placeholder_ricerca"
+                   autocomplete="off" aria-label="$aria_ricerca">
+          </div>
+        </div>
+        <p id="search-box-info" aria-live="polite"></p>
+        <div class="articles-list" id="lista-articoli">
 $lista
-    </div>
-$paginazione  </section>
+        </div>
+$paginazione      </section>

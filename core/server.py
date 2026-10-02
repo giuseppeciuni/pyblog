@@ -11,10 +11,10 @@ Everything that changes state is protected three ways: a session cookie, a
 CSRF token bound to that session, and a size limit on the request body.
 """
 import http.server
-import io
 import json
 import mimetypes
 import secrets
+import tempfile
 import time
 import urllib.parse
 import zipfile
@@ -24,10 +24,10 @@ from core import build as build_module
 from core import i18n, render
 from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
-from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, delete_article,
-                           html_content_is_empty, load_article, load_articles,
-                           max_image_side, save_article, save_uploaded_file,
-                           validate_upload)
+from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, SlugTakenError,
+                           delete_article, html_content_is_empty, load_article,
+                           load_articles, max_image_side, requested_slug,
+                           save_article, save_uploaded_file, validate_upload)
 from core.docx_import import convert_docx, looks_like_docx
 from core.auth import (create_session_token, csrf_token_for,
                        csrf_token_is_valid, destroy_all_sessions,
@@ -37,10 +37,10 @@ from core.auth import (create_session_token, csrf_token_for,
                        verify_password)
 from core.build import (BUILD_LOCK, build, compute_reading_time, format_date,
                         generate_article_page)
-from core.config import (CONFIG, CONFIG_FILE, OUTPUT_DIR, PORT, POSTS_DIR,
-                         admin_language, load_config, reload_global_config,
-                         save_config)
-from core.i18n import T
+from core.config import (CONFIG, CONFIG_FILE, MEDIA_DIR, OUTPUT_DIR, PORT,
+                         POSTS_DIR, admin_language, load_config, main_language,
+                         reload_global_config, save_config, secondary_language)
+from core.i18n import LANGUAGE_NAMES, T
 from core.render import esc, js, js_attr
 
 # Bootstrap version loaded from a CDN for all the administration pages.
@@ -52,6 +52,21 @@ QUILL_JS = "https://cdn.quilljs.com/1.3.7/quill.min.js"
 BLOT_FORMATTER_JS = "https://unpkg.com/quill-blot-formatter@1.0.5/dist/quill-blot-formatter.min.js"
 HLJS_CSS = "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css"
 HLJS_JS = "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"
+
+# CodeMirror 5 for the boxes of the custom code: colours, line numbers and
+# indentation instead of a bare textarea. Only the two pages with such boxes
+# load it, and admin.js keeps the textarea when the CDN does not answer.
+# htmlmixed needs the three modes before it to colour the scripts and styles
+# inside the HTML.
+CODEMIRROR_BASE = "https://cdn.jsdelivr.net/npm/codemirror@5.65.16"
+CODEMIRROR_CSS = CODEMIRROR_BASE + "/lib/codemirror.min.css"
+CODEMIRROR_JS = (
+    CODEMIRROR_BASE + "/lib/codemirror.min.js",
+    CODEMIRROR_BASE + "/mode/xml/xml.min.js",
+    CODEMIRROR_BASE + "/mode/javascript/javascript.min.js",
+    CODEMIRROR_BASE + "/mode/css/css.min.js",
+    CODEMIRROR_BASE + "/mode/htmlmixed/htmlmixed.min.js",
+)
 
 # Content-Security-Policy for the administration pages. It allows this origin
 # plus exactly the CDNs the editor really loads, and nothing else: a script
@@ -143,9 +158,17 @@ JS_TRANSLATION_KEYS = (
     "admin_codice_titolo", "admin_codice_elimina",
     "admin_salvataggio", "admin_config_salvata", "admin_errore_salvataggio",
     "admin_config_raw_salvata", "err_invalid_json_prefix",
+    # Custom code: the folded summary of a card, the ready-made templates,
+    # the consent banner
+    "admin_codice_attivo", "admin_codice_spento", "admin_codice_senza_nome",
+    "consenso_necessary", "consenso_statistics", "consenso_marketing",
+    "js_modello_campo_ga4", "js_modello_campo_gtm", "js_modello_campo_pub",
+    "js_modello_campo_slot", "js_modello_campo_aw", "js_modello_campo_pixel",
+    "js_modello_campo_clarity", "js_modello_non_valido", "js_modello_creato",
+    "js_modello_ads_txt", "js_modello_ga4_doppio", "js_consenso_rinnovato",
     # Shared dialogs, saving, autosave and the Word import
     "admin_chiudi", "admin_annulla", "admin_elimina",
-    "js_article_saved", "js_save_error", "js_unsaved_changes",
+    "js_article_saved", "js_save_error", "js_unsaved_changes", "js_slug_was_taken",
     "js_autosaving", "js_autosaved_at", "js_autosave_failed",
     "js_autosave_needs_title", "js_delete_title", "js_delete_body",
     "js_site_rebuilt_error",
@@ -187,6 +210,31 @@ TOOLBAR_TOOLTIP_KEYS = (
 )
 
 
+def fill_languages(text, language):
+    """
+    Put the names of the site's two languages into an interface label.
+
+    The translation goes from the main language to the other one, and which
+    is which depends on the site: Italian to English, or English to Italian.
+    The labels say {principale} and {lingua} instead of naming them, and
+    {CODICE} is the short code of the translation ("EN" or "IT").
+    """
+    main = main_language()
+    other = secondary_language()
+    main_name = LANGUAGE_NAMES[main].get(language, LANGUAGE_NAMES[main]["it"])
+    other_name = LANGUAGE_NAMES[other].get(language, LANGUAGE_NAMES[other]["it"])
+    return (text.replace("{principale}", main_name)
+                .replace("{Principale}", main_name[:1].upper() + main_name[1:])
+                .replace("{lingua}", other_name)
+                .replace("{Lingua}", other_name[:1].upper() + other_name[1:])
+                .replace("{CODICE}", other.upper()))
+
+
+def TL(key, language):
+    """T() for the labels that name the site's languages."""
+    return fill_languages(T(key, language), language)
+
+
 def js_translations(language):
     """
     Build the object injected as window.PB_I18N: the strings admin.js needs,
@@ -194,6 +242,8 @@ def js_translations(language):
     always needed in both languages, one per editor).
     """
     result = i18n.subset(JS_TRANSLATION_KEYS, language)
+    for key in result:
+        result[key] = fill_languages(result[key], language)
 
     tooltips = {}
     for selector, key in TOOLBAR_TOOLTIP_KEYS:
@@ -404,20 +454,22 @@ def admin_page(articles, csrf):
             status_label = T("admin_pubblica", la)
             status_class = "btn-outline-success"
 
-        # We show a badge if the article has an English version.
+        # We show a badge if the article has a translated version.
+        other = secondary_language()
         badge_en = ""
         if art.get("translation_confirmed", False):
-            badge_en = '<span class="badge bg-info-subtle text-info-emphasis ms-1">EN</span>'
+            badge_en = ('<span class="badge bg-info-subtle text-info-emphasis ms-1">'
+                        + other.upper() + '</span>')
 
-        # Preview of the English page: the link appears as soon as some
-        # English content exists (even if not confirmed yet), so that you
+        # Preview of the translated page: the link appears as soon as some
+        # translated content exists (even if not confirmed yet), so that you
         # can check the translation BEFORE confirming it.
         preview_en_link = ""
         if not html_content_is_empty(art.get("content_en", "")):
             preview_en_link = (
                 f'<a class="btn btn-sm btn-outline-secondary" '
-                f'href="/preview?slug={esc(art["slug"])}&amp;language=en" target="_blank">'
-                f'{T("admin_anteprima", la)} EN</a>')
+                f'href="/preview?slug={esc(art["slug"])}&amp;language={other}" target="_blank">'
+                f'{T("admin_anteprima", la)} {other.upper()}</a>')
 
         # Sorting happens in the browser, so every row carries the keys it
         # can be sorted by. Drafts sort first, because they are the ones
@@ -487,6 +539,11 @@ def admin_page(articles, csrf):
         T("admin_titolo_pagina", la) + " - " + CONFIG["site_title"],
         contenuto, la, csrf=csrf, navbar=admin_navbar("articles", la),
         page_data={"page": "dashboard"})
+
+
+def codemirror_scripts():
+    """The script tags of CodeMirror and of the modes it needs, in order."""
+    return "\n".join(f'<script src="{url}"></script>' for url in CODEMIRROR_JS)
 
 
 def editor_page(art, csrf):
@@ -561,15 +618,21 @@ def editor_page(art, csrf):
         label_analisi_seo=T("admin_analisi_seo", la),
         hint_analisi_seo=T("admin_analisi_seo_hint", la),
         label_analizza=T("admin_analizza_seo", la),
-        label_versione_inglese=T("admin_versione_inglese", la),
-        label_autorizza=T("admin_autorizza_traduzione", la),
+        label_versione_inglese=TL("admin_versione_inglese", la),
+        label_autorizza=TL("admin_autorizza_traduzione", la),
         label_traduci=T("admin_traduci_auto", la),
-        label_anteprima_en=T("admin_anteprima_en", la),
-        hint_anteprima_en=T("admin_anteprima_en_hint", la),
-        label_conferma_traduzione=T("admin_conferma_traduzione", la),
+        label_anteprima_en=TL("admin_anteprima_en", la),
+        hint_anteprima_en=TL("admin_anteprima_en_hint", la),
+        label_conferma_traduzione=TL("admin_conferma_traduzione", la),
+        codice_traduzione=secondary_language().upper(),
         label_codice_titolo=T("admin_codice_articolo_titolo", la),
         hint_codice=T("admin_codice_articolo_hint", la),
         codice_articolo_html=article_custom_code_html(art, la),
+        label_codice_proprio=T("admin_codice_proprio_titolo", la),
+        hint_codice_proprio=T("admin_codice_proprio_hint", la),
+        codice_proprio_html=article_own_code_html(art, la),
+        codice_proprio_modello=custom_code_blank_card(la, own=True),
+        label_codice_proprio_aggiungi=T("admin_codice_proprio_aggiungi", la),
     )
 
     # The article content and the translation flags travel as JSON, never as
@@ -595,13 +658,20 @@ def editor_page(art, csrf):
         "content_en": art.get("content_en", ""),
         "translation_authorized": art.get("translation_authorized", False),
         "translation_confirmed": art.get("translation_confirmed", False),
+        "secondary_language": secondary_language(),
+        # The article's choices about the site's code, as saved: admin.js
+        # keeps the ones about snippets the editor does not list.
+        "custom_code_ids": list(build_module.article_snippet_ids(art)),
+        "custom_code_off_ids": list(build_module.article_off_ids(art)),
     }
 
     head_extra = (f'<link href="{QUILL_CSS}" rel="stylesheet">\n'
                   f'<link href="{HLJS_CSS}" rel="stylesheet">\n'
+                  f'<link href="{CODEMIRROR_CSS}" rel="stylesheet">\n'
                   f'<script src="{HLJS_JS}"></script>')
     script_extra = (f'<script src="{QUILL_JS}"></script>\n'
-                    f'<script src="{BLOT_FORMATTER_JS}"></script>')
+                    f'<script src="{BLOT_FORMATTER_JS}"></script>\n'
+                    + codemirror_scripts())
 
     return admin_page_shell(page_title, contenuto, la, csrf=csrf,
                             navbar=admin_navbar("articles", la),
@@ -646,61 +716,127 @@ def with_snippet_ids(snippets):
     return cleaned
 
 
-def custom_code_card(snippet, index_value, la):
+# The positions of a snippet, with the key of their label, in the order the
+# dropdown lists them.
+POSITION_LABEL_KEYS = {
+    "head": "admin_codice_pos_head",
+    "body_start": "admin_codice_pos_body_start",
+    "body_end": "admin_codice_pos_body_end",
+    "nav": "admin_codice_pos_nav",
+    "after_header": "admin_codice_pos_after_header",
+    "sidebar": "admin_codice_pos_sidebar",
+    "home_feed": "admin_codice_pos_home_feed",
+    "article_start": "admin_codice_pos_article_start",
+    "article_middle": "admin_codice_pos_article_middle",
+    "article_end": "admin_codice_pos_article_end",
+    "before_footer": "admin_codice_pos_before_footer",
+}
+
+SCOPE_LABEL_KEYS = {
+    "all": "admin_codice_scope_tutto",
+    "home": "admin_codice_scope_home",
+    "articles": "admin_codice_scope_solo_articoli",
+    "home_articles": "admin_codice_scope_articles",
+    "optin": "admin_codice_scope_solo_optin",
+    "home_optin": "admin_codice_scope_optin",
+}
+
+
+def snippet_summary(snippet, la, own=False):
     """
-    Build one settings card for a custom code snippet.
+    The line under the name of a folded card: where the code goes, on which
+    pages, and whether it waits for consent. A long list of cards can then be
+    read without opening any of them.
+    """
+    position = snippet.get("position", "head")
+    pieces = [T(POSITION_LABEL_KEYS.get(position, "admin_codice_pos_head"), la)]
+    if not own:
+        pieces.append(T(SCOPE_LABEL_KEYS.get(snippet.get("scope", "home"),
+                                             "admin_codice_scope_home"), la))
+    consent = snippet.get("consent", "necessary")
+    if consent not in ("necessary", "statistics", "marketing"):
+        consent = "necessary"
+    pieces.append(T("consenso_" + consent, la))
+    return " · ".join(pieces)
+
+
+def custom_code_card(snippet, index_value, la, own=False, open_card=False):
+    """
+    Build one card for a custom code snippet: a folded summary, and the
+    fields underneath.
 
     The id travels in a data attribute rather than a field: it is machinery,
     not something to edit. admin.js reads it back when saving so a snippet
     keeps the same id across saves, and the articles keep pointing at it.
+
+    own=True is the card of a snippet written inside an article: it has no
+    "on which pages" choice, because its page is the article.
     """
     position = snippet.get("position", "head")
     scope = snippet.get("scope", "home")
-    return render.render(
-        "admin/custom_code_card.html",
-        indice=index_value,
-        id_snippet=esc(snippet.get("id", "")),
-        checked=checked_if(snippet.get("enabled", False)),
-        label_attivo=T("admin_codice_attivo", la),
-        label_elimina=T("admin_codice_elimina", la),
-        label_nome=T("admin_codice_nome", la),
-        nome=esc(snippet.get("name", "")),
-        ph_nome=esc(T("admin_codice_nome_ph", la)),
-        label_posizione=T("admin_codice_posizione", la),
-        gruppo_tecnico=T("admin_codice_pos_gruppo_tecnico", la),
-        sel_head=selected_if(position, "head"),
-        label_pos_head=T("admin_codice_pos_head", la),
-        sel_body_start=selected_if(position, "body_start"),
-        label_pos_body_start=T("admin_codice_pos_body_start", la),
-        sel_body_end=selected_if(position, "body_end"),
-        label_pos_body_end=T("admin_codice_pos_body_end", la),
-        gruppo_visibile=T("admin_codice_pos_gruppo_visibile", la),
-        sel_nav=selected_if(position, "nav"),
-        label_pos_nav=T("admin_codice_pos_nav", la),
-        sel_after_header=selected_if(position, "after_header"),
-        label_pos_after_header=T("admin_codice_pos_after_header", la),
-        sel_before_footer=selected_if(position, "before_footer"),
-        label_pos_before_footer=T("admin_codice_pos_before_footer", la),
-        sel_article_end=selected_if(position, "article_end"),
-        label_pos_article_end=T("admin_codice_pos_article_end", la),
-        hint_posizione=T("admin_codice_pos_hint", la),
-        label_ambito=T("admin_codice_ambito", la),
-        sel_home=selected_if(scope, "home"),
-        label_scope_home=T("admin_codice_scope_home", la),
-        sel_solo_articoli=selected_if(scope, "articles"),
-        label_scope_solo_articoli=T("admin_codice_scope_solo_articoli", la),
-        sel_articles=selected_if(scope, "home_articles"),
-        label_scope_articles=T("admin_codice_scope_articles", la),
-        sel_solo_optin=selected_if(scope, "optin"),
-        label_scope_solo_optin=T("admin_codice_scope_solo_optin", la),
-        sel_optin=selected_if(scope, "home_optin"),
-        label_scope_optin=T("admin_codice_scope_optin", la),
-        sel_tutto=selected_if(scope, "all"),
-        label_scope_tutto=T("admin_codice_scope_tutto", la),
-        hint_ambito=T("admin_codice_scope_hint", la),
-        label_codice=T("admin_codice_codice", la),
-        codice=esc(snippet.get("code", "")),
-    ).rstrip("\n")
+    consent = snippet.get("consent", "necessary")
+    enabled = snippet.get("enabled", False) is True
+    name = snippet.get("name", "")
+    shown_name = name
+    if shown_name.strip() == "":
+        shown_name = T("admin_codice_senza_nome", la)
+
+    scope_block = ""
+    if not own:
+        scope_block = render.render(
+            "admin/custom_code_scope.html",
+            label_ambito=T("admin_codice_ambito", la),
+            sel_tutto=selected_if(scope, "all"),
+            label_scope_tutto=T("admin_codice_scope_tutto", la),
+            sel_home=selected_if(scope, "home"),
+            label_scope_home=T("admin_codice_scope_home", la),
+            sel_solo_articoli=selected_if(scope, "articles"),
+            label_scope_solo_articoli=T("admin_codice_scope_solo_articoli", la),
+            sel_articles=selected_if(scope, "home_articles"),
+            label_scope_articles=T("admin_codice_scope_articles", la),
+            sel_solo_optin=selected_if(scope, "optin"),
+            label_scope_solo_optin=T("admin_codice_scope_solo_optin", la),
+            sel_optin=selected_if(scope, "home_optin"),
+            label_scope_optin=T("admin_codice_scope_optin", la),
+            hint_ambito=T("admin_codice_scope_hint", la),
+        )
+
+    values = {
+        "indice": index_value,
+        "id_snippet": esc(snippet.get("id", "")),
+        "aperto": " open" if open_card else "",
+        "nome_mostrato": esc(shown_name),
+        "riassunto": esc(snippet_summary(snippet, la, own)),
+        "stato": T("admin_codice_attivo", la) if enabled else T("admin_codice_spento", la),
+        "classe_spento": "" if enabled else " spento",
+        "checked": checked_if(enabled),
+        "label_attivo": T("admin_codice_attivo", la),
+        "label_elimina": T("admin_codice_elimina", la),
+        "label_nome": T("admin_codice_nome", la),
+        "nome": esc(name),
+        "ph_nome": esc(T("admin_codice_nome_ph", la)),
+        "label_posizione": T("admin_codice_posizione", la),
+        "gruppo_tecnico": T("admin_codice_pos_gruppo_tecnico", la),
+        "gruppo_visibile": T("admin_codice_pos_gruppo_visibile", la),
+        "blocco_ambito": scope_block,
+        "label_consenso": T("admin_codice_consenso", la),
+        "sel_necessary": selected_if(consent, "necessary"),
+        "label_cons_necessary": T("admin_codice_cons_necessary", la),
+        "sel_statistics": selected_if(consent, "statistics"),
+        "label_cons_statistics": T("admin_codice_cons_statistics", la),
+        "sel_marketing": selected_if(consent, "marketing"),
+        "label_cons_marketing": T("admin_codice_cons_marketing", la),
+        # The homepage list is no place for code that belongs to one article.
+        "solo_sito": " hidden disabled" if own else "",
+        "hint_posizione": T("admin_codice_pos_hint_proprio" if own else "admin_codice_pos_hint", la),
+        "hint_consenso": T("admin_codice_consenso_hint_proprio" if own else "admin_codice_consenso_hint", la),
+        "label_codice": T("admin_codice_codice", la),
+        "codice": esc(snippet.get("code", "")),
+    }
+    for key, label_key in POSITION_LABEL_KEYS.items():
+        values["sel_" + key] = selected_if(position, key)
+        values["label_pos_" + key] = T(label_key, la)
+    return render.render("admin/custom_code_card.html", **values).rstrip("\n")
 
 
 def custom_code_cards(config, la):
@@ -719,76 +855,78 @@ def custom_code_cards(config, la):
     return "\n".join(parts)
 
 
-def custom_code_blank_card(la):
+def custom_code_blank_card(la, own=False):
     """
     The empty card that the "Add code" button clones, rendered once into a
     <template>. Cloning beats building the markup in JavaScript: the fields
     and their translated labels stay defined in the one template file, so
-    they cannot drift apart. A new snippet starts active, because you add one
-    in order to use it.
+    they cannot drift apart. A new snippet starts active and open, because
+    you add one in order to use it.
+
+    Code written for one article is mostly something to see there - an ad,
+    an embed, a widget - so its card starts at the end of the text.
     """
-    return custom_code_card({"enabled": True}, 0, la)
+    blank = {"enabled": True, "scope": "all", "position": "head"}
+    if own:
+        blank = {"enabled": True, "position": "article_end"}
+    return custom_code_card(blank, 0, la, own=own, open_card=True)
 
 
 def article_custom_code_html(art, la):
     """
-    Build the custom code list shown in the article editor.
+    The site-wide snippets that can reach this article, one checkbox each.
 
-    Only the snippets scoped to the selected articles get a checkbox: they
-    are the ones this article decides about. The ones running on every
-    article anyway are listed underneath, as plain text, so you can see what
-    is already on the page without opening the Settings in another tab.
+    A snippet scoped to "selected articles" is off until ticked here. One
+    that goes on every article is on until unticked here: that is how a
+    single article says no to an advertisement the others carry. Snippets
+    that never reach an article (homepage only) are not listed.
     """
     snippets = CONFIG.get("custom_code", [])
     if not isinstance(snippets, list):
         snippets = []
-    enabled_ids = build_module.article_snippet_ids(art)
+    ticked = build_module.article_snippet_ids(art)
+    switched_off = build_module.article_off_ids(art)
 
-    labels = {
-        "head": T("admin_codice_pos_head", la),
-        "body_start": T("admin_codice_pos_body_start", la),
-        "body_end": T("admin_codice_pos_body_end", la),
-        "after_header": T("admin_codice_pos_after_header", la),
-        "nav": T("admin_codice_pos_nav", la),
-        "before_footer": T("admin_codice_pos_before_footer", la),
-        "article_end": T("admin_codice_pos_article_end", la),
-    }
-
-    choices = []
-    always_on = []
+    rows = []
     for snippet in snippets:
         if not isinstance(snippet, dict):
             continue
         if snippet.get("enabled", False) is not True:
             continue
+        scope = snippet.get("scope", "home")
+        if scope not in ("optin", "home_optin", "articles", "home_articles", "all"):
+            continue
         snippet_id = str(snippet.get("id", ""))
         name = esc(snippet.get("name", "")) or esc(snippet_id)
-        where = esc(labels.get(snippet.get("position", "head"), ""))
-        scope = snippet.get("scope", "home")
-        if scope in ("optin", "home_optin"):
-            checked = ""
-            if snippet_id in enabled_ids:
-                checked = " checked"
-            choices.append(
-                '<label class="riga-flag codice-articolo-riga">'
-                f'<input type="checkbox" class="codice-articolo" '
-                f'value="{esc(snippet_id)}"{checked}> {name} '
-                f'<span class="hint">({where})</span></label>')
-        elif scope in ("articles", "home_articles", "all"):
-            always_on.append(f'<li>{name} <span class="hint">({where})</span></li>')
+        optin = scope in ("optin", "home_optin")
+        if optin:
+            checked = " checked" if snippet_id in ticked else ""
+            kind = T("admin_codice_articolo_scelto", la)
+        else:
+            checked = "" if snippet_id in switched_off else " checked"
+            kind = T("admin_codice_articolo_sempre", la)
+        where = esc(T(POSITION_LABEL_KEYS.get(snippet.get("position", "head"),
+                                              "admin_codice_pos_head"), la))
+        rows.append(
+            '<label class="riga-flag codice-articolo-riga">'
+            f'<input type="checkbox" class="codice-articolo" value="{esc(snippet_id)}"'
+            f' data-tipo="{"optin" if optin else "sempre"}"{checked}> {name} '
+            f'<span class="hint">({where}, {esc(kind)})</span></label>')
 
-    if len(choices) == 0:
-        parts = [f'<p class="hint">{T("admin_codice_articolo_vuoto", la)}</p>']
-    else:
-        parts = choices
+    if len(rows) == 0:
+        return f'<p class="hint">{T("admin_codice_articolo_vuoto", la)}</p>'
+    return "\n".join(rows)
 
-    if len(always_on) > 0:
-        parts.append(f'<p class="hint" style="margin:0.6rem 0 0.2rem">'
-                     f'{T("admin_codice_articolo_sempre", la)}</p>'
-                     f'<ul class="hint codice-sempre-attivi">'
-                     + "".join(always_on) + "</ul>")
 
+def article_own_code_html(art, la):
+    """The cards of the snippets written inside this article."""
+    parts = []
+    index_value = 0
+    for snippet in build_module.article_own_snippets(art):
+        parts.append(custom_code_card(snippet, index_value, la, own=True))
+        index_value = index_value + 1
     return "\n".join(parts)
+
 
 
 def config_placeholders(language):
@@ -874,23 +1012,14 @@ def config_page(csrf):
         ai_training = {}
     ai_policy = ai_training.get("policy", "open")
 
-    # --- Homepage structure: three dropdowns, one per position ---
-    order = config.get("home_order", ["intro", "cards", "articles"])
-    if not isinstance(order, list) or len(order) != 3:
-        order = ["intro", "cards", "articles"]
-    sezioni = ("intro", "cards", "articles")
-    order_selects = []
-    for posizione in range(3):
-        choices = []
-        for section_name in sezioni:
-            selected = ""
-            if order[posizione] == section_name:
-                selected = " selected"
-            label = T("admin_section_" + section_name, la)
-            choices.append(f'<option value="{section_name}"{selected}>{label}</option>')
-        order_selects.append(
-            f'<select class="ordine-home" id="ordine_home_{posizione}">'
-            + "".join(choices) + "</select>")
+    # The consent banner, with the defaults filled in the same way the build
+    # fills them: what the form shows is what the site does.
+    consent = build_module.consent_settings(config)
+
+    # --- Homepage: where the introduction goes, how long the excerpts are ---
+    intro_position = config.get("home_intro_position", "sidebar")
+    if intro_position not in ("sidebar", "top"):
+        intro_position = "sidebar"
 
     # --- Editorial cards: one WYSIWYG editor each, filled in by admin.js ---
     card_lista = config.get("home_cards", [])
@@ -937,9 +1066,9 @@ def config_page(csrf):
         tip_preview=esc(T("tip_preview", la)),
         label_mostra_anteprima_home=T("admin_mostra_anteprima_home", la),
         hint_come_appare=T("admin_come_appare_home", la),
-        label_presentazione_inglese=T("admin_presentazione_inglese", la),
-        hint_presentazione_en=T("admin_presentazione_en_hint", la),
-        label_traduci_italiano=T("admin_traduci_dall_italiano", la),
+        label_presentazione_inglese=TL("admin_presentazione_inglese", la),
+        hint_presentazione_en=TL("admin_presentazione_en_hint", la),
+        label_traduci_italiano=TL("admin_traduci_dall_italiano", la),
         label_card_home=T("admin_card_home_titolo", la),
         hint_card_home=T("admin_card_home_hint", la),
         checked_card_home_attiva=checked_if(config.get("home_cards_enabled", True)),
@@ -952,6 +1081,34 @@ def config_page(csrf):
         codice_modello=custom_code_blank_card(la),
         label_codice_vuoto=T("admin_codice_vuoto", la),
         label_codice_aggiungi=T("admin_codice_aggiungi", la),
+        label_codice_modelli=T("admin_codice_modelli", la),
+        hint_codice_modelli=T("admin_codice_modelli_hint", la),
+        label_modello_libero=T("admin_codice_libero", la),
+        label_modello_adsense_auto=T("admin_modello_adsense_auto", la),
+        label_modello_adsense_unita=T("admin_modello_adsense_unita", la),
+        label_modello_google_ads=T("admin_modello_google_ads", la),
+        label_modello_altri=esc(T("admin_modello_altri", la)),
+        label_codice_crea=T("admin_codice_crea", la),
+        label_annulla_scelta=T("admin_annulla_scelta", la),
+        label_ads_txt=T("admin_ads_txt", la),
+        hint_ads_txt=T("admin_ads_txt_hint", la),
+        valore_ads_txt=esc(config.get("ads_txt", "")),
+        label_consenso_titolo=T("admin_consenso_titolo", la),
+        hint_consenso=T("admin_consenso_intro", la),
+        checked_consenso=checked_if(consent["enabled"]),
+        label_consenso_attivo=T("admin_consenso_attivo", la),
+        label_consenso_testo=T("admin_consenso_testo", la),
+        hint_consenso_testo=T("admin_consenso_testo_hint", la),
+        valore_consenso_testo=esc(consent["text"]),
+        ph_consenso_testo=esc(T("consenso_testo", main_language())),
+        label_consenso_testo_en=TL("admin_consenso_testo_en", la),
+        valore_consenso_testo_en=esc(consent["text_en"]),
+        ph_consenso_testo_en=esc(T("consenso_testo", secondary_language())),
+        label_consenso_privacy=T("admin_consenso_privacy", la),
+        valore_consenso_privacy=esc(consent["privacy_url"]),
+        ph_consenso_privacy=ph["base_url"] + "/privacy.html",
+        label_consenso_rinnova=T("admin_consenso_rinnova", la),
+        hint_consenso_rinnova=T("admin_consenso_rinnova_hint", la),
         label_impostazioni_generali=T("admin_impostazioni_generali", la),
         label_titolo_sito=T("admin_titolo_sito", la),
         valore_titolo_sito=esc(config.get("site_title", "")),
@@ -978,13 +1135,19 @@ def config_page(csrf):
         ph_umami_website_id=ph["umami_website_id"],
         label_lingua_principale=T("admin_lingua_principale", la),
         hint_lingua_principale=T("admin_lingua_principale_hint", la),
-        valore_lingua=esc(site_language),
+        sel_lingua_it=selected_if(site_language, "it"),
+        sel_lingua_en=selected_if(site_language, "en"),
         label_layout=T("admin_layout_titolo", la),
         hint_layout=T("admin_layout_hint", la),
-        label_posizione=T("admin_posizione", la),
-        select_ordine_0=order_selects[0],
-        select_ordine_1=order_selects[1],
-        select_ordine_2=order_selects[2],
+        label_intro_posizione=T("admin_intro_posizione", la),
+        hint_intro_posizione=T("admin_intro_posizione_hint", la),
+        sel_intro_barra=selected_if(intro_position, "sidebar"),
+        label_intro_barra=T("admin_intro_barra", la),
+        sel_intro_sopra=selected_if(intro_position, "top"),
+        label_intro_sopra=T("admin_intro_sopra", la),
+        label_parole_anteprima=T("admin_parole_anteprima", la),
+        hint_parole_anteprima=T("admin_parole_anteprima_hint", la),
+        valore_parole_anteprima=esc(config.get("home_excerpt_words", 40)),
         label_articoli_per_pagina=T("admin_articoli_per_pagina", la),
         hint_articoli_per_pagina=T("admin_articoli_per_pagina_hint", la),
         valore_articoli_per_pagina=esc(config.get("articles_per_page", 10)),
@@ -1057,7 +1220,7 @@ def config_page(csrf):
         valore_giscus_theme=esc(giscus.get("theme", "light")),
         hint_disqus=T("admin_disqus_hint", la),
         valore_disqus_shortname=esc(disqus.get("shortname", "")),
-        label_traduzione=T("admin_traduzione_titolo", la),
+        label_traduzione=TL("admin_traduzione_titolo", la),
         hint_traduzione=T("admin_traduzione_intro", la),
         label_servizio_traduzione=T("admin_servizio_traduzione", la),
         sel_deepl=selected_if(translation_service, "deepl"),
@@ -1097,11 +1260,16 @@ def config_page(csrf):
         "home_content_en": config.get("home_content_en", ""),
         "card_contents": card_contents,
         "config_raw": json.dumps(config, ensure_ascii=False, indent=2),
+        # "Ask everyone again" raises this number by one; the visitors'
+        # browsers keep the number their choice was made under.
+        "consent_version": consent["version"],
     }
 
-    head_extra = f'<link href="{QUILL_CSS}" rel="stylesheet">'
+    head_extra = (f'<link href="{QUILL_CSS}" rel="stylesheet">\n'
+                  f'<link href="{CODEMIRROR_CSS}" rel="stylesheet">')
     script_extra = (f'<script src="{QUILL_JS}"></script>\n'
-                    f'<script src="{BLOT_FORMATTER_JS}"></script>')
+                    f'<script src="{BLOT_FORMATTER_JS}"></script>\n'
+                    + codemirror_scripts())
 
     return admin_page_shell(T("admin_impostazioni_titolo", la), contenuto, la,
                             csrf=csrf, navbar=admin_navbar("config", la),
@@ -1190,6 +1358,35 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if piece.startswith("sessione="):
                 return piece[len("sessione="):]
         return None
+
+    def _client_address(self):
+        """
+        The address a request really comes from, for the login lock.
+
+        Behind nginx every request reaches us from 127.0.0.1, so on its own
+        the connection address would put every visitor in the same bucket
+        and one of them could lock out all the others. The reverse proxy
+        writes the visitor's address in a header, and we read it - but only
+        when the request does come from this machine. Someone talking to the
+        server directly could write any header they like; the proxy is the
+        only one we believe.
+
+        X-Real-IP comes first: when nginx sets it, it overwrites whatever the
+        visitor sent. Otherwise the LAST address of X-Forwarded-For, which is
+        the one nginx itself appended; the ones before it come from the
+        visitor and prove nothing.
+        """
+        peer = ""
+        if self.client_address:
+            peer = str(self.client_address[0])
+        if peer.startswith("127.") or peer in ("::1", "::ffff:127.0.0.1"):
+            real_ip = self.headers.get("X-Real-IP", "").strip()
+            if real_ip != "":
+                return real_ip
+            forwarded = self.headers.get("X-Forwarded-For", "")
+            if forwarded.strip() != "":
+                return forwarded.split(",")[-1].strip()
+        return peer
 
     def _user_is_authenticated(self):
         """Tell whether the current request comes from a logged-in user."""
@@ -1416,9 +1613,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             # On-the-fly preview of an article, even if it is a draft.
             slug = query.get("slug", [None])[0]
             # Preview language: ?language=en shows the English version.
-            preview_language = query.get("language", ["it"])[0]
+            preview_language = query.get("language", [main_language()])[0]
             if preview_language not in ("it", "en"):
-                preview_language = "it"
+                preview_language = main_language()
             art = None
             if slug:
                 art = load_article(slug)
@@ -1437,21 +1634,37 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def _handle_export(self):
         """
-        Create a ZIP archive in memory with every article (JSON files) and
-        the configuration, and send it as a download.
-        It is the complete backup of the blog contents.
+        Send a ZIP archive with every article (JSON files), the
+        configuration and the uploaded images and videos.
+
+        The media used to be left out, so a blog restored from its backup
+        came back with every picture missing: the articles only hold the
+        address of an image, the file itself lives in output/media. They are
+        stored without compression, because a JPEG, a PNG or an MP4 is
+        already compressed and squeezing it again only costs time.
+
+        The archive is built in a temporary file rather than in memory: with
+        a few videos it can be hundreds of megabytes.
         """
-        buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        archive = tempfile.SpooledTemporaryFile(max_size=32 * 1024 * 1024)
+        with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zip_file:
             # We add every JSON file of the articles.
             if POSTS_DIR.exists():
-                for path_value in POSTS_DIR.glob("*.json"):
+                for path_value in sorted(POSTS_DIR.glob("*.json")):
                     zip_file.write(path_value, "posts/" + path_value.name)
             # We add the configuration, if it exists.
             if CONFIG_FILE.exists():
                 zip_file.write(CONFIG_FILE, "config.json")
+            # The uploaded images and videos, under the path they are
+            # published at, so unpacking the archive in output/ restores them.
+            if MEDIA_DIR.exists():
+                for path_value in sorted(MEDIA_DIR.iterdir()):
+                    if path_value.is_file() and not path_value.name.startswith("."):
+                        zip_file.write(path_value, "media/" + path_value.name,
+                                       compress_type=zipfile.ZIP_STORED)
 
-        data = buffer.getvalue()
+        size = archive.tell()
+        archive.seek(0)
         # File name with today's date.
         oggi = datetime.now().strftime("%Y-%m-%d")
         file_name = "pyblog-backup-" + oggi + ".zip"
@@ -1459,10 +1672,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "application/zip")
         self.send_header("Content-Disposition", 'attachment; filename="' + file_name + '"')
-        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Content-Length", str(size))
         self._security_headers(False)
         self.end_headers()
-        self.wfile.write(data)
+        while True:
+            chunk = archive.read(1024 * 1024)
+            if not chunk:
+                break
+            self.wfile.write(chunk)
+        archive.close()
 
     # --- POST ---------------------------------------------------------------
 
@@ -1577,21 +1795,42 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             data.get("description", ""))
 
     def _api_save(self, data):
-        """Save an article and rebuild the site."""
+        """
+        Save an article and rebuild the site.
+
+        An empty original_slug means the article has never been saved: if its
+        slug belongs to another article it gets a free one instead, and the
+        editor is told so. A rename onto another article's slug is refused.
+        """
+        la = admin_language()
+        old_slug = str(data.get("original_slug", "") or "").strip()
         with BUILD_LOCK:
-            old_slug = data.get("original_slug", "")
-            new_slug = save_article(data)
+            try:
+                new_slug = save_article(data, new_article=(old_slug == ""))
+            except SlugTakenError as error:
+                return {"ok": False,
+                        "error": T("err_slug_taken", la).replace("{slug}", error.slug)}
             # If the slug has changed, remove the old file.
             if old_slug and old_slug != new_slug:
                 delete_article(old_slug)
             build()  # rebuilds the static HTML right away
-        return {"ok": True, "slug": new_slug}
+        result = {"ok": True, "slug": new_slug}
+        wanted = requested_slug(data)
+        if old_slug == "" and new_slug != wanted:
+            result["notice"] = (T("js_slug_was_taken", la)
+                                .replace("{slug}", wanted).replace("{new}", new_slug))
+        return result
 
     def _api_delete(self, data):
         """Delete an article and rebuild the site."""
         with BUILD_LOCK:
-            delete_article(data["slug"])
+            deleted = delete_article(str(data.get("slug", "")))
             build()
+        if not deleted:
+            # Saying "done" for an article that is still there is how a
+            # deletion used to fail without anybody noticing.
+            return {"ok": False,
+                    "error": T("err_article_not_found", admin_language())}
         return {"ok": True}
 
     def _api_admin_language(self, data):
@@ -1611,12 +1850,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         Change an article's status (published <-> draft) without having to
         open the editor: load it, change the status, save and rebuild.
         """
+        new_status = data.get("status", "")
+        if new_status not in ("draft", "published"):
+            return {"ok": False, "error": T("js_status_change_error", admin_language())}
         with BUILD_LOCK:
-            article = load_article(data["slug"])
+            article = load_article(str(data.get("slug", "")))
             if article is None:
                 return {"ok": False,
                         "error": T("err_article_not_found", admin_language())}
-            article["status"] = data["status"]
+            article["status"] = new_status
             save_article(article)
             build()
         return {"ok": True}
@@ -1693,18 +1935,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         # If there have been too many errors in a row, login is locked
         # for a few moments: it makes a brute-force attack pointless.
         la = admin_language()
-        if login_is_locked():
+        client = self._client_address()
+        if login_is_locked(client):
             self._send(login_page(
-                T("err_too_many_attempts", la).replace("{n}", str(login_lock_remaining()))))
+                T("err_too_many_attempts", la).replace("{n}", str(login_lock_remaining(client)))))
             return
         form = self._read_form()
         password = form.get("password", [""])[0]
         if verify_password(password):
-            record_successful_login()
+            record_successful_login(client)
             token = create_session_token()
             self._redirect("/admin", cookie=self._session_cookie(token))
         else:
-            record_failed_login()
+            record_failed_login(client)
             # A small pause: it slows automated attempts down even further.
             time.sleep(0.5)
             self._send(login_page(T("err_wrong_password", la)))
@@ -1866,6 +2109,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._send_json({
                 "ok": True,
                 "title": result["title"],
+                "subtitle": result.get("subtitle", ""),
                 "content": result["content"],
                 "warnings": translate_warnings(result["warnings"], la),
             })

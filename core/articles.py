@@ -8,13 +8,28 @@ put under version control.
 import html
 import json
 import re
+import secrets
 import xml.etree.ElementTree as ElementTree
 from datetime import datetime, timezone
 from pathlib import Path
 
 from core import images
 from core.config import (CONFIG, MEDIA_DIR, POSTS_DIR, main_language,
-                         migrate_article_schema)
+                         migrate_article_schema, write_json_atomically)
+
+
+class SlugTakenError(ValueError):
+    """
+    Raised when an article would be renamed onto the address of another one.
+
+    Saving under that slug would replace the other article on disk, so the
+    save is refused and nothing is written. The message is not shown as is:
+    the caller translates it, and it carries the slug that was asked for.
+    """
+
+    def __init__(self, slug):
+        super().__init__(slug)
+        self.slug = slug
 
 
 
@@ -62,8 +77,7 @@ def load_articles():
         # Old Italian schema: convert and rewrite the file once.
         data, migrato = migrate_article_schema(data)
         if migrato:
-            with open(f, "w", encoding="utf-8") as fp:
-                json.dump(data, fp, ensure_ascii=False, indent=2)
+            write_json_atomically(f, data)
             print(f"{f.name} migrated to the new English schema.")
         data["_file"] = f.name
         articles.append(data)
@@ -77,32 +91,133 @@ def load_article(slug):
         return None
     path_value = POSTS_DIR / f"{slug}.json"
     if path_value.exists():
-        with open(path_value, encoding="utf-8") as fp:
-            data = json.load(fp)
+        # The same rule as load_articles: a damaged file is reported and
+        # skipped, it does not turn the editor page into a server error.
+        try:
+            with open(path_value, encoding="utf-8") as fp:
+                data = json.load(fp)
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
+            print(f"WARNING: {path_value.name} is not valid JSON ({error}).")
+            return None
         data, migrato = migrate_article_schema(data)
         if migrato:
-            with open(path_value, "w", encoding="utf-8") as fp:
-                json.dump(data, fp, ensure_ascii=False, indent=2)
+            write_json_atomically(path_value, data)
         return data
     return None
 
 
-def save_article(data):
+def requested_slug(data):
     """
-    Save an article as a JSON file. Return the slug.
-    The article holds both the Italian and the English (translated) version.
+    The slug an article asks for: the one typed in the editor, or the one
+    derived from its title. Normalised either way, so a hand-written slug
+    with "/" or ".." can never escape the posts folder.
+
+    An article that already exists and arrives with the slug field empty
+    keeps the slug it has: changing the title must not move a published
+    page to a new address behind the author's back.
+    """
+    slug = str(data.get("slug", "") or "").strip()
+    if slug != "":
+        return slugify(slug)
+    original = str(data.get("original_slug", "") or "").strip()
+    if original != "":
+        return slugify(original)
+    title_value = str(data.get("title", "") or "").strip()
+    if title_value == "":
+        title_value = "Senza titolo"
+    return slugify(title_value)
+
+
+def free_slug(slug):
+    """
+    The slug itself when no article uses it yet, otherwise the first free
+    variant with a number on the end: "note", "note-2", "note-3"...
+    """
+    if not (POSTS_DIR / f"{slug}.json").exists():
+        return slug
+    number = 2
+    while (POSTS_DIR / f"{slug}-{number}.json").exists():
+        number = number + 1
+    return f"{slug}-{number}"
+
+
+# Attributes the editor puts on the content for its own use. They mean
+# nothing on a published page: the hint over a table and the outline of the
+# table that happened to be selected when the author pressed Save.
+EDITOR_ONLY_ATTRIBUTES = re.compile(r'\sdata-hint="[^"]*"')
+EDITOR_ONLY_CLASS = re.compile(r'(class="[^"]*?)\s*\bpb-tabella-selezionata\b([^"]*")')
+
+
+def clean_editor_markup(html_value):
+    """Remove the editor's own markers from a piece of article content."""
+    if not isinstance(html_value, str) or html_value == "":
+        return html_value
+    html_value = EDITOR_ONLY_ATTRIBUTES.sub("", html_value)
+    return EDITOR_ONLY_CLASS.sub(r"\1\2", html_value)
+
+
+def id_list(value):
+    """A list of snippet ids as strings, whatever the editor sent."""
+    if not isinstance(value, list):
+        return []
+    return [str(x) for x in value if isinstance(x, (str, int))]
+
+
+def own_snippets(value):
+    """
+    The pieces of code written inside an article, in the shape the build
+    reads. They have no scope - their only page is the article - and each
+    gets an id of its own, so the cards keep it from one save to the next.
+    Position and consent are kept as written: the build reads anything it
+    does not know as the head and as necessary.
+    """
+    if not isinstance(value, list):
+        return []
+    cleaned = []
+    used = set()
+    for snippet in value:
+        if not isinstance(snippet, dict):
+            continue
+        snippet_id = str(snippet.get("id", "") or "")
+        while snippet_id == "" or snippet_id in used:
+            snippet_id = "art-" + secrets.token_hex(4)
+        used.add(snippet_id)
+        cleaned.append({
+            "id": snippet_id,
+            "name": str(snippet.get("name", "") or "").strip(),
+            "enabled": snippet.get("enabled", True) is not False,
+            "position": str(snippet.get("position", "") or "article_end"),
+            "consent": str(snippet.get("consent", "") or "necessary"),
+            "code": str(snippet.get("code", "") or ""),
+        })
+    return cleaned
+
+
+def save_article(data, new_article=False):
+    """
+    Save an article as a JSON file. Return the slug it was saved under.
+    The article holds both the main-language and the translated version.
+
+    Two articles can never share a file, and that is what this function
+    guards. With new_article=True (the first save of an article written in
+    the editor, an imported document) a slug that is already taken gets a
+    number on the end instead of replacing the article that owns it. An
+    existing article renamed onto someone else's slug - original_slug says
+    where it was - raises SlugTakenError before anything is written.
     """
     title_value = data.get("title", "").strip()
     if title_value == "":
         title_value = "Senza titolo"
 
-    slug = data.get("slug", "").strip()
-    if slug == "":
-        slug = slugify(title_value)
-    else:
-        # We normalise a hand-written slug too: safe characters only.
-        # This prevents slugs with "/" or ".." that would escape the folder.
-        slug = slugify(slug)
+    slug = requested_slug(data)
+    original = ""
+    original_text = str(data.get("original_slug", "") or "").strip()
+    if original_text != "":
+        original = slugify(original_text)
+    if new_article:
+        slug = free_slug(slug)
+    elif original != "" and original != slug and (POSTS_DIR / f"{slug}.json").exists():
+        raise SlugTakenError(slug)
 
     # We recover any fields of the English translation.
     # If they are missing, they stay empty strings.
@@ -117,13 +232,19 @@ def save_article(data):
     translation_confirmed = data.get("translation_confirmed", False)
 
     # Ids of the custom code snippets ticked for this article. Only the
-    # snippets set to "homepage and selected articles" read this list; the
+    # snippets set to one of the "selected articles" scopes read this list; the
     # ids themselves live in config.json. An id of a snippet that has since
     # been deleted stays here harmlessly: the build simply never finds it.
-    snippet_ids = data.get("custom_code_ids", [])
-    if not isinstance(snippet_ids, list):
-        snippet_ids = []
-    snippet_ids = [str(x) for x in snippet_ids if isinstance(x, (str, int))]
+    snippet_ids = id_list(data.get("custom_code_ids", []))
+    # The opposite list: snippets that go on every article, switched off on
+    # this one. Same rule for ids that no longer exist.
+    off_ids = id_list(data.get("custom_code_off_ids", []))
+
+    # Anything but the two known states would be published by nobody and
+    # listed as a draft by the dashboard: it is a draft.
+    status = data.get("status", "draft")
+    if status not in ("draft", "published"):
+        status = "draft"
 
     article = {
         "title": title_value,
@@ -132,18 +253,20 @@ def save_article(data):
         # Reader preview: the text that appears in the homepage card.
         # If empty, the card shows an automatic excerpt of the content.
         "preview": data.get("preview", "").strip(),
-        "content": data.get("content", ""),
+        "content": clean_editor_markup(data.get("content", "")),
         "tags": data.get("tags", "").strip(),
         "image": data.get("image", "").strip(),
-        "status": data.get("status", "draft"),
+        "status": status,
         "custom_code_ids": snippet_ids,
+        "custom_code_off_ids": off_ids,
+        "custom_code": own_snippets(data.get("custom_code", [])),
         "date": data.get("date"),
         "date_modified": datetime.now(timezone.utc).isoformat(),
-        # --- English version ---
+        # --- Translated version (the language that is not the main one) ---
         "title_en": title_en,
         "description_en": description_en,
         "preview_en": data.get("preview_en", "").strip(),
-        "content_en": content_en,
+        "content_en": clean_editor_markup(content_en),
         "translation_authorized": translation_authorized,
         "translation_confirmed": translation_confirmed,
     }
@@ -151,29 +274,35 @@ def save_article(data):
     # article already on disk (the editor does not send the date field:
     # without this step, every save would reset the publication date).
     if article["date"] is None:
-        existing = None
-        existing_path = POSTS_DIR / f"{slug}.json"
-        if existing_path.exists():
-            with open(existing_path, encoding="utf-8") as fp:
-                existing = json.load(fp)
-        if existing is None:
-            original = data.get("original_slug", "")
-            if original != "" and original != slug:
-                original_path = POSTS_DIR / f"{slugify(original)}.json"
-                if original_path.exists():
-                    with open(original_path, encoding="utf-8") as fp:
-                        existing = json.load(fp)
-        if existing is not None:
-            existing, _ = migrate_article_schema(existing)
-            article["date"] = existing.get("date")
+        candidates = [POSTS_DIR / f"{slug}.json"]
+        if original != "" and original != slug:
+            candidates.append(POSTS_DIR / f"{original}.json")
+        for candidate in candidates:
+            existing = read_article_file(candidate)
+            if existing is not None:
+                article["date"] = existing.get("date")
+                break
     # If the article is genuinely new, we use the current time.
     if article["date"] is None:
         article["date"] = datetime.now(timezone.utc).isoformat()
 
-    POSTS_DIR.mkdir(parents=True, exist_ok=True)
-    with open(POSTS_DIR / f"{slug}.json", "w", encoding="utf-8") as fp:
-        json.dump(article, fp, ensure_ascii=False, indent=2)
+    write_json_atomically(POSTS_DIR / f"{slug}.json", article)
     return slug
+
+
+def read_article_file(path_value):
+    """The article stored in a file, or None if it is missing or unreadable."""
+    if not path_value.exists():
+        return None
+    try:
+        with open(path_value, encoding="utf-8") as fp:
+            existing = json.load(fp)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    if not isinstance(existing, dict):
+        return None
+    existing, _ = migrate_article_schema(existing)
+    return existing
 
 
 def delete_article(slug):
@@ -848,8 +977,13 @@ def import_markdown(path_value):
             "status": status,
             "date": metadata.get("date", metadata.get("data", None)),
         }
-        slug = save_article(data)
+        # An import never replaces an article that is already there: running
+        # the same import twice, or importing a file whose title matches an
+        # existing article, adds a copy with a numbered slug instead.
+        slug = save_article(data, new_article=True)
         print(f"  imported: {file_corrente.name} -> posts/{slug}.json ({status})")
+        if slug != requested_slug(data):
+            print(f"    note: {requested_slug(data)} was already taken, saved as {slug}")
         imported_count = imported_count + 1
 
     return imported_count

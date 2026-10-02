@@ -113,42 +113,83 @@ def verify_password(password):
 # ---------------------------------------------------------------------------
 # LOGIN RATE LIMITING
 # ---------------------------------------------------------------------------
-# After LOGIN_MAX_ATTEMPTS consecutive errors, login stays locked for
-# LOGIN_LOCK_SECONDS seconds. The counter resets on the first successful login.
+# After LOGIN_MAX_ATTEMPTS consecutive errors from the same address, THAT
+# address is locked out for a while. Every other address can still log in.
+#
+# The lock used to be one for the whole server: five wrong passwords from
+# anywhere locked everybody out, the owner of the blog included, so anyone
+# could keep the author out of their own editor just by failing on purpose
+# once a minute. Now each address has its own counter. A lock that repeats
+# lasts longer each time, so guessing from one address stays slow without
+# ever punishing anyone else.
 
 LOGIN_MAX_ATTEMPTS = 5
 LOGIN_LOCK_SECONDS = 60
-LOGIN_STATE = {"errors": 0, "locked_until": 0.0}
+# The longest a repeated lock can last: 60, 120, 240, 480 seconds, then 15
+# minutes at most.
+LOGIN_LOCK_MAX_SECONDS = 15 * 60
+# An address that has been quiet this long is forgotten, lock history
+# included, so the table cannot grow without limit.
+LOGIN_FORGET_SECONDS = 60 * 60
+
+# address -> {"errors": int, "locked_until": float, "locks": int, "seen": float}
+LOGIN_STATE = {}
 _LOGIN_LOCK = threading.Lock()
 
 
-def login_is_locked():
-    """Tell whether login is temporarily locked after too many errors."""
-    return time.time() < LOGIN_STATE["locked_until"]
+def _forget_quiet_clients(now):
+    """Drop the addresses that are not locked and have been quiet for long.
+    The caller must already hold _LOGIN_LOCK."""
+    for client in list(LOGIN_STATE):
+        entry = LOGIN_STATE[client]
+        if entry["locked_until"] <= now and now - entry["seen"] > LOGIN_FORGET_SECONDS:
+            del LOGIN_STATE[client]
 
 
-def login_lock_remaining():
-    """Seconds left before login is possible again (0 when it is not locked)."""
-    remaining = int(LOGIN_STATE["locked_until"] - time.time()) + 1
+def login_is_locked(client=""):
+    """Tell whether login is temporarily locked for this address."""
+    with _LOGIN_LOCK:
+        entry = LOGIN_STATE.get(client)
+        if entry is None:
+            return False
+        return time.time() < entry["locked_until"]
+
+
+def login_lock_remaining(client=""):
+    """Seconds left before this address may try again (0 when not locked)."""
+    with _LOGIN_LOCK:
+        entry = LOGIN_STATE.get(client)
+        if entry is None:
+            return 0
+        remaining = int(entry["locked_until"] - time.time()) + 1
     if remaining < 0:
         return 0
     return remaining
 
 
-def record_failed_login():
-    """Record a failed login attempt and turn on the lock if needed."""
+def record_failed_login(client=""):
+    """Record a failed attempt from an address and lock it if needed."""
+    now = time.time()
     with _LOGIN_LOCK:
-        LOGIN_STATE["errors"] = LOGIN_STATE["errors"] + 1
-        if LOGIN_STATE["errors"] >= LOGIN_MAX_ATTEMPTS:
-            LOGIN_STATE["locked_until"] = time.time() + LOGIN_LOCK_SECONDS
-            LOGIN_STATE["errors"] = 0
+        _forget_quiet_clients(now)
+        entry = LOGIN_STATE.setdefault(
+            client, {"errors": 0, "locked_until": 0.0, "locks": 0, "seen": now})
+        entry["seen"] = now
+        entry["errors"] = entry["errors"] + 1
+        if entry["errors"] >= LOGIN_MAX_ATTEMPTS:
+            duration = LOGIN_LOCK_SECONDS * (2 ** entry["locks"])
+            if duration > LOGIN_LOCK_MAX_SECONDS:
+                duration = LOGIN_LOCK_MAX_SECONDS
+            entry["locked_until"] = now + duration
+            entry["locks"] = entry["locks"] + 1
+            entry["errors"] = 0
 
 
-def record_successful_login():
-    """Reset the error counter after a successful login."""
+def record_successful_login(client=""):
+    """Forget the errors of an address after it logged in correctly."""
     with _LOGIN_LOCK:
-        LOGIN_STATE["errors"] = 0
-        LOGIN_STATE["locked_until"] = 0.0
+        if client in LOGIN_STATE:
+            del LOGIN_STATE[client]
 
 
 # ---------------------------------------------------------------------------

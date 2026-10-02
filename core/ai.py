@@ -21,8 +21,21 @@ import urllib.error as _urlerr
 import urllib.request as _urlreq
 
 from core.articles import load_articles, plain_text
-from core.config import CONFIG, admin_language, secret_setting
+from core.config import (CONFIG, admin_language, main_language, secret_setting,
+                         secondary_language)
 from core.i18n import T
+
+# The two site languages as the translation services and the language models
+# want them. The translation always goes from the main language (the one the
+# articles are written in) to the other one: Italian to English on an
+# Italian site, English to Italian on an English one.
+LANGUAGE_IN_ENGLISH = {"it": "Italian", "en": "English"}
+LANGUAGE_IN_ITALIAN = {"it": "italiano", "en": "inglese"}
+
+
+def missing_key_error(service):
+    """The error raised when the API key of a service is not configured."""
+    return ValueError(T("err_api_key_missing", admin_language()).replace("{service}", service))
 
 
 
@@ -129,13 +142,13 @@ def restore_media(text, originals):
     return text, len(missing)
 
 
-def translate_with_deepl(text, api_key):
+def translate_with_deepl(text, api_key, source="it", target="en"):
     """
-    Translate an HTML text from Italian to English using DeepL.
+    Translate an HTML text with DeepL, from the source to the target language.
     DeepL keeps the HTML tags if we pass tag_handling=html.
     """
     if api_key == "":
-        raise ValueError("Chiave API DeepL mancante.")
+        raise missing_key_error("DeepL")
 
     # DeepL has two domains: free (api-free) and paid (api).
     # Free keys end with ":fx".
@@ -146,8 +159,8 @@ def translate_with_deepl(text, api_key):
 
     parametri = {
         "text": text,
-        "source_lang": "IT",
-        "target_lang": "EN",
+        "source_lang": source.upper(),
+        "target_lang": target.upper(),
         "tag_handling": "html",
     }
     data = urllib.parse.urlencode(parametri).encode("utf-8")
@@ -160,19 +173,19 @@ def translate_with_deepl(text, api_key):
     return result["translations"][0]["text"]
 
 
-def translate_with_google(text, api_key):
+def translate_with_google(text, api_key, source="it", target="en"):
     """
-    Translate an HTML text from Italian to English with Google Cloud Translation.
+    Translate an HTML text with Google Cloud Translation.
     With format=html, Google preserves the tags.
     """
     if api_key == "":
-        raise ValueError("Chiave API Google mancante.")
+        raise missing_key_error("Google")
 
     url = "https://translation.googleapis.com/language/translate/v2?key=" + api_key
     parametri = {
         "q": text,
-        "source": "it",
-        "target": "en",
+        "source": source,
+        "target": target,
         "format": "html",
     }
     data = urllib.parse.urlencode(parametri).encode("utf-8")
@@ -184,19 +197,25 @@ def translate_with_google(text, api_key):
     return result["data"]["translations"][0]["translatedText"]
 
 
-def translate_with_llm(text, api_key, endpoint, modello):
-    """
-    Translate an HTML text from Italian to English using an LLM (e.g. Claude).
-    We ask the model to translate while keeping the HTML tags intact.
-    """
-    if api_key == "":
-        raise ValueError("Chiave API dell'LLM mancante.")
-
-    istruzione = (
-        "Translate the following HTML content from Italian to English. "
+def translation_instruction(text, source, target):
+    """The request a language model gets to translate a piece of HTML."""
+    return (
+        "Translate the following HTML content from " + LANGUAGE_IN_ENGLISH[source]
+        + " to " + LANGUAGE_IN_ENGLISH[target] + ". "
         "Keep all HTML tags exactly as they are, translate only the visible text. "
         "Return only the translated HTML, with no extra comments.\n\n" + text
     )
+
+
+def translate_with_llm(text, api_key, endpoint, modello, source="it", target="en"):
+    """
+    Translate an HTML text using an LLM (e.g. Claude).
+    We ask the model to translate while keeping the HTML tags intact.
+    """
+    if api_key == "":
+        raise missing_key_error("Anthropic")
+
+    istruzione = translation_instruction(text, source, target)
     request_body = {
         "model": modello,
         "max_tokens": 4000,
@@ -228,21 +247,17 @@ def translate_with_llm(text, api_key, endpoint, modello):
     return translated_text
 
 
-def translate_with_openai_compat(text, api_key, endpoint, modello):
+def translate_with_openai_compat(text, api_key, endpoint, modello, source="it", target="en"):
     """
-    Translate an HTML text from Italian to English using a service
-    compatible with the OpenAI API (both OpenAI and DeepSeek are).
-    Both use the same 'chat completions' format, so a single function
-    serves both by changing the endpoint and the model.
+    Translate an HTML text using a service compatible with the OpenAI API
+    (both OpenAI and DeepSeek are). Both use the same 'chat completions'
+    format, so a single function serves both by changing the endpoint and
+    the model.
     """
     if api_key == "":
-        raise ValueError("Chiave API mancante.")
+        raise missing_key_error("OpenAI / DeepSeek")
 
-    istruzione = (
-        "Translate the following HTML content from Italian to English. "
-        "Keep all HTML tags exactly as they are, translate only the visible text. "
-        "Return only the translated HTML, with no extra comments.\n\n" + text
-    )
+    istruzione = translation_instruction(text, source, target)
     request_body = {
         "model": modello,
         "messages": [
@@ -269,7 +284,8 @@ def translate_with_openai_compat(text, api_key, endpoint, modello):
 
 def translate_text(text):
     """
-    Translate a text from Italian to English using the configured service.
+    Translate a text from the main language of the site to the other one,
+    using the configured service.
     Return a dictionary with the outcome and the translated text (or the error).
     """
     if text is None:
@@ -284,32 +300,34 @@ def translate_text(text):
 
     translation_config = CONFIG.get("translation", {})
     service = translation_config.get("service", "deepl")
+    source = main_language()
+    target = secondary_language()
 
     try:
         if service == "deepl":
             tradotto = translate_with_deepl(
-                text, secret_setting(translation_config, "deepl_api_key"))
+                text, secret_setting(translation_config, "deepl_api_key"), source, target)
         elif service == "google":
             tradotto = translate_with_google(
-                text, secret_setting(translation_config, "google_api_key"))
+                text, secret_setting(translation_config, "google_api_key"), source, target)
         elif service == "llm":
             tradotto = translate_with_llm(
                 text,
                 secret_setting(translation_config, "llm_api_key"),
                 translation_config.get("llm_endpoint", ""),
-                translation_config.get("llm_model", ""))
+                translation_config.get("llm_model", ""), source, target)
         elif service == "openai":
             tradotto = translate_with_openai_compat(
                 text,
                 secret_setting(translation_config, "openai_api_key"),
                 "https://api.openai.com/v1/chat/completions",
-                translation_config.get("openai_model", "gpt-4o-mini"))
+                translation_config.get("openai_model", "gpt-4o-mini"), source, target)
         elif service == "deepseek":
             tradotto = translate_with_openai_compat(
                 text,
                 secret_setting(translation_config, "deepseek_api_key"),
                 "https://api.deepseek.com/chat/completions",
-                translation_config.get("deepseek_model", "deepseek-chat"))
+                translation_config.get("deepseek_model", "deepseek-chat"), source, target)
         else:
             return {"ok": False, "error": T("err_unknown_translation_service", admin_language())}
         tradotto, spostate = restore_media(tradotto, media)
@@ -337,7 +355,7 @@ def call_llm_with_prompt(prompt, max_tokens=300):
             endpoint = translation_config.get("llm_endpoint", "")
             modello = translation_config.get("llm_model", "")
             if api_key == "":
-                return {"ok": False, "error": "Chiave API Anthropic mancante."}
+                return {"ok": False, "error": str(missing_key_error("Anthropic"))}
             # We reuse the structure of the Anthropic call.
             body = {
                 "model": modello,
@@ -367,7 +385,7 @@ def call_llm_with_prompt(prompt, max_tokens=300):
                 endpoint = "https://api.deepseek.com/chat/completions"
                 modello = translation_config.get("deepseek_model", "deepseek-chat")
             if api_key == "":
-                return {"ok": False, "error": "Chiave API mancante."}
+                return {"ok": False, "error": str(missing_key_error(service))}
             body = {
                 "model": modello,
                 "max_tokens": max_tokens,
@@ -381,7 +399,7 @@ def call_llm_with_prompt(prompt, max_tokens=300):
                 result = json.loads(response.read().decode("utf-8"))
             choices = result.get("choices", [])
             if len(choices) == 0:
-                return {"ok": False, "error": "Risposta vuota dal modello."}
+                return {"ok": False, "error": T("err_empty_model_answer", admin_language())}
             text = choices[0].get("message", {}).get("content", "")
             return {"ok": True, "text": text.strip()}
 
@@ -405,7 +423,8 @@ def generate_seo_description(html_content, title_value):
     # We limit the text we send so as not to waste tokens: the first 2000 are enough.
     excerpt = text[:2000]
     prompt = (
-        "Sei un esperto SEO. Scrivi una meta description in italiano per questo "
+        "Sei un esperto SEO. Scrivi una meta description in "
+        + LANGUAGE_IN_ITALIAN[main_language()] + " per questo "
         "articolo di blog. Deve essere una sola frase invitante di circa 150 "
         "caratteri (massimo 160), che riassuma il contenuto e spinga al click. "
         "Rispondi SOLO con la descrizione, senza virgolette, senza prefissi, "
@@ -434,7 +453,8 @@ def generate_reader_preview(html_content, title_value):
 
     excerpt = text[:2500]
     prompt = (
-        "Sei un redattore di blog. Scrivi in italiano una breve presentazione "
+        "Sei un redattore di blog. Scrivi in " + LANGUAGE_IN_ITALIAN[main_language()]
+        + " una breve presentazione "
         "di questo articolo, da mostrare nell'anteprima in homepage. Deve essere "
         "discorsiva e invitante, da 2 a 4 frasi (circa 300-500 caratteri), e far "
         "capire al lettore di cosa parla l'articolo e perche' vale la pena "
@@ -546,10 +566,13 @@ def analyze_article_seo(html_content, title_value, slug_value, tags_value, descr
         "Altri articoli del blog (per suggerire link interni):\n"
         + articles_text + "\n\n"
         "Contenuto:\n" + excerpt + "\n\n"
+        "Keyword, tag, titoli, anchor text e FAQ vanno scritti in "
+        + LANGUAGE_IN_ITALIAN[main_language()] + ", la lingua dell'articolo; giudizi e "
+        "consigli vanno scritti in " + LANGUAGE_IN_ITALIAN[admin_language()] + ".\n"
         "Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, "
         "senza markdown, con esattamente queste chiavi:\n"
         "{\n"
-        '  "primary_keywords": [3-5 keyword principali, in italiano],\n'
+        '  "primary_keywords": [3-5 keyword principali, in ' + LANGUAGE_IN_ITALIAN[main_language()] + '],\n'
         '  "secondary_keywords": [5-8 keyword secondarie e long-tail],\n'
         '  "suggested_tags": [4-6 tag consigliati per questo blog],\n'
         '  "title_variants": [2-3 varianti di titolo SEO, max 60 caratteri],\n'

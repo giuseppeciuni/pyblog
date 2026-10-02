@@ -82,9 +82,14 @@ def test_full_document():
     check("Italian heading style", "<h3>Sezione con stile italiano</h3>" in content)
     check("style derived from a heading", "<h2>Sezione con stile derivato da Heading2</h2>" in content)
 
-    check("bulleted list with nesting",
-          "<ul><li>Primo punto</li><li>Secondo punto<ul><li>Punto annidato</li></ul>"
-          "</li><li>Terzo punto</li></ul>" in content)
+    # Flat, the way Quill writes lists: a <ul> nested in an <li> makes Quill
+    # throw the whole list away when the editor loads it.
+    check("bulleted list with nesting, in Quill's flat form",
+          "<ul><li>Primo punto</li><li>Secondo punto</li>"
+          '<li class="ql-indent-1">Punto annidato</li><li>Terzo punto</li></ul>' in content)
+    check("no list is nested inside another", "<li>Secondo punto<ul>" not in content)
+    check("no line breaks between the blocks (Quill turns them into empty lines)",
+          "\n" not in content)
     check("numbered list is an ol",
           "<ol><li>Primo passo</li><li>Secondo passo</li></ol>" in content)
 
@@ -123,8 +128,10 @@ def test_full_document():
     check("a warning reports the flattened table",
           "warn_docx_nested_table" in warning_keys(result))
 
-    check("DrawingML image extracted", '<img src="/media/image1' in content)
-    check("legacy VML image extracted", '<img src="/media/vecchia' in content)
+    # The saved files carry the document's name: every Word file calls its
+    # first picture image1.png.
+    check("DrawingML image extracted", '<img src="/media/documento-completo-image1' in content)
+    check("legacy VML image extracted", '<img src="/media/documento-completo-vecchia' in content)
     check("images are lazy loaded", content.count('loading="lazy"') == 2)
     check("WMF image is refused", ".wmf" not in content)
     check("a warning reports the refused image",
@@ -138,6 +145,116 @@ def test_full_document():
           "&lt;script&gt;alert(1)&lt;/script&gt;" in content
           and "<script>" not in content)
     check("ampersand is escaped", "e &amp; da neutralizzare" in content)
+
+
+def test_word_document():
+    """A document shaped the way Word writes one, with the parts that used to go wrong."""
+    print("\ndocumento-word.docx")
+    result = convert_docx_file(HERE / "documento-word.docx")
+    check("conversion succeeds", result["ok"], result.get("error_key", ""))
+    if not result["ok"]:
+        return
+    content = result["content"]
+    keys = warning_keys(result)
+
+    check("the Title style becomes the title",
+          result["title"] == "Guida pratica ai sistemi distribuiti", repr(result["title"]))
+    check("the subtitle is offered as a description",
+          result["subtitle"] == "Appunti per chi parte da zero")
+    check("the title is not repeated in the text",
+          "Guida pratica ai sistemi distribuiti" not in content)
+    check("a Heading 1 becomes an h2: the h1 of the page is the title",
+          "<h2>Introduzione</h2>" in content and "<h1" not in content)
+    check("a Heading 2 becomes an h3", "<h3>Dettaglio finale</h3>" in content)
+    check("headings numbered by their style are still headings",
+          "<h2>Conclusioni</h2>" in content)
+    check("no bold inside the headings", "<h2><strong>" not in content)
+
+    check("Word's table of contents is left out",
+          "Sommario" not in content and "Introduzione 1" not in content
+          and content.count("Introduzione") == 1)
+    check("a warning says the table of contents was left out",
+          "warn_docx_toc_skipped" in keys)
+
+    check("superscript", "E=mc<sup>2</sup>" in content)
+    check("subscript", "H<sub>2</sub>O" in content)
+    check("hidden text is not published", "TESTO NASCOSTO" not in content)
+    check("the footnote mark stays where it was", "una nota<sup>[1]</sup>" in content)
+    check("the footnote text goes at the end, under its heading",
+          content.endswith("<h2>Note</h2><ol><li>Testo della nota a piè di pagina.</li></ol>"))
+
+    check("a link written as a simple field keeps text and address",
+          '<a href="https://example.com/semplice">sito di esempio</a>' in content)
+    check("a link written as a complex field keeps text and address",
+          '<a href="https://example.com/complesso">altro sito</a>' in content)
+    check("the Hyperlink style does not add a <u> inside links",
+          "<a href=\"https://example.com/normale\">terzo sito</a>" in content
+          and "<u>" not in content)
+    check("a code font in the middle of a sentence becomes <code>",
+          "Il comando <code>pyblog build</code> rigenera il sito." in content)
+
+    check("a list whose numbering is in the style is a list",
+          "<ul><li>Primo punto con stile elenco</li><li>Secondo punto con stile elenco</li></ul>"
+          in content)
+    check("and a numbered one is an ol",
+          "<ol><li>Passo numerato uno</li><li>Passo numerato due</li></ol>" in content)
+    check("a numbering with no visible mark is a plain paragraph",
+          "<p>Paragrafo in una numerazione senza segni</p>" in content)
+    check("the Quote style becomes a quotation, without the style's italics",
+          "<blockquote>Una citazione con lo stile Citazione.</blockquote>" in content)
+    check("consecutive code lines become one block, indentation kept",
+          '<pre class="ql-syntax" spellcheck="false">def ciao():\n    return 42</pre>' in content)
+
+    check("the image keeps the alternative text written in Word",
+          'alt="Grafico delle vendite 2025"' in content)
+    check("and the size it had on the page", 'width="200"' in content)
+    check("the image file carries the document's name",
+          '<img src="/media/documento-word-grafico' in content)
+
+    check("the text of a text box is kept, once",
+          content.count("Testo dentro una casella di testo.") == 1)
+    check("a page break does not glue two words together",
+          "Prima della pagina nuova dopo la pagina nuova" in content)
+    check("paragraphs inside custom XML are kept", "Paragrafo dentro customXml." in content)
+    check("text inside inline custom XML is kept",
+          "Testo dentro customXml in linea." in content)
+    check("three empty paragraphs become one", content.count("<p><br></p>") == 1)
+
+    check("cells merged across columns keep their colspan",
+          '<th colspan="2">Dettagli</th>' in content)
+    check("cells merged down rows keep their rowspan",
+          '<td rowspan="2">Alfa</td>' in content)
+    check("the cell covered by the merge is not written",
+          "<tr><td>b</td><td>4</td></tr>" in content)
+    check("two paragraphs in a cell stay on two lines",
+          "<td>prima riga<br>seconda riga</td>" in content)
+    check("nothing between the blocks", "</p>\n" not in content and "</h2>\n" not in content)
+
+
+def test_table_of_contents_as_a_field():
+    """An older document's table of contents: a bare field across paragraphs."""
+    print("\nsommario-campo.docx")
+    result = convert_docx_file(HERE / "sommario-campo.docx")
+    check("conversion succeeds", result["ok"], result.get("error_key", ""))
+    if not result["ok"]:
+        return
+    content = result["content"]
+    check("the entries of the table of contents are gone",
+          "Sommario" not in content and "Conclusioni" not in content)
+    check("the text after it is all there",
+          content == "<h2>Introduzione</h2><p>Il testo vero comincia qui.</p>", content)
+
+
+def test_heading_in_the_middle():
+    """A Heading 1 after the first paragraph is a section, not the title."""
+    print("\ntitolo-a-meta.docx")
+    result = convert_docx_file(HERE / "titolo-a-meta.docx")
+    check("conversion succeeds", result["ok"], result.get("error_key", ""))
+    if not result["ok"]:
+        return
+    check("the section heading stays in the text", "<h2>Una sezione</h2>" in result["content"])
+    check("the title falls back to the file name", result["title"] == "titolo-a-meta")
+    check("and the author is told", "warn_docx_title_from_filename" in warning_keys(result))
 
 
 def test_missing_numbering():
@@ -200,6 +317,9 @@ def main():
         for leftover in articles.MEDIA_DIR.iterdir():
             leftover.unlink()
     test_full_document()
+    test_word_document()
+    test_table_of_contents_as_a_field()
+    test_heading_in_the_middle()
     test_missing_numbering()
     test_missing_styles()
     test_broken_input()

@@ -6,3 +6,5 @@ output_riferimento/
 test_docx/_media_di_prova/
 test_docx/*.docx
 pyblog_standalone.py
+config.json
+config.broken.json

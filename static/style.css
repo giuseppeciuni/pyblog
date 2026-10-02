@@ -2,29 +2,29 @@
    The palette itself lives in common.css, which every page loads first: here
    we only map the historical variable names of the public site onto those
    shared tokens. Both themes are covered by this single block, because the
-   tokens are what change when html[data-tema="dark"] is set. */
+   tokens are what change when html[data-tema="dark"] is set.
+
+   The layout has two columns: the content in a main column and a sidebar
+   next to it, which moves under the content on a narrow screen. */
 :root {
   --testo:var(--pb-text); --secondario:var(--pb-text-muted); --link:var(--pb-accent);
   --bordo:var(--pb-border); --codice-bg:var(--pb-code-bg); --larghezza:var(--pb-width-text);
   --larghezza-home:var(--pb-width-wide); --card-bg:var(--pb-surface); --card-hover:var(--pb-surface-alt);
   --sfondo:var(--pb-bg); --hero-1:var(--pb-hero-1); --hero-2:var(--pb-hero-2); --hero-bordo:var(--pb-hero-border);
-  --evidenza-1:var(--pb-featured-1); --evidenza-2:var(--pb-featured-2);
-  --evidenza-bordo:var(--pb-featured-border); --evidenza-accento:var(--pb-featured-accent);
+  --evidenza-accento:var(--pb-featured-accent);
+  /* The frame of the two columns. */
+  --larghezza-pagina:1120px;
+  --larghezza-barra:300px;
+  --spazio-colonne:2.6rem;
+  /* The space an advertisement or a widget sits in, when it has no look of
+     its own yet: a faint tint, so an empty slot does not read as a hole. */
+  --annuncio-bg:var(--pb-surface-alt);
 }
 /* In dark mode, the elements with fixed colours must be adapted by hand,
    otherwise they stay dark on dark and become unreadable. */
 html[data-tema="dark"] .home-intro p { color:#cbd5e1; }
 html[data-tema="dark"] .home-intro p strong { color:#f1f5f9; }
-html[data-tema="dark"] .card-snippet,
-html[data-tema="dark"] .card-excerpt,
-html[data-tema="dark"] .card-date,
-html[data-tema="dark"] .card-read-more,
-html[data-tema="dark"] .home-card-excerpt,
 html[data-tema="dark"] .meta { color:var(--secondario); }
-html[data-tema="dark"] .card-title,
-html[data-tema="dark"] .home-card-title { color:var(--testo); }
-html[data-tema="dark"] .card-snippet mark,
-html[data-tema="dark"] .card-title mark { background:#7a5a00; color:#fff; }
 /* Gradient headings: in dark mode we lighten the gradient for readability. */
 html[data-tema="dark"] .home-intro h1, html[data-tema="dark"] .home-intro h2,
 html[data-tema="dark"] .card-hero-title {
@@ -46,119 +46,307 @@ html[data-tema="dark"] .article-table td { border-color:#66667a; }
 html[data-tema="dark"] .article-table th { background:#26262d; }
 html[data-tema="dark"] blockquote {
   border-left-color:#66667a; color:var(--testo); opacity:0.92; }
-/* The search snippet: the highlight was already adjusted, but the text
-   around it stayed at the muted colour on a card background. */
-html[data-tema="dark"] .card-snippet { color:#c4c4cc; }
-html[data-tema="dark"] .card-snippet mark,
-html[data-tema="dark"] .card-title mark { background:#8a6600; color:#fff; }
-/* Small tag labels under a card. */
-html[data-tema="dark"] .card-tag { border-color:#3a3a45; }
+/* The search snippet: the highlighted term keeps its contrast. */
+html[data-tema="dark"] .art-snippet { color:#c4c4cc; }
+html[data-tema="dark"] .art-snippet mark,
+html[data-tema="dark"] .art-title mark { background:#8a6600; color:#fff; }
+
 body {
   font-family:var(--pb-font);
   font-size:var(--pb-font-size); line-height:var(--pb-line-height); color:var(--testo);
   margin:0; background:var(--sfondo);
 }
-/* Header with navbar: title on the left, navigation on the right. */
-header.site {
-  max-width:var(--larghezza-home); margin:0 auto;
-  padding:1.5rem 1.2rem; display:flex; justify-content:space-between;
-  align-items:center; flex-wrap:wrap; gap:1rem;
-  border-bottom:1px solid var(--bordo);
+a { color:var(--link); }
+h1,h2,h3 { line-height:1.25; font-weight:600; }
+
+/* --- Header ----------------------------------------------------------------
+   The name of the site on the left, the menu on the right. The name is the
+   h1 of the homepage only; on the other pages it is a paragraph, and the
+   page's own title is the h1. */
+header.site { border-bottom:1px solid var(--bordo); }
+.site-header-inner {
+  max-width:var(--larghezza-pagina); margin:0 auto;
+  padding:1.1rem 1.2rem; display:flex; justify-content:space-between;
+  align-items:center; flex-wrap:wrap; gap:0.8rem 1.5rem;
 }
-header.site .site-brand h1 { font-size:1.5rem; margin:0; }
-header.site .site-brand h1 a { color:var(--testo); text-decoration:none; }
-header.site .site-brand .site-subtitle { color:var(--secondario); font-size:0.9rem; margin:0.2rem 0 0; }
-header.site .site-nav { display:flex; gap:1.5rem; }
-header.site .site-nav a {
+.site-brand { min-width:0; }
+.site-title { font-size:1.4rem; font-weight:700; line-height:1.2; margin:0; letter-spacing:-0.01em; }
+.site-title a { color:var(--testo); text-decoration:none; }
+.site-subtitle { color:var(--secondario); font-size:0.88rem; margin:0.15rem 0 0; }
+.site-nav { display:flex; align-items:center; flex-wrap:wrap; gap:0.4rem 1.4rem; }
+.site-nav a {
   color:var(--testo); text-decoration:none; font-size:0.95rem;
   font-weight:500; padding:0.3rem 0; border-bottom:2px solid transparent;
 }
-header.site .site-nav a:hover { border-bottom-color:var(--link); color:var(--link); }
+.site-nav a:hover { border-bottom-color:var(--link); color:var(--link); }
 .tema-toggle { background:none; border:1px solid var(--bordo); border-radius:50%; width:36px; height:36px;
   cursor:pointer; font-size:1.1rem; line-height:1; color:var(--testo); display:inline-flex;
   align-items:center; justify-content:center; padding:0; }
 .tema-toggle:hover { border-color:var(--link); color:var(--link); }
-/* Main container: wider on the home, for the grid. */
-.main-content { max-width:var(--larghezza-home); margin:0 auto; padding:2.5rem 1.2rem 4rem; }
-a { color:var(--link); }
-h1,h2,h3 { line-height:1.25; font-weight:600; }
-article.post h1 { font-size:2rem; margin:0 0 0.4rem; }
-.meta { color:var(--secondario); font-size:0.9rem; margin-bottom:2rem; }
+/* Language switcher in the navbar. The selector carries .site-nav so it
+   wins over the transparent bottom border of the menu links, which used to
+   leave the box open at the bottom. */
+.site-nav .nav-lingua { font-weight:700; font-size:0.85rem; border:1px solid var(--bordo);
+  border-radius:6px; padding:0.15rem 0.5rem; }
+.site-nav .nav-lingua:hover { border-color:var(--link); }
+/* The menu button exists for phones only, and only when the script runs:
+   without JavaScript the links simply wrap under the name of the site. */
+.menu-toggle { display:none; }
+@media (max-width: 760px) {
+  .site-header-inner { padding:0.8rem 1rem; }
+  .site-title { font-size:1.2rem; }
+  .site-subtitle { display:none; }
+  .js .menu-toggle {
+    display:inline-flex; align-items:center; gap:0.4rem;
+    font:inherit; font-size:0.92rem; font-weight:500; color:var(--testo);
+    background:var(--card-bg); border:1px solid var(--bordo); border-radius:8px;
+    padding:0.35rem 0.8rem; cursor:pointer;
+  }
+  .js .menu-toggle:hover { border-color:var(--link); color:var(--link); }
+  .js .site-nav { display:none; }
+  .js .site-nav.aperto {
+    display:flex; flex-direction:column; align-items:flex-start; gap:0.2rem;
+    flex-basis:100%; padding:0.4rem 0 0.2rem; border-top:1px solid var(--bordo);
+  }
+  .js .site-nav.aperto a { padding:0.45rem 0; width:100%; }
+  .js .site-nav.aperto .nav-lingua { width:auto; }
+}
+
+/* --- Topics bar ------------------------------------------------------------
+   The most used tags, right under the header. On a phone it scrolls
+   sideways instead of wrapping onto several lines. */
+.barra-argomenti { border-bottom:1px solid var(--bordo); }
+.barra-argomenti-interno {
+  max-width:var(--larghezza-pagina); margin:0 auto; padding:0.6rem 1.2rem;
+  display:flex; gap:0.5rem; overflow-x:auto; scrollbar-width:thin;
+}
+.argomento {
+  flex:0 0 auto; display:inline-flex; align-items:center; gap:0.35rem;
+  font-size:0.82rem; color:var(--testo); text-decoration:none; white-space:nowrap;
+  border:1px solid var(--bordo); border-radius:999px; padding:0.15rem 0.7rem;
+  background:var(--card-bg);
+}
+.argomento:hover, .argomento[aria-current="page"] { border-color:var(--link); color:var(--link); }
+.argomento-conteggio { color:var(--secondario); font-size:0.75rem; }
+
+/* --- The two columns ------------------------------------------------------- */
+.layout-colonne {
+  max-width:var(--larghezza-pagina); margin:0 auto; padding:2rem 1.2rem 3rem;
+  display:grid; grid-template-columns:minmax(0, 1fr); gap:2.4rem;
+}
+.colonna-principale { min-width:0; }
+.barra-laterale { min-width:0; display:flex; flex-direction:column; gap:1.2rem; }
+@media (min-width: 980px) {
+  .layout-colonne {
+    grid-template-columns:minmax(0, 1fr) var(--larghezza-barra);
+    gap:var(--spazio-colonne);
+  }
+}
+@media (max-width: 640px) {
+  .layout-colonne { padding:1.4rem 1rem 2.5rem; gap:2rem; }
+}
+
+/* --- The list of articles --------------------------------------------------
+   One row per article: thumbnail on the left, then tags, title, date and the
+   opening of the text. The whole row is clickable through the title link,
+   whose ::after covers the row; the tags sit above it and stay links of
+   their own. */
+.articles-head { display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:0.8rem 1.5rem; margin:0 0 0.4rem; }
+.articles-heading { font-size:1.5rem; margin:0; font-weight:700; letter-spacing:-0.01em; }
+.search-box { flex:1 1 14rem; max-width:22rem; }
+.search-box input {
+  width:100%; padding:0.55rem 0.9rem; font-size:0.95rem; font-family:inherit;
+  border:1px solid var(--bordo); border-radius:8px;
+  background:var(--card-bg); color:var(--testo);
+}
+.search-box input:focus { border-color:var(--link); }
+#search-box-info { color:var(--secondario); font-size:0.85rem; margin:0 0 0.4rem; min-height:1.2em; }
+.articles-list { display:flex; flex-direction:column; }
+.art-row {
+  position:relative; display:grid; grid-template-columns:150px minmax(0, 1fr);
+  gap:1.1rem; align-items:start; padding:1.15rem 0; border-bottom:1px solid var(--bordo);
+}
+.art-thumb { min-width:0; }
+/* A declared width, for the same reason as every image inside a grid or a
+   flex row: without one the minimum size falls back to the size of the file
+   and a large upload pushes the text out of the row. */
+.art-thumb-img, .art-tile {
+  display:block; width:100%; aspect-ratio:3 / 2; height:auto; min-width:0;
+  object-fit:cover; border-radius:10px;
+}
+.art-tile {
+  display:grid; place-items:center; padding:0.5rem; text-align:center;
+  background:var(--card-hover); border:1px solid var(--bordo);
+  color:var(--link); font-weight:700; font-size:1.05rem; letter-spacing:-0.01em;
+  overflow:hidden; text-overflow:ellipsis; word-break:break-word;
+}
+.art-body { min-width:0; display:flex; flex-direction:column; gap:0.3rem; }
+.art-tags { display:flex; flex-wrap:wrap; gap:0.35rem; margin:0; }
+.art-tag {
+  position:relative; z-index:1;
+  font-size:0.74rem; color:var(--secondario); text-decoration:none;
+  border:1px solid var(--bordo); border-radius:999px; padding:0.05rem 0.55rem;
+  background:var(--card-bg); line-height:1.6;
+}
+.art-tag:hover { color:var(--link); border-color:var(--link); }
+.art-title { font-size:1.15rem; margin:0.1rem 0 0; line-height:1.3; }
+.art-title a { color:var(--testo); text-decoration:none; }
+.art-title a::after { content:""; position:absolute; inset:0; }
+.art-row:hover .art-title a { color:var(--link); }
+.art-title a:focus-visible { outline:none; }
+.art-row:has(.art-title a:focus-visible) { outline:2px solid var(--link); outline-offset:4px; border-radius:6px; }
+.art-meta { color:var(--secondario); font-size:0.82rem; margin:0; }
+.art-excerpt, .art-snippet {
+  color:var(--secondario); font-size:0.95rem; line-height:1.6; margin:0.15rem 0 0;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+}
+.art-snippet mark, .art-title mark { background:#fff3b0; color:inherit; padding:0 2px; border-radius:2px; }
+/* The most recent article leads the list: a bigger picture, a bigger title
+   and twice the text. */
+.art-lead { grid-template-columns:260px minmax(0, 1fr); gap:1.4rem; padding-top:0.6rem; }
+.art-lead .art-title { font-size:1.55rem; letter-spacing:-0.01em; }
+.art-lead .art-excerpt { color:var(--testo); font-size:1rem; -webkit-line-clamp:5; }
+.art-kicker {
+  margin:0; font-size:0.7rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase;
+  color:var(--evidenza-accento);
+}
+.art-more { color:var(--link); font-size:0.9rem; font-weight:500; margin-top:0.3rem; }
+@media (max-width: 640px) {
+  .art-row { grid-template-columns:104px minmax(0, 1fr); gap:0.85rem; padding:1rem 0; }
+  .art-title { font-size:1.02rem; }
+  .art-excerpt, .art-snippet { font-size:0.9rem; -webkit-line-clamp:2; }
+  .art-lead { grid-template-columns:minmax(0, 1fr); }
+  .art-lead .art-thumb-img, .art-lead .art-tile { aspect-ratio:16 / 9; }
+  .art-lead .art-title { font-size:1.3rem; }
+  .art-lead .art-excerpt { -webkit-line-clamp:4; }
+}
+.no-articles { color:var(--secondario); }
+
+/* --- Spaces for advertisements and widgets ---------------------------------
+   The custom code placed between the articles, in the sidebar or inside the
+   text. The slot itself is quiet: an ad brings its own look. */
+.annuncio { margin:1.2rem 0; text-align:center; overflow:hidden; min-width:0; }
+.annuncio:empty { display:none; }
+.annuncio-barra { margin:0; }
+.annuncio-testo { margin:1.8rem 0; }
+
+/* --- Pagination ------------------------------------------------------------ */
+.paginazione { display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; margin:1.8rem 0 0; gap:0.8rem; }
+.paginazione[hidden] { display:none; }
+.paginazione-numeri { display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap; }
+.paginazione a, .paginazione-numero {
+  color:var(--link); text-decoration:none; font-size:0.92rem;
+  padding:0.4rem 0.8rem; border:1px solid var(--bordo); border-radius:8px; min-width:2.4rem;
+  text-align:center;
+}
+.paginazione a:hover { border-color:var(--link); }
+.paginazione-numero[aria-current="page"] { background:var(--link); border-color:var(--link); color:var(--sfondo); }
+.paginazione-salto { color:var(--secondario); padding:0 0.2rem; }
+.paginazione-vuoto { min-width:1px; }
+@media (max-width: 560px) {
+  .paginazione { justify-content:center; }
+  .paginazione-numeri { order:-1; flex-basis:100%; justify-content:center; }
+  .paginazione-vuoto { display:none; }
+}
+
+/* --- Sidebar ---------------------------------------------------------------
+   Boxes of the same shape: the author, the cards, the topics, the follow
+   links. On a phone they come after the content. */
+.box {
+  background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px;
+  padding:1rem 1.1rem; font-size:0.92rem;
+}
+.box-titolo {
+  font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--secondario); margin:0 0 0.7rem;
+}
+.profilo { display:flex; gap:0.8rem; align-items:center; }
+.profilo-foto {
+  flex:0 0 auto; width:52px; height:52px; min-width:0; border-radius:50%; object-fit:cover;
+}
+.avatar-iniziali {
+  display:inline-grid; place-items:center; font-weight:700; font-size:1.05rem;
+  color:#fff; background:linear-gradient(135deg, var(--pb-accent), var(--pb-accent-2));
+}
+.profilo-nome { margin:0; font-weight:700; color:var(--testo); }
+.profilo-ruolo { margin:0.1rem 0 0; color:var(--secondario); font-size:0.85rem; line-height:1.4; }
+.profilo-bio { margin:0.7rem 0 0; line-height:1.55; }
+.profilo-link { margin:0.6rem 0 0; }
+.profilo-link a, .esplora-lista a, .segui-lista a { text-decoration:none; font-weight:500; }
+.profilo-link a:hover, .esplora-lista a:hover, .segui-lista a:hover { text-decoration:underline; }
+.esplora-lista, .segui-lista { list-style:none; margin:0; padding:0; display:grid; gap:0.65rem; }
+.esplora-estratto { display:block; color:var(--secondario); font-size:0.82rem; line-height:1.45; margin-top:0.1rem; }
+.segui-lista { gap:0.4rem; }
+.nuvola { display:flex; flex-wrap:wrap; gap:0.4rem; margin:0; }
+/* The introduction of the homepage, when it lives in the sidebar: the same
+   content as the old hero, at the size of a box. */
+.box-intro .home-intro {
+  margin:0; padding:0; border:0; background:none; text-align:left;
+}
+.box-intro .home-intro::before { display:none; }
+.box-intro .home-intro h1, .box-intro .home-intro h2 { font-size:1.15rem; text-align:left; }
+.box-intro .home-intro p { font-size:0.92rem; margin:0.45rem 0 0; max-width:none; text-align:left; }
+.box-intro .home-intro img { max-height:none; }
+.box-intro .home-avatar { width:64px; height:64px; margin:0 0 0.7rem; }
+/* The table of contents of an article: the last box, the one that stays on
+   screen while the article scrolls. On a narrow screen the sidebar comes
+   after the article, so the folded copy at the top of the text takes over. */
+.box-indice { position:sticky; top:1.2rem; max-height:calc(100vh - 2.4rem); overflow-y:auto; }
+.toc-lista { list-style:none; margin:0; padding:0; display:grid; gap:0.4rem; }
+.toc-lista a { color:var(--testo); text-decoration:none; line-height:1.4; display:block;
+  border-left:2px solid transparent; padding-left:0.6rem; margin-left:-0.6rem; }
+.toc-lista a:hover { color:var(--link); }
+.toc-lista a[aria-current] { color:var(--link); border-left-color:var(--link); font-weight:600; }
+.toc-lista .toc-h3 { padding-left:0.9rem; font-size:0.9em; }
+.toc-telefono {
+  border:1px solid var(--bordo); border-radius:10px; background:var(--card-bg);
+  padding:0.7rem 1rem; margin:0 0 1.6rem;
+}
+.toc-telefono summary { cursor:pointer; font-weight:600; font-size:0.92rem; }
+.toc-telefono .toc-lista { margin-top:0.7rem; }
+@media (min-width: 980px) {
+  .toc-telefono { display:none; }
+}
+@media (max-width: 979px) {
+  .box-indice { display:none; }
+}
+
+/* --- Article page ---------------------------------------------------------- */
+article.post { max-width:46rem; margin:0; padding:0; }
+article.post h1 { font-size:2.1rem; margin:0 0 0.5rem; letter-spacing:-0.015em; }
+.meta { color:var(--secondario); font-size:0.9rem; margin-bottom:1.8rem; }
 .tag { font-size:0.8rem; color:var(--secondario); text-decoration:none; }
 .tag:hover { color:var(--link); }
 .breadcrumbs { font-size:0.85rem; color:var(--secondario); margin:0 0 0.5rem; }
 .breadcrumbs a { color:var(--link); text-decoration:none; }
-.text-tag-conteggio { color:var(--secondario); font-size:0.9rem; margin:0 0 1.5rem; }
-/* Table of contents (TOC) for long articles. */
-.table-of-contents { background:var(--card-bg); border:1px solid var(--bordo); border-radius:10px;
-  padding:1rem 1.4rem; margin:0 0 2rem; }
-.table-of-contents .toc-title { font-weight:700; margin:0 0 0.5rem; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.03em; color:var(--secondario); }
-.table-of-contents ul { list-style:none; padding:0; margin:0; }
-.table-of-contents li { margin:0.3rem 0; }
-.table-of-contents li.toc-h3 { padding-left:1.2rem; font-size:0.92rem; }
-.table-of-contents a { color:var(--link); text-decoration:none; }
-.table-of-contents a:hover { text-decoration:underline; }
-/* Related articles block at the bottom of the article. */
-.related-articles { max-width:var(--larghezza); margin:3rem auto 0; padding:2rem 1.2rem 0; border-top:1px solid var(--bordo); }
+.text-tag-conteggio { color:var(--secondario); font-size:0.9rem; margin:0.2rem 0 1rem; }
+.post-ritorno { margin-top:2rem; }
+.post-ritorno a { text-decoration:none; }
+@media (max-width: 640px) {
+  article.post h1 { font-size:1.65rem; }
+}
+/* Related articles: the same rows as the homepage. */
+.related-articles { max-width:46rem; margin:3rem 0 0; padding:2rem 0 0; border-top:1px solid var(--bordo); }
+.related-articles .articles-heading { font-size:1.25rem; margin-bottom:0.3rem; }
 /* Page of a card (Biography, Projects, About). */
-.card-hero { text-align:center; padding:2.5rem 1rem 1.5rem; margin-bottom:2rem;
+.card-hero { text-align:center; padding:2.2rem 1rem 1.4rem; margin-bottom:2rem;
   background:linear-gradient(135deg, var(--hero-1) 0%, var(--hero-2) 100%);
   border:1px solid var(--hero-bordo); border-radius:16px; }
 .card-hero .breadcrumbs { justify-content:center; }
 .card-hero-title { font-size:2rem; margin:0.3rem 0 0; letter-spacing:-0.02em;
   background:linear-gradient(120deg, #0066cc, #5b3df5); -webkit-background-clip:text;
   background-clip:text; -webkit-text-fill-color:transparent; font-weight:700; }
-.card-page { max-width:var(--larghezza); margin:0 auto; font-size:1.05rem; line-height:1.7; }
+.card-page { max-width:46rem; font-size:1.05rem; line-height:1.7; }
 .card-page img { max-width:100%; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.08); margin:1rem 0; }
-.card-ritorno { max-width:var(--larghezza); margin:3rem auto 0; }
+.card-ritorno { margin:3rem 0 0; }
 .card-ritorno a { color:var(--link); text-decoration:none; }
-.language-switcher-home { text-align:right; margin:0 0 1rem; }
-.language-switcher-home a { color:var(--link); text-decoration:none; font-size:0.9rem; }
-/* Grid of clickable cards for the articles. */
-.articles-grid {
-  display:flex; flex-direction:column; gap:1rem;
-}
-/* The card is a row: thumbnail on the left, text on the right. With no cover
-   the row has a single child and the text simply takes the whole width, so a
-   blog without images looks exactly as it did. */
-.article-card {
-  display:flex; flex-direction:row; gap:1.2rem; align-items:flex-start;
-  text-decoration:none; color:var(--testo);
-  background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px;
-  padding:1.3rem 1.5rem; transition:transform 0.15s, box-shadow 0.15s, background 0.15s;
-}
-.card-corpo { display:flex; flex-direction:column; flex:1 1 auto; min-width:0; }
-/* Sized exactly like the thumbnail of the highlighted block, and for the same
-   reasons: a declared width so the automatic minimum size of a flex item
-   cannot fall back to the intrinsic width of the file, min-width:0 to remove
-   that minimum outright, and a width rather than a max-width because the
-   global img rule further down carries !important. Smaller than the
-   highlighted one, because these cards are a list to scan. */
-.card-copertina {
-  flex:0 0 auto;
-  width:clamp(56px, 14%, 92px);
-  aspect-ratio:1 / 1; height:auto;
-  min-width:0;
-  object-fit:cover;
-  border-radius:10px;
-}
-.article-card:hover {
-  transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.08);
-  background:var(--card-hover);
-}
-.card-date { color:var(--secondario); font-size:0.8rem; margin-bottom:0.4rem; }
-.card-title { font-size:1.2rem; margin:0 0 0.5rem; line-height:1.3; }
-.card-excerpt { color:var(--secondario); font-size:0.95rem; margin:0 0 1rem; flex-grow:1; line-height:1.6;
-  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-/* Author avatar in the homepage hero. */
-.home-avatar { width:96px; height:96px; border-radius:50%; object-fit:cover;
-  border:3px solid var(--sfondo); box-shadow:0 2px 10px rgba(0,0,0,0.12);
-  margin:0 auto 1rem; display:block; }
 /* "Written by" box at the bottom of the articles. */
 .author-box { display:flex; gap:1.2rem; align-items:flex-start;
   background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px;
   padding:1.3rem 1.5rem; margin:3rem 0 0; }
-.author-box-photo { width:64px; height:64px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+.author-box-photo { width:64px; height:64px; min-width:0; border-radius:50%; object-fit:cover; flex-shrink:0; }
 .author-box-name { margin:0 0 0.2rem; font-weight:700; }
 .author-box-name a { color:var(--testo); text-decoration:none; }
 .author-box-name a:hover { color:var(--link); }
@@ -185,45 +373,68 @@ article.post h1 { font-size:2rem; margin:0 0 0.4rem; }
   .article-nav-empty { display:none; }
   .author-box { flex-direction:column; align-items:center; text-align:center; }
 }
-/* Language switcher in the navbar. */
-.nav-lingua { font-weight:700; font-size:0.85rem; border:1px solid var(--bordo);
-  border-radius:6px; padding:0.15rem 0.5rem; }
-/* Social links in the footer. */
-.pie-social { margin:0.4rem 0 0; }
-.pie-social a { color:var(--secondario); text-decoration:none; }
-.pie-social a:hover { color:var(--link); }
-/* Skip link: invisible until it receives keyboard focus. */
-.skip-to-content { position:absolute; left:-9999px; top:0; background:var(--link);
-  color:#fff; padding:0.6rem 1rem; border-radius:0 0 8px 0; z-index:100; text-decoration:none; }
-.skip-to-content:focus { left:0; }
-/* Context snippet in the search results, with the term highlighted. */
-.card-snippet { color:var(--secondario); font-size:0.9rem; margin:0 0 1rem; flex-grow:1; line-height:1.5; }
-.card-snippet mark, .card-title mark { background:#fff3b0; color:inherit; padding:0 2px; border-radius:2px; }
-.card-read-more { color:var(--link); font-size:0.88rem; font-weight:500; margin-top:auto; }
-.no-articles { color:var(--secondario); }
-/* Archive page: compact list by year, date aligned left. */
-.archive-year h2 { font-size:1.3rem; margin:2rem 0 0.6rem; color:var(--testo);
-  border-bottom:1px solid var(--bordo); padding-bottom:0.3rem; }
-.archive-list { list-style:none; padding:0; margin:0; }
-.archive-list li { margin:0.45rem 0; display:flex; gap:1rem; align-items:baseline; }
-.archive-date { color:var(--secondario); font-size:0.85rem; min-width:9.5rem; flex-shrink:0; }
-.archive-list a { color:var(--testo); text-decoration:none; }
-.archive-list a:hover { color:var(--link); text-decoration:underline; }
-@media (max-width: 640px) {
-  .archive-list li { flex-direction:column; gap:0.1rem; margin:0.8rem 0; }
-  .archive-date { min-width:0; }
-}
-/* Navigation between the homepage pages (pagination). */
-.paginazione { display:flex; justify-content:space-between; align-items:center;
-  margin:2rem 0 0; gap:1rem; }
-.paginazione a { color:var(--link); text-decoration:none; font-size:0.95rem;
-  padding:0.5rem 1rem; border:1px solid var(--bordo); border-radius:8px; }
-.paginazione a:hover { border-color:var(--link); }
-.paginazione .paginazione-vuoto { visibility:hidden; }
-.paginazione .paginazione-info { color:var(--secondario); font-size:0.85rem; }
+/* Language switcher in the article pages. */
+.language-switcher { display:flex; gap:0.5rem; margin-bottom:1rem; font-size:0.85rem; }
+.language-switcher a, .language-switcher span { padding:0.2rem 0.7rem; border-radius:20px; text-decoration:none; }
+.language-switcher a { color:var(--link); border:1px solid var(--bordo); }
+.language-switcher .lingua-attiva { background:var(--link); color:var(--sfondo); }
+
+/* --- The text of an article ------------------------------------------------- */
 pre { background:var(--codice-bg); padding:1rem 1.2rem; border-radius:6px; overflow-x:auto; font-size:0.85rem; line-height:1.5; }
-pre.ql-syntax, pre code { font-family:"SF Mono",Menlo,Monaco,Consolas,monospace; tab-size:4; }
+pre.ql-syntax, pre code { font-family:var(--pb-font-mono); tab-size:4; }
 pre.ql-syntax { background:var(--codice-bg); border:1px solid var(--bordo); }
+code { font-family:var(--pb-font-mono); font-size:0.88em; }
+p code, li code { background:var(--codice-bg); padding:0.1rem 0.35rem; border-radius:4px; }
+img { max-width:100% !important; height:auto; }
+video { max-width:100%; height:auto; display:block; margin:1rem 0; }
+.video-youtube { position:relative; width:100%; padding-bottom:56.25%; margin:1rem 0; height:0; overflow:hidden; }
+.video-youtube iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:0; }
+/* Alignment generated by Quill (text and images). */
+.ql-align-center { text-align:center; }
+.ql-align-right { text-align:right; }
+.ql-align-justify { text-align:justify; }
+/* Fonts and sizes chosen in the editor (Quill uses these classes). */
+.ql-font-serif { font-family:Georgia,"Times New Roman",serif; }
+.ql-font-monospace { font-family:var(--pb-font-mono); }
+.ql-size-small { font-size:0.75em; }
+.ql-size-large { font-size:1.5em; }
+.ql-size-huge { font-size:2.5em; }
+/* A centred image is inline: display block is needed to really centre it. */
+p.ql-align-center img, .ql-align-center img { display:inline-block; }
+blockquote { border-left:3px solid var(--bordo); margin-left:0; padding-left:1.2rem; color:var(--secondario); font-style:italic; }
+.commenti { max-width:46rem; margin:2.5rem 0 0; padding:2rem 0 0; border-top:1px solid var(--bordo); }
+.commenti h2 { font-size:1.2rem; }
+/* Lists in the articles: we restore the bullets and the numbers, which some
+   CSS resets remove. Without these rules bulleted lists show with no bullet. */
+article.post ul { list-style:disc; padding-left:1.6rem; margin:1rem 0; }
+article.post ol { list-style:decimal; padding-left:1.6rem; margin:1rem 0; }
+article.post li { margin:0.3rem 0; }
+/* Lists with check boxes (checklists) written in the editor. Quill 1.3.7
+   marks them on the list, ul[data-checked="true|false"], not on the items:
+   the rules used to target the items, the way Quill 2 does it, and to draw
+   "±0" and "±1", a CSS escape mangled on its way through Python. */
+article.post ul[data-checked] { list-style:none; padding-left:0.3rem; }
+article.post ul[data-checked] > li::before { margin-right:0.5rem; }
+article.post ul[data-checked="false"] > li::before { content:"\2610"; }
+article.post ul[data-checked="true"] > li::before { content:"\2611"; }
+/* Indentation produced by the editor, and the depth of a sub-point in a
+   list: a margin rather than a padding, so the bullet moves with the text. */
+article.post .ql-indent-1 { padding-left:2.5rem; }
+article.post .ql-indent-2 { padding-left:5rem; }
+article.post .ql-indent-3 { padding-left:7.5rem; }
+article.post .ql-indent-4 { padding-left:10rem; }
+article.post .ql-indent-5 { padding-left:12.5rem; }
+article.post li.ql-indent-1 { padding-left:0; margin-left:1.6rem; list-style-type:circle; }
+article.post li.ql-indent-2 { padding-left:0; margin-left:3.2rem; list-style-type:square; }
+article.post li.ql-indent-3 { padding-left:0; margin-left:4.8rem; }
+article.post li.ql-indent-4 { padding-left:0; margin-left:6.4rem; }
+article.post li.ql-indent-5 { padding-left:0; margin-left:8rem; }
+article.post ol > li.ql-indent-1, article.post ol > li.ql-indent-2 { list-style-type:lower-alpha; }
+/* Superscript and subscript (for formulas, notes, units of measure). */
+article.post sub { vertical-align:sub; font-size:0.75em; }
+article.post sup { vertical-align:super; font-size:0.75em; }
+/* Strikethrough text. */
+article.post s, article.post del { text-decoration:line-through; }
 /* Tables (including those pasted from Word or imported from a .docx).
    The backgrounds use the theme variables: they used to be fixed light colours
    that became unreadable in dark mode (light text on a light background).
@@ -248,136 +459,109 @@ pre.ql-syntax { background:var(--codice-bg); border:1px solid var(--bordo); }
    scroll container of its own. On a narrow screen it falls back to the old
    behaviour, where shrink-to-fit plus scrolling is what you want anyway. */
 @media (max-width: 640px) {
-  article.post > .article-table,
+  article.post .post-content > .article-table,
   .card-page > .article-table { display:block; overflow-x:auto; }
+  pre { font-size:0.8rem; padding:0.8rem 1rem; }
+  body { font-size:16px; }
 }
-code { font-family:"SF Mono",Menlo,Monaco,Consolas,monospace; font-size:0.88em; }
-p code,li code { background:var(--codice-bg); padding:0.1rem 0.35rem; border-radius:4px; }
-img { max-width:100% !important; height:auto; }
-video { max-width:100%; height:auto; display:block; margin:1rem 0; }
-.video-youtube { position:relative; width:100%; padding-bottom:56.25%; margin:1rem 0; height:0; overflow:hidden; }
-.video-youtube iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:0; }
-/* Alignment generated by Quill (text and images). */
-.ql-align-center { text-align:center; }
-.ql-align-right { text-align:right; }
-.ql-align-justify { text-align:justify; }
-/* Fonts and sizes chosen in the editor (Quill uses these classes). */
-.ql-font-serif { font-family:Georgia,"Times New Roman",serif; }
-.ql-font-monospace { font-family:Menlo,Monaco,Consolas,monospace; }
-.ql-size-small { font-size:0.75em; }
-.ql-size-large { font-size:1.5em; }
-.ql-size-huge { font-size:2.5em; }
-/* A centred image is inline: display block is needed to really centre it. */
-p.ql-align-center img, .ql-align-center img { display:inline-block; }
-blockquote { border-left:3px solid var(--bordo); margin-left:0; padding-left:1.2rem; color:var(--secondario); font-style:italic; }
-.commenti { margin-top:3rem; padding-top:2rem; border-top:1px solid var(--bordo); }
-.commenti h2 { font-size:1.2rem; }
-.search-box { margin-bottom:2rem; }
-.search-box input { width:100%; padding:0.7rem 1rem; font-size:1rem; border:1px solid var(--bordo); border-radius:8px; font-family:inherit; }
-.search-box input:focus { border-color:var(--link); }
-#search-box-info { color:var(--secondario); font-size:0.85rem; margin:0.5rem 0 0; min-height:1em; }
-/* The individual article pages stay narrow, for readability. */
-article.post { max-width:var(--larghezza); margin:0 auto; padding:2.5rem 1.2rem 2rem; }
-/* Lists in the articles: we restore the bullets and the numbers, which some
-   CSS resets remove. Without these rules bulleted lists show with no bullet. */
-article.post ul { list-style:disc; padding-left:1.6rem; margin:1rem 0; }
-article.post ol { list-style:decimal; padding-left:1.6rem; margin:1rem 0; }
-article.post li { margin:0.3rem 0; }
-/* Lists with check boxes (checklists) generated by the editor. */
-article.post ul[data-checked] { list-style:none; padding-left:0.3rem; }
-article.post li[data-list="unchecked"]::before { content:"±0"; margin-right:0.5rem; }
-article.post li[data-list="checked"]::before { content:"±1"; margin-right:0.5rem; }
-/* Indentation produced by the editor: 5 levels. */
-article.post .ql-indent-1 { padding-left:2.5rem; }
-article.post .ql-indent-2 { padding-left:5rem; }
-article.post .ql-indent-3 { padding-left:7.5rem; }
-article.post .ql-indent-4 { padding-left:10rem; }
-article.post .ql-indent-5 { padding-left:12.5rem; }
-/* Superscript and subscript (for formulas, notes, units of measure). */
-article.post sub { vertical-align:sub; font-size:0.75em; }
-article.post sup { vertical-align:super; font-size:0.75em; }
-/* Strikethrough text. */
-article.post s, article.post del { text-decoration:line-through; }
-.commenti { max-width:var(--larghezza); margin:2rem auto 0; padding:2rem 1.2rem 0; border-top:1px solid var(--bordo); }
-footer.site { max-width:var(--larghezza-home); margin:4rem auto 0; padding:1.5rem 1.2rem; border-top:1px solid var(--bordo); color:var(--secondario); font-size:0.85rem; text-align:center; }
-/* Top of the homepage (bio, images, introduction). */
-/* Welcome section (hero): elegant but very light, CSS only.
-   A gentle gradient and careful typography give emphasis without images. */
+/* --- Formats applied to a whole table in the editor -----------------------
+   The toolbar can format a selected table as a unit: an embedded table has
+   no text in the editor's model, so these formats become classes on the
+   table itself. The rules mirror the ones in admin.css, so what the author
+   sees while writing is what gets published. */
+.article-table.pb-tbl-bold th,
+.article-table.pb-tbl-bold td { font-weight:700; }
+.article-table.pb-tbl-italic th,
+.article-table.pb-tbl-italic td { font-style:italic; }
+.article-table.pb-tbl-underline th,
+.article-table.pb-tbl-underline td { text-decoration:underline; }
+.article-table.pb-tbl-strike th,
+.article-table.pb-tbl-strike td { text-decoration:line-through; }
+.article-table.pb-tbl-underline.pb-tbl-strike th,
+.article-table.pb-tbl-underline.pb-tbl-strike td { text-decoration:underline line-through; }
+.article-table.pb-tbl-sfondo th,
+.article-table.pb-tbl-sfondo td { background:transparent; }
+/* An aligned table shrinks to its content: a table at width:100% has no room
+   to move, so centring it would look like nothing happened. */
+.raw-html-block.ql-align-center .article-table,
+.raw-html-block.ql-align-right .article-table { width:auto; max-width:100%; }
+.raw-html-block.ql-align-center .article-table { margin-left:auto; margin-right:auto; }
+.raw-html-block.ql-align-right .article-table { margin-left:auto; margin-right:0; }
+.raw-html-block.ql-align-justify .article-table { width:100%; }
+
+/* --- The cover inside the article ------------------------------------------
+   Under the title and the date, never above them: a cover is usually
+   decorative, and putting it first would push the opening line of the article
+   off the first screen on a phone. The height cap is there for the same
+   reason. Since the cap crops the picture, clicking it opens the whole
+   thing. */
+.articolo-copertina { margin:0 0 2rem; }
+.articolo-copertina img {
+  width:100%; max-height:340px; object-fit:cover;
+  border-radius:12px; display:block;
+  box-shadow:0 4px 18px rgba(0,0,0,0.10);
+  cursor:zoom-in;
+}
+.articolo-copertina img:hover { box-shadow:0 6px 24px rgba(0,0,0,0.16); }
+@media (max-width: 640px) {
+  .articolo-copertina img { max-height:220px; }
+  .articolo-copertina { margin-bottom:1.4rem; }
+}
+
+/* --- Homepage introduction --------------------------------------------------
+   The free content written in the Settings. In the sidebar it is a box (see
+   .box-intro above); above the articles it is a light hero, kept short so
+   the articles still start on the first screen. */
 .home-intro {
-  margin:0 0 2rem; padding:1.3rem 2rem; border-radius:16px;
+  margin:0 0 2rem; padding:1.2rem 1.6rem; border-radius:14px;
   background:linear-gradient(135deg, var(--hero-1) 0%, var(--hero-2) 100%);
-  border:1px solid var(--hero-bordo); text-align:center; position:relative; overflow:hidden;
-}
-.home-intro::before {
-  content:""; position:absolute; top:-50%; right:-10%; width:260px; height:260px;
-  background:radial-gradient(circle, rgba(0,102,204,0.08) 0%, transparent 70%);
-  pointer-events:none;
+  border:1px solid var(--hero-bordo); position:relative; overflow:hidden;
 }
 .home-intro h1, .home-intro h2 {
-  font-size:1.7rem; margin:0 0 0.3rem; line-height:1.2; letter-spacing:-0.02em;
+  font-size:1.5rem; margin:0 0 0.3rem; line-height:1.2; letter-spacing:-0.02em;
   background:linear-gradient(120deg, #0066cc, #5b3df5); -webkit-background-clip:text;
   background-clip:text; -webkit-text-fill-color:transparent; font-weight:700;
 }
-.home-intro p { font-size:1rem; color:#475569; max-width:620px; margin:0.2rem auto; line-height:1.5; }
+.home-intro p { font-size:1rem; color:#475569; margin:0.2rem 0; line-height:1.5; }
 .home-intro p strong { color:#1a1a1a; }
 /* We hide the empty paragraphs the editor leaves behind (both <p></p> and
-   <p><br></p>), so as not to add useless vertical space in the hero. */
+   <p><br></p>), so as not to add useless vertical space. */
 .home-intro p:empty { display:none; }
-.home-intro p:last-child:has(br:only-child) { display:none; }
-.home-intro br { display:none; }
+.home-intro p:has(> br:only-child) { display:none; }
 .home-intro img { border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.08); max-height:160px; width:auto; }
-/* Images side by side with the text: float left/right, text wrapping around. */
-.home-intro .ql-align-left img { float:left; margin:0 1.5rem 1rem 0; max-width:45%; }
-.home-intro .ql-align-right img { float:right; margin:0 0 1rem 1.5rem; max-width:45%; }
 .home-intro::after { content:""; display:block; clear:both; }
-/* Homepage cards: each one is a link to a dedicated page. */
-.home-cards-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.2rem; margin:0 0 3rem; }
-.cards-section { margin-top:3.5rem; }
-.home-card { display:flex; flex-direction:column; text-decoration:none; color:var(--testo);
-  background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px; padding:1.4rem;
-  transition:transform 0.15s, box-shadow 0.15s, background 0.15s; }
-.home-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.08); background:var(--card-hover); }
-.home-card-title { font-size:1.15rem; margin:0 0 0.6rem; padding-bottom:0.5rem; border-bottom:2px solid var(--link); display:inline-block; }
-.home-card-excerpt { font-size:0.92rem; color:var(--secondario); margin:0 0 1rem; flex-grow:1; }
-.home-card-link { color:var(--link); font-size:0.88rem; font-weight:500; margin-top:auto; }
-.articles-heading { font-size:1.6rem; margin:0 0 0.3rem; font-weight:700; letter-spacing:-0.01em; }
-.articles-section { position:relative; }
-.articles-section::before {
-  content:""; display:block; width:48px; height:4px; border-radius:2px;
-  background:linear-gradient(90deg, #0066cc, #5b3df5); margin-bottom:1.2rem;
-}
-/* Language switcher in the article pages. */
-.language-switcher { display:flex; gap:0.5rem; margin-bottom:1rem; font-size:0.85rem; }
-.language-switcher a, .language-switcher span { padding:0.2rem 0.7rem; border-radius:20px; text-decoration:none; }
-.language-switcher a { color:var(--link); border:1px solid var(--bordo); }
-.language-switcher .lingua-attiva { background:var(--link); color:#fff; }
-/* --- Responsive / mobile friendly --- */
+/* Author avatar in the introduction. */
+.home-avatar { width:80px; height:80px; border-radius:50%; object-fit:cover;
+  border:3px solid var(--sfondo); box-shadow:0 2px 10px rgba(0,0,0,0.12);
+  margin:0 0 0.8rem; display:block; }
+.home-avatar.avatar-iniziali { display:grid; place-items:center; font-size:1.4rem; }
+
+/* --- Archive page: compact list by year, date aligned left. --- */
+.archive-year h2 { font-size:1.3rem; margin:2rem 0 0.6rem; color:var(--testo);
+  border-bottom:1px solid var(--bordo); padding-bottom:0.3rem; }
+.archive-list { list-style:none; padding:0; margin:0; }
+.archive-list li { margin:0.45rem 0; display:flex; gap:1rem; align-items:baseline; }
+.archive-date { color:var(--secondario); font-size:0.85rem; min-width:9.5rem; flex-shrink:0; }
+.archive-list a { color:var(--testo); text-decoration:none; }
+.archive-list a:hover { color:var(--link); text-decoration:underline; }
 @media (max-width: 640px) {
-  body { font-size:16px; }
-  header.site { padding:1rem; flex-direction:column; align-items:flex-start; gap:0.6rem; }
-  header.site .site-nav { gap:1.2rem; }
-  .main-content { padding:1.5rem 1rem 3rem; }
-  article.post { padding:1.5rem 1rem; }
-  article.post h1 { font-size:1.6rem; }
-  /* Side-by-side images become full width, stacked. */
-  .home-intro .ql-align-left img,
-  .home-intro .ql-align-right img { float:none; max-width:100%; margin:1rem 0; display:block; }
-  /* The hero adapts: less padding and a smaller title on mobile. */
-  .home-intro { padding:2rem 1.2rem; border-radius:16px; }
-  .home-intro h1, .home-intro h2 { font-size:1.7rem; }
-  .home-intro p { font-size:1rem; }
-  pre { font-size:0.8rem; padding:0.8rem 1rem; }
+  .archive-list li { flex-direction:column; gap:0.1rem; margin:0.8rem 0; }
+  .archive-date { min-width:0; }
 }
-/* --- Tag labels under the homepage cards ---------------------------------
-   They sit outside the card, because the card is itself a link and nesting
-   one anchor inside another is invalid HTML. */
-.card-tags { display:flex; flex-wrap:wrap; gap:0.4rem; margin:0.5rem 0 0.2rem; padding:0 0.3rem; }
-.card-tag {
-  font-size:0.75rem; color:var(--secondario); text-decoration:none;
-  border:1px solid var(--bordo); border-radius:999px; padding:0.1rem 0.6rem;
-  background:var(--card-bg); line-height:1.6;
-}
-.card-tag:hover { color:var(--link); border-color:var(--link); }
+
+/* --- Footer ---------------------------------------------------------------- */
+footer.site { max-width:var(--larghezza-pagina); margin:2rem auto 0; padding:1.5rem 1.2rem; border-top:1px solid var(--bordo); color:var(--secondario); font-size:0.85rem; text-align:center; }
+.pie-social { margin:0.4rem 0 0; }
+.pie-social a { color:var(--secondario); text-decoration:none; }
+.pie-social a:hover { color:var(--link); }
+.link-preferenze { background:none; border:0; padding:0; font:inherit; color:var(--link);
+  text-decoration:underline; cursor:pointer; }
+
+/* Skip link: invisible until it receives keyboard focus. */
+.skip-to-content { position:absolute; left:-9999px; top:0; background:var(--link);
+  color:#fff; padding:0.6rem 1rem; border-radius:0 0 8px 0; z-index:100; text-decoration:none; }
+.skip-to-content:focus { left:0; }
+
 /* --- Copy button on the code blocks --------------------------------------- */
 .blocco-codice { position:relative; }
 .blocco-codice pre { margin:0; }
@@ -397,6 +581,7 @@ footer.site { max-width:var(--larghezza-home); margin:4rem auto 0; padding:1.5re
 .copia-codice:hover { color:var(--link); border-color:var(--link); }
 .copia-codice.copiato { color:#0a6b2e; border-color:#0a6b2e; }
 html[data-tema="dark"] .copia-codice.copiato { color:#4ade80; border-color:#4ade80; }
+
 /* --- Reading progress bar ------------------------------------------------- */
 .progresso-lettura {
   position:fixed; top:0; left:0; width:100%; height:3px;
@@ -413,7 +598,9 @@ html[data-tema="dark"] .progresso-lettura-barra {
 @media (prefers-reduced-motion: reduce) {
   .progresso-lettura-barra { transition:none; }
 }
+
 /* --- 404 page ------------------------------------------------------------- */
+.main-content { max-width:var(--larghezza-pagina); margin:0 auto; padding:2.5rem 1.2rem 4rem; }
 .pagina-404 { max-width:var(--larghezza); margin:0 auto; text-align:center; padding:3rem 0 2rem; }
 .errore-404-numero { font-size:3.5rem; margin:0; line-height:1;
   background:linear-gradient(120deg, #0066cc, #5b3df5); -webkit-background-clip:text;
@@ -452,145 +639,9 @@ html[data-tema="dark"] .errore-404-numero {
   .errore-404-ricerca { flex-direction:column; }
   .errore-404-ultimi li { flex-direction:column; gap:0.1rem; }
   .errore-404-numero { font-size:2.8rem; }
+  .main-content { padding:1.5rem 1rem 3rem; }
 }
-/* --- Pagination on a narrow screen ----------------------------------------
-   Three items side by side leave no room for the labels on a phone: the
-   counter moves to its own line and the two links share the row below,
-   each big enough to be a comfortable tap target. */
-@media (max-width: 560px) {
-  .paginazione {
-    display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;
-  }
-  .paginazione .paginazione-info {
-    grid-column:1 / -1; order:-1; text-align:center;
-  }
-  .paginazione a {
-    display:block; text-align:center; padding:0.7rem 0.5rem;
-  }
-  .paginazione .paginazione-vuoto { display:none; }
-}
-/* --- Formats applied to a whole table in the editor -----------------------
-   The toolbar can format a selected table as a unit: an embedded table has
-   no text in the editor's model, so these formats become classes on the
-   table itself. The rules mirror the ones in admin.css, so what the author
-   sees while writing is what gets published. */
-.article-table.pb-tbl-bold th,
-.article-table.pb-tbl-bold td { font-weight:700; }
-.article-table.pb-tbl-italic th,
-.article-table.pb-tbl-italic td { font-style:italic; }
-.article-table.pb-tbl-underline th,
-.article-table.pb-tbl-underline td { text-decoration:underline; }
-.article-table.pb-tbl-strike th,
-.article-table.pb-tbl-strike td { text-decoration:line-through; }
-.article-table.pb-tbl-underline.pb-tbl-strike th,
-.article-table.pb-tbl-underline.pb-tbl-strike td { text-decoration:underline line-through; }
-.article-table.pb-tbl-sfondo th,
-.article-table.pb-tbl-sfondo td { background:transparent; }
-/* An aligned table shrinks to its content: a table at width:100% has no room
-   to move, so centring it would look like nothing happened. */
-.raw-html-block.ql-align-center .article-table,
-.raw-html-block.ql-align-right .article-table { width:auto; max-width:100%; }
-.raw-html-block.ql-align-center .article-table { margin-left:auto; margin-right:auto; }
-.raw-html-block.ql-align-right .article-table { margin-left:auto; margin-right:0; }
-.raw-html-block.ql-align-justify .article-table { width:100%; }
-/* --- The most recent article, highlighted ---------------------------------
-   It sits below the search box on purpose: hiding it while a search is
-   running must not make the box jump. The block is removed from the list
-   below rather than repeated in it.
 
-   Its colours are its own (--evidenza-*), warm where the hero is cold. They
-   used to be the hero's own gradient, which made the two panels identical:
-   the reader scrolling past met the same box twice and read the second one
-   as another header rather than as an article. */
-.in-evidenza { margin:0 0 1.6rem; }
-.in-evidenza[hidden] { display:none; }
-.in-evidenza-etichetta {
-  font-size:0.72rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase;
-  color:var(--evidenza-accento); margin:0 0 0.5rem; padding-left:0.9rem;
-  border-left:3px solid var(--evidenza-accento);
-}
-.in-evidenza-card {
-  display:flex; gap:1.5rem; align-items:flex-start; text-decoration:none;
-  color:var(--testo); background:var(--card-bg);
-  border:1px solid var(--evidenza-bordo); border-radius:16px;
-  padding:1.6rem 1.8rem;
-  background-image:linear-gradient(135deg, var(--evidenza-1) 0%, var(--evidenza-2) 100%);
-  transition:transform 0.15s, box-shadow 0.15s;
-}
-.in-evidenza-card:hover { transform:translateY(-3px); box-shadow:0 10px 30px rgba(0,0,0,0.10); }
-/* The cover is a thumbnail, not a column: a square that identifies the
-   article and leaves the text the width it needs. It treats a tall photo and
-   a wide one the same way.
-
-   Its size is written as a clamp, and both ends of that clamp matter:
-
-     - the width is DECLARED, not left to a flex-basis. A flex item's
-       automatic minimum size (min-width:auto) falls back to the size of its
-       CONTENT when no width is specified, and for an image that is its
-       intrinsic width. With flex:0 0 20% and nothing else, an 800px cover
-       claimed 800px, refused to shrink, and pushed the text out of the block
-       entirely. min-width:0 removes that automatic minimum outright, so an
-       upload of any size behaves the same.
-     - the 150px ceiling is a width, not a max-width, because the global
-       "img { max-width:100% !important }" rule further down would override a
-       max-width here and leave the thumbnail with no cap at all.
-
-   The clamp also does the responsive work by itself: 150px on a desktop
-   block, proportional in between, never below 72px on the narrowest phone.
-   That is why the media queries below carry no rule for it. */
-.in-evidenza-copertina {
-  flex:0 0 auto;
-  width:clamp(72px, 20%, 150px);
-  aspect-ratio:1 / 1; height:auto;
-  min-width:0;
-  object-fit:cover;
-  border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,0.10);
-}
-.in-evidenza-testo { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; }
-.in-evidenza-titolo {
-  font-size:1.55rem; line-height:1.25; margin:0 0 0.4rem; letter-spacing:-0.01em;
-}
-.in-evidenza-meta { color:var(--secondario); font-size:0.85rem; margin:0 0 0.8rem; }
-.in-evidenza-estratto {
-  font-size:1rem; line-height:1.6; margin:0 0 1rem; color:var(--testo);
-  display:-webkit-box; -webkit-line-clamp:5; -webkit-box-orient:vertical; overflow:hidden;
-}
-.in-evidenza .card-read-more { margin-top:auto; font-size:0.92rem; }
-.in-evidenza .card-tags { margin-top:0.6rem; }
-/* In dark mode the panel is dark, so the text has to come back to the body
-   colour or it would sit at the muted grey on a dark panel. */
-html[data-tema="dark"] .in-evidenza-card { border-color:var(--evidenza-bordo); }
-html[data-tema="dark"] .in-evidenza-estratto,
-html[data-tema="dark"] .in-evidenza-titolo { color:var(--testo); }
-@media (max-width: 720px) {
-  /* The row survives on a phone: a small square beside the text reads like a
-     list item, and stacking it full width would undo the point of shrinking
-     it. The thumbnail needs no rule here - its clamp already scales it. */
-  .in-evidenza-card { gap:1rem; padding:1.2rem; }
-  .in-evidenza-titolo { font-size:1.25rem; }
-  .in-evidenza-estratto { -webkit-line-clamp:4; }
-}
-@media (max-width: 420px) {
-  .in-evidenza-card { gap:0.8rem; padding:1rem; }
-}
-/* --- The cover inside the article ------------------------------------------
-   Under the title and the date, never above them: a cover is usually
-   decorative, and putting it first would push the opening line of the article
-   off the first screen on a phone. The height cap is there for the same
-   reason. Since the cap crops the picture, clicking it opens the whole
-   thing. */
-.articolo-copertina { margin:0 0 2rem; }
-.articolo-copertina img {
-  width:100%; max-height:340px; object-fit:cover;
-  border-radius:12px; display:block;
-  box-shadow:0 4px 18px rgba(0,0,0,0.10);
-  cursor:zoom-in;
-}
-.articolo-copertina img:hover { box-shadow:0 6px 24px rgba(0,0,0,0.16); }
-@media (max-width: 640px) {
-  .articolo-copertina img { max-height:220px; }
-  .articolo-copertina { margin-bottom:1.4rem; }
-}
 /* --- The enlarged picture --------------------------------------------------
    A div, an image and two ways out. No library: this is the whole feature. */
 .zoom-immagine {
@@ -630,4 +681,58 @@ body.zoom-aperto { overflow:hidden; }
 /* Someone who has asked for less motion gets no hover lift on the cover. */
 @media (prefers-reduced-motion: reduce) {
   .articolo-copertina img { transition:none; }
+}
+
+/* The pages with no sidebar (the training-rights statement) keep their
+   column centred. */
+.main-content article.post { margin:0 auto; }
+
+/* --- The consent banner -----------------------------------------------------
+   At the bottom of the window, over the page but without blocking it: a
+   visitor can keep reading while deciding. Refusing is exactly as easy and as
+   visible as accepting, which is what the Italian data-protection authority
+   asks of a cookie banner; closing it with the cross counts as refusing. */
+.consenso {
+  position:fixed; left:0; right:0; bottom:0; z-index:150;
+  padding:0 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  pointer-events:none;
+}
+.consenso[hidden] { display:none; }
+.consenso-interno {
+  position:relative; pointer-events:auto;
+  max-width:46rem; margin:0 auto; padding:1.1rem 1.3rem 1rem;
+  background:var(--card-bg); color:var(--testo);
+  border:1px solid var(--bordo); border-radius:14px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.18);
+  font-size:0.92rem;
+}
+.consenso-titolo { margin:0 2rem 0.35rem 0; font-weight:700; font-size:1rem; }
+.consenso-testo { margin:0; line-height:1.55; color:var(--secondario); }
+.consenso-scelte { display:grid; gap:0.55rem; margin:0.9rem 0 0.2rem; }
+.consenso-scelte[hidden] { display:none; }
+.consenso-voce { display:flex; gap:0.55rem; align-items:flex-start; line-height:1.45; cursor:pointer; }
+.consenso-voce input { margin-top:0.25rem; }
+.consenso-voce span { color:var(--secondario); }
+.consenso-voce strong { color:var(--testo); }
+.consenso-pulsanti { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem; margin-top:0.9rem; }
+.consenso-pulsante {
+  font:inherit; font-weight:600; cursor:pointer; border-radius:8px;
+  padding:0.5rem 1rem; border:1px solid var(--link);
+  background:var(--card-bg); color:var(--link);
+}
+.consenso-pulsante[hidden] { display:none; }
+.consenso-pulsante:hover { filter:brightness(0.95); }
+.consenso-pulsante[data-consenso="rifiuta"], .consenso-primario {
+  background:var(--link); color:var(--sfondo);
+}
+.consenso-chiudi {
+  position:absolute; top:0.55rem; right:0.6rem; width:2rem; height:2rem;
+  border:0; background:none; color:var(--secondario); font-size:1.4rem; line-height:1;
+  cursor:pointer; border-radius:50%;
+}
+.consenso-chiudi:hover { color:var(--testo); background:var(--card-hover); }
+@media (max-width: 560px) {
+  .consenso { padding:0 0.5rem calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
+  .consenso-pulsanti { justify-content:stretch; }
+  .consenso-pulsante { flex:1 1 auto; }
 }

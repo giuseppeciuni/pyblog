@@ -48,22 +48,26 @@ def classi_di(testo):
 
 
 def test_parita_delle_card():
-    """The generator and site.js must build the same card."""
-    print("\nparita' fra le due versioni della card")
+    """The generator and site.js must build the same article row."""
+    print("\nparita' fra le due versioni della riga di un articolo")
     home = leggi("output/index.html")
-    lista = re.search(r'id="lista-articoli">(.*?)\n    </div>\n', home, re.S)
+    # Up to the end of the articles section: a closing </div> alone would stop
+    # inside the first row, which has divs of its own.
+    lista = re.search(r'id="lista-articoli">(.*?)</section>', home, re.S)
     check("la lista degli articoli esiste", lista is not None)
     if lista is None:
         return
-    card = re.search(r'<a class="article-card".*?</a>', lista.group(1), re.S)
-    check("c'e' almeno una card", card is not None)
-    if card is None:
+    # The first row is the lead one; the rows built by a search are ordinary
+    # rows, so the comparison takes an ordinary one.
+    riga = re.search(r'<article class="art-row">.*?</article>', lista.group(1), re.S)
+    check("c'e' almeno una riga normale", riga is not None)
+    if riga is None:
         return
-    classi_server = set(classi_di(card.group(0)))
+    classi_server = set(classi_di(riga.group(0)))
 
     js = leggi("static/site.js")
-    funzione = re.search(r"function cardHtml\(.*?\n  \}", js, re.S)
-    check("site.js ha un solo costruttore di card", funzione is not None)
+    funzione = re.search(r"function rowHtml\(.*?\n  \}", js, re.S)
+    check("site.js ha un solo costruttore di righe", funzione is not None)
     if funzione is None:
         return
     tag_builder = re.search(r"function tagsHtml\(.*?\n  \}", js, re.S)
@@ -71,59 +75,55 @@ def test_parita_delle_card():
     if tag_builder is not None:
         sorgente_js = sorgente_js + tag_builder.group(0)
     classi_js = set(classi_di(sorgente_js))
-    # These two come from the caller: the plain list passes an excerpt, the
-    # search results pass a snippet.
-    classi_js.add("card-excerpt")
-    classi_js.add("card-snippet")
-
-    # The tag row is a sibling of the card, so it has to be gathered from the
-    # list, not from inside the <a>.
-    riga_tag = re.search(r'<span class="card-tags">.*?</span>\s*</span>',
-                         lista.group(1), re.S)
-    if riga_tag is not None:
-        classi_server = classi_server | set(classi_di(riga_tag.group(0)))
+    # These two come from the caller: the opening of the article, or the
+    # snippet around the searched term.
+    classi_js.add("art-excerpt")
+    classi_js.add("art-snippet")
+    # An article without a cover gets the tile: the server row shows one or
+    # the other, site.js knows both.
+    classi_server.discard("art-tile")
+    classi_server.discard("art-thumb-img")
+    check("site.js sa fare sia la miniatura sia il riquadro",
+          "art-thumb-img" in classi_js and "art-tile" in classi_js)
 
     mancanti = classi_server - classi_js
     check("site.js costruisce ogni parte che il generatore scrive",
           len(mancanti) == 0, "mancano in site.js: " + str(sorted(mancanti)))
-
     check("i tag compaiono anche nei risultati di ricerca",
-          "card-tags" in classi_js and "card-tag" in classi_js,
-          str(sorted(classi_js)))
+          "art-tags" in classi_js and "art-tag" in classi_js, str(sorted(classi_js)))
 
-    # Position matters as much as presence: the thumbnail goes between the
-    # opening link and the text block, and the tag row comes after the card.
-    # The return statement is one expression spread over several lines, so it
-    # ends at the first semicolon that closes a line.
-    ritorno = re.search(r"return '<a class=\"article-card\".*?;\n", funzione.group(0), re.S)
-    check("il return della card e' individuabile", ritorno is not None)
-    if ritorno is None:
-        return
-    testo = ritorno.group(0)
-    check("la miniatura e' concatenata prima del corpo della card",
-          testo.index("copertina") < testo.index("card-corpo"), testo)
-    check("la riga dei tag viene dopo la chiusura della card",
-          "tagsHtml" in testo and testo.index("</a>") < testo.index("tagsHtml"), testo)
+    # Order matters as much as presence: the thumbnail comes before the body,
+    # and inside the body the tags come before the title.
+    corpo = funzione.group(0)
+    check("la miniatura viene prima del corpo della riga",
+          corpo.index("art-thumb") < corpo.index("art-body"), corpo[:200])
+    check("i tag vengono prima del titolo",
+          corpo.index("tagsHtml(a)") < corpo.index("art-title"), corpo[:400])
 
 
 def test_indice_di_ricerca():
-    """The index must carry everything the browser needs to rebuild a card."""
+    """The index must carry everything the browser needs to rebuild a row."""
     print("\nindice di ricerca")
     indice = json.loads(leggi("output/search-index.json"))
     check("l'indice non e' vuoto", len(indice) > 0)
     if len(indice) == 0:
         return
     js = leggi("static/site.js")
-    funzione = re.search(r"function cardHtml\(.*?\n  \}", js, re.S).group(0)
-    tag_builder = re.search(r"function tagsHtml\(.*?\n  \}", js, re.S)
-    if tag_builder is not None:
-        funzione = funzione + tag_builder.group(0)
-    # Every a.<field> the card builder reads must exist in the index.
-    campi_usati = set(re.findall(r"\ba\.([a-z_]+)", funzione))
+    sorgente = ""
+    for nome in ("rowHtml", "tagsHtml", "articleDate", "articleTitle",
+                 "articleReading", "articleExcerpt"):
+        trovata = re.search(r"function " + nome + r"\(.*?\n  \}", js, re.S)
+        check(f"site.js ha {nome}", trovata is not None)
+        if trovata is not None:
+            sorgente = sorgente + trovata.group(0)
+    # Every a.<field> the row builder reads must exist in the index.
+    campi_usati = set(re.findall(r"\ba\.([a-z_]+)", sorgente))
     campi_indice = set(indice[0].keys())
     mancanti = campi_usati - campi_indice
     check("ogni campo letto dal costruttore e' nell'indice",
           len(mancanti) == 0, "mancano: " + str(sorted(mancanti)))
+    check("l'anteprima arriva gia' pronta dal server",
+          all("excerpt" in voce and "reading" in voce for voce in indice))
 
 
 def test_copertina_nell_articolo():

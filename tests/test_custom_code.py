@@ -22,6 +22,7 @@ sys.path.insert(0, str(RADICE))
 
 from core.articles import load_article, save_article  # noqa: E402
 from core.build import build, snippet_applies  # noqa: E402
+from core.config import OUTPUT_DIR  # noqa: E402
 from core.config import CONFIG_FILE, POSTS_DIR, load_config, save_config  # noqa: E402
 
 PASSED = 0
@@ -57,6 +58,25 @@ SNIPPET_DI_PROVA = [
     {"id": "prova-menu", "name": "Voce di menu", "enabled": True,
      "position": "nav", "scope": "all",
      "code": '<a href="#" data-vaitony-apri>MARCA-MENU</a>'},
+    # On every article, except the one that switches it off for itself.
+    {"id": "prova-spegnibile", "name": "Spegnibile", "enabled": True,
+     "position": "body_end", "scope": "articles",
+     "code": "<!-- MARCA-SPEGNIBILE -->"},
+]
+
+# The code written inside the ticked article: one piece at the top of the
+# text, one half way down, one switched off. The markers share no prefix, so
+# finding one can never be finding another.
+CODICE_PROPRIO = [
+    {"id": "art-inizio", "name": "Annuncio in cima", "enabled": True,
+     "position": "article_start", "consent": "necessary",
+     "code": "<!-- MARCA-MIO-INIZIO -->"},
+    {"id": "art-meta", "name": "Annuncio a metà", "enabled": True,
+     "position": "article_middle", "consent": "marketing",
+     "code": "<!-- MARCA-MIO-META -->"},
+    {"id": "art-spento", "name": "Spento", "enabled": False,
+     "position": "article_end", "consent": "necessary",
+     "code": "<!-- MARCA-NON-DEVE-USCIRE -->"},
 ]
 
 CON_SPUNTA = "come-un-llm-genera-testo"
@@ -168,7 +188,7 @@ def test_posizione_nella_pagina():
     testa = home.split("</head>")[0]
     check("'nell'head' sta davvero nell'head", "MARCA-SOLO-HOME" in testa)
 
-    dopo_body = home.split("<body>")[1]
+    dopo_body = home.split("<body", 1)[1].split(">", 1)[1]
     prima_header = dopo_body.split("<header")[0]
     check("'inizio body' sta fra <body> e l'header",
           "MARCA-TUTTI-ARTICOLI" in prima_header)
@@ -212,7 +232,7 @@ def test_posizione_nella_pagina():
     for percorso in ("output/index.html", f"output/posts/{CON_SPUNTA}.html",
                      "output/404.html", "output/en/index.html"):
         pagina = leggi(percorso)
-        menu = pagina.split('<nav class="site-nav">', 1)[-1].split("</nav>", 1)[0]
+        menu = pagina.split('<nav class="site-nav"', 1)[-1].split("</nav>", 1)[0]
         check(f"{percorso}: 'nel menu' sta dentro il <nav>", "MARCA-MENU" in menu)
         check(f"{percorso}: 'nel menu' sta dopo RSS e prima della lingua",
               menu.find(">RSS</a>") < menu.find("MARCA-MENU") < menu.find("nav-lingua"))
@@ -310,6 +330,163 @@ def test_le_spunte_sopravvivono_al_salvataggio():
           load_article(CON_SPUNTA).get("custom_code_ids") == ["prova-scelti"])
 
 
+def test_spento_su_un_articolo():
+    """An article can say no to a snippet that goes on every article."""
+    print("\nun articolo spegne un codice di serie")
+    check("l'articolo che lo spegne non lo riceve",
+          not contiene(f"output/posts/{CON_SPUNTA}.html", "MARCA-SPEGNIBILE"))
+    check("la sua versione tradotta nemmeno",
+          not contiene(f"output/en/posts/{CON_SPUNTA}.html", "MARCA-SPEGNIBILE"))
+    check("gli altri articoli lo ricevono ancora",
+          contiene(f"output/posts/{SENZA_SPUNTA}.html", "MARCA-SPEGNIBILE"),
+          "spegnerlo su un articolo l'ha spento dappertutto")
+
+    ovunque = {"id": "x", "enabled": True, "scope": "all"}
+    check("la regola: spento sull'articolo che lo dice",
+          not snippet_applies(ovunque, "article", (), ("x",)))
+    check("la regola: le altre pagine non ne sanno niente",
+          snippet_applies(ovunque, "home", (), ("x",))
+          and snippet_applies(ovunque, "other", (), ("x",)))
+    check("la regola: spegnere vince anche sulla spunta",
+          not snippet_applies({"id": "x", "enabled": True, "scope": "optin"},
+                              "article", ("x",), ("x",)))
+
+
+def test_codice_proprio():
+    """The code written inside an article goes there and nowhere else."""
+    print("\ncodice scritto dentro un articolo")
+    pagina = leggi(f"output/posts/{CON_SPUNTA}.html")
+    check("l'articolo riceve il suo codice in cima", "MARCA-MIO-INIZIO" in pagina)
+    check("l'articolo riceve il suo codice a metà", "MARCA-MIO-META" in pagina)
+    check("il codice proprio spento non esce", "MARCA-NON-DEVE-USCIRE" not in pagina)
+    check("la versione tradotta riceve lo stesso codice",
+          contiene(f"output/en/posts/{CON_SPUNTA}.html", "MARCA-MIO-INIZIO"))
+
+    for nome, percorso in (("home", "output/index.html"),
+                           ("altro articolo", f"output/posts/{SENZA_SPUNTA}.html"),
+                           ("archivio", "output/archivio.html"),
+                           ("tag", "output/tag/ai.html")):
+        altrove = leggi(percorso)
+        check(f"non esce su {nome}",
+              "MARCA-MIO-INIZIO" not in altrove and "MARCA-MIO-META" not in altrove)
+
+    # "At the start": after the title, before the text. "Half way": inside
+    # the text, with paragraphs on both sides.
+    inizio = pagina.find("MARCA-MIO-INIZIO")
+    testo = pagina.find('<div class="post-content">')
+    check("'all'inizio' sta dopo il titolo e prima del testo",
+          pagina.find("<h1") < inizio < testo)
+    meta = pagina.find("MARCA-MIO-META")
+    check("'a metà' sta dentro il testo",
+          testo < meta < pagina.find("</article>"))
+    check("'a metà' ha testo prima e dopo",
+          "</p>" in pagina[testo:meta] and "<p" in pagina[meta:pagina.find("</article>")])
+
+
+def test_salvataggio_dei_codici_propri():
+    """The article keeps its own code and its switched-off snippets."""
+    print("\nil salvataggio conserva i codici dell'articolo")
+    articolo = load_article(CON_SPUNTA)
+    propri = articolo.get("custom_code", [])
+    check("i codici propri sono salvati, nell'ordine",
+          [s.get("id") for s in propri] == ["art-inizio", "art-meta", "art-spento"])
+    check("con posizione e consenso",
+          propri[1].get("position") == "article_middle" and propri[1].get("consent") == "marketing")
+    check("il codice spento resta spento", propri[2].get("enabled") is False)
+    check("gli spegnimenti sono salvati",
+          articolo.get("custom_code_off_ids") == ["prova-spegnibile"])
+
+    # What a hand-edited file or an old client can send: something that is
+    # not a card, a card without an id, a second card with an id taken.
+    copia = dict(articolo)
+    copia["custom_code"] = propri + ["rotto", {"code": "<!-- senza id -->"},
+                                     {"id": "art-inizio", "code": "<!-- doppio -->"}]
+    save_article(copia)
+    salvati = load_article(CON_SPUNTA)["custom_code"]
+    ids = [s["id"] for s in salvati]
+    check("le voci che non sono codici vengono scartate", len(salvati) == len(propri) + 2)
+    check("ogni codice ha un id, e nessuno è ripetuto",
+          all(ids) and len(set(ids)) == len(ids), str(ids))
+    check("gli id nuovi sono quelli dell'articolo",
+          all(i.startswith("art-") for i in ids[len(propri):]), str(ids))
+    check("i codici esistenti tengono il loro id", ids[:len(propri)] == ["art-inizio", "art-meta", "art-spento"])
+
+    copia["custom_code"] = propri
+    save_article(copia)
+
+
+def test_consenso():
+    """With the banner on, the code that needs consent waits for it."""
+    print("\nconsenso: il codice aspetta la scelta del visitatore")
+    config = load_config()
+    config["consent"] = {"enabled": True, "text": "", "text_en": "",
+                         "privacy_url": "https://example.org/privacy", "version": 3}
+    config["analytics_id"] = "G-PROVA12345"
+    config["custom_code"] = SNIPPET_DI_PROVA + [
+        {"id": "prova-statistiche", "name": "Statistiche", "enabled": True,
+         "position": "head", "scope": "all", "consent": "statistics",
+         "code": "<!-- MARCA-STATISTICHE -->"},
+        {"id": "prova-pubblicita", "name": "Pubblicità", "enabled": True,
+         "position": "sidebar", "scope": "all", "consent": "marketing",
+         "code": "<!-- MARCA-PUBBLICITA -->"},
+    ]
+    config["ads_txt"] = "google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0"
+    save_config(config)
+    build()
+
+    home = leggi("output/index.html")
+    check("le statistiche arrivano trattenute",
+          '<template data-pb-consenso="statistics"><!-- MARCA-STATISTICHE --></template>' in home)
+    check("la pubblicità arriva trattenuta",
+          '<template data-pb-consenso="marketing"><!-- MARCA-PUBBLICITA --></template>' in home)
+    solo_home = home.find("MARCA-SOLO-HOME")
+    check("il codice necessario parte subito",
+          solo_home != -1 and "<template" not in home[solo_home - 40:solo_home])
+    check("Google Analytics aspetta anche lui",
+          '<template data-pb-consenso="statistics"><script async '
+          'src="https://www.googletagmanager.com/gtag/js?id=G-PROVA12345"' in home)
+    check("i valori di Consent Mode vengono prima di ogni tag di Google",
+          -1 < home.find("gtag('consent', 'default'") < home.find("gtag/js?id=G-PROVA12345"))
+    check("il banner è nella pagina", 'id="pb-consenso"' in home)
+    check("chiede le due categorie usate",
+          'data-categoria="statistics"' in home and 'data-categoria="marketing"' in home)
+    check("site.js riceve versione e categorie",
+          '"consent": {"version": 3, "categories": ["statistics", "marketing"]}' in home)
+    check("il banner porta all'informativa", 'href="https://example.org/privacy"' in home)
+    check("il piè di pagina permette di cambiare idea", 'data-consenso="apri"' in home)
+    check("in inglese il banner è in inglese",
+          "Cookies and privacy" in leggi("output/en/index.html"))
+    check("il codice proprio dell'articolo aspetta il suo consenso",
+          '<template data-pb-consenso="marketing"><!-- MARCA-MIO-META --></template>'
+          in leggi(f"output/posts/{CON_SPUNTA}.html"))
+
+    ads = OUTPUT_DIR / "ads.txt"
+    check("ads.txt viene pubblicato",
+          ads.exists() and ads.read_text(encoding="utf-8") == config["ads_txt"] + "\n")
+
+    # Banner on, but nothing that needs it: no banner at all.
+    config["analytics_id"] = ""
+    config["custom_code"] = SNIPPET_DI_PROVA
+    save_config(config)
+    build()
+    home = leggi("output/index.html")
+    check("senza codici da trattenere il banner non esce", 'id="pb-consenso"' not in home)
+    check("e il piè di pagina non offre preferenze", 'data-consenso="apri"' not in home)
+
+    # Banner off: everything runs as written, and ads.txt goes away.
+    config["consent"]["enabled"] = False
+    config["analytics_id"] = "G-PROVA12345"
+    config["ads_txt"] = ""
+    save_config(config)
+    build()
+    home = leggi("output/index.html")
+    check("a banner spento niente viene trattenuto", "data-pb-consenso" not in home)
+    check("a banner spento Analytics parte subito",
+          '<script async src="https://www.googletagmanager.com/gtag/js?id=G-PROVA12345">' in home)
+    check("a banner spento nessun Consent Mode", "gtag('consent', 'default'" not in home)
+    check("ads.txt vuoto non viene pubblicato", not ads.exists())
+
+
 def main():
     articolo = load_article(CON_SPUNTA)
     if articolo is None:
@@ -331,6 +508,8 @@ def main():
     config["custom_code"] = SNIPPET_DI_PROVA
     save_config(config)
     articolo["custom_code_ids"] = ["prova-scelti", "prova-solo-scelti"]
+    articolo["custom_code_off_ids"] = ["prova-spegnibile"]
+    articolo["custom_code"] = CODICE_PROPRIO
     save_article(articolo)
     build()
 
@@ -341,6 +520,11 @@ def main():
         test_id_mancante_o_morto()
         test_regole_di_ambito()
         test_le_spunte_sopravvivono_al_salvataggio()
+        test_spento_su_un_articolo()
+        test_codice_proprio()
+        test_salvataggio_dei_codici_propri()
+        # Last: it rebuilds the site with other settings.
+        test_consenso()
     finally:
         file_articolo.write_text(articolo_originale, encoding="utf-8")
         if config_originale is None:

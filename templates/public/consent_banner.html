@@ -1,0 +1,17 @@
+  <div class="consenso" id="pb-consenso" role="dialog" aria-modal="false" aria-labelledby="pb-consenso-titolo" hidden>
+    <div class="consenso-interno">
+      <button type="button" class="consenso-chiudi" data-consenso="rifiuta" aria-label="$chiudi" title="$chiudi">&times;</button>
+      <p class="consenso-titolo" id="pb-consenso-titolo">$titolo</p>
+      <p class="consenso-testo">$testo$privacy</p>
+      <div class="consenso-scelte" id="pb-consenso-scelte" hidden>
+        <label class="consenso-voce"><input type="checkbox" checked disabled> <span><strong>$label_necessari</strong> $hint_necessari</span></label>
+$voci
+      </div>
+      <div class="consenso-pulsanti">
+        <button type="button" class="consenso-pulsante" data-consenso="rifiuta">$rifiuta</button>
+        <button type="button" class="consenso-pulsante" data-consenso="personalizza">$personalizza</button>
+        <button type="button" class="consenso-pulsante" data-consenso="salva" hidden>$salva</button>
+        <button type="button" class="consenso-pulsante consenso-primario" data-consenso="accetta">$accetta</button>
+      </div>
+    </div>
+  </div>

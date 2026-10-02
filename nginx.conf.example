@@ -30,6 +30,10 @@ server {
     location ~ ^/(admin|edit|config|login|logout|change-password|preview|export|save|delete|toggle-status|save-config|save-config-raw|rebuild|upload|translate|generate-description|generate-preview|analyze-seo|admin-language|set-password)$ {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
+        # The visitor's real address. PyBlog uses it to lock out only the
+        # address that keeps getting the password wrong: without it every
+        # request looks like 127.0.0.1 and one visitor could lock out all.
+        proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         # PyBlog uses this to add the Secure flag to the session cookie.
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -44,6 +48,7 @@ server {
         limit_req zone=pyblog_login burst=5 nodelay;
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }

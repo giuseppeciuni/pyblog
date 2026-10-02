@@ -890,16 +890,23 @@ function applyImportedDocx(risultato) {
   updatePreview();
   refreshTableHints();
 
+  // The subtitle of the document is a ready-made description. It only fills
+  // an empty field: a description the author already wrote stays.
+  var campoDescrizione = document.getElementById('description');
+  if (risultato.subtitle && campoDescrizione && campoDescrizione.value.trim() === '') {
+    campoDescrizione.value = risultato.subtitle;
+    updateDescriptionCounter();
+  }
+
   pbStatus('docx-status', '');
   pbToast(t('js_docx_imported'), 'success');
 
-  // Warnings are shown one by one: each names a specific image, link or
-  // table, and an author needs to know which.
+  // The warnings go in one message, one per line: each names a specific
+  // image, link or table, and an author needs to know which - but a pile of
+  // separate toasts covered the editor and disappeared one by one.
   if (risultato.warnings && risultato.warnings.length > 0) {
-    pbToast(t('js_docx_warnings_title'), 'warning');
-    for (var i = 0; i < risultato.warnings.length; i++) {
-      pbToast(risultato.warnings[i], 'warning');
-    }
+    pbToast(t('js_docx_warnings_title') + '\n\u2022 ' + risultato.warnings.join('\n\u2022 '),
+            'warning');
   }
 }
 
@@ -1013,6 +1020,17 @@ function collectCellContent(nodo, pezzi) {
   }
 }
 
+// The merge of a cell, as attributes to write back: Word's merged cells
+// arrive as colspan and rowspan, and dropping them shifts every cell after.
+function mergeAttributes(cella) {
+  var risultato = '';
+  var colonne = parseInt(cella.getAttribute('colspan') || '1', 10);
+  var righe = parseInt(cella.getAttribute('rowspan') || '1', 10);
+  if (colonne > 1) { risultato = risultato + ' colspan="' + colonne + '"'; }
+  if (righe > 1) { risultato = risultato + ' rowspan="' + righe + '"'; }
+  return risultato;
+}
+
 // Turns a Word <table> node into simple, clean HTML, keeping the images.
 function buildCleanTable(tabella) {
   var risultato = '<table class="article-table"><tbody>';
@@ -1024,9 +1042,9 @@ function buildCleanTable(tabella) {
       var contenuto = buildCleanCell(celle[j]);
       // We treat the first row as the header.
       if (i === 0) {
-        risultato = risultato + '<th>' + contenuto + '</th>';
+        risultato = risultato + '<th' + mergeAttributes(celle[j]) + '>' + contenuto + '</th>';
       } else {
-        risultato = risultato + '<td>' + contenuto + '</td>';
+        risultato = risultato + '<td' + mergeAttributes(celle[j]) + '>' + contenuto + '</td>';
       }
     }
     risultato = risultato + '</tr>';
@@ -1497,9 +1515,9 @@ function serializeEditedTable(tabella) {
     for (var j = 0; j < celle.length; j++) {
       var contenuto = buildCleanCell(celle[j]);
       if (i === 0) {
-        risultato = risultato + '<th>' + contenuto + '</th>';
+        risultato = risultato + '<th' + mergeAttributes(celle[j]) + '>' + contenuto + '</th>';
       } else {
-        risultato = risultato + '<td>' + contenuto + '</td>';
+        risultato = risultato + '<td' + mergeAttributes(celle[j]) + '>' + contenuto + '</td>';
       }
     }
     risultato = risultato + '</tr>';
@@ -1811,6 +1829,9 @@ function initEditorPage() {
   });
   quillEn.on('text-change', markEditorDirty);
   watchEditorFields();
+  // The code of the article: its checkboxes and its own cards.
+  document.getElementById('lista-codice-articolo').addEventListener('change', markEditorDirty);
+  watchCodeList(document.getElementById('lista-codice-proprio'), markEditorDirty);
 
   // The article as it is right now is what is on disk: loading the page is
   // not a change.
@@ -1892,7 +1913,7 @@ function autosaveDraft() {
     .then(function(res) {
       salvataggioInCorso = false;
       if (res.ok) {
-        slugOriginale = res.slug;
+        applySavedSlug(res);
         markEditorClean();
         setAutosaveIndicator(t('js_autosaved_at').replace('{time}', currentTime()), false);
       } else {
@@ -2295,17 +2316,38 @@ function translatePiece(testo, quandoFinito) {
     });
 }
 
-// The ids of the custom code snippets ticked for this article. Only the
-// snippets set to "homepage and selected articles" have a checkbox here.
-function articleCustomCodeIds() {
+// The site's snippets on this article, read from the checkboxes: a
+// "selected articles" one counts when ticked (tipo "optin"), one that goes on
+// every article counts when unticked (tipo "sempre"), as switched off here.
+// The editor only lists the snippets that are active in the Settings, so the
+// ids the article already had for the others are kept as they were: the day
+// one of them is switched back on, the article's choice is still there.
+function articleCodeIds(tipo, spuntate, salvati) {
   var caselle = document.querySelectorAll('.codice-articolo');
+  var mostrati = {};
   var ids = [];
   for (var i = 0; i < caselle.length; i++) {
-    if (caselle[i].checked) {
+    mostrati[caselle[i].value] = true;
+    if (caselle[i].getAttribute('data-tipo') === tipo && caselle[i].checked === spuntate) {
       ids.push(caselle[i].value);
     }
   }
+  for (var j = 0; j < salvati.length; j++) {
+    if (!mostrati[salvati[j]] && ids.indexOf(salvati[j]) === -1) {
+      ids.push(salvati[j]);
+    }
+  }
   return ids;
+}
+
+// A new piece of code for this article only.
+function addOwnCode() {
+  var card = cloneBlankCard('codice-proprio-modello', 'art');
+  document.getElementById('lista-codice-proprio').appendChild(card);
+  updateCardSummary(card);
+  startCodeEditor(card);
+  markEditorDirty();
+  card.querySelector('.codice-nome').focus();
 }
 
 // Collects every form field into a single article object.
@@ -2321,7 +2363,9 @@ function articleData() {
     image: document.getElementById('image').value,
     status: document.getElementById('status').value,
     original_slug: slugOriginale,
-    custom_code_ids: articleCustomCodeIds(),
+    custom_code_ids: articleCodeIds('optin', true, pbPage('custom_code_ids', [])),
+    custom_code_off_ids: articleCodeIds('sempre', false, pbPage('custom_code_off_ids', [])),
+    custom_code: customCodeData(document.getElementById('lista-codice-proprio'), 'art'),
     // Fields of the English version.
     title_en: document.getElementById('title_en').value,
     description_en: document.getElementById('description_en').value,
@@ -2330,6 +2374,18 @@ function articleData() {
     translation_authorized: document.getElementById('translation_authorized').checked,
     translation_confirmed: document.getElementById('translation_confirmed').checked
   };
+}
+
+// After a save the server says which slug the article really has. It goes
+// back into the Slug field, so the next save asks for that same address
+// instead of deriving a new one from the title. When the address the article
+// wanted already belonged to another article, the server picked a free one
+// and says so: the author has to know the page is not where they expected.
+function applySavedSlug(res) {
+  slugOriginale = res.slug;
+  var campo = document.getElementById('slug');
+  if (campo) { campo.value = res.slug; }
+  if (res.notice) { pbToast(res.notice, 'warning'); }
 }
 
 // Saves and STAYS in the editor. Losing the page you were working on after
@@ -2357,7 +2413,7 @@ function submitArticle(pulsante, chiudiDopo) {
         pbToast(t('js_save_error') + ' ' + res.error, 'danger');
         return;
       }
-      slugOriginale = res.slug;
+      applySavedSlug(res);
       markEditorClean();
       setAutosaveIndicator('', false);
       if (chiudiDopo) {
@@ -2379,18 +2435,20 @@ function submitArticle(pulsante, chiudiDopo) {
     });
 }
 
-// Preview of the English page: it first SAVES the article (otherwise
-// you would see the version on disk, not the one you are writing), then
-// it opens /preview with language=en in a new tab. You stay in the editor.
+// Preview of the translated page: it first SAVES the article (otherwise
+// you would see the version on disk, not the one you are writing), then it
+// opens /preview in the translation's language in a new tab. You stay in the
+// editor.
 function previewEnglish(pulsante) {
   pbBusy(pulsante, true);
   pbPostJson('/save', articleData())
     .then(function(res) {
       pbBusy(pulsante, false);
       if (res.ok) {
-        slugOriginale = res.slug;
+        applySavedSlug(res);
         markEditorClean();
-        window.open('/preview?slug=' + encodeURIComponent(res.slug) + '&language=en', '_blank');
+        window.open('/preview?slug=' + encodeURIComponent(res.slug) + '&language='
+                    + encodeURIComponent(pbPage('secondary_language', 'en')), '_blank');
       } else {
         pbToast(t('js_save_error') + ' ' + res.error, 'danger');
       }
@@ -2407,7 +2465,9 @@ function deleteItem() {
             t('js_delete_body').replace('{title}', titolo),
             t('admin_elimina'), 'danger',
             function() {
-    pbPostJson('/delete', { slug: pbPage('slug', '') })
+    // slugOriginale, not the slug the page was opened with: after a rename
+    // the old address no longer exists, and deleting it would delete nothing.
+    pbPostJson('/delete', { slug: slugOriginale })
       .then(function(res) {
         if (res.ok) {
           // The article is gone, so there is nothing left to warn about.
@@ -2474,6 +2534,16 @@ function initConfigPage() {
   updateTranslationGroups();
 
   updateCustomCodeNote();
+  watchCodeList(document.getElementById('lista-codice'), null);
+  // Enter in a field of the templates creates the code, as a form would.
+  document.getElementById('modello-campi').addEventListener('keydown', function(evento) {
+    if (evento.key === 'Enter') {
+      evento.preventDefault();
+      createCodeFromTemplate();
+    }
+  });
+  versioneConsensoSalvata = pbPage('consent_version', 1);
+  versioneConsenso = versioneConsensoSalvata;
 
   // --- Advanced config.json editor ---
   configRawIniziale = pbPage('config_raw', '');
@@ -2548,40 +2618,126 @@ function updateTranslationGroups() {
 }
 
 // --- Custom code -----------------------------------------------------------
+// The same cards serve two lists: the site's code in the Settings and the
+// code written inside one article in the editor. The article's cards have
+// no "on which pages" dropdown, because their only page is the article.
 
 // A new snippet gets its id here, in the browser, so that the checkboxes in
 // the article editor have something stable to point at from the very first
 // save. The timestamp keeps them ordered and the random tail keeps two cards
-// added in the same millisecond apart.
-function newSnippetId() {
+// added in the same millisecond apart. The code of an article has ids of
+// its own kind ("art-"), never mistaken for the site's.
+function newSnippetId(prefisso) {
   var casuale = Math.floor(Math.random() * 1679616).toString(36);
-  return 'snip-' + Date.now().toString(36) + '-' + casuale;
+  return (prefisso || 'snip') + '-' + Date.now().toString(36) + '-' + casuale;
 }
 
-function customCodeCards() {
-  return document.querySelectorAll('.codice-config');
+function customCodeCards(lista) {
+  if (lista === null) { return []; }
+  return lista.querySelectorAll('.codice-config');
 }
 
 // The empty-list note shows only while there are no cards at all.
 function updateCustomCodeNote() {
   var nota = document.getElementById('codice-vuoto-nota');
   if (nota === null) { return; }
-  nota.hidden = customCodeCards().length > 0;
+  nota.hidden = customCodeCards(document.getElementById('lista-codice')).length > 0;
 }
 
-function addCustomCode() {
-  var lista = document.getElementById('lista-codice');
-  if (lista === null) { return; }
+// A new card, cloned from the blank one the server rendered into a
+// <template>: the markup and its translated labels live in the template file
+// and nowhere else.
+function cloneBlankCard(idModello, prefisso) {
+  var modello = document.getElementById(idModello);
+  var card = modello.content.firstElementChild.cloneNode(true);
+  card.setAttribute('data-id', newSnippetId(prefisso));
+  return card;
+}
 
-  // The blank card comes from a <template> the server rendered, so the markup
-  // and its translated labels live in the template file and nowhere else.
-  var modello = document.getElementById('codice-modello');
-  if (modello === null) { return; }
-  var nuova = modello.content.firstElementChild.cloneNode(true);
-  nuova.setAttribute('data-id', newSnippetId());
-  lista.appendChild(nuova);
-  updateCustomCodeNote();
-  nuova.querySelector('.codice-nome').focus();
+// The code box of a card: CodeMirror when the CDN delivered it, the plain
+// textarea when it did not. CodeMirror cannot measure itself inside a closed
+// <details>, so it starts the first time its card is opened.
+function startCodeEditor(card) {
+  var area = card.querySelector('.codice-testo');
+  if (area === null || area.pbEditor || typeof window.CodeMirror !== 'function') { return; }
+  var editor = window.CodeMirror.fromTextArea(area, {
+    mode: 'htmlmixed',
+    lineNumbers: true,
+    indentUnit: 2,
+    tabSize: 2,
+    viewportMargin: Infinity
+  });
+  area.pbEditor = editor;
+  // Every change goes back into the textarea and is announced the way
+  // typing would be, so the summary and the unsaved-changes guard hear
+  // about it like they hear about any other field.
+  editor.on('change', function() {
+    editor.save();
+    area.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+
+function cardCode(card) {
+  var area = card.querySelector('.codice-testo');
+  if (area.pbEditor) { return area.pbEditor.getValue(); }
+  return area.value;
+}
+
+function selectedLabel(tendina) {
+  var scelta = tendina.options[tendina.selectedIndex];
+  if (!scelta) { return ''; }
+  return scelta.textContent;
+}
+
+function consentLabel(valore) {
+  if (valore === 'statistics') { return t('consenso_statistics'); }
+  if (valore === 'marketing') { return t('consenso_marketing'); }
+  return t('consenso_necessary');
+}
+
+// The line under the name of a folded card, rewritten while the fields
+// change, in the words the server used to draw it: where the code goes, on
+// which pages, which consent it waits for.
+function updateCardSummary(card) {
+  var nome = card.querySelector('.codice-nome').value.trim();
+  if (nome === '') { nome = t('admin_codice_senza_nome'); }
+  card.querySelector('.codice-sommario-nome').textContent = nome;
+
+  var pezzi = [selectedLabel(card.querySelector('.codice-posizione'))];
+  var ambito = card.querySelector('.codice-ambito');
+  if (ambito !== null) { pezzi.push(selectedLabel(ambito)); }
+  pezzi.push(consentLabel(card.querySelector('.codice-consenso').value));
+  card.querySelector('.codice-sommario-dove').textContent = pezzi.join(' · ');
+
+  var attivo = card.querySelector('.codice-attivo').checked;
+  var stato = card.querySelector('.codice-sommario-stato');
+  stato.textContent = attivo ? t('admin_codice_attivo') : t('admin_codice_spento');
+  stato.classList.toggle('spento', !attivo);
+}
+
+// Wires a list of cards: the summary follows the fields and the code editor
+// starts when a card opens. Listening on the list covers the cards added
+// later as well. "toggle" does not bubble, hence the capture phase.
+function watchCodeList(lista, quandoCambia) {
+  if (lista === null) { return; }
+  var aggiorna = function(evento) {
+    var card = evento.target.closest('.codice-config');
+    if (card === null) { return; }
+    updateCardSummary(card);
+    if (quandoCambia) { quandoCambia(); }
+  };
+  lista.addEventListener('input', aggiorna);
+  lista.addEventListener('change', aggiorna);
+  lista.addEventListener('toggle', function(evento) {
+    var card = evento.target;
+    if (card.classList && card.classList.contains('codice-config') && card.open) {
+      startCodeEditor(card);
+    }
+  }, true);
+  var aperte = lista.querySelectorAll('.codice-config[open]');
+  for (var i = 0; i < aperte.length; i++) {
+    startCodeEditor(aperte[i]);
+  }
 }
 
 function removeCustomCode(pulsante) {
@@ -2593,27 +2749,327 @@ function removeCustomCode(pulsante) {
     function() {
       card.remove();
       updateCustomCodeNote();
+      if (pbPage('page', '') === 'editor') { markEditorDirty(); }
     });
 }
 
-// Reads the custom code cards back into the list that goes into config.json.
-function customCodeData() {
-  var cards = customCodeCards();
+// Reads a list of cards back into the snippets that are saved: the site's
+// into config.json, an article's into the article.
+function customCodeData(lista, prefisso) {
+  var cards = customCodeCards(lista);
   var dati = [];
   for (var i = 0; i < cards.length; i++) {
     var card = cards[i];
     var id = card.getAttribute('data-id');
-    if (id === null || id === '') { id = newSnippetId(); }
-    dati.push({
+    if (id === null || id === '') {
+      // Written back on the card, so the next save sends the same id.
+      id = newSnippetId(prefisso);
+      card.setAttribute('data-id', id);
+    }
+    var snippet = {
       id: id,
       name: card.querySelector('.codice-nome').value.trim(),
       enabled: card.querySelector('.codice-attivo').checked,
       position: card.querySelector('.codice-posizione').value,
-      scope: card.querySelector('.codice-ambito').value,
-      code: card.querySelector('.codice-testo').value
-    });
+      consent: card.querySelector('.codice-consenso').value,
+      code: cardCode(card)
+    };
+    var ambito = card.querySelector('.codice-ambito');
+    if (ambito !== null) { snippet.scope = ambito.value; }
+    dati.push(snippet);
   }
   return dati;
+}
+
+// --- Ready-made code for the common services ---------------------------------
+
+// The fields of a template accept the id the way people copy it: with
+// spaces around, in lower case, with or without its prefix. normalizza puts
+// it in the one shape forma checks.
+function adsensePublisherField() {
+  return {
+    etichetta: t('js_modello_campo_pub'),
+    esempio: 'pub-1234567890123456',
+    forma: /^pub-\d{10,20}$/,
+    normalizza: function(valore) {
+      valore = valore.toLowerCase().replace(/^ca-/, '');
+      if (/^\d+$/.test(valore)) { valore = 'pub-' + valore; }
+      return valore;
+    }
+  };
+}
+
+function upperCaseId(valore) {
+  return valore.toUpperCase();
+}
+
+// Each service: the fields it needs and the cards it writes from them, with
+// the position, the pages and the consent that suit it. The code is the one
+// the service itself publishes, with the id put in. A template is a starting
+// point: everything stays editable in the card.
+function codeTemplates() {
+  return {
+    ga4: {
+      campi: [{ etichetta: t('js_modello_campo_ga4'), esempio: 'G-ABC123DEF4',
+                forma: /^G-[A-Z0-9]{4,15}$/, normalizza: upperCaseId }],
+      schede: function(valori, nome) {
+        return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'statistics', codice:
+          '<!-- Google tag (gtag.js) -->\n' +
+          '<script async src="https://www.googletagmanager.com/gtag/js?id=' + valori[0] + '"></script>\n' +
+          '<script>\n' +
+          '  window.dataLayer = window.dataLayer || [];\n' +
+          '  function gtag(){dataLayer.push(arguments);}\n' +
+          "  gtag('js', new Date());\n" +
+          '\n' +
+          "  gtag('config', '" + valori[0] + "');\n" +
+          '</script>' }];
+      }
+    },
+    // Tag Manager comes in two pieces, one for the head and one right after
+    // <body>. It waits for the statistics consent: the tags it loads are
+    // not known here, and the safe side is not to load them uninvited.
+    gtm: {
+      campi: [{ etichetta: t('js_modello_campo_gtm'), esempio: 'GTM-ABC1234',
+                forma: /^GTM-[A-Z0-9]{4,12}$/, normalizza: upperCaseId }],
+      schede: function(valori, nome) {
+        return [
+          { nome: nome, posizione: 'head', ambito: 'all', consenso: 'statistics', codice:
+            '<!-- Google Tag Manager -->\n' +
+            "<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':\n" +
+            "new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],\n" +
+            "j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=\n" +
+            "'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);\n" +
+            "})(window,document,'script','dataLayer','" + valori[0] + "');</script>\n" +
+            '<!-- End Google Tag Manager -->' },
+          { nome: nome + ' (noscript)', posizione: 'body_start', ambito: 'all', consenso: 'statistics', codice:
+            '<!-- Google Tag Manager (noscript) -->\n' +
+            '<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=' + valori[0] + '"\n' +
+            'height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>\n' +
+            '<!-- End Google Tag Manager (noscript) -->' }
+        ];
+      }
+    },
+    adsense_auto: {
+      campi: [adsensePublisherField()],
+      adsTxt: true,
+      schede: function(valori, nome) {
+        return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'marketing', codice:
+          '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-' + valori[0] + '"\n' +
+          '     crossorigin="anonymous"></script>' }];
+      }
+    },
+    // One ad unit, in the sidebar to begin with: the place the layout keeps
+    // for it. AdSense ignores its loader when the page already has one.
+    adsense_unita: {
+      campi: [adsensePublisherField(),
+              { etichetta: t('js_modello_campo_slot'), esempio: '1234567890', forma: /^\d{6,12}$/ }],
+      adsTxt: true,
+      schede: function(valori, nome) {
+        return [{ nome: nome, posizione: 'sidebar', ambito: 'all', consenso: 'marketing', codice:
+          '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-' + valori[0] + '"\n' +
+          '     crossorigin="anonymous"></script>\n' +
+          '<ins class="adsbygoogle"\n' +
+          '     style="display:block"\n' +
+          '     data-ad-client="ca-' + valori[0] + '"\n' +
+          '     data-ad-slot="' + valori[1] + '"\n' +
+          '     data-ad-format="auto"\n' +
+          '     data-full-width-responsive="true"></ins>\n' +
+          '<script>\n' +
+          '     (adsbygoogle = window.adsbygoogle || []).push({});\n' +
+          '</script>' }];
+      }
+    },
+    google_ads: {
+      campi: [{ etichetta: t('js_modello_campo_aw'), esempio: 'AW-123456789',
+                forma: /^AW-\d{6,12}$/,
+                normalizza: function(valore) {
+                  valore = valore.toUpperCase();
+                  if (/^\d+$/.test(valore)) { valore = 'AW-' + valore; }
+                  return valore;
+                } }],
+      schede: function(valori, nome) {
+        return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'marketing', codice:
+          '<!-- Google tag (gtag.js) -->\n' +
+          '<script async src="https://www.googletagmanager.com/gtag/js?id=' + valori[0] + '"></script>\n' +
+          '<script>\n' +
+          '  window.dataLayer = window.dataLayer || [];\n' +
+          '  function gtag(){dataLayer.push(arguments);}\n' +
+          "  gtag('js', new Date());\n" +
+          '\n' +
+          "  gtag('config', '" + valori[0] + "');\n" +
+          '</script>' }];
+      }
+    },
+    meta_pixel: {
+      campi: [{ etichetta: t('js_modello_campo_pixel'), esempio: '1234567890123456',
+                forma: /^\d{10,20}$/ }],
+      schede: function(valori, nome) {
+        return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'marketing', codice:
+          '<!-- Meta Pixel Code -->\n' +
+          '<script>\n' +
+          '!function(f,b,e,v,n,t,s)\n' +
+          '{if(f.fbq)return;n=f.fbq=function(){n.callMethod?\n' +
+          'n.callMethod.apply(n,arguments):n.queue.push(arguments)};\n' +
+          "if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';\n" +
+          'n.queue=[];t=b.createElement(e);t.async=!0;\n' +
+          't.src=v;s=b.getElementsByTagName(e)[0];\n' +
+          "s.parentNode.insertBefore(t,s)}(window, document,'script',\n" +
+          "'https://connect.facebook.net/en_US/fbevents.js');\n" +
+          "fbq('init', '" + valori[0] + "');\n" +
+          "fbq('track', 'PageView');\n" +
+          '</script>\n' +
+          '<noscript><img height="1" width="1" style="display:none"\n' +
+          'src="https://www.facebook.com/tr?id=' + valori[0] + '&ev=PageView&noscript=1"\n' +
+          '/></noscript>\n' +
+          '<!-- End Meta Pixel Code -->' }];
+      }
+    },
+    clarity: {
+      campi: [{ etichetta: t('js_modello_campo_clarity'), esempio: 'abcd1234ef',
+                forma: /^[a-z0-9]{6,14}$/,
+                normalizza: function(valore) { return valore.toLowerCase(); } }],
+      schede: function(valori, nome) {
+        return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'statistics', codice:
+          '<script type="text/javascript">\n' +
+          '    (function(c,l,a,r,i,t,y){\n' +
+          '        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};\n' +
+          '        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;\n' +
+          '        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);\n' +
+          '    })(window, document, "clarity", "script", "' + valori[0] + '");\n' +
+          '</script>' }];
+      }
+    }
+  };
+}
+
+// "Add code" opens the choice of templates in its place.
+function openCodeTemplates() {
+  var pannello = document.getElementById('codice-modelli');
+  if (pannello === null) { return; }
+  pannello.hidden = false;
+  document.getElementById('btn-aggiungi-codice').hidden = true;
+  updateCodeTemplateFields();
+  document.getElementById('modello-codice').focus();
+}
+
+function closeCodeTemplates() {
+  document.getElementById('codice-modelli').hidden = true;
+  document.getElementById('btn-aggiungi-codice').hidden = false;
+}
+
+// The fields of the chosen template, built with textContent: a label is a
+// translated string, never markup.
+function updateCodeTemplateFields() {
+  var contenitore = document.getElementById('modello-campi');
+  contenitore.textContent = '';
+  var modello = codeTemplates()[document.getElementById('modello-codice').value];
+  if (!modello) { return; }
+  for (var i = 0; i < modello.campi.length; i++) {
+    var etichetta = document.createElement('label');
+    etichetta.setAttribute('for', 'modello-campo-' + i);
+    etichetta.textContent = modello.campi[i].etichetta;
+    var campo = document.createElement('input');
+    campo.type = 'text';
+    campo.id = 'modello-campo-' + i;
+    campo.placeholder = modello.campi[i].esempio;
+    campo.spellcheck = false;
+    campo.autocomplete = 'off';
+    contenitore.appendChild(etichetta);
+    contenitore.appendChild(campo);
+  }
+}
+
+// A card at the bottom of the Settings list, empty or filled from a template.
+function addCustomCodeCard(scheda) {
+  var lista = document.getElementById('lista-codice');
+  var card = cloneBlankCard('codice-modello', 'snip');
+  if (scheda) {
+    card.querySelector('.codice-nome').value = scheda.nome;
+    card.querySelector('.codice-posizione').value = scheda.posizione;
+    card.querySelector('.codice-ambito').value = scheda.ambito;
+    card.querySelector('.codice-consenso').value = scheda.consenso;
+    card.querySelector('.codice-testo').value = scheda.codice;
+  }
+  lista.appendChild(card);
+  updateCardSummary(card);
+  updateCustomCodeNote();
+  startCodeEditor(card);
+  return card;
+}
+
+// Adds a line to ads.txt unless it is there already. Says whether it did.
+function addAdsTxtLine(riga) {
+  var campo = document.getElementById('ads_txt');
+  if (campo === null) { return false; }
+  var righe = campo.value.split('\n');
+  for (var i = 0; i < righe.length; i++) {
+    if (righe[i].replace(/\s+/g, '').toLowerCase() === riga.replace(/\s+/g, '').toLowerCase()) {
+      return false;
+    }
+  }
+  var testo = campo.value.replace(/\s+$/, '');
+  campo.value = (testo === '' ? '' : testo + '\n') + riga;
+  return true;
+}
+
+function createCodeFromTemplate() {
+  var tendina = document.getElementById('modello-codice');
+  var scelta = tendina.value;
+  if (scelta === 'libero') {
+    var vuota = addCustomCodeCard(null);
+    closeCodeTemplates();
+    vuota.querySelector('.codice-nome').focus();
+    return;
+  }
+
+  // Two Google Analytics on the same page count every visit twice.
+  if (scelta === 'ga4' && document.getElementById('analytics_id').value.trim() !== '') {
+    pbToast(t('js_modello_ga4_doppio'), 'warning');
+    return;
+  }
+
+  var modello = codeTemplates()[scelta];
+  var valori = [];
+  for (var i = 0; i < modello.campi.length; i++) {
+    var definizione = modello.campi[i];
+    var campo = document.getElementById('modello-campo-' + i);
+    var valore = campo.value.replace(/\s+/g, '');
+    if (definizione.normalizza) { valore = definizione.normalizza(valore); }
+    if (!definizione.forma.test(valore)) {
+      pbToast(t('js_modello_non_valido').replace('{campo}', definizione.etichetta)
+                                        .replace('{esempio}', definizione.esempio), 'warning');
+      campo.focus();
+      return;
+    }
+    valori.push(valore);
+  }
+
+  var schede = modello.schede(valori, selectedLabel(tendina));
+  var prima = null;
+  for (var s = 0; s < schede.length; s++) {
+    var card = addCustomCodeCard(schede[s]);
+    if (prima === null) { prima = card; }
+  }
+  var messaggio = t('js_modello_creato');
+  if (modello.adsTxt && addAdsTxtLine('google.com, ' + valori[0] + ', DIRECT, f08c47fec0942fa0')) {
+    messaggio = messaggio + '\n' + t('js_modello_ads_txt');
+  }
+  closeCodeTemplates();
+  prima.scrollIntoView({ block: 'center' });
+  pbToast(messaggio, 'success');
+}
+
+// --- Consent banner -------------------------------------------------------------
+
+// The consent version as saved, and the one the next save will send. "Ask
+// everyone again" raises it by one; a visitor whose choice was made under an
+// older number sees the banner again.
+var versioneConsensoSalvata = 1;
+var versioneConsenso = 1;
+
+function renewConsent() {
+  versioneConsenso = versioneConsensoSalvata + 1;
+  pbToast(t('js_consenso_rinnovato'), 'success');
 }
 
 function saveConfig(pulsante) {
@@ -2639,25 +3095,10 @@ function saveConfig(pulsante) {
     }
   }
 
-  // Order of the homepage sections, from the three dropdowns.
-  // If the user picks the same section twice, we complete with the
-  // missing ones so that none is lost.
-  var ordineScelto = [
-    document.getElementById('ordine_home_0').value,
-    document.getElementById('ordine_home_1').value,
-    document.getElementById('ordine_home_2').value
-  ];
-  var ordineHome = [];
-  for (var o = 0; o < ordineScelto.length; o++) {
-    if (ordineHome.indexOf(ordineScelto[o]) === -1) {
-      ordineHome.push(ordineScelto[o]);
-    }
-  }
-  var tutteSezioni = ['intro', 'articles', 'cards'];
-  for (var s = 0; s < tutteSezioni.length; s++) {
-    if (ordineHome.indexOf(tutteSezioni[s]) === -1) {
-      ordineHome.push(tutteSezioni[s]);
-    }
+  // How many words of each article the lists show when it has no preview.
+  var paroleAnteprima = parseInt(document.getElementById('home_excerpt_words').value, 10);
+  if (isNaN(paroleAnteprima) || paroleAnteprima < 10) {
+    paroleAnteprima = 40;
   }
 
   var articoliPerPagina = parseInt(document.getElementById('articoli_per_pagina').value, 10);
@@ -2674,7 +3115,8 @@ function saveConfig(pulsante) {
     umami_url: document.getElementById('umami_url').value.trim(),
     umami_website_id: document.getElementById('umami_website_id').value.trim(),
     language: document.getElementById('language').value,
-    home_order: ordineHome,
+    home_intro_position: document.getElementById('home_intro_position').value,
+    home_excerpt_words: paroleAnteprima,
     articles_per_page: articoliPerPagina,
     home_featured: document.getElementById('home_featured').checked,
     article_cover: document.getElementById('article_cover').checked,
@@ -2692,7 +3134,15 @@ function saveConfig(pulsante) {
     home_content_en: quillHomeEn.root.innerHTML,
     home_cards_enabled: document.getElementById('home_cards_enabled').checked,
     home_cards: cardDati,
-    custom_code: customCodeData(),
+    custom_code: customCodeData(document.getElementById('lista-codice'), 'snip'),
+    ads_txt: document.getElementById('ads_txt').value.trim(),
+    consent: {
+      enabled: document.getElementById('consent_enabled').checked,
+      text: document.getElementById('consent_text').value.trim(),
+      text_en: document.getElementById('consent_text_en').value.trim(),
+      privacy_url: document.getElementById('consent_privacy_url').value.trim(),
+      version: versioneConsenso
+    },
     comments: document.getElementById('commenti').value,
     giscus: {
       repo: document.getElementById('giscus_repo').value,
@@ -2731,6 +3181,7 @@ function saveConfig(pulsante) {
       pbBusy(pulsante, false);
       pbStatus('save-status', '');
       if (res.ok === true) {
+        versioneConsensoSalvata = config.consent.version;
         pbToast(t('admin_config_salvata'), 'success');
       } else {
         pbToast(t('js_error_prefix') + res.error, 'danger');

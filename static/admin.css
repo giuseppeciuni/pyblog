@@ -82,16 +82,48 @@ body { background:#f5f6f8; }
 .card-config { background:#f7f7f7; border:1px solid #e4e4e7; border-radius:8px; padding:1rem; margin-bottom:1rem; }
 .card-editor { height:160px; background:#fff; margin-top:0.3rem; }
 
-/* Custom code: same card as the homepage ones, with a monospace box for the
-   code itself. nowrap plus a horizontal scrollbar keeps a long minified
-   snippet on one line instead of reflowing it into an unreadable block. */
-.codice-config { background:#f7f7f7; border:1px solid #e4e4e7; border-radius:8px; padding:1rem; margin-bottom:1rem; }
-.codice-intestazione { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+/* Custom code: each snippet is a card that folds down to one line - its
+   name, where it goes, on which pages, which consent - so a long list reads
+   without opening anything. The same card serves the Settings and the code
+   written inside an article. */
+.codice-config { background:#f7f7f7; border:1px solid #e4e4e7; border-radius:8px; margin-bottom:0.8rem; }
+.codice-sommario { display:flex; flex-wrap:wrap; align-items:baseline; gap:0.15rem 0.7rem;
+                   padding:0.7rem 1rem; cursor:pointer; list-style:none; user-select:none; }
+.codice-sommario::-webkit-details-marker { display:none; }
+/* Our own arrow: a summary that is a flex box loses the browser's marker. */
+.codice-sommario::before { content:"\25B8"; color:#888; transition:transform 0.15s ease; }
+.codice-config[open] > .codice-sommario::before { transform:rotate(90deg); }
+.codice-sommario-nome { font-weight:600; overflow-wrap:anywhere; }
+.codice-sommario-dove { color:#666; font-size:0.8rem; flex:1 1 14rem; }
+.codice-sommario-stato { font-size:0.72rem; font-weight:600; color:#0a6b2e; background:#d4f4dd;
+                         border-radius:999px; padding:0.1rem 0.55rem; }
+.codice-sommario-stato.spento { color:#666; background:#e9e9ec; }
+.codice-corpo { padding:0 1rem 1rem; border-top:1px solid #e4e4e7; }
+.codice-intestazione { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding-top:0.8rem; }
 .codice-intestazione .riga-flag { margin:0; }
-.codice-testo { font-family:var(--pb-font-mono); font-size:0.85rem; line-height:1.6;
+.codice-griglia { display:grid; grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr)); gap:0 1rem; }
+.codice-aiuto { margin:0.3rem 0 0; }
+/* The plain box, kept when CodeMirror does not load. nowrap plus a
+   horizontal scrollbar keeps a long minified snippet on one line instead of
+   reflowing it into an unreadable block. */
+.codice-testo, .campo-mono { font-family:var(--pb-font-mono); font-size:0.85rem; line-height:1.6;
                 background:#fff; white-space:pre; overflow-wrap:normal; overflow-x:auto; }
+/* CodeMirror grows with the code, up to a point, then scrolls. */
+.codice-config .CodeMirror { height:auto; border:1px solid #ccc; border-radius:var(--pb-radius-sm);
+                             font-family:var(--pb-font-mono); font-size:0.85rem; line-height:1.55; }
+.codice-config .CodeMirror-scroll { min-height:8rem; max-height:26rem; }
+.codice-config .CodeMirror-focused { border-color:var(--pb-blu); box-shadow:0 0 0 3px rgba(0,102,204,0.12); }
+/* The choice of ready-made code, under the list. */
+.codice-modelli { background:#f4f1fe; border:1px solid #d8ccfb; border-radius:8px; padding:0.1rem 1rem 1rem; margin-top:0.8rem; }
+.codice-modelli[hidden] { display:none; }
+.codice-modelli .azioni { display:flex; gap:0.6rem; flex-wrap:wrap; }
+.consenso-rinnova { display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap; margin-top:0.8rem; }
+/* In the narrow sidebar of the editor the card tightens up. */
+.codice-proprio-titolo { font-size:0.85rem; font-weight:700; color:#444; margin:1.1rem 0 0.2rem; }
+.editor-sidebar .codice-sommario { padding:0.55rem 0.7rem; }
+.editor-sidebar .codice-corpo { padding:0 0.7rem 0.8rem; }
+.editor-sidebar .codice-griglia { grid-template-columns:1fr; }
 .codice-articolo-riga { align-items:flex-start; margin:0.1rem 0; }
-.codice-sempre-attivi { margin:0.2rem 0 0; padding-left:1.1rem; }
 .gruppo-commenti { display:none; padding:1rem; background:#f7f7f7; border-radius:var(--pb-radius-sm); margin-top:0.5rem; }
 .gruppo-commenti.attivo { display:block; }
 .translation-group { display:none; padding:1rem; background:#f7f7f7; border-radius:var(--pb-radius-sm); margin-top:0.5rem; }
@@ -331,3 +363,7 @@ button:disabled { opacity: 0.65; cursor: default; }
 }
 .btn-rimuovi-cover:hover { background:#fdf2f3; }
 .btn-rimuovi-cover[hidden] { display:none; }
+
+/* A toast can carry several lines (the warnings of a Word import, one per
+   line): the line breaks of the message are kept. */
+#pb-toasts .toast-body { white-space:pre-line; }

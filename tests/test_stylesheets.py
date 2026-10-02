@@ -54,9 +54,11 @@ def regola(testo, selettore):
 
 def test_copertina_in_evidenza():
     """The cover thumbnail must be immune to the size of the uploaded file."""
-    print("\ncopertina dell'articolo in evidenza (style.css)")
+    # The highlighted block became the lead row of the list in the two-column
+    # layout: every row, the lead included, uses this thumbnail.
+    print("\nminiatura delle righe degli articoli (style.css)")
     css = (RADICE / "static" / "style.css").read_text(encoding="utf-8")
-    dichiarazioni = regola(css, ".in-evidenza-copertina")
+    dichiarazioni = regola(css, ".art-thumb-img, .art-tile")
     check("la regola esiste", dichiarazioni is not None)
     if dichiarazioni is None:
         return
@@ -100,7 +102,7 @@ def test_immagini_flex_hanno_una_larghezza():
     print("\nogni immagine dentro un contenitore flex ha una larghezza")
     css = (RADICE / "static" / "style.css").read_text(encoding="utf-8")
     # The images this project places inside a flex row or column.
-    for selettore in (".in-evidenza-copertina", ".author-box-photo"):
+    for selettore in (".art-thumb-img, .art-tile", ".author-box-photo", ".profilo-foto"):
         dichiarazioni = regola(css, selettore)
         if dichiarazioni is None:
             check(f"{selettore}: la regola esiste", False)

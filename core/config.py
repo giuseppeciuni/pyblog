@@ -8,6 +8,7 @@ did "from core.config import CONFIG" always sees the current values.
 """
 import json
 import os
+import tempfile
 from pathlib import Path
 
 
@@ -175,11 +176,21 @@ CONFIG_DEFAULT = {
         "statement": "",
     },
 
-    # Order of the homepage sections, from top to bottom.
-    # Possible values: "intro" (introduction), "articoli", "card".
-    # Default: introduction, then the cards (who you are, projects), then
-    # the articles. Reorder the list to change the page structure.
+    # Kept for old configurations, no longer read. It ordered the three
+    # stacked sections of the single-column homepage ("intro", "cards",
+    # "articles"); the two-column layout has the articles in the main column
+    # and the rest in the sidebar, so there is no order left to choose.
     "home_order": ["intro", "cards", "articles"],
+
+    # Where the free introduction of the homepage (home_content) goes:
+    # "sidebar" puts it in the first box of the sidebar, so the articles
+    # start at the top of the page; "top" puts it above the articles, as a
+    # short presentation across the main column.
+    "home_intro_position": "sidebar",
+
+    # How many words of an article the lists show when the author has not
+    # written a preview: the opening of the article, cut at a word boundary.
+    "home_excerpt_words": 40,
 
     # Highlight the most recent article in a larger block at the top of the
     # article list, with its cover image when it has one. With False the
@@ -346,6 +357,63 @@ def migrate_config_schema(data):
 # good-faith, best-effort set covering the major current operators. None of
 # this is a legally binding standard - a crawler is only as compliant as its
 
+def write_json_atomically(path_value, data):
+    """
+    Write a JSON file so that it is either the old version or the new one,
+    never half of each.
+
+    Writing straight into the file truncates it first: a crash, a full disk
+    or a killed process in the middle leaves a file that is no longer valid
+    JSON, and for config.json that used to mean a site that would not even
+    start. The data goes to a temporary file next to the real one, is pushed
+    to disk, and only then takes the real name in a single rename, which the
+    operating system performs as one step.
+    """
+    path_value = Path(path_value)
+    path_value.parent.mkdir(parents=True, exist_ok=True)
+    # The temporary name ends in .tmp, so the "*.json" listing of the posts
+    # folder never mistakes a half-written file for an article.
+    descriptor, temporary = tempfile.mkstemp(
+        dir=str(path_value.parent), prefix="." + path_value.name + ".", suffix=".tmp")
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as fp:
+            json.dump(data, fp, ensure_ascii=False, indent=2)
+            fp.flush()
+            os.fsync(fp.fileno())
+        os.replace(temporary, path_value)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+
+
+# Where a config.json that cannot be read is set aside. It is never
+# overwritten: the first broken copy is the one worth recovering by hand.
+BROKEN_CONFIG_FILE = BASE_DIR / "config.broken.json"
+
+
+def set_broken_config_aside(reason):
+    """
+    Keep a copy of an unreadable config.json and say so on the console.
+
+    The site then starts on the default values instead of refusing to start
+    at all. Without the copy, the next save from the Settings page would
+    write the defaults over the file and whatever was still recoverable in
+    it would be gone.
+    """
+    print(f"WARNING: config.json cannot be read ({reason}). "
+          "The site is running on the default settings.")
+    if BROKEN_CONFIG_FILE.exists():
+        return
+    try:
+        BROKEN_CONFIG_FILE.write_bytes(CONFIG_FILE.read_bytes())
+        print(f"A copy of the unreadable file is in {BROKEN_CONFIG_FILE.name}.")
+    except OSError:
+        pass
+
+
 def load_config():
     """
     Load the configuration from the config.json file.
@@ -356,15 +424,21 @@ def load_config():
     if not CONFIG_FILE.exists():
         return dict(CONFIG_DEFAULT)
 
-    with open(CONFIG_FILE, encoding="utf-8") as fp:
-        saved_config = json.load(fp)
+    try:
+        with open(CONFIG_FILE, encoding="utf-8") as fp:
+            saved_config = json.load(fp)
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        set_broken_config_aside(error)
+        return dict(CONFIG_DEFAULT)
+    if not isinstance(saved_config, dict):
+        set_broken_config_aside("it is not a JSON object")
+        return dict(CONFIG_DEFAULT)
 
     # Old Italian schema detected: convert it and rewrite the file once,
     # so the migration happens transparently on the first load.
     saved_config, migrata = migrate_config_schema(saved_config)
     if migrata:
-        with open(CONFIG_FILE, "w", encoding="utf-8") as fp:
-            json.dump(saved_config, fp, ensure_ascii=False, indent=2)
+        write_json_atomically(CONFIG_FILE, saved_config)
         print("config.json migrated to the new English schema.")
 
     # We start from the defaults and overwrite with the saved values.
@@ -387,8 +461,7 @@ def load_config():
 
 def save_config(new_config):
     """Save the site configuration to the config.json file."""
-    with open(CONFIG_FILE, "w", encoding="utf-8") as fp:
-        json.dump(new_config, fp, ensure_ascii=False, indent=2)
+    write_json_atomically(CONFIG_FILE, new_config)
 
 
 # Global variable holding the current configuration.

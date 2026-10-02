@@ -114,6 +114,17 @@
       <h2>$label_codice_titolo</h2>
       <p class="hint" style="margin:0 0 0.3rem">$hint_codice</p>
       <div id="lista-codice-articolo">$codice_articolo_html</div>
+
+      <h3 class="codice-proprio-titolo">$label_codice_proprio</h3>
+      <p class="hint" style="margin:0 0 0.3rem">$hint_codice_proprio</p>
+      <div id="lista-codice-proprio" class="lista-codice">
+$codice_proprio_html
+      </div>
+      <button type="button" class="btn-suggerisci" onclick="addOwnCode()">$label_codice_proprio_aggiungi</button>
+      <!-- The blank card of the button: inert until cloned, see the Settings. -->
+      <template id="codice-proprio-modello">
+$codice_proprio_modello
+      </template>
     </div>
 
     <div class="translation-section">
@@ -129,16 +140,16 @@
           <span id="translation-status" class="hint"></span>
         </div>
 
-        <label>$label_titolo (EN)</label>
+        <label>$label_titolo ($codice_traduzione)</label>
         <input type="text" id="title_en">
 
-        <label>$label_descrizione_seo (EN)</label>
+        <label>$label_descrizione_seo ($codice_traduzione)</label>
         <input type="text" id="description_en" maxlength="160">
 
-        <label>$label_anteprima_lettori (EN)</label>
+        <label>$label_anteprima_lettori ($codice_traduzione)</label>
         <textarea id="preview_en" rows="3" maxlength="900"></textarea>
 
-        <label>$label_contenuto (EN)</label>
+        <label>$label_contenuto ($codice_traduzione)</label>
         <div id="editor-en"></div>
 
         <div class="translation-bar" style="margin-top:1rem">

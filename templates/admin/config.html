@@ -44,18 +44,67 @@ $card_html
 
 <h2>$label_codice_titolo</h2>
 <p class="hint">$hint_codice</p>
-<div id="lista-codice">
+<div id="lista-codice" class="lista-codice">
 $codice_html
 </div>
 <p class="hint" id="codice-vuoto-nota" hidden>$label_codice_vuoto</p>
 <div class="azioni" style="margin-top:0.8rem">
-  <button type="button" class="btn-secondario" onclick="addCustomCode()">$label_codice_aggiungi</button>
+  <button type="button" class="btn-secondario" id="btn-aggiungi-codice" onclick="openCodeTemplates()">$label_codice_aggiungi</button>
 </div>
-<!-- The blank card the button clones. A <template> is inert: its content is
-     not in the page, so the card inside is never collected when saving. -->
+<!-- The ready-made templates. The author picks a service and types its id;
+     admin.js writes the code with the recommended position, pages and
+     consent. "Your own code" is the empty card. -->
+<div class="codice-modelli" id="codice-modelli" hidden>
+  <label for="modello-codice">$label_codice_modelli</label>
+  <select id="modello-codice" onchange="updateCodeTemplateFields()">
+    <option value="libero">$label_modello_libero</option>
+    <optgroup label="Google">
+      <option value="ga4">Google Analytics 4</option>
+      <option value="gtm">Google Tag Manager</option>
+      <option value="adsense_auto">$label_modello_adsense_auto</option>
+      <option value="adsense_unita">$label_modello_adsense_unita</option>
+      <option value="google_ads">$label_modello_google_ads</option>
+    </optgroup>
+    <optgroup label="$label_modello_altri">
+      <option value="meta_pixel">Meta Pixel (Facebook, Instagram)</option>
+      <option value="clarity">Microsoft Clarity</option>
+    </optgroup>
+  </select>
+  <div id="modello-campi"></div>
+  <p class="hint">$hint_codice_modelli</p>
+  <div class="azioni">
+    <button type="button" class="save-btn" onclick="createCodeFromTemplate()">$label_codice_crea</button>
+    <button type="button" class="btn-secondario" onclick="closeCodeTemplates()">$label_annulla_scelta</button>
+  </div>
+</div>
+<!-- The blank card the templates start from. A <template> is inert: its
+     content is not in the page, so the card inside is never collected when
+     saving. -->
 <template id="codice-modello">
 $codice_modello
 </template>
+
+<label for="ads_txt">$label_ads_txt</label>
+<p class="hint" style="margin:0 0 0.3rem">$hint_ads_txt</p>
+<textarea id="ads_txt" rows="3" spellcheck="false" class="campo-mono"
+          placeholder="google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0">$valore_ads_txt</textarea>
+
+<h2>$label_consenso_titolo</h2>
+<p class="hint">$hint_consenso</p>
+<label class="riga-flag">
+  <input type="checkbox" id="consent_enabled" $checked_consenso>
+  $label_consenso_attivo
+</label>
+<label for="consent_text">$label_consenso_testo <span class="hint">$hint_consenso_testo</span></label>
+<textarea id="consent_text" rows="3" placeholder="$ph_consenso_testo">$valore_consenso_testo</textarea>
+<label for="consent_text_en">$label_consenso_testo_en <span class="hint">$hint_consenso_testo</span></label>
+<textarea id="consent_text_en" rows="3" placeholder="$ph_consenso_testo_en">$valore_consenso_testo_en</textarea>
+<label for="consent_privacy_url">$label_consenso_privacy</label>
+<input type="text" id="consent_privacy_url" value="$valore_consenso_privacy" placeholder="$ph_consenso_privacy">
+<div class="azioni consenso-rinnova">
+  <button type="button" class="btn-secondario" onclick="renewConsent()">$label_consenso_rinnova</button>
+  <span class="hint">$hint_consenso_rinnova</span>
+</div>
 
 </div><!-- end of the left column -->
 
@@ -83,17 +132,22 @@ $codice_modello
 <input type="text" id="umami_website_id" value="$valore_umami_id" placeholder="$ph_umami_website_id" style="margin-top:0.3rem">
 
 <label>$label_lingua_principale <span class="hint">$hint_lingua_principale</span></label>
-<input type="text" id="language" value="$valore_lingua">
+<select id="language">
+  <option value="it" $sel_lingua_it>Italiano</option>
+  <option value="en" $sel_lingua_en>English</option>
+</select>
 
 <h2>$label_layout</h2>
 <p class="hint">$hint_layout</p>
 
-<label>$label_posizione 1</label>
-$select_ordine_0
-<label>$label_posizione 2</label>
-$select_ordine_1
-<label>$label_posizione 3</label>
-$select_ordine_2
+<label for="home_intro_position">$label_intro_posizione <span class="hint">$hint_intro_posizione</span></label>
+<select id="home_intro_position">
+  <option value="sidebar" $sel_intro_barra>$label_intro_barra</option>
+  <option value="top" $sel_intro_sopra>$label_intro_sopra</option>
+</select>
+
+<label for="home_excerpt_words">$label_parole_anteprima <span class="hint">$hint_parole_anteprima</span></label>
+<input type="number" id="home_excerpt_words" min="10" max="200" value="$valore_parole_anteprima">
 
 <label>$label_articoli_per_pagina <span class="hint">$hint_articoli_per_pagina</span></label>
 <input type="number" id="articoli_per_pagina" min="0" value="$valore_articoli_per_pagina">

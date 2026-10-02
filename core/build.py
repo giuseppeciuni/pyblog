@@ -11,6 +11,9 @@ the placeholders. Two rules are absolute:
   - a value that ends up in HTML goes through render.esc();
   - a value that ends up in JavaScript goes through render.js().
 """
+import hashlib
+import html
+import html.parser
 import json
 import re
 import threading
@@ -170,28 +173,69 @@ def add_lazy_loading(html_content_value):
     return LAZY_IMAGE_PATTERN.sub(r'<img\1 loading="lazy">', html_content_value)
 
 
-def tag_links(art, language, css_class="card-tag"):
-    """
-    Render an article's tags as small links, for the homepage cards.
+def excerpt_word_count():
+    """How many words of an article the lists show, from the configuration."""
+    value = CONFIG.get("home_excerpt_words", 40)
+    try:
+        value = int(value)
+    except (ValueError, TypeError):
+        value = 40
+    return max(10, min(value, 200))
 
-    Seeing the topics before clicking is how a reader decides whether an
-    article is for them; the links also give the tag pages somewhere to be
-    found from.
+
+def excerpt_words(html_content_value, words):
     """
-    tags = extract_article_tags(art)
-    if len(tags) == 0:
-        return ""
-    prefix = language_url_prefix(language) + "/tag/"
-    pieces = []
-    for tag in tags:
-        tag_slug = slugify(tag)
-        if tag_slug == "":
-            continue
-        pieces.append(f'<a class="{css_class}" href="{prefix}{tag_slug}.html">'
-                      f"#{esc(tag)}</a>")
-    if len(pieces) == 0:
-        return ""
-    return '<span class="card-tags">' + "".join(pieces) + "</span>"
+    The opening of an article as plain text, cut after a number of words.
+
+    It used to be cut after a number of CHARACTERS, which stops in the middle
+    of a word as often as not ("Un modello linguistico non sa nul...").
+    Counting words keeps every word whole, and the ellipsis says the text
+    goes on.
+    """
+    text = plain_text(prose_only(html_content_value or ""))
+    if text == "":
+        text = plain_text(html_content_value or "")
+    pieces = text.split()
+    if len(pieces) <= words:
+        return text
+    return " ".join(pieces[:words]).rstrip(",;:-") + "…"
+
+
+# The parts of an article that are not running text: headings, code, tables
+# and the [n] marks of the footnotes. In an excerpt they read as noise - a
+# heading glued to the next sentence ("...del blog. Il problema Ogni...").
+NOT_PROSE_PATTERN = re.compile(
+    r"<(h[1-6]|pre|table|figcaption)\b[^>]*>.*?</\1>", re.IGNORECASE | re.DOTALL)
+FOOTNOTE_MARK_PATTERN = re.compile(r"<sup>\[\d+\]</sup>", re.IGNORECASE)
+# Tags that live inside a line of text. They are removed without leaving a
+# space, so "E=mc<sup>2</sup>" stays "E=mc2" and a bold word stays glued to
+# its comma; block tags still turn into spaces between sentences.
+INLINE_TAG_PATTERN = re.compile(
+    r"</?(a|strong|b|em|i|u|s|sup|sub|code|span|mark|small)\b[^>]*>", re.IGNORECASE)
+
+
+def prose_only(html_content_value):
+    """An article's HTML without the blocks that are not running text."""
+    text = NOT_PROSE_PATTERN.sub(" ", html_content_value)
+    text = FOOTNOTE_MARK_PATTERN.sub("", text)
+    return INLINE_TAG_PATTERN.sub("", text)
+
+
+def asset_version(*names):
+    """
+    A short fingerprint of a public CSS or JavaScript file, for its address.
+
+    The pages link "/style.css?v=..." instead of "/style.css": when the file
+    changes, so does the address, and a browser holding the old stylesheet in
+    its cache fetches the new one instead of showing the new page with the
+    old look. nginx serves these files with a long cache lifetime, which is
+    right as long as the address changes with the content.
+    """
+    digest = hashlib.sha256()
+    for name in names:
+        if render.static_exists(name):
+            digest.update(render.read_static(name).encode("utf-8"))
+    return "?v=" + digest.hexdigest()[:10]
 
 
 def compute_reading_time(html_content_value, language="it"):
@@ -275,10 +319,13 @@ def analytics_snippet():
     """
     parts = []
 
+    # Google Analytics sets cookies, so with the consent banner switched on
+    # it waits, inert, until the visitor accepts the statistics. Umami sets
+    # none and is left alone.
     measurement_id = str(CONFIG.get("analytics_id", "")).strip()
     if measurement_id != "":
         if re.fullmatch(r"[A-Za-z0-9-]+", measurement_id) is not None:
-            parts.append(
+            parts.append(wrap_for_consent(
                 '<script async src="https://www.googletagmanager.com/gtag/js?id='
                 + measurement_id + '"></script>\n'
                 '  <script>\n'
@@ -286,7 +333,7 @@ def analytics_snippet():
                 '    function gtag(){dataLayer.push(arguments);}\n'
                 "    gtag('js', new Date());\n"
                 "    gtag('config', '" + measurement_id + "');\n"
-                '  </script>')
+                '  </script>', "statistics"))
 
     umami_url = str(CONFIG.get("umami_url", "")).strip().rstrip("/")
     umami_id = str(CONFIG.get("umami_website_id", "")).strip()
@@ -325,6 +372,168 @@ def article_snippet_ids(art):
     return tuple(str(x) for x in ids)
 
 
+def article_off_ids(art):
+    """
+    The ids of the site-wide snippets switched off on one article.
+
+    "Every article" is right for an analytics tag and wrong, now and then,
+    for an advertisement on an article that should have none: the article
+    can say no to a snippet without the snippet changing for the others.
+    """
+    ids = art.get("custom_code_off_ids", [])
+    if not isinstance(ids, list):
+        return ()
+    return tuple(str(x) for x in ids)
+
+
+def article_own_snippets(art):
+    """The pieces of code written inside one article, for that article only."""
+    own = art.get("custom_code", [])
+    if not isinstance(own, list):
+        return []
+    return [snippet for snippet in own if isinstance(snippet, dict)]
+
+
+def code_context(article):
+    """
+    What a page says about the custom code: the snippets it ticked, the ones
+    it switched off and the ones of its own.
+
+    The callers pass the article itself, or - the homepage, the old tests -
+    just a tuple of ticked ids.
+    """
+    if isinstance(article, dict):
+        return article_snippet_ids(article), article_off_ids(article), article_own_snippets(article)
+    if article is None:
+        return (), (), []
+    return tuple(article), (), []
+
+
+# ---------------------------------------------------------------------------
+# CONSENT
+# ---------------------------------------------------------------------------
+# Statistics and advertising code sets cookies, and in Europe it may only do
+# so after the visitor agrees. Each snippet says which kind it is; with the
+# banner switched on, the snippets that are not "necessary" reach the page as
+# inert <template> elements, and site.js turns them into live code once the
+# visitor accepts that category. Google's own tags are told the same through
+# Consent Mode.
+
+CONSENT_CATEGORIES = ("necessary", "statistics", "marketing")
+
+
+def consent_settings(config=None):
+    """
+    The consent block of the configuration, with its defaults filled in.
+    config is the configuration to read, the running one when omitted: the
+    Settings page passes the one it has just loaded from disk.
+    """
+    if config is None:
+        config = CONFIG
+    value = config.get("consent", {})
+    if not isinstance(value, dict):
+        value = {}
+    try:
+        version = int(value.get("version", 1))
+    except (ValueError, TypeError):
+        version = 1
+    return {
+        "enabled": value.get("enabled", False) is True,
+        "text": str(value.get("text", "") or ""),
+        "text_en": str(value.get("text_en", "") or ""),
+        "privacy_url": str(value.get("privacy_url", "") or "").strip(),
+        "version": version,
+    }
+
+
+def consent_enabled():
+    """Tell whether the code that needs consent has to wait for it."""
+    return consent_settings()["enabled"]
+
+
+def snippet_consent(snippet):
+    """The consent category of a snippet: necessary, statistics or marketing."""
+    value = snippet.get("consent", "necessary")
+    if value not in CONSENT_CATEGORIES:
+        return "necessary"
+    return value
+
+
+def wrap_for_consent(code, category):
+    """
+    The code itself, or the code held back until the visitor consents.
+
+    A <template> is inert: its scripts do not run, its images and iframes do
+    not load. It is allowed in the head as well as in the body, so the code
+    waits in the very place it will run from.
+    """
+    if category == "necessary" or not consent_enabled():
+        return code
+    return '<template data-pb-consenso="' + category + '">' + code + "</template>"
+
+
+def consent_categories_used(article=None):
+    """The categories some code on the page needs consent for, in order."""
+    used = set()
+    if str(CONFIG.get("analytics_id", "")).strip() != "":
+        used.add("statistics")
+    for snippet in custom_code_list():
+        if snippet.get("enabled", False) is True:
+            used.add(snippet_consent(snippet))
+    if isinstance(article, dict):
+        for snippet in article_own_snippets(article):
+            if snippet.get("enabled", True) is not False:
+                used.add(snippet_consent(snippet))
+    return [category for category in ("statistics", "marketing") if category in used]
+
+
+def consent_default_script():
+    """
+    Google's Consent Mode defaults: everything denied until the visitor
+    decides. It has to run before any Google tag, so it opens the head.
+    """
+    return ("<script>\n"
+            "    window.dataLayer = window.dataLayer || [];\n"
+            "    function gtag(){dataLayer.push(arguments);}\n"
+            "    gtag('consent', 'default', {ad_storage: 'denied', ad_user_data: 'denied',\n"
+            "      ad_personalization: 'denied', analytics_storage: 'denied', wait_for_update: 500});\n"
+            "  </script>")
+
+
+def consent_banner_html(language, categories):
+    """The banner that asks for consent, with one switch per category in use."""
+    settings = consent_settings()
+    text = settings["text"]
+    if language != main_language() and settings["text_en"] != "":
+        text = settings["text_en"]
+    if text == "":
+        text = T("consenso_testo", language)
+    privacy = ""
+    if settings["privacy_url"] != "":
+        privacy = (' <a href="' + esc(settings["privacy_url"]) + '">'
+                   + T("consenso_privacy", language) + "</a>")
+    switches = []
+    for category in categories:
+        switches.append(
+            f'        <label class="consenso-voce"><input type="checkbox" data-categoria="{category}"> '
+            f'<span><strong>{T("consenso_" + category, language)}</strong> '
+            f'{T("consenso_" + category + "_hint", language)}</span></label>')
+    return render.render(
+        "public/consent_banner.html",
+        titolo=T("consenso_titolo", language),
+        testo=esc(text),
+        privacy=privacy,
+        label_necessari=T("consenso_necessary", language),
+        hint_necessari=T("consenso_necessary_hint", language),
+        voci="\n".join(switches),
+        chiudi=esc(T("consenso_chiudi", language)),
+        rifiuta=T("consenso_rifiuta", language),
+        personalizza=T("consenso_personalizza", language),
+        salva=T("consenso_salva", language),
+        accetta=T("consenso_accetta", language),
+    ).rstrip("\n")
+
+
 # The scopes a snippet can have, in the order the Settings dropdown lists
 # them. "home", "home_articles" and "home_optin" came first: a configuration
 # written before the list grew keeps behaving exactly as it did.
@@ -335,24 +544,33 @@ SNIPPET_SCOPES = ("home", "articles", "home_articles",
 # and exist on every page; the others are places in the visible layout, and a
 # page that has no such place simply leaves the snippet out. "nav" is the
 # header menu, next to Home, Articles, Archive and RSS: made for a link such as
-# a chat widget's "Ask the assistant". It came last, so it is last here too.
+# a chat widget's "Ask the assistant".
+#
+# The last four are the places an advertisement usually goes, and came with
+# the two-column layout: the top of an article (after the title and the
+# cover), its middle (between two paragraphs, half way down the text), the
+# list of articles on the homepage (after the third one) and the sidebar.
 SNIPPET_POSITIONS = ("head", "body_start", "body_end",
-                     "after_header", "before_footer", "article_end", "nav")
+                     "after_header", "before_footer", "article_end", "nav",
+                     "article_start", "article_middle", "home_feed", "sidebar")
 
 
-def snippet_applies(snippet, page_kind, article_ids):
+def snippet_applies(snippet, page_kind, article_ids, off_ids=()):
     """
     Tell whether a snippet belongs on the page being generated.
 
     Each scope names the pages it wants: the homepage, the articles, both, or
     the whole site. "optin" and "home_optin" narrow the articles down to the
-    ones that ticked the snippet while being written.
+    ones that ticked the snippet while being written; off_ids are the ones an
+    article switched off for itself.
 
     A snippet whose id is no longer anywhere in the configuration simply never
     matches, which is what makes deleting one safe: the articles that ticked
     it keep the dead id in their JSON and nothing goes wrong.
     """
     if snippet.get("enabled", False) is not True:
+        return False
+    if page_kind == "article" and str(snippet.get("id", "")) in off_ids:
         return False
     scope = snippet.get("scope", "home")
     if scope not in SNIPPET_SCOPES:
@@ -372,26 +590,44 @@ def snippet_applies(snippet, page_kind, article_ids):
     return False
 
 
-def custom_code_block(position, page_kind, article_ids):
+def snippet_position(snippet):
+    """Where a snippet goes, with an unknown position read as the head."""
+    where = snippet.get("position", "head")
+    if where not in SNIPPET_POSITIONS:
+        return "head"
+    return where
+
+
+def custom_code_block(position, page_kind, article=()):
     """
     Collect the snippets that go into one position of one page.
 
+    article is the article being generated (or, for the other pages, a tuple
+    of ticked ids): the site-wide snippets it switched off stay out, and the
+    code written inside it goes in after them.
+
     The code is injected VERBATIM: escaping it would defeat the point. It is
     written by whoever can log into the editor, which is the same trust level
-    as "home_content", already raw HTML. It never comes from a reader.
+    as "home_content", already raw HTML. It never comes from a reader. Code
+    that needs the visitor's consent arrives held back, see wrap_for_consent.
     """
+    ticked, switched_off, own = code_context(article)
     parts = []
     for snippet in custom_code_list():
-        where = snippet.get("position", "head")
-        if where not in SNIPPET_POSITIONS:
-            where = "head"
-        if where != position:
+        if snippet_position(snippet) != position:
             continue
-        if not snippet_applies(snippet, page_kind, article_ids):
+        if not snippet_applies(snippet, page_kind, ticked, switched_off):
             continue
         code = str(snippet.get("code", "")).strip()
         if code != "":
-            parts.append(code)
+            parts.append(wrap_for_consent(code, snippet_consent(snippet)))
+    if page_kind == "article":
+        for snippet in own:
+            if snippet.get("enabled", True) is False or snippet_position(snippet) != position:
+                continue
+            code = str(snippet.get("code", "")).strip()
+            if code != "":
+                parts.append(wrap_for_consent(code, snippet_consent(snippet)))
     return "\n".join(parts)
 
 
@@ -457,13 +693,18 @@ def hreflang_links(path_it, path_en):
     )
 
 
-def site_header(language="it", nav_extra=""):
+def site_header(language="it", nav_extra="", is_home=False):
     """
     The header shared by every public page, with the language switcher.
 
     nav_extra is the custom code for the "nav" position: extra entries of the
     menu, after RSS and before the language switcher, so they sit with the
     other links and pick up their style.
+
+    The name of the site is the <h1> of the homepage only. On every other
+    page the h1 is the page's own title - an article, a tag, the archive -
+    and a second one in the header told search engines the page had two
+    main subjects.
     """
     prefix = language_url_prefix(language)
 
@@ -473,12 +714,20 @@ def site_header(language="it", nav_extra=""):
     if language != main_language():
         other_language = main_language()
 
+    link_titolo = f'<a href="{prefix}/">{esc(CONFIG["site_title"])}</a>'
+    if is_home:
+        titolo_sito = '<h1 class="site-title">' + link_titolo + "</h1>"
+    else:
+        titolo_sito = '<p class="site-title">' + link_titolo + "</p>"
+
     return render.render(
         "public/header.html",
         salta_contenuto=T("salta_contenuto", language),
         url_home=prefix + "/",
-        titolo_sito=esc(CONFIG["site_title"]),
+        titolo_sito=titolo_sito,
         sottotitolo=esc(CONFIG["subtitle"]),
+        label_menu=T("menu", language),
+        aria_menu=esc(T("menu_principale", language)),
         label_home=T("home", language),
         label_articoli=T("articles", language),
         url_archivio=prefix + "/" + archive_file_name(language),
@@ -488,12 +737,12 @@ def site_header(language="it", nav_extra=""):
         url_altra_lingua=language_url_prefix(other_language) + "/",
         altra_lingua=other_language,
         altra_lingua_label=other_language.upper(),
-        aria_tema="Cambia tema",
-        title_tema="Tema chiaro/scuro",
+        aria_tema=esc(T("cambia_tema", language)),
+        title_tema=esc(T("tema_chiaro_scuro", language)),
     ).rstrip("\n")
 
 
-def site_footer(language="it"):
+def site_footer(language="it", consent_active=False):
     """The footer shared by every public page."""
     prefix = language_url_prefix(language)
 
@@ -512,6 +761,7 @@ def site_footer(language="it"):
         url_archivio=prefix + "/" + archive_file_name(language),
         label_archivio=T("archivio", language),
         url_feed=feed_url(language),
+        link_preferenze=consent_footer_link(language, consent_active),
         riga_social=riga_social,
     ).rstrip("\n")
 
@@ -527,6 +777,9 @@ def site_options(language, extra=None):
     """
     options = {
         "language": language,
+        # True on the pages of the translated language: they read the _en
+        # fields of the search index, whichever language those are in.
+        "secondary": language != main_language(),
         "copy_label": T("copia_codice", language),
         "copied_label": T("codice_copiato", language),
         "copy_title": T("copia_codice_titolo", language),
@@ -539,20 +792,49 @@ def site_options(language, extra=None):
     return options
 
 
+def consent_footer_link(language, active):
+    """
+    The "cookie preferences" link of the footer: the way back to the banner
+    for a visitor who wants to change the choice made.
+    """
+    if not active:
+        return ""
+    return (' &middot; <button type="button" class="link-preferenze" data-consenso="apri">'
+            + T("consenso_preferenze", language) + "</button>")
+
+
 def render_page(language, titolo_pagina, contenuto, meta_extra="",
                 head_extra="", script_extra="", feed_links=None,
-                site_extra=None, page_kind="other", article_ids=()):
+                site_extra=None, page_kind="other", article_ids=(),
+                is_home=False, article=None):
     """
     Wrap a page body in the shared public layout (templates/base.html).
 
     titolo_pagina is inserted as-is: the caller has already escaped the parts
     that come from the configuration or from an article.
 
-    page_kind ("home", "article" or "other") and article_ids are what the
-    custom code snippets are matched against. A caller that passes neither
-    gets only the snippets scoped to the whole site, which is right for the
-    tag, archive, card and 404 pages: no other scope names them.
+    page_kind ("home", "article" or "other") and the article (or, for the
+    other pages, article_ids) are what the custom code snippets are matched
+    against. A caller that passes neither gets only the snippets scoped to
+    the whole site, which is right for the tag, archive, card and 404 pages:
+    no other scope names them.
     """
+    context = article_ids
+    if article is not None:
+        context = article
+
+    # The consent banner, when it is switched on and some code on this page
+    # needs it. PB_SITE tells site.js which categories to ask about.
+    categories = []
+    if consent_enabled():
+        categories = consent_categories_used(article)
+    if len(categories) > 0:
+        if site_extra is None:
+            site_extra = {}
+        site_extra = dict(site_extra)
+        site_extra["consent"] = {"version": consent_settings()["version"],
+                                 "categories": categories}
+
     head_extra = block(head_extra) + (
         "  <script>window.PB_SITE = "
         + js(site_options(language, site_extra)) + ";</script>")
@@ -560,61 +842,76 @@ def render_page(language, titolo_pagina, contenuto, meta_extra="",
     # Custom code goes LAST in its position: in the head after PB_SITE, so a
     # snippet can read it, and at the end of the body after the scripts of
     # the page, so a snippet can use what they define.
-    head_extra = block(head_extra) + custom_code_block(
-        "head", page_kind, article_ids)
-    script_extra = block(script_extra) + custom_code_block(
-        "body_end", page_kind, article_ids)
-    body_open = custom_code_block("body_start", page_kind, article_ids)
+    head_extra = block(head_extra) + custom_code_block("head", page_kind, context)
+    script_extra = block(script_extra) + custom_code_block("body_end", page_kind, context)
+    body_open = custom_code_block("body_start", page_kind, context)
+    if len(categories) > 0:
+        script_extra = block(script_extra) + consent_banner_html(language, categories)
 
-    # The two visible slots of the shared layout. The third one, the end of
-    # the article text, is filled by generate_article_page: it is the only
-    # page that has such a place.
-    after_header = custom_code_block("after_header", page_kind, article_ids)
-    before_footer = custom_code_block("before_footer", page_kind, article_ids)
-    nav_extra = custom_code_block("nav", page_kind, article_ids)
+    # The visible slots of the shared layout. The ones inside the text and
+    # the sidebar are filled by the pages that have such places.
+    after_header = custom_code_block("after_header", page_kind, context)
+    before_footer = custom_code_block("before_footer", page_kind, context)
+    nav_extra = custom_code_block("nav", page_kind, context)
     if feed_links is None:
         feed_links = ('  <link rel="alternate" type="application/rss+xml" '
                       f'title="{esc(CONFIG["site_title"])}" href="{feed_url(language)}">\n')
+
+    # Google's consent defaults have to run before any Google tag, the
+    # analytics one included, so they go first.
+    analytics = analytics_snippet()
+    if len(categories) > 0:
+        analytics = consent_default_script() + "\n  " + analytics
     return render.render(
         "base.html",
         lang=language,
         favicon=favicon_link(),
-        analytics=analytics_snippet(),
+        analytics=analytics,
         titolo_pagina=titolo_pagina,
         meta_extra=block(meta_extra),
         feed_links=block(feed_links),
         head_extra=block(head_extra),
         body_open=block(body_open),
-        header=site_header(language, nav_extra),
+        header=site_header(language, nav_extra, is_home),
         after_header=block(after_header),
         contenuto=block(contenuto),
         before_footer=block(before_footer),
-        footer=site_footer(language),
+        footer=site_footer(language, len(categories) > 0),
         script_extra=block(script_extra),
+        versione_css=asset_version("common.css", "style.css"),
+        versione_js=asset_version("site.js"),
+        tipo_pagina=page_kind,
     )
+
 
 
 # ---------------------------------------------------------------------------
 # COMMENTS
 # ---------------------------------------------------------------------------
 
-def comments_block(art):
+def comments_block(art, language=None):
     """
     Generate the comments snippet based on CONFIG["comments"].
     It supports "giscus", "disqus" or "none".
+
+    The heading and the widget's own interface follow the language of the
+    page: an English article used to get "Commenti" and an Italian Giscus.
     """
+    if language is None:
+        language = main_language()
     sistema = CONFIG.get("comments", "none")
 
     if sistema == "giscus":
         g = CONFIG["giscus"]
         return render.render(
             "public/comments_giscus.html",
+            titolo=T("commenti", language),
             repo=esc(g["repo"]),
             repo_id=esc(g["repo_id"]),
             category=esc(g["category"]),
             category_id=esc(g["category_id"]),
             theme=esc(g["theme"]),
-            lingua=esc(CONFIG["language"]),
+            lingua=esc(language),
         ).rstrip("\n")
 
     if sistema == "disqus":
@@ -625,6 +922,8 @@ def comments_block(art):
         embed_url = f"https://{d['shortname']}.disqus.com/embed.js"
         return render.render(
             "public/comments_disqus.html",
+            titolo=T("commenti", language),
+            noscript=T("commenti_disqus_noscript", language),
             page_url=js(page_url),
             identifier=js(art["slug"]),
             embed_url=js(embed_url),
@@ -689,11 +988,89 @@ def generate_table_of_contents(html_content_value, language="it"):
 
     modified_content = HEADING_PATTERN.sub(add_anchor, html_content_value)
 
-    index_html = (
-        '<nav class="table-of-contents"><p class="toc-title">' + T('indice', language) + '</p><ul>'
-        + "\n".join(toc_items) + "</ul></nav>"
-    )
+    # Only the list: the article page shows it twice, in the sidebar on a
+    # wide screen and folded at the top of the text on a phone.
+    index_html = '<ul class="toc-lista">' + "".join(toc_items) + "</ul>"
     return modified_content, index_html
+
+
+def toc_sidebar_html(toc_list, language):
+    """The table of contents as the last box of the article's sidebar."""
+    return ('      <nav class="box box-indice" aria-label="' + esc(T("indice", language)) + '">\n'
+            '        <h2 class="box-titolo">' + T("in_questo_articolo", language) + "</h2>\n"
+            "        " + toc_list + "\n      </nav>")
+
+
+def toc_phone_html(toc_list, language):
+    """The table of contents folded at the top of the text, for narrow screens."""
+    return ('        <details class="toc-telefono">\n'
+            "          <summary>" + T("indice", language) + "</summary>\n"
+            "          " + toc_list + "\n        </details>\n")
+
+
+# Elements with no closing tag: they never open a level of nesting.
+VOID_ELEMENTS = {"area", "base", "br", "col", "embed", "hr", "img", "input",
+                 "link", "meta", "source", "track", "wbr"}
+
+
+class _TopLevelBlocks(html.parser.HTMLParser):
+    """Collects where each top-level element of a piece of HTML ends."""
+
+    def __init__(self, text):
+        super().__init__(convert_charrefs=False)
+        self.text = text
+        self.line_starts = [0]
+        for index_value, character in enumerate(text):
+            if character == "\n":
+                self.line_starts.append(index_value + 1)
+        self.depth = 0
+        self.ends = []
+
+    def _offset(self):
+        line, column = self.getpos()
+        return self.line_starts[line - 1] + column
+
+    def handle_starttag(self, tag, attrs):
+        if tag not in VOID_ELEMENTS:
+            self.depth = self.depth + 1
+
+    def handle_endtag(self, tag):
+        if tag in VOID_ELEMENTS:
+            return
+        self.depth = max(0, self.depth - 1)
+        if self.depth == 0:
+            close = self.text.find(">", self._offset())
+            if close != -1:
+                self.ends.append((close + 1, tag))
+
+
+def insert_in_middle(content, code):
+    """
+    Put a piece of HTML half way down an article, between two paragraphs.
+
+    The content is a flat run of blocks - paragraphs, headings, lists,
+    tables - and the code goes after the paragraph nearest the middle, never
+    between a heading and its first paragraph. An article too short to have
+    a middle gets the code at the end of the text instead, so it is not lost.
+    """
+    if code == "":
+        return content
+    parser = _TopLevelBlocks(content)
+    try:
+        parser.feed(content)
+        parser.close()
+    except Exception:
+        return content + code
+    paragraph_ends = [end for end, tag in parser.ends if tag == "p"]
+    if len(parser.ends) < 4 or len(paragraph_ends) == 0:
+        return content + code
+    middle = len(content) / 2
+    # Not after the very last block: that would be the end, not the middle.
+    candidates = [end for end in paragraph_ends if end < parser.ends[-1][0]]
+    if len(candidates) == 0:
+        return content + code
+    best = min(candidates, key=lambda end: abs(end - middle))
+    return content[:best] + code + content[best:]
 
 
 def find_related_articles(article, all_articles, maximum=3):
@@ -772,15 +1149,10 @@ def generate_related_block(article, all_articles, language="it"):
     if len(visibili) == 0:
         return ""
 
-    post_prefix = language_url_prefix(language) + "/posts/"
-    feed_items = []
-    for art in visibili:
-        feed_items.append(f"""    <a class="article-card" href="{post_prefix}{art['slug']}.html">
-      <div class="card-date">{format_date(art['date'], language)}</div>
-      <h3 class="card-title">{esc(title_in_language(art, language))}</h3>
-      <span class="card-read-more">{T('leggi_articolo', language)} &rarr;</span>
-    </a>""")
-
+    # The same rows as the homepage: thumbnail, title, date, the opening of
+    # the text. They used to be bare cards whose date, title and link sat
+    # side by side on one line.
+    feed_items = [article_row(art, language) for art in visibili]
     return render.render(
         "public/related.html",
         titolo_sezione=T("articoli_correlati", language),
@@ -890,6 +1262,375 @@ def generate_article_nav(art, all_articles, language="it"):
 
 
 # ---------------------------------------------------------------------------
+# THE TWO-COLUMN LAYOUT: ARTICLE ROWS, TOPICS, SIDEBAR, PAGINATION
+# ---------------------------------------------------------------------------
+# Every page but the 404 has the same frame: the content in a main column and
+# a sidebar next to it (below it on a phone). The pieces of that frame are
+# built here, so the homepage, the articles, the tags and the archive cannot
+# drift apart.
+
+def article_url(art, language):
+    """Address of an article's page in a language, from the site root."""
+    return language_url_prefix(language) + "/posts/" + art["slug"] + ".html"
+
+
+def article_excerpt(art, language, words):
+    """
+    The text under the title in a list of articles.
+
+    Priority: the preview the author wrote, then the opening of the article
+    (its first words, cut at a word boundary), then the SEO description as a
+    last resort.
+    """
+    title_value, description, content, preview = article_card_fields(art, language)
+    if preview.strip() != "":
+        return preview.strip()
+    opening = excerpt_words(content, words)
+    if opening != "":
+        return opening
+    return description
+
+
+def article_tile_label(art):
+    """The word on the tile shown when an article has no cover: its first tag."""
+    tags = extract_article_tags(art)
+    if len(tags) > 0:
+        return tags[0]
+    title_value = CONFIG.get("site_title", "").strip()
+    if title_value == "":
+        return "·"
+    return title_value[0].upper()
+
+
+def article_thumbnail(art):
+    """
+    The cover as a thumbnail, or a tile with the article's first tag.
+
+    The tile keeps the rows aligned when some articles have a cover and some
+    do not. The image has an empty alt: the title next to it says everything,
+    and a screen reader would otherwise read the title twice.
+    """
+    image_url = media_url(art.get("image", ""))
+    if image_url != "":
+        return ('<img class="art-thumb-img" src="' + esc(image_url)
+                + '" alt="" loading="lazy">')
+    return '<span class="art-tile">' + esc(article_tile_label(art)) + "</span>"
+
+
+def article_tags_line(art, language):
+    """The tags of an article as links, for its row in a list."""
+    prefix = language_url_prefix(language) + "/tag/"
+    pieces = []
+    for tag in extract_article_tags(art):
+        tag_slug = slugify(tag)
+        if tag_slug == "":
+            continue
+        pieces.append(f'<a class="art-tag" href="{prefix}{tag_slug}.html">#{esc(tag)}</a>')
+    if len(pieces) == 0:
+        return ""
+    return '          <p class="art-tags">' + "".join(pieces) + "</p>\n"
+
+
+def article_row(art, language, lead=False):
+    """
+    One article in a list: thumbnail, tags, title, date and reading time, and
+    the opening of the text.
+
+    The same markup serves the homepage, the tag pages, the related articles
+    and - rebuilt by site.js - the search results. The whole row is clickable
+    through the title link; the tags stay links of their own on top of it.
+    The lead row (the most recent article on the first page) shows twice as
+    many words and a "read" prompt.
+    """
+    title_value, description, content, preview = article_card_fields(art, language)
+    words = excerpt_word_count()
+    css_class = ""
+    label = ""
+    read = ""
+    if lead:
+        words = words * 2
+        css_class = " art-lead"
+        label = '          <p class="art-kicker">' + T("ultimo_articolo", language) + "</p>\n"
+        read = ('          <span class="art-more" aria-hidden="true">'
+                + T("leggi_articolo", language) + " &rarr;</span>\n")
+    return render.render(
+        "public/article_row.html",
+        classe=css_class,
+        url=article_url(art, language),
+        miniatura=article_thumbnail(art),
+        etichetta=label,
+        tags=article_tags_line(art, language),
+        titolo=esc(title_value),
+        data=format_date(art["date"], language),
+        tempo_lettura=compute_reading_time(content, language),
+        estratto=esc(article_excerpt(art, language, words)),
+        leggi=read,
+    ).rstrip("\n")
+
+
+def tag_counts(articles, language):
+    """Every tag of the articles visible in a language, with how many use it."""
+    counts = {}
+    for art in articles_visible_in_language(articles, language):
+        for tag in extract_article_tags(art):
+            counts[tag] = counts.get(tag, 0) + 1
+    return sorted(counts.items(), key=lambda pair: (-pair[1], pair[0].lower()))
+
+
+def topics_bar(articles, language, current_tag=""):
+    """
+    The row of topics under the header: the most used tags, with a count.
+
+    It is the quickest way into the blog for a reader who came for one
+    subject. On a phone it scrolls sideways instead of wrapping onto lines.
+    """
+    prefix = language_url_prefix(language) + "/tag/"
+    items = []
+    for tag, count in tag_counts(articles, language)[:12]:
+        tag_slug = slugify(tag)
+        if tag_slug == "":
+            continue
+        current = ""
+        if tag == current_tag:
+            current = ' aria-current="page"'
+        items.append(f'      <a class="argomento" href="{prefix}{tag_slug}.html"{current}>'
+                     f'{esc(tag)} <span class="argomento-conteggio">{count}</span></a>')
+    if len(items) == 0:
+        return ""
+    return render.render("public/topics_bar.html", aria=esc(T("argomenti", language)),
+                         voci="\n".join(items))
+
+
+def sidebar_box(css_class, title, content):
+    """One box of the sidebar. An empty title leaves the heading out."""
+    titolo = ""
+    if title != "":
+        titolo = title
+    html_box = render.render("public/sidebar_box.html", classe=css_class,
+                             titolo=titolo, contenuto=block(content))
+    if titolo == "":
+        html_box = html_box.replace('        <h2 class="box-titolo"></h2>\n', "")
+    return html_box
+
+
+def author_initials(name):
+    """Up to two initials of the author, for the avatar when there is no photo."""
+    letters = [piece[0].upper() for piece in name.split() if piece]
+    if len(letters) == 0:
+        return "·"
+    return "".join(letters[:2])
+
+
+def avatar_html(css_class):
+    """The author's photo, or their initials in a circle."""
+    photo = seo_data().get("author_image", "")
+    if photo != "":
+        return f'<img class="{css_class}" src="{esc(photo)}" alt="" loading="lazy">'
+    return (f'<span class="{css_class} avatar-iniziali" aria-hidden="true">'
+            f'{esc(author_initials(CONFIG.get("author", "")))}</span>')
+
+
+def profile_box(language):
+    """
+    The author in brief: photo or initials, name, role and bio.
+
+    Shown on every page with a sidebar, except the homepage that has the
+    full introduction in that place. A link to the author's own page is
+    added when one is configured.
+    """
+    seo = seo_data()
+    role = seo.get("author_role", "") or CONFIG.get("subtitle", "")
+    lines = ['        <div class="profilo">' + avatar_html("profilo-foto")
+             + '<div><p class="profilo-nome">' + esc(CONFIG.get("author", ""))
+             + '</p><p class="profilo-ruolo">' + esc(role) + "</p></div></div>"]
+    bio = seo.get("author_bio", "")
+    if bio != "":
+        lines.append('        <p class="profilo-bio">' + esc(bio) + "</p>")
+    author_url = seo.get("author_url", "")
+    if author_url != "":
+        lines.append(f'        <p class="profilo-link"><a href="{esc(author_url)}" rel="me">'
+                     f'{T("chi_sono", language)} &rarr;</a></p>')
+    return sidebar_box("box-profilo", T("chi_scrive", language), "\n".join(lines))
+
+
+def home_intro_html(language):
+    """The free introduction of the homepage (home_content), or ""."""
+    if language != main_language():
+        home_content = CONFIG.get("home_content_en", "")
+        # Without a translation, the introduction shows in the main language:
+        # better than nothing at all.
+        if html_content_is_empty(home_content):
+            home_content = CONFIG.get("home_content", "")
+    else:
+        home_content = CONFIG.get("home_content", "")
+    if html_content_is_empty(home_content):
+        return ""
+    avatar = ""
+    if seo_data().get("author_image", "") != "":
+        avatar = avatar_html("home-avatar") + "\n        "
+    return render.render("public/home_intro.html", avatar=avatar,
+                         contenuto_intro=add_lazy_loading(home_content)).rstrip("\n")
+
+
+def home_intro_position():
+    """Where the introduction goes: "sidebar" (default) or "top"."""
+    if CONFIG.get("home_intro_position", "sidebar") == "top":
+        return "top"
+    return "sidebar"
+
+
+def explore_box(language):
+    """The editorial cards (biography, projects...) as links to their pages."""
+    cards = published_home_cards()
+    if len(cards) == 0:
+        return ""
+    prefix = language_url_prefix(language) + "/pagine/"
+    items = []
+    for card in cards:
+        slug = card_slug(card.get("title", ""))
+        items.append(f'          <li><a href="{prefix}{slug}.html">{esc(card.get("title", ""))}</a>'
+                     f'<span class="esplora-estratto">{esc(excerpt_words(card.get("content", ""), 12))}'
+                     "</span></li>")
+    return sidebar_box("box-esplora", T("esplora", language),
+                       '        <ul class="esplora-lista">\n' + "\n".join(items) + "\n        </ul>")
+
+
+def topics_box(articles, language):
+    """The tags as a cloud, for the pages that have no topics bar."""
+    prefix = language_url_prefix(language) + "/tag/"
+    pieces = []
+    for tag, count in tag_counts(articles, language):
+        tag_slug = slugify(tag)
+        if tag_slug == "":
+            continue
+        pieces.append(f'<a class="argomento" href="{prefix}{tag_slug}.html">{esc(tag)} '
+                      f'<span class="argomento-conteggio">{count}</span></a>')
+    if len(pieces) == 0:
+        return ""
+    return sidebar_box("box-argomenti", T("argomenti", language),
+                       '        <p class="nuvola">' + "".join(pieces) + "</p>")
+
+
+def follow_box(language):
+    """The feed of the page's language and the author's social profiles."""
+    items = [f'          <li><a href="{feed_url(language)}">RSS</a></li>']
+    for link in social_profile_links():
+        items.append("          <li>" + link + "</li>")
+    return sidebar_box("box-segui", T("seguimi", language),
+                       '        <ul class="segui-lista">\n' + "\n".join(items) + "\n        </ul>")
+
+
+def sidebar_ads(page_kind, article):
+    """The custom code placed in the sidebar (an advertisement, a widget)."""
+    code = custom_code_block("sidebar", page_kind, article)
+    if code == "":
+        return ""
+    return '      <div class="annuncio annuncio-barra">\n' + code + "\n      </div>"
+
+
+def build_sidebar(language, page_kind, articles, article=(), toc_html="",
+                  intro=""):
+    """
+    The sidebar of a page.
+
+    Homepage: the introduction (when it lives in the sidebar), the sidebar
+    code, the cards, the follow links. Article: the author, the sidebar
+    code, and the table of contents last, because it is the one that stays
+    on screen while the article scrolls. Other pages: the author, the code,
+    the cards, the topics and the follow links.
+    """
+    parts = []
+    if intro != "":
+        parts.append(sidebar_box("box-intro", "", intro))
+    else:
+        parts.append(profile_box(language))
+    parts.append(sidebar_ads(page_kind, article))
+    if page_kind == "article" and toc_html != "":
+        parts.append(toc_html)
+        return "\n".join(part for part in parts if part != "")
+    parts.append(explore_box(language))
+    if page_kind not in ("home",):
+        parts.append(topics_box(articles, language))
+    parts.append(follow_box(language))
+    return "\n".join(part for part in parts if part != "")
+
+
+def two_columns(principale, barra, language, argomenti="", main_has_id=True):
+    """The main column and the sidebar, with the topics bar above them."""
+    attributi = ""
+    if main_has_id:
+        attributi = ' id="content"'
+    return render.render(
+        "public/layout_colonne.html",
+        argomenti=block(argomenti),
+        attributi_main=attributi,
+        principale=block(principale),
+        aria_barra=esc(T("barra_laterale", language)),
+        barra=block(barra),
+    )
+
+
+def pages_to_show(page, total):
+    """The page numbers of the pagination: the first, the last, the current
+    one and its neighbours, with None where numbers are skipped."""
+    wanted = {1, total, page - 1, page, page + 1}
+    numbers = sorted(n for n in wanted if 1 <= n <= total)
+    result = []
+    previous = 0
+    for number in numbers:
+        if number - previous > 1:
+            result.append(None)
+        result.append(number)
+        previous = number
+    return result
+
+
+def pagination_html(page, total, language):
+    """
+    The navigation between the pages of the homepage, with the page numbers.
+
+    It used to say only "newer" and "older": with numbers a reader sees how
+    much there is, and can jump to the last page of the archive in one go.
+    """
+    if total <= 1:
+        return ""
+    prefix = language_url_prefix(language)
+    folder = pagination_folder(language)
+
+    def address(number):
+        if number == 1:
+            return prefix + "/"
+        return f"{prefix}/{folder}/{number}.html"
+
+    if page > 1:
+        previous = (f'<a class="paginazione-freccia" href="{address(page - 1)}" rel="prev">'
+                    f'{T("pagina_piu_recenti", language)}</a>')
+    else:
+        previous = '<span class="paginazione-vuoto"></span>'
+    if page < total:
+        following = (f'<a class="paginazione-freccia" href="{address(page + 1)}" rel="next">'
+                     f'{T("pagina_meno_recenti", language)}</a>')
+    else:
+        following = '<span class="paginazione-vuoto"></span>'
+
+    numbers = []
+    for number in pages_to_show(page, total):
+        if number is None:
+            numbers.append('<span class="paginazione-salto">&hellip;</span>')
+        elif number == page:
+            numbers.append(f'<span class="paginazione-numero" aria-current="page">{number}</span>')
+        else:
+            numbers.append(f'<a class="paginazione-numero" href="{address(number)}">{number}</a>')
+    return render.render(
+        "public/pagination.html",
+        aria=esc(T("pagine", language)),
+        precedente=previous,
+        numeri="".join(numbers),
+        successiva=following,
+    )
+
+
+# ---------------------------------------------------------------------------
 # ARTICLE PAGE
 # ---------------------------------------------------------------------------
 
@@ -901,8 +1642,12 @@ def generate_article_page(art, language="it", all_articles=None):
     """
     prefix = language_url_prefix(language)
 
-    # We pick the right fields based on the requested language.
-    if language == "en":
+    # We pick the right fields based on the requested language. The _en
+    # fields hold the translation, whichever language that is: with English
+    # as the main language they hold the Italian version. This used to test
+    # for language == "en" and so, on an English site, served the Italian
+    # translation at the root while the homepage listed the English title.
+    if language != main_language():
         title_value = art.get("title_en", "")
         content = art.get("content_en", "")
         description = art.get("description_en", "")
@@ -936,8 +1681,24 @@ def generate_article_page(art, language="it", all_articles=None):
 
     # We generate the table of contents (only for long articles).
     # The function adds the ids to the headings and gives us back the index to show.
-    content, toc_html = generate_table_of_contents(content, language)
+    content, toc_list = generate_table_of_contents(content, language)
     content = add_lazy_loading(content)
+    toc_sidebar = ""
+    toc_phone = ""
+    if toc_list != "":
+        toc_sidebar = toc_sidebar_html(toc_list, language)
+        toc_phone = toc_phone_html(toc_list, language)
+
+    # The custom code that lives inside the text: at the top, after the
+    # title and the cover, and half way down, between two paragraphs.
+    start_code = custom_code_block("article_start", "article", art)
+    if start_code != "":
+        start_code = ('        <div class="annuncio annuncio-testo">\n' + start_code
+                      + "\n        </div>\n")
+    middle_code = custom_code_block("article_middle", "article", art)
+    if middle_code != "":
+        content = insert_in_middle(
+            content, '<div class="annuncio annuncio-testo">' + middle_code + "</div>")
 
     # The cover inside the article, under the title and the date.
     #
@@ -1063,7 +1824,7 @@ def generate_article_page(art, language="it", all_articles=None):
         '  <script type="application/ld+json">'
         + json.dumps(jsonld_data, ensure_ascii=False) + "</script>")
 
-    contenuto = render.render(
+    principale = render.render(
         "public/article.html",
         language_switcher=language_switcher,
         url_home=prefix + "/",
@@ -1073,15 +1834,23 @@ def generate_article_page(art, language="it", all_articles=None):
         tempo_lettura=reading_time,
         tags_html=tags_html,
         copertina=block(cover_block),
-        toc=toc_html,
+        codice_inizio_testo=start_code,
+        toc_telefono=toc_phone,
         contenuto_articolo=content,
-        codice_fine_testo=block(custom_code_block(
-            "article_end", "article", article_snippet_ids(art))),
+        codice_fine_testo=block(custom_code_block("article_end", "article", art)),
         author_box=generate_author_box(language),
         article_nav=generate_article_nav(art, all_articles, language),
         back_label=back_label,
-        related=related_block,
-        comments=comments_block(art),
+        related=block(related_block),
+        comments=block(comments_block(art, language)),
+    )
+    if all_articles is None:
+        all_articles = [art]
+    contenuto = two_columns(
+        principale,
+        build_sidebar(language, "article", all_articles, art, toc_html=toc_sidebar),
+        language,
+        main_has_id=False,
     )
 
     return render_page(
@@ -1093,7 +1862,7 @@ def generate_article_page(art, language="it", all_articles=None):
         script_extra='  <script src="https://cdn.jsdelivr.net/gh/highlightjs/'
                      'cdn-release@11.9.0/build/highlight.min.js"></script>',
         page_kind="article",
-        article_ids=article_snippet_ids(art),
+        article=art,
     )
 
 
@@ -1145,114 +1914,14 @@ def article_card_fields(art, language):
             art.get("content", ""), art.get("preview", ""))
 
 
-def card_preview_text(preview, content, description, length):
-    """
-    The text shown under a card title.
-
-    Priority: what the author wrote, then an automatic excerpt of the article,
-    then the SEO description as a last resort.
-    """
-    if preview != "":
-        return preview
-    excerpt = excerpt_from_html(content, length)
-    if excerpt != "":
-        return excerpt
-    return description
-
-
-def card_cover_image(art, title_value, css_class):
-    """
-    The thumbnail of an article for a listing, or an empty string.
-
-    Every card uses it, so an article with a cover looks the same wherever it
-    is listed. Until now only the highlighted block carried one, which made
-    the newest article look different from the rest for a reason the reader
-    could not see.
-    """
-    image_url = media_url(art.get("image", ""))
-    if image_url == "":
-        return ""
-    return ('<img class="' + css_class + '" src="' + esc(image_url)
-            + '" alt="' + esc(title_value) + '" loading="lazy">')
-
-
-def generate_featured_article(art, language):
-    """
-    Render the most recent article as a larger block at the top of the list.
-
-    The cover image is used here and nowhere else on the homepage: until now
-    it only fed og:image and the structured data, so an author who filled it
-    in saw nothing for it. When there is no image the block keeps the same
-    markup and simply reads as a wider card, so it never looks half-finished.
-    """
-    prefix = language_url_prefix(language)
-    title_value, description, content, preview = article_card_fields(art, language)
-
-    cover = card_cover_image(art, title_value, "in-evidenza-copertina")
-    if cover != "":
-        cover = "        " + cover + NEWLINE
-
-    # A longer excerpt than the ordinary cards get: this block has the room
-    # for it, and it is what earns the extra space.
-    excerpt = card_preview_text(preview, content, description, 340)
-
-    tags_row = tag_links(art, language)
-    if tags_row != "":
-        tags_row = "      " + tags_row + "\n"
-
-    return render.render(
-        "public/home_featured.html",
-        etichetta=T("ultimo_articolo", language),
-        url=f"{prefix}/posts/{art['slug']}.html",
-        copertina=cover,
-        titolo=esc(title_value),
-        data=format_date(art["date"], language),
-        tempo_lettura=compute_reading_time(content, language),
-        estratto=esc(excerpt),
-        leggi=T("leggi_articolo", language),
-        tags=tags_row,
-    )
-
-
-def generate_home_cards(language="it"):
-    """
-    Generate the homepage cards block. Each card is a link leading to its
-    own dedicated page. It only shows the published cards, and nothing at all
-    when the block is switched off.
-    """
-    prefix = language_url_prefix(language) + "/pagine/"
-    if language == "en":
-        open_label = "Open"
-    else:
-        open_label = "Apri"
-
-    card_html = []
-    for card in published_home_cards():
-        content = card.get("content", "")
-        title_value = card.get("title", "")
-        slug = card_slug(title_value)
-        excerpt = excerpt_from_html(content)
-        card_html.append(f"""    <a class="home-card" href="{prefix}{slug}.html">
-      <h3 class="home-card-title">{esc(title_value)}</h3>
-      <p class="home-card-excerpt">{esc(excerpt)}</p>
-      <span class="home-card-link">{open_label} &rarr;</span>
-    </a>""")
-
-    if len(card_html) == 0:
-        return ""
-
-    return render.render(
-        "public/home_cards.html",
-        titolo_sezione=T("esplora", language),
-        lista="\n".join(card_html),
-    )
-
-
-def generate_card_page(card, language="it"):
+def generate_card_page(card, language="it", articles=None):
     """
     Generate the HTML page of a single card (Biography, Projects, etc.)
-    with a polished style: prominent header and readable content.
+    with a polished style: prominent header and readable content, and the
+    sidebar every page shares.
     """
+    if articles is None:
+        articles = []
     title_value = card.get("title", "")
     content = card.get("content", "")
     slug = card_slug(title_value)
@@ -1263,7 +1932,7 @@ def generate_card_page(card, language="it"):
     prefix = language_url_prefix(language)
     url_canonico = f"{CONFIG['base_url']}{prefix}/pagine/{slug}.html"
 
-    contenuto = render.render(
+    principale = render.render(
         "public/card_page.html",
         url_home=prefix + "/",
         label_home=T("home", language),
@@ -1271,6 +1940,7 @@ def generate_card_page(card, language="it"):
         contenuto_card=add_lazy_loading(content),
         torna_home=T("torna_homepage", language),
     )
+    contenuto = two_columns(principale, build_sidebar(language, "card", articles), language)
 
     meta_extra = "\n".join([
         f'  <meta name="description" content="{esc(description)}">',
@@ -1293,13 +1963,12 @@ def generate_card_page(card, language="it"):
 
 def generate_homepage(articles, language="it", page=1, totale_pagine=1):
     """
-    Generate the homepage: free content at the top + article grid + search.
-    With language="en" it generates the English version in /en/ (UI texts and
-    links translated). With page > 1 it generates the next pages
-    (/pagina/2.html, /pagina/3.html...): the introduction and the cards only
-    appear on page 1, the following pages show articles only.
+    Generate the homepage: the articles in the main column, with the opening
+    of each one, and the sidebar with the introduction, the cards and the
+    follow links. With language="en" (or whichever language is the
+    secondary one) it generates the translated version in its subfolder.
+    With page > 1 it generates the next pages (/pagina/2.html, ...).
     """
-    # Link prefix, derived from the site's main language.
     prefix = language_url_prefix(language)
     post_prefix = prefix + "/posts/"
 
@@ -1315,161 +1984,55 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         end = len(visibili)
         page_articles = visibili
 
-    # The most recent article gets its own block above the list, on the first
-    # page only. It is REMOVED from the list rather than repeated in it: the
-    # same article twice in a row reads as a mistake. The page still holds the
-    # same number of articles, so the pagination maths is unchanged - only the
-    # slice the browser restores when a search is cleared starts one later.
-    featured_article = None
-    if home_featured_enabled() and page == 1 and len(page_articles) > 0:
-        featured_article = page_articles[0]
-        page_articles = page_articles[1:]
-        start = start + 1
+    # The most recent article leads the list on the first page: a bigger
+    # thumbnail and twice the text. It stays in the list rather than in a
+    # block of its own, so a search that replaces the list leaves nothing
+    # stale above it.
+    rows = []
+    for index_value, art in enumerate(page_articles):
+        lead = home_featured_enabled() and page == 1 and index_value == 0
+        rows.append(article_row(art, language, lead=lead))
+        # The "between the articles" custom code (an in-feed advertisement)
+        # goes after the third one, once per page.
+        if index_value == 2 and len(page_articles) > 3:
+            feed_code = custom_code_block("home_feed", "home", ())
+            if feed_code != "":
+                rows.append('      <div class="annuncio annuncio-elenco">\n'
+                            + feed_code + "\n      </div>")
 
-    feed_items = []
-    for art in page_articles:
-        # The translated fields are always the _en ones (translation is IT<->EN).
-        card_title, card_description, card_content, card_preview = \
-            article_card_fields(art, language)
-
-        # Short excerpt: 2-3 lines. A long excerpt turns every card into
-        # a wall of text and makes the homepage impossible to scan.
-        preview_text = card_preview_text(card_preview, card_content,
-                                         card_description, 200)
-        excerpt = ""
-        if preview_text != "":
-            excerpt = f'<p class="card-excerpt">{esc(preview_text)}</p>'
-
-        # The card is a link, so the tags cannot be links inside it: nested
-        # anchors are invalid HTML and browsers unnest them unpredictably.
-        # They sit as a sibling row under the card instead.
-        tags_row = tag_links(art, language)
-        if tags_row != "":
-            tags_row = "\n    " + tags_row
-
-        thumbnail = card_cover_image(art, card_title, "card-copertina")
-        if thumbnail != "":
-            thumbnail = "      " + thumbnail + NEWLINE
-
-        feed_items.append(f"""    <a class="article-card" href="{post_prefix}{art['slug']}.html">
-{thumbnail}      <div class="card-corpo">
-        <div class="card-date">{format_date(art['date'], language)}</div>
-        <h3 class="card-title">{esc(card_title)}</h3>
-        {excerpt}
-        <span class="card-read-more">{T('leggi_articolo', language)} &rarr;</span>
-      </div>
-    </a>{tags_row}""")
-
-    if len(feed_items) > 0:
-        lista = "\n".join(feed_items)
-    elif featured_article is not None:
-        # Every article of this page went into the highlighted block, so the
-        # list below is empty. That is not an empty blog: saying "no articles
-        # published yet" right under an article would be plainly wrong.
-        lista = ""
+    if len(rows) > 0:
+        lista = "\n".join(rows)
     else:
-        lista = f'    <p class="no-articles">{T("nessun_articolo", language)}</p>'
-
-    # Top of the home: free content written with the WYSIWYG (bio, images...).
-    # For the secondary language we use the translated version (_en field), if any.
-    if language != main_language():
-        home_content = CONFIG.get("home_content_en", "")
-        # If the translation is missing we fall back to the main content, so
-        # the introduction shows anyway (better in Italian than empty).
-        if html_content_is_empty(home_content):
-            home_content = CONFIG.get("home_content", "")
-    else:
-        home_content = CONFIG.get("home_content", "")
-    home_block = ""
-    if not html_content_is_empty(home_content):
-        # If the author has configured a photo of their own ("SEO and author
-        # data" section), we show it as a round avatar at the top of the hero:
-        # for a personal blog the face is the first element of trust.
-        avatar = ""
-        author_photo = seo_data().get("author_image", "")
-        if author_photo != "":
-            avatar = (f'<img class="home-avatar" src="{esc(author_photo)}" '
-                      f'alt="{esc(CONFIG["author"])}" loading="lazy">\n    ')
-        home_block = render.render(
-            "public/home_intro.html",
-            avatar=avatar,
-            contenuto_intro=add_lazy_loading(home_content),
-        )
-
-    # Editorial cards (bio, projects, photos, notices).
-    cards_block = generate_home_cards(language)
-
-    # --- Navigation between pages (pagination) ---
-    # It appears only if there is more than one page. The "newer" link on
-    # page 2 goes back to the homepage, not to /pagina/1.html (which does not exist).
-    pagination_block = ""
-    if totale_pagine > 1:
-        page_folder = pagination_folder(language)
-        if page > 1:
-            if page == 2:
-                url_precedente = prefix + "/"
-            else:
-                url_precedente = f"{prefix}/{page_folder}/{page - 1}.html"
-            link_precedente = f'<a href="{url_precedente}">{T("pagina_piu_recenti", language)}</a>'
-        else:
-            link_precedente = '<span class="paginazione-vuoto">&nbsp;</span>'
-        if page < totale_pagine:
-            url_successiva = f"{prefix}/{page_folder}/{page + 1}.html"
-            link_successiva = f'<a href="{url_successiva}">{T("pagina_meno_recenti", language)}</a>'
-        else:
-            link_successiva = '<span class="paginazione-vuoto">&nbsp;</span>'
-        pagination_block = render.render(
-            "public/pagination.html",
-            precedente=link_precedente,
-            label_pagina=T("pagina_di", language),
-            numero=page,
-            label_su=T("pagina_su", language),
-            totale=totale_pagine,
-            successiva=link_successiva,
-        )
-
-    # --- Articles section (with search) as a standalone block ---
-    featured_block = ""
-    if featured_article is not None:
-        featured_block = generate_featured_article(featured_article, language)
+        lista = f'      <p class="no-articles">{T("nessun_articolo", language)}</p>'
 
     articles_block = render.render(
         "public/home_articles.html",
         titolo_sezione=T("articles", language),
         placeholder_ricerca=esc(T("cerca_articoli", language)),
-        aria_ricerca="Cerca",
-        in_evidenza=block(featured_block),
+        aria_ricerca=esc(T("cerca", language)),
         lista=lista,
-        paginazione=block(pagination_block),
+        paginazione=block(pagination_html(page, totale_pagine, language)),
     )
 
-    # --- Order of the homepage sections, configurable ---
-    # The author can reorder "intro", "articles" and "cards" from the config
-    # ("home_order" field) to give priority to what the reader should see
-    # first. Sections not listed are appended at the end.
-    blocks = {
-        "intro": home_block,
-        "articles": articles_block,
-        "cards": cards_block,
-    }
-    # From page 2 on we only show the articles: the introduction and the
-    # cards belong to the first page, repeating them would be noise.
-    if page > 1:
-        blocks["intro"] = ""
-        blocks["cards"] = ""
-    order = CONFIG.get("home_order", ["intro", "cards", "articles"])
-    if not isinstance(order, list):
-        order = ["intro", "cards", "articles"]
-    home_body = []
-    for section_name in order:
-        if section_name in blocks:
-            home_body.append(blocks.pop(section_name))
-    # Sections forgotten in the order: we add them at the bottom anyway.
-    for section_name in ("intro", "cards", "articles"):
-        if section_name in blocks:
-            home_body.append(blocks.pop(section_name))
+    # The introduction lives in the sidebar, or above the articles when the
+    # author prefers it there. From page 2 on it is left out of the main
+    # column: whoever reached page 2 has already seen it.
+    intro = ""
+    if page == 1:
+        intro = home_intro_html(language)
+    principale = articles_block
+    sidebar_intro = ""
+    if intro != "" and home_intro_position() == "top":
+        principale = block(intro) + articles_block
+    elif intro != "":
+        sidebar_intro = intro
 
-    contenuto = render.render("public/home.html", sezioni="".join(home_body))
+    contenuto = two_columns(
+        principale,
+        build_sidebar(language, "home", articles, intro=sidebar_intro),
+        language,
+        argomenti=topics_bar(articles, language),
+    )
 
     # --- Homepage SEO ---
     base = CONFIG["base_url"].rstrip("/")
@@ -1521,15 +2084,19 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
             meta_extra = meta_extra + f'\n  <link rel="next" href="{next_url}">'
 
     # Values the client-side search needs, on top of the ones every page gets.
+    # The slice tells the browser which articles to put back when the search
+    # box is emptied; the lead flag tells it the first one was the lead row.
     search_options = {
         "post_prefix": post_prefix,
         "tag_prefix": prefix + "/tag/",
         "read_label": T("leggi_articolo", language),
+        "latest_label": T("ultimo_articolo", language),
         "msg_unavailable": T("js_search_unavailable", language),
         "msg_no_results": T("js_search_no_results", language),
         "msg_results_for": T("js_search_results_for", language),
         "page_start": start,
         "page_end": end,
+        "lead": home_featured_enabled() and page == 1,
     }
 
     head_extra = '  <script type="application/ld+json">' + jsonld_home + "</script>"
@@ -1542,6 +2109,7 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         head_extra=head_extra,
         site_extra=search_options,
         page_kind="home",
+        is_home=True,
     )
 
 
@@ -1608,7 +2176,7 @@ def generate_archive_page(articles, language="it"):
         language_url_prefix("it") + "/" + archive_file_name("it"),
         language_url_prefix("en") + "/" + archive_file_name("en"))
 
-    contenuto = render.render(
+    principale = render.render(
         "public/archive.html",
         url_home=prefix + "/",
         label_home=T("home", language),
@@ -1616,6 +2184,8 @@ def generate_archive_page(articles, language="it"):
         titolo_archivio=T("archivio_titolo", language),
         corpo=body,
     )
+    contenuto = two_columns(principale, build_sidebar(language, "other", articles),
+                            language, argomenti=topics_bar(articles, language))
 
     meta_extra = "\n".join([
         f'  <meta name="description" content="{T("archivio_descrizione", language)}">',
@@ -1632,49 +2202,35 @@ def generate_archive_page(articles, language="it"):
     )
 
 
-def generate_tag_page(tag_name, tag_articles, language="it"):
+def generate_tag_page(tag_name, tag_articles, language="it", all_articles=None):
     """
-    Generate the index page of a tag: it lists every article using it, as
-    clickable cards, with the same design as the homepage.
-    In the secondary language only the translated articles are listed.
+    Generate the index page of a tag: every article using it, with the same
+    rows as the homepage - thumbnail, title, date and the opening of the
+    text - and the shared sidebar. In the secondary language only the
+    translated articles are listed.
+
+    The tag pages used to show the SEO description only, so an article
+    without one appeared as a bare title, unlike on the homepage.
     """
+    if all_articles is None:
+        all_articles = tag_articles
     prefix = language_url_prefix(language)
-    post_prefix = prefix + "/posts/"
 
-    feed_items = []
-    count = 0
-    for art in tag_articles:
-        # In the secondary version we only show the translated articles.
-        if language != main_language():
-            if not art.get("translation_confirmed", False):
-                continue
-            card_title = art.get("title_en", "")
-            card_description = art.get("description_en", "")
-        else:
-            card_title = art.get("title", "")
-            card_description = art.get("description", "")
+    visibili = articles_visible_in_language(tag_articles, language)
+    rows = [article_row(art, language) for art in visibili]
 
-        count = count + 1
-        excerpt = ""
-        if card_description:
-            excerpt = f'<p class="card-excerpt">{esc(card_description)}</p>'
-        feed_items.append(f"""    <a class="article-card" href="{post_prefix}{art['slug']}.html">
-      <div class="card-date">{format_date(art['date'], language)}</div>
-      <h3 class="card-title">{esc(card_title)}</h3>
-      {excerpt}
-      <span class="card-read-more">{T('leggi_articolo', language)} &rarr;</span>
-    </a>""")
-
-    contenuto = render.render(
+    principale = render.render(
         "public/tag.html",
         url_home=prefix + "/",
         label_home=T("home", language),
         label_tag=T("tag", language),
         nome_tag=esc(tag_name),
-        conteggio=count,
+        conteggio=len(visibili),
         label_conteggio=T("tag_conteggio", language),
-        lista="\n".join(feed_items),
+        lista="\n".join(rows),
     )
+    contenuto = two_columns(principale, build_sidebar(language, "other", all_articles),
+                            language, argomenti=topics_bar(all_articles, language, tag_name))
 
     meta_extra = (f'  <meta name="description" '
                   f'content="{T("articoli_con_tag", language)} {esc(tag_name)}.">')
@@ -1685,6 +2241,7 @@ def generate_tag_page(tag_name, tag_articles, language="it"):
         contenuto,
         meta_extra=meta_extra,
     )
+
 
 
 def generate_404_page(articles=None):
@@ -1840,6 +2397,15 @@ def generate_search_index(articles):
             # JavaScript would be a second version of the rule to keep in
             # step. Same reason the cover travels in this index.
             "tag_links": tag_link_data(art),
+            # What a row of the list shows, computed here once so the rows
+            # the browser builds for a search say exactly what the rows of
+            # the page say: the opening of the article, the reading time and
+            # the word on the tile of an article with no cover.
+            "excerpt": article_excerpt(art, main_language(), excerpt_word_count()),
+            "reading": compute_reading_time(art.get("content", ""), main_language()),
+            "tile": article_tile_label(art),
+            "excerpt_en": "",
+            "reading_en": "",
         }
         # We add the English data only if the translation is confirmed.
         translation_confirmed = art.get("translation_confirmed", False)
@@ -1848,6 +2414,9 @@ def generate_search_index(articles):
             url_entry["has_en"] = True
             url_entry["title_en"] = art.get("title_en", "")
             url_entry["text_en"] = plain_text(content_en)
+            url_entry["excerpt_en"] = article_excerpt(art, secondary_language(),
+                                                      excerpt_word_count())
+            url_entry["reading_en"] = compute_reading_time(content_en, secondary_language())
         index_value.append(url_entry)
     return json.dumps(index_value, ensure_ascii=False)
 
@@ -2300,7 +2869,7 @@ def _build_unlocked():
         if tag_slug == "":
             continue
         # Tags in the main language (at the root).
-        html_tag = generate_tag_page(tag_name, tag_articles, lp)
+        html_tag = generate_tag_page(tag_name, tag_articles, lp, published_articles)
         write_page(OUTPUT_DIR / "tag" / f"{tag_slug}.html", html_tag)
         # Tags in the secondary language, only if at least one article
         # with that tag has a confirmed translation.
@@ -2311,7 +2880,7 @@ def _build_unlocked():
                 break
         if has_translated_articles:
             (OUTPUT_DIR / sec_folder / "tag").mkdir(parents=True, exist_ok=True)
-            html_tag_sec = generate_tag_page(tag_name, tag_articles, ls)
+            html_tag_sec = generate_tag_page(tag_name, tag_articles, ls, published_articles)
             write_page(OUTPUT_DIR / sec_folder / "tag" / f"{tag_slug}.html",
                        html_tag_sec)
 
@@ -2322,11 +2891,11 @@ def _build_unlocked():
         slug = card_slug(card.get("title", ""))
         # Cards in the main language (at the root).
         write_page(OUTPUT_DIR / "pagine" / f"{slug}.html",
-                   generate_card_page(card, lp))
+                   generate_card_page(card, lp, published_articles))
         # Cards in the secondary language.
         (OUTPUT_DIR / sec_folder / "pagine").mkdir(parents=True, exist_ok=True)
         write_page(OUTPUT_DIR / sec_folder / "pagine" / f"{slug}.html",
-                   generate_card_page(card, ls))
+                   generate_card_page(card, ls, published_articles))
 
     # Homepage in the main language (at the root) and in the secondary one.
     # If pagination is active, we also generate /pagina/2.html, /pagina/3...
@@ -2389,6 +2958,16 @@ def _build_unlocked():
     if base != "":
         robots_content = robots_content + "Sitemap: " + base + "/sitemap.xml\n"
     (OUTPUT_DIR / "robots.txt").write_text(robots_content, encoding="utf-8")
+
+    # ads.txt: the list of who may sell advertising on this site. AdSense
+    # asks for it at the root of the domain and limits the ads it serves
+    # until it finds it. Written only when the author filled it in; when the
+    # field is emptied the old file goes, or it would keep authorising.
+    ads_txt = str(CONFIG.get("ads_txt", "") or "").strip()
+    if ads_txt != "":
+        (OUTPUT_DIR / "ads.txt").write_text(ads_txt + "\n", encoding="utf-8")
+    elif (OUTPUT_DIR / "ads.txt").exists():
+        (OUTPUT_DIR / "ads.txt").unlink()
 
     # AI training rights: /.well-known files and a plain-language page,
     # in both site languages. Always generated (the "open" policy is the

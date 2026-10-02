@@ -201,7 +201,7 @@ def test_chiavi_i18n_esportate():
     # that exist, which also keeps out the createElement('div') lookalikes.
     usate = set()
     for chiave in re.findall(r"\bt\('([a-z0-9_]+)'\)", sorgente):
-        if chiave.startswith(("js_", "admin_", "seo_", "err_", "img_")):
+        if chiave.startswith(("js_", "admin_", "seo_", "err_", "img_", "consenso_")):
             usate.add(chiave)
     esportate = set(server.JS_TRANSLATION_KEYS)
     esportate.add("js_home_intro_placeholder_it")

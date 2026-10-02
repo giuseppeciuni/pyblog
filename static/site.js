@@ -1,10 +1,12 @@
 /* ---------------------------------------------------------------------------
    site.js - all the JavaScript of the public site.
 
-   Two independent pieces live here:
-     1) the light/dark theme, applied immediately so the page never flashes;
-     2) the client-side search on the homepage, which downloads the JSON index
-        generated at build time and filters it locally.
+   Independent pieces live here: the light/dark theme, applied immediately
+   so the page never flashes; the client-side search on the homepage, which
+   downloads the JSON index generated at build time and filters it locally;
+   the folding menu of a phone; the table of contents that follows the
+   reading; the copy button of the code blocks; the reading progress bar;
+   the enlarged cover.
 
    The page-dependent values (language, link prefix, translated labels, the
    slice of articles shown by the pagination) are NOT written into this file:
@@ -17,6 +19,9 @@
 
 // We apply the saved theme right away, before the page is painted.
 (function() {
+  // The stylesheet folds the phone menu only when this class is there: a
+  // browser without JavaScript keeps every link visible.
+  document.documentElement.classList.add('js');
   try {
     var salvato = localStorage.getItem('pb-tema');
     if (salvato === 'dark') {
@@ -73,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Browser-side search: it downloads the JSON index once and filters locally.
 // It shows a snippet of the context around the searched word, with
-// highlighting. It searches both Italian and English. A 100% static site.
+// highlighting. It searches both languages. A 100% static site.
 document.addEventListener('DOMContentLoaded', function() {
   var opzioni = window.PB_SITE;
   if (!opzioni) { return; }
@@ -84,32 +89,26 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!input || !info || !lista) { return; }
   if (opzioni.post_prefix === undefined) { return; }
 
-  // The highlighted article, when the homepage has one. A search replaces
-  // the whole list, so leaving "latest article" pinned above a set of
-  // filtered results would be misleading: it hides while a query is running
-  // and comes back when the box is emptied.
-  var bloccoInEvidenza = document.querySelector('.in-evidenza');
-
-  function mostraInEvidenza(visibile) {
-    if (!bloccoInEvidenza) { return; }
-    bloccoInEvidenza.hidden = !visibile;
-  }
+  // The list exactly as the generator wrote it. When the box is emptied it
+  // goes back as it was, lead row and all: rebuilding it from the index used
+  // to give back cards with a different excerpt, and on the translated
+  // homepage with the excerpt of the other language.
+  var listaOriginale = lista.innerHTML;
+  var paginazione = document.querySelector('.paginazione');
 
   var indice = [];
 
   // Variables that depend on the page language (injected from Python).
   var LINGUA_PAGINA = opzioni.language;
+  // True on the pages of the translation. The _en fields of the index hold
+  // the translated version, whichever language that is: on a site written in
+  // English they are the Italian one.
+  var SECONDARIA = opzioni.secondary === true;
   var PREFISSO_POST = opzioni.post_prefix;
   var PREFISSO_TAG = opzioni.tag_prefix;
-  var ETICHETTA_LEGGI = opzioni.read_label;
   var MSG_SEARCH_UNAVAILABLE = opzioni.msg_unavailable;
   var MSG_NO_RESULTS_FOR = opzioni.msg_no_results;
   var MSG_RESULTS_FOR = opzioni.msg_results_for;
-  // Slice of articles shown on this page (for the pagination).
-  // When the search is cleared, we restore ONLY this slice,
-  // not the whole index. The search itself always searches everything.
-  var PAGINA_INIZIO = opzioni.page_start;
-  var PAGINA_FINE = opzioni.page_end;
 
   // Returns the date formatted in the page language.
   function articleDate(a) {
@@ -121,19 +120,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Returns the right title based on the page language.
   function articleTitle(a) {
-    if (LINGUA_PAGINA === 'en') {
-      if (a.title_en) {
-        return a.title_en;
-      }
-      return a.title;
+    if (SECONDARIA && a.title_en) {
+      return a.title_en;
     }
     return a.title;
   }
 
+  // The reading time and the opening of the text, in the page language.
+  function articleReading(a) {
+    if (SECONDARIA && a.reading_en) { return a.reading_en; }
+    return a.reading;
+  }
+
+  function articleExcerpt(a) {
+    if (SECONDARIA && a.excerpt_en) { return a.excerpt_en; }
+    return a.excerpt;
+  }
+
   // Tells whether an article should be shown in this language.
-  // On the English home we only show articles with a confirmed translation.
+  // On the translated home we only show articles with a confirmed translation.
   function articleIsVisible(a) {
-    if (LINGUA_PAGINA === 'en') {
+    if (SECONDARIA) {
       return a.has_en === true;
     }
     return true;
@@ -171,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (s === null || s === undefined) {
       return '';
     }
-    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   }
 
   // Bolds the occurrences of the term in a text (already made safe).
@@ -211,10 +218,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     var frammento = testo.substring(inizio, fine);
     if (inizio > 0) {
-      frammento = '...' + frammento;
+      frammento = '…' + frammento;
     }
     if (fine < testo.length) {
-      frammento = frammento + '...';
+      frammento = frammento + '…';
     }
     // We make the text safe and then highlight the term.
     return highlight(escapeHtml(frammento), termine);
@@ -224,19 +231,21 @@ document.addEventListener('DOMContentLoaded', function() {
     var termine = q.trim();
     var termineNorm = normalizeText(termine);
     if (termineNorm === '') {
-      // Empty query: restore the original full list.
+      // Empty query: the list goes back exactly as the page had it.
       info.textContent = '';
-      mostraInEvidenza(true);
-      renderAll();
+      lista.innerHTML = listaOriginale;
+      if (paginazione) { paginazione.hidden = false; }
       return;
     }
-    mostraInEvidenza(false);
+    // The pages of the pagination are pages of the full list; a list of
+    // results has none.
+    if (paginazione) { paginazione.hidden = true; }
 
     // For each article we check where the term appears.
     var risultati = [];
     for (var i = 0; i < indice.length; i++) {
       var a = indice[i];
-      // On the English home we skip the articles with no translation.
+      // On the translated home we skip the articles with no translation.
       if (articleIsVisible(a) === false) {
         continue;
       }
@@ -250,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (inTitolo || inDescr || inTags || inTesto || inTestoEn || inTitoloEn) {
         // We build the snippet from the point where the word was found.
         var snippet = '';
-        if (LINGUA_PAGINA === 'en' && inTestoEn) {
+        if (SECONDARIA && inTestoEn) {
           snippet = extractSnippet(a.text_en, termine);
         } else if (inTesto) {
           snippet = extractSnippet(a.text, termine);
@@ -271,122 +280,60 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Builds one article card.
+  // Builds one article row.
   //
-  // The same markup the generator writes, because these cards REPLACE the
-  // generated ones the moment you type in the search box: any difference
-  // here would show up as the page changing shape mid-search. That is also
-  // why the thumbnail is here - without it a search silently stripped every
-  // cover from the list.
+  // The same markup the generator writes in templates/public/article_row.html,
+  // because these rows REPLACE the generated ones the moment you type in the
+  // search box: any difference here would show up as the page changing shape
+  // mid-search.
   //
   // titoloHtml arrives ready: the results highlight the search term inside
-  // it, the plain list does not.
-  function cardHtml(a, titoloHtml, testoSotto) {
-    var copertina = '';
+  // it. testoSotto is the snippet around the term, or the opening of the
+  // article when the term was only in the title.
+  function rowHtml(a, titoloHtml, testoSotto) {
+    var miniatura = '<span class="art-tile">' + escapeHtml(a.tile) + '</span>';
     if (a.image) {
-      copertina = '<img class="card-copertina" src="' + escapeHtml(a.image) +
-                  '" alt="' + escapeHtml(articleTitle(a)) + '" loading="lazy">';
+      miniatura = '<img class="art-thumb-img" src="' + escapeHtml(a.image) +
+                  '" alt="" loading="lazy">';
     }
-    return '<a class="article-card" href="' + PREFISSO_POST + a.slug + '.html">' +
-      copertina +
-      '<div class="card-corpo">' +
-      '<div class="card-date">' + articleDate(a) + '</div>' +
-      '<h3 class="card-title">' + titoloHtml + '</h3>' +
+    var indirizzo = PREFISSO_POST + a.slug + '.html';
+    return '<article class="art-row">' +
+      '<div class="art-thumb" aria-hidden="true">' + miniatura + '</div>' +
+      '<div class="art-body">' +
+      tagsHtml(a) +
+      '<h3 class="art-title"><a href="' + indirizzo + '">' + titoloHtml + '</a></h3>' +
+      '<p class="art-meta">' + articleDate(a) + ' &middot; ' + escapeHtml(articleReading(a)) + '</p>' +
       testoSotto +
-      '<span class="card-read-more">' + ETICHETTA_LEGGI + ' &rarr;</span>' +
-      '</div></a>' +
-      tagsHtml(a);
+      '</div></article>';
   }
 
-  // The tag row that goes under a card.
-  //
-  // It sits OUTSIDE the card, because the card is itself a link and one
-  // anchor cannot be nested inside another. The slugs come from the index
-  // rather than being derived here: the generator folds accents when it makes
-  // them, and a second version of that rule in JavaScript would drift.
+  // The tags of a row, as links. The slugs come from the index rather than
+  // being derived here: the generator folds accents when it makes them, and
+  // a second version of that rule in JavaScript would drift.
   function tagsHtml(a) {
     if (!a.tag_links || a.tag_links.length === 0) { return ''; }
     var pezzi = '';
     for (var i = 0; i < a.tag_links.length; i++) {
       var tag = a.tag_links[i];
-      pezzi = pezzi + '<a class="card-tag" href="' + PREFISSO_TAG +
+      pezzi = pezzi + '<a class="art-tag" href="' + PREFISSO_TAG +
               escapeHtml(tag.slug) + '.html">#' + escapeHtml(tag.name) + '</a>';
     }
-    return '<span class="card-tags">' + pezzi + '</span>';
+    return '<p class="art-tags">' + pezzi + '</p>';
   }
 
   // Shows the search results, with highlighted title and snippet.
   function renderResults(risultati, termine) {
-    if (risultati.length === 0) {
-      lista.innerHTML = '';
-      return;
-    }
     var html = '';
     for (var i = 0; i < risultati.length; i++) {
       var a = risultati[i].articolo;
       var snippet = risultati[i].snippet;
-      var bloccoSnippet = '';
+      var testoSotto = '<p class="art-excerpt">' + escapeHtml(articleExcerpt(a)) + '</p>';
       if (snippet !== '') {
-        bloccoSnippet = '<p class="card-snippet">' + snippet + '</p>';
+        testoSotto = '<p class="art-snippet">' + snippet + '</p>';
       }
-      html = html + cardHtml(a, highlight(escapeHtml(articleTitle(a)), termine), bloccoSnippet);
+      html = html + rowHtml(a, highlight(escapeHtml(articleTitle(a)), termine), testoSotto);
     }
     lista.innerHTML = html;
-  }
-
-  // Shows every article (the initial state, with no search).
-  function render(elenco) {
-    if (elenco.length === 0) {
-      lista.innerHTML = '';
-      return;
-    }
-    var html = '';
-    for (var i = 0; i < elenco.length; i++) {
-      var a = elenco[i];
-      if (articleIsVisible(a) === false) {
-        continue;
-      }
-      // Card preview. Priority: preview written by the author,
-      // then automatic excerpt (about 9 lines), then SEO description.
-      var testoAnteprima = '';
-      if (LINGUA_PAGINA === 'en' && a.preview_en) {
-        testoAnteprima = a.preview_en;
-      } else if (a.preview) {
-        testoAnteprima = a.preview;
-      }
-      if (!testoAnteprima) {
-        var fonte = a.text;
-        if (LINGUA_PAGINA === 'en' && a.text_en) {
-          fonte = a.text_en;
-        }
-        if (fonte) {
-          testoAnteprima = fonte.substring(0, 640);
-          if (fonte.length > 640) {
-            testoAnteprima = testoAnteprima + '...';
-          }
-        }
-      }
-      if (!testoAnteprima) {
-        testoAnteprima = a.description;
-      }
-      var estratto = '';
-      if (testoAnteprima) {
-        estratto = '<p class="card-excerpt">' + escapeHtml(testoAnteprima) + '</p>';
-      }
-      html = html + cardHtml(a, escapeHtml(articleTitle(a)), estratto);
-    }
-    lista.innerHTML = html;
-  }
-
-  function renderAll() {
-    // First we filter by language, then we take the page slice.
-    var visibili = [];
-    for (var i = 0; i < indice.length; i++) {
-      if (articleIsVisible(indice[i])) {
-        visibili.push(indice[i]);
-      }
-    }
-    render(visibili.slice(PAGINA_INIZIO, PAGINA_FINE));
   }
 
   function escapeHtml(s) {
@@ -400,6 +347,85 @@ document.addEventListener('DOMContentLoaded', function() {
     clearTimeout(timer);
     timer = setTimeout(function() { searchArticles(input.value); }, 120);
   });
+});
+
+/* --- 3b) The menu on a phone ---------------------------------------------- */
+
+// On a narrow screen the links of the header fold behind a "Menu" button.
+// Without JavaScript the button stays hidden and the links simply wrap: the
+// stylesheet only folds the menu when the html element carries the "js"
+// class, which the theme code above sets as soon as the script runs.
+document.addEventListener('DOMContentLoaded', function() {
+  var pulsante = document.querySelector('.menu-toggle');
+  var menu = document.getElementById('site-nav');
+  if (!pulsante || !menu) { return; }
+
+  function chiudi() {
+    menu.classList.remove('aperto');
+    pulsante.setAttribute('aria-expanded', 'false');
+  }
+
+  pulsante.addEventListener('click', function() {
+    var aperto = menu.classList.toggle('aperto');
+    pulsante.setAttribute('aria-expanded', aperto ? 'true' : 'false');
+  });
+  // Esc closes it, and so does following one of its links (an anchor such
+  // as #articles keeps the page, so the menu would stay open over it).
+  document.addEventListener('keydown', function(evento) {
+    if (evento.key === 'Escape' && menu.classList.contains('aperto')) {
+      chiudi();
+      pulsante.focus();
+    }
+  });
+  menu.addEventListener('click', function(evento) {
+    if (evento.target.closest('a')) { chiudi(); }
+  });
+});
+
+/* --- 3c) The table of contents follows the reading ------------------------- */
+
+// In the sidebar of an article, the entry of the section being read is
+// marked, so the index doubles as a "you are here".
+document.addEventListener('DOMContentLoaded', function() {
+  var voci = document.querySelectorAll('.box-indice a[href^="#"]');
+  if (voci.length === 0 || !('IntersectionObserver' in window)) { return; }
+
+  var perId = {};
+  var titoli = [];
+  for (var i = 0; i < voci.length; i++) {
+    var id = decodeURIComponent(voci[i].getAttribute('href').substring(1));
+    var titolo = document.getElementById(id);
+    if (titolo) {
+      perId[id] = voci[i];
+      titoli.push(titolo);
+    }
+  }
+  if (titoli.length === 0) { return; }
+
+  function segna(id) {
+    for (var chiave in perId) {
+      if (chiave === id) {
+        perId[chiave].setAttribute('aria-current', 'location');
+      } else {
+        perId[chiave].removeAttribute('aria-current');
+      }
+    }
+  }
+
+  // A heading counts as "being read" once it has crossed the top third of
+  // the window; the last one that did is the current section.
+  var osservatore = new IntersectionObserver(function() {
+    var attuale = titoli[0].id;
+    for (var j = 0; j < titoli.length; j++) {
+      if (titoli[j].getBoundingClientRect().top < window.innerHeight / 3) {
+        attuale = titoli[j].id;
+      }
+    }
+    segna(attuale);
+  }, { rootMargin: '0px 0px -66% 0px' });
+  for (var k = 0; k < titoli.length; k++) {
+    osservatore.observe(titoli[k]);
+  }
 });
 
 /* --- 4) Copy button on the code blocks ------------------------------------ */
@@ -631,3 +657,173 @@ function apriZoom(indirizzo, testoAlternativo, opzioni) {
   document.body.classList.add('zoom-aperto');
   chiudi.focus();
 }
+
+/* --- 7) Consent to statistics and advertising ------------------------------ */
+
+// The code that needs the visitor's consent reaches the page inside inert
+// <template data-pb-consenso="..."> elements: nothing in them runs or loads.
+// Here, once the visitor has accepted a category, its templates become live
+// code in the very place they stand, and Google's tags are told through
+// Consent Mode. The choice is kept in this browser and asked again only when
+// the site starts using a category the visitor never decided about, or when
+// the author asks everybody again (the version number changes).
+document.addEventListener('DOMContentLoaded', function() {
+  var opzioni = window.PB_SITE;
+  if (!opzioni || !opzioni.consent) { return; }
+  var banner = document.getElementById('pb-consenso');
+  if (!banner) { return; }
+
+  var CHIAVE = 'pb-consenso';
+  var versione = opzioni.consent.version;
+  var categorie = opzioni.consent.categories || [];
+  var scelte = document.getElementById('pb-consenso-scelte');
+  var pulsanteSalva = banner.querySelector('[data-consenso="salva"]');
+  var pulsantePersonalizza = banner.querySelector('[data-consenso="personalizza"]');
+
+  function leggiScelta() {
+    try {
+      var valore = JSON.parse(localStorage.getItem(CHIAVE));
+      if (valore && valore.v === versione) { return valore; }
+    } catch (e) { }
+    return null;
+  }
+
+  function salvaScelta(valore) {
+    valore.v = versione;
+    valore.data = new Date().toISOString();
+    try { localStorage.setItem(CHIAVE, JSON.stringify(valore)); } catch (e) { }
+  }
+
+  // A script cloned out of a template does not run: it has to be created
+  // anew. External scripts keep their own async; the others keep the order
+  // they were written in, which is what a loader followed by its set-up
+  // expects.
+  function attivaCategoria(categoria) {
+    var modelli = document.querySelectorAll('template[data-pb-consenso="' + categoria + '"]');
+    for (var i = 0; i < modelli.length; i++) {
+      var modello = modelli[i];
+      var frammento = modello.content.cloneNode(true);
+      var script = frammento.querySelectorAll('script');
+      for (var j = 0; j < script.length; j++) {
+        var vecchio = script[j];
+        var nuovo = document.createElement('script');
+        for (var k = 0; k < vecchio.attributes.length; k++) {
+          nuovo.setAttribute(vecchio.attributes[k].name, vecchio.attributes[k].value);
+        }
+        if (vecchio.src) { nuovo.async = vecchio.hasAttribute('async'); }
+        nuovo.text = vecchio.text;
+        vecchio.parentNode.replaceChild(nuovo, vecchio);
+      }
+      modello.parentNode.replaceChild(frammento, modello);
+    }
+  }
+
+  function aggiornaGoogle(valore) {
+    if (typeof window.gtag !== 'function') { return; }
+    var statistiche = valore.statistics === true ? 'granted' : 'denied';
+    var pubblicita = valore.marketing === true ? 'granted' : 'denied';
+    window.gtag('consent', 'update', {
+      analytics_storage: statistiche,
+      ad_storage: pubblicita,
+      ad_user_data: pubblicita,
+      ad_personalization: pubblicita
+    });
+  }
+
+  function applica(valore) {
+    aggiornaGoogle(valore);
+    for (var i = 0; i < categorie.length; i++) {
+      if (valore[categorie[i]] === true) { attivaCategoria(categorie[i]); }
+    }
+  }
+
+  function mostraScelte(valore) {
+    var caselle = scelte.querySelectorAll('input[data-categoria]');
+    for (var i = 0; i < caselle.length; i++) {
+      caselle[i].checked = !!(valore && valore[caselle[i].getAttribute('data-categoria')] === true);
+    }
+    scelte.hidden = false;
+    pulsanteSalva.hidden = false;
+    pulsantePersonalizza.hidden = true;
+  }
+
+  function apri(conScelte) {
+    var attuale = leggiScelta();
+    if (conScelte) {
+      mostraScelte(attuale);
+    } else {
+      scelte.hidden = true;
+      pulsanteSalva.hidden = true;
+      pulsantePersonalizza.hidden = false;
+    }
+    banner.hidden = false;
+  }
+
+  // A category taken back cannot be switched off in a page where its code
+  // already runs: the page is reloaded without it.
+  function decidi(valore) {
+    var prima = leggiScelta();
+    salvaScelta(valore);
+    banner.hidden = true;
+    var ritirata = false;
+    for (var i = 0; i < categorie.length; i++) {
+      if (prima && prima[categorie[i]] === true && valore[categorie[i]] !== true) { ritirata = true; }
+    }
+    if (ritirata) {
+      window.location.reload();
+      return;
+    }
+    applica(valore);
+  }
+
+  function tutte(valoreDiOgni) {
+    var valore = prendiPrecedenti();
+    for (var i = 0; i < categorie.length; i++) { valore[categorie[i]] = valoreDiOgni; }
+    return valore;
+  }
+
+  // Categories decided on another page, and not used on this one, keep the
+  // answer the visitor gave there.
+  function prendiPrecedenti() {
+    var prima = leggiScelta();
+    var valore = {};
+    if (prima) {
+      for (var chiave in prima) {
+        if (chiave !== 'v' && chiave !== 'data') { valore[chiave] = prima[chiave]; }
+      }
+    }
+    return valore;
+  }
+
+  banner.addEventListener('click', function(evento) {
+    var pulsante = evento.target.closest('[data-consenso]');
+    if (!pulsante) { return; }
+    var azione = pulsante.getAttribute('data-consenso');
+    if (azione === 'accetta') { decidi(tutte(true)); }
+    if (azione === 'rifiuta') { decidi(tutte(false)); }
+    if (azione === 'personalizza') { mostraScelte(leggiScelta()); }
+    if (azione === 'salva') {
+      var valore = prendiPrecedenti();
+      var caselle = scelte.querySelectorAll('input[data-categoria]');
+      for (var i = 0; i < caselle.length; i++) {
+        valore[caselle[i].getAttribute('data-categoria')] = caselle[i].checked;
+      }
+      decidi(valore);
+    }
+  });
+
+  // The "cookie preferences" link of the footer reopens the banner.
+  document.addEventListener('click', function(evento) {
+    if (evento.target.closest('.link-preferenze')) { apri(true); }
+  });
+
+  var salvata = leggiScelta();
+  var daChiedere = salvata === null;
+  if (salvata !== null) {
+    for (var i = 0; i < categorie.length; i++) {
+      if (salvata[categorie[i]] === undefined) { daChiedere = true; }
+    }
+  }
+  if (salvata !== null) { applica(salvata); }
+  if (daChiedere) { apri(false); }
+});
