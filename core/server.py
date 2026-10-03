@@ -509,6 +509,12 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
         csrf=js(csrf),
         page_data=js(page_data),
         script_extra=build_module.block(script_extra),
+        # A fingerprint of each file in its address: after an update the
+        # address changes, so no cache - the browser's, Cloudflare's - can
+        # pair the new page with the old stylesheet or script.
+        v_common=build_module.asset_version("common.css"),
+        v_admin_css=build_module.asset_version("admin.css"),
+        v_admin_js=build_module.asset_version("admin.js"),
     )
 
 

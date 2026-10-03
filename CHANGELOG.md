@@ -6,6 +6,11 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **The administration no longer looks unstyled after an update.** Its
+  stylesheets and script had fixed addresses, so a cache in between (the
+  browser's, or a CDN such as Cloudflare) could keep serving the old files
+  with the new pages. Their addresses now carry a fingerprint of the
+  content (`admin.css?v=...`), as the public site's already did.
 - **A missing page shows the site's 404 page.** The preview answered with
   Python's bare error page and `nginx.conf.example` with nginx's: now both
   answer with the site's own page, search and latest articles included.

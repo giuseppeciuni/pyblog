@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>$titolo_pagina</title>
 <link href="$bootstrap_css" rel="stylesheet">
-<link rel="stylesheet" href="/admin-static/common.css">
-<link rel="stylesheet" href="/admin-static/admin.css">
+<link rel="stylesheet" href="/admin-static/common.css$v_common">
+<link rel="stylesheet" href="/admin-static/admin.css$v_admin_css">
 $head_extra</head>
 <body class="$classe_body">
 $salta_contenuto<div class="guscio">
@@ -45,6 +45,6 @@ window.PB_CSRF = $csrf;
 window.PB_PAGE = $page_data;
 </script>
 <script src="$bootstrap_js"></script>
-$script_extra<script src="/admin-static/admin.js"></script>
+$script_extra<script src="/admin-static/admin.js$v_admin_js"></script>
 </body>
 </html>
