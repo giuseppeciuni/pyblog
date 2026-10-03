@@ -311,6 +311,17 @@ il servizio e lascia vuoto il campo della chiave. Consiglio: una chiave
 usata solo per il blog, con un tetto di spesa mensile impostato nella
 console del servizio.
 
+### 6.6 (Facoltativo) La newsletter
+
+Per far iscrivere i lettori e mandare loro un'email a ogni nuovo articolo
+serve un account SMTP (quello del tuo provider di posta, o Brevo, Mailgun,
+Amazon SES). In **Impostazioni → Newsletter** spunta **Attiva la
+newsletter**, compila **Spedizione delle email**, clicca **Manda un'email di
+prova** e salva. La password SMTP mettila in `/etc/pyblog.env` come
+`PYBLOG_SMTP_PASSWORD=...` (poi `sudo systemctl restart pyblog`). La
+configurazione di nginx del passo 4.1 porta già il modulo a PyBlog. Tutti i
+dettagli nel capitolo 8b del manuale.
+
 ---
 
 ## Parte 7 — Tenerlo in salute
@@ -327,7 +338,7 @@ $ sudo crontab -e
 e aggiungi queste due righe:
 
 ```
-0 3 * * * tar -czf /var/backups/pyblog-$(date +\%F).tar.gz -C /opt/pyblog posts config.json admin_password.txt output/media
+0 3 * * * tar -czf /var/backups/pyblog-$(date +\%F).tar.gz --ignore-failed-read -C /opt/pyblog posts config.json admin_password.txt subscribers.json output/media
 30 3 * * * find /var/backups -name 'pyblog-*.tar.gz' -mtime +30 -delete
 ```
 

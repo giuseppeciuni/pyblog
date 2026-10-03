@@ -122,7 +122,7 @@ def test_interfaccia():
     check("le rotte chiedono l'accesso",
           "/versioni" in server.ADMIN_GET_ROUTES and "/versione" in server.ADMIN_GET_ROUTES)
     nginx = (pathlib.Path(__file__).resolve().parent.parent / "nginx.conf.example").read_text()
-    check("nginx le porta a Python", "|versioni|versione)$" in nginx)
+    check("nginx le porta a Python", "|versioni|versione|" in nginx or "|versioni|versione)$" in nginx)
 
 
 def main():

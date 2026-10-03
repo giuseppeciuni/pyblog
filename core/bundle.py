@@ -29,6 +29,7 @@ BUNDLED_MODULES = (
     ("core.config", "core/config.py"),
     ("core.i18n", "core/i18n.py"),
     ("core.render", "core/render.py"),
+    ("core.newsletter", "core/newsletter.py"),
     ("core.images", "core/images.py"),
     ("core.articles", "core/articles.py"),
     ("core.ai", "core/ai.py"),

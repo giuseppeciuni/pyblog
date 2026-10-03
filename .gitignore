@@ -8,3 +8,4 @@ test_docx/*.docx
 pyblog_standalone.py
 config.json
 config.broken.json
+subscribers.json

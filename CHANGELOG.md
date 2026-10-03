@@ -71,6 +71,18 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **A newsletter inside PyBlog.** Readers subscribe from a form in the
+  sidebar or at the end of the articles, confirm through an email (double
+  opt-in, with a button rather than a bare link, which mail scanners would
+  follow) and get an email the first time an article is published, in
+  their language, with one-click unsubscribe. Subscribers live in
+  `subscribers.json` on the server; emails leave through the SMTP account
+  set in the new Settings section, which also sends a test email, lists the
+  subscribers and exports them as CSV. A hidden field and a per-address
+  limit keep robots out. The public routes `/iscriviti`, `/conferma`,
+  `/disiscrivi` and the admin routes `/newsletter-prova`,
+  `/newsletter-rimuovi`, `/newsletter-iscritti.csv` are new: they are in
+  `nginx.conf.example`, with a request limit of their own.
 - **Earlier versions of an article.** Every save keeps the version it
   replaces (autosaves closer than ten minutes are merged, a published
   version is always kept, 50 per article, in `posts/.history/`). In the

@@ -787,3 +787,24 @@ body.zoom-aperto { overflow:hidden; }
 .progetti-lista .progetto-nome a { color:var(--link); font-weight:600; }
 .progetti-lista .progetto-descrizione { font-size:0.82rem; grid-column:2; }
 .progetti-lista .progetto:not(:has(.progetto-immagine)) { display:block; }
+
+/* --- Newsletter ------------------------------------------------------------
+   The sign-up form, in the sidebar and at the end of the articles, and the
+   pages the subscription answers with. */
+.newsletter-modulo { display:flex; flex-direction:column; gap:0.6rem; }
+.newsletter-testo { margin:0; line-height:1.55; color:var(--secondario); }
+.newsletter-riga { display:flex; flex-wrap:wrap; gap:0.5rem; }
+.newsletter-riga .campo-input { flex:1 1 12rem; min-width:0; }
+.newsletter-privacy { margin:0; font-size:0.8rem; }
+/* The field robots fill in and people never see. */
+.newsletter-trappola { position:absolute; left:-10000px; width:1px; height:1px; overflow:hidden; }
+.box-newsletter .newsletter-riga .pulsante { flex:1 1 auto; }
+.newsletter-articolo {
+  margin:2.5rem 0 0; padding:1.2rem 1.3rem; border:1px solid var(--bordo); border-radius:12px;
+  background:var(--card-bg);
+}
+.newsletter-articolo h2 { margin:0 0 0.4rem; font-size:1.15rem; }
+.newsletter-pagina { max-width:36rem; margin:3rem auto; padding:0 1.2rem; text-align:center; }
+.newsletter-pagina h1 { font-size:1.6rem; margin:0 0 0.8rem; }
+.newsletter-pagina p { line-height:1.6; color:var(--secondario); }
+.newsletter-pagina form { margin:1.5rem 0; }

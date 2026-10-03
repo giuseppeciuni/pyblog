@@ -316,6 +316,95 @@ $testata_commenti
   </div>
 </section>
 
+<section class="sezione" id="sezione-newsletter" data-sezione="newsletter" aria-labelledby="titolo-newsletter" hidden>
+$testata_newsletter
+  <div class="gruppo">
+    <div class="campo-spunta">
+      <input type="checkbox" id="nl_enabled" aria-describedby="nl_enabled-aiuto" $checked_nl>
+      <div>
+        <label for="nl_enabled">$label_nl_attiva</label>
+        <p class="aiuto" id="nl_enabled-aiuto">$hint_nl_attiva</p>
+      </div>
+    </div>
+    <fieldset class="campo-gruppo">
+      <legend>$label_nl_dove</legend>
+      <label class="campo-spunta"><input type="checkbox" id="nl_in_sidebar" $checked_nl_barra> <span>$label_nl_barra</span></label>
+      <label class="campo-spunta"><input type="checkbox" id="nl_after_article" $checked_nl_articolo> <span>$label_nl_articolo</span></label>
+    </fieldset>
+    <div class="campo">
+      <label for="nl_title">$label_nl_titolo</label>
+      <input class="campo-input" type="text" id="nl_title" value="$valore_nl_titolo" placeholder="$ph_nl_titolo" aria-describedby="nl-testi-aiuto">
+    </div>
+    <div class="campo">
+      <label for="nl_text">$label_nl_testo</label>
+      <textarea class="campo-input" id="nl_text" rows="2" placeholder="$ph_nl_testo" aria-describedby="nl-testi-aiuto">$valore_nl_testo</textarea>
+      <p class="aiuto" id="nl-testi-aiuto">$hint_nl_testi</p>
+    </div>
+    <div class="campo-spunta">
+      <input type="checkbox" id="nl_send_on_publish" aria-describedby="nl_send_on_publish-aiuto" $checked_nl_invio>
+      <div>
+        <label for="nl_send_on_publish">$label_nl_invio</label>
+        <p class="aiuto" id="nl_send_on_publish-aiuto">$hint_nl_invio</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="gruppo">
+    <h2>$label_gr_nl_spedizione</h2>
+    <p class="aiuto">$hint_gr_nl_spedizione</p>
+    <div class="campi-due">
+      <div class="campo">
+        <label for="nl_sender_name">$label_nl_mittente_nome</label>
+        <input class="campo-input" type="text" id="nl_sender_name" value="$valore_nl_mittente_nome" aria-describedby="nl_sender_name-aiuto">
+        <p class="aiuto" id="nl_sender_name-aiuto">$hint_nl_mittente_nome</p>
+      </div>
+      <div class="campo">
+        <label for="nl_sender_email">$label_nl_mittente_email</label>
+        <input class="campo-input" type="email" id="nl_sender_email" value="$valore_nl_mittente_email" placeholder="blog@tuodominio.it">
+      </div>
+      <div class="campo">
+        <label for="nl_smtp_host">$label_nl_smtp_host</label>
+        <input class="campo-input" type="text" id="nl_smtp_host" value="$valore_nl_smtp_host" placeholder="smtp-relay.brevo.com">
+      </div>
+      <div class="campo">
+        <label for="nl_smtp_port">$label_nl_smtp_port</label>
+        <input class="campo-input" type="number" id="nl_smtp_port" min="1" max="65535" value="$valore_nl_smtp_port" aria-describedby="nl_smtp_port-aiuto">
+        <p class="aiuto" id="nl_smtp_port-aiuto">$hint_nl_smtp_port</p>
+      </div>
+      <div class="campo">
+        <label for="nl_smtp_security">$label_nl_smtp_sicurezza</label>
+        <select class="campo-input" id="nl_smtp_security">
+          <option value="starttls" $sel_nl_starttls>$label_nl_starttls</option>
+          <option value="ssl" $sel_nl_ssl>$label_nl_ssl</option>
+          <option value="none" $sel_nl_none>$label_nl_none</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="nl_smtp_user">$label_nl_smtp_utente</label>
+        <input class="campo-input" type="text" id="nl_smtp_user" value="$valore_nl_smtp_utente" autocomplete="off">
+      </div>
+    </div>
+    <div class="campo">
+      <label for="nl_smtp_password">$label_nl_smtp_password</label>
+      <input class="campo-input" type="password" id="nl_smtp_password" value="" placeholder="$ph_nl_password" autocomplete="new-password" aria-describedby="nl_smtp_password-aiuto">
+      <p class="aiuto" id="nl_smtp_password-aiuto">$hint_nl_smtp_password</p>
+    </div>
+    <div class="azioni">
+      <button type="button" class="pulsante" onclick="sendNewsletterTest(this)" aria-describedby="nl-prova-aiuto">$label_nl_prova</button>
+      <span class="hint" id="nl-prova-stato" role="status"></span>
+    </div>
+    <p class="aiuto" id="nl-prova-aiuto">$hint_nl_prova</p>
+  </div>
+
+  <div class="gruppo">
+    <h2>$label_gr_nl_iscritti</h2>
+    <p class="aiuto">$nl_conteggio</p>
+$nl_ultimo
+$nl_elenco
+    <div class="azioni"><a class="pulsante pulsante-piccolo" href="/newsletter-iscritti.csv">$label_nl_esporta</a></div>
+  </div>
+</section>
+
 <section class="sezione" id="sezione-traduzione" data-sezione="traduzione" aria-labelledby="titolo-traduzione" hidden>
 $testata_traduzione
   <div class="gruppo">

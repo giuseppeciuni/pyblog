@@ -19,6 +19,7 @@ passo per passo. Questo manuale è il riferimento da consultare dopo.
 6. [Codici esterni: statistiche, annunci, widget](#6-codici-esterni-statistiche-annunci-widget)
 7. [Il banner dei cookie](#7-il-banner-dei-cookie)
 8. [Commenti](#8-commenti)
+   - [8b. Newsletter](#8b-newsletter)
 9. [Statistiche delle visite](#9-statistiche-delle-visite)
 10. [Due lingue e traduzione automatica](#10-due-lingue-e-traduzione-automatica)
 11. [Il sito pubblico: cosa viene generato](#11-il-sito-pubblico-cosa-viene-generato)
@@ -281,15 +282,17 @@ vengono convertiti da soli al primo avvio.
 
 ### 2.11 Backup e ripristino
 
-Da salvare: `posts/`, `config.json`, `admin_password.txt` e `output/media/`
+Da salvare: `posts/`, `config.json`, `admin_password.txt`,
+`subscribers.json` (gli iscritti, se usi la newsletter) e `output/media/`
 (i file caricati). Tutto il resto di `output/` si rigenera con `build`.
 
 - **Dal menu:** **Scarica il backup** scarica uno `.zip` con articoli (e
-  le loro versioni precedenti), immagini e impostazioni.
+  le loro versioni precedenti), immagini, impostazioni e iscritti alla
+  newsletter.
 - **Ogni notte sul server**, con cron (`sudo crontab -e`):
 
   ```
-  0 3 * * * tar -czf /var/backups/pyblog-$(date +\%F).tar.gz -C /opt/pyblog posts config.json admin_password.txt output/media
+  0 3 * * * tar -czf /var/backups/pyblog-$(date +\%F).tar.gz --ignore-failed-read -C /opt/pyblog posts config.json admin_password.txt subscribers.json output/media
   30 3 * * * find /var/backups -name 'pyblog-*.tar.gz' -mtime +30 -delete
   ```
 
@@ -568,6 +571,12 @@ biografia viene saltata finché la biografia è accesa.
 
 Nessuno, **Giscus** o **Disqus**: vedi [8](#8-commenti).
 
+### 5.6b Newsletter
+
+Il modulo d'iscrizione, dove compare, i suoi testi, l'invio automatico alla
+pubblicazione, l'account SMTP con l'email di prova e l'elenco degli
+iscritti: vedi [8b](#8b-newsletter).
+
 ### 5.7 Traduzione
 
 Il servizio (DeepL, Google Translate, Anthropic Claude, OpenAI, DeepSeek) e
@@ -793,6 +802,68 @@ https://disqus.com, crea il sito e ottieni lo **shortname**; in
 
 ---
 
+## 8b. Newsletter
+
+I lettori si iscrivono dal sito e ricevono un'email quando pubblichi un
+articolo. Tutto resta sul tuo server: gli iscritti stanno in
+`subscribers.json` (accanto a `config.json`, privato come lui) e le email
+partono dal tuo account SMTP, senza servizi in mezzo.
+
+**Cosa serve.** L'editor online (il modo C del capitolo 2.5, quello del
+tutorial): il modulo d'iscrizione è sul sito statico ma deve raggiungere
+PyBlog, e nginx gli passa `/iscriviti`, `/conferma` e `/disiscrivi` (con un
+limite di richieste suo). E un **account SMTP**: quello del tuo provider di
+posta o di un servizio come Brevo, Mailgun o Amazon SES, che ti dà server,
+porta, utente e password.
+
+**Accenderla.** In **Impostazioni → Newsletter**: spunta **Attiva la
+newsletter**, scegli dove compare il modulo (nella barra laterale, in fondo
+a ogni articolo), compila **Spedizione delle email** e clicca **Manda
+un'email di prova**: arriva all'indirizzo del mittente, con i dati scritti,
+anche prima di salvare. Poi **Salva e aggiorna il sito**. La password SMTP è
+meglio in `/etc/pyblog.env` come `PYBLOG_SMTP_PASSWORD=...`: ha la
+precedenza e non compare mai nella pagina; il campo vuoto tiene quella
+salvata.
+
+**L'iscrizione, con doppio consenso.**
+
+1. Il lettore scrive il suo indirizzo e clicca **Iscriviti**: la pagina dice
+   "Controlla la posta", qualunque cosa sia successo (così il modulo non
+   rivela chi è già iscritto).
+2. Gli arriva un'email con il link di conferma; se lo chiede di nuovo, il
+   link riparte al massimo ogni dieci minuti.
+3. Il link apre una pagina con il pulsante **Confermo l'iscrizione**: il
+   link da solo non conferma, perché i programmi antivirus della posta
+   aprono tutti i link. Senza conferma l'indirizzo non riceve nient'altro.
+
+Un campo nascosto ferma i robot che compilano i moduli, e ogni indirizzo
+internet può fare al massimo cinque richieste all'ora.
+
+**Gli invii.** Quando pubblichi un articolo per la **prima volta**, gli
+iscritti confermati ricevono un'email con il titolo, le prime righe e il
+link, nella loro lingua se l'articolo è tradotto. Vale anche per gli
+articoli programmati, all'ora in cui escono. Non vengono mandati gli
+articoli pubblicati prima di accendere la newsletter (anche se li correggi
+dopo), né quelli per cui nell'editor togli la spunta **Avvisa gli iscritti
+quando lo pubblichi**, né lo stesso articolo due volte. Con **Avvisa gli
+iscritti quando pubblichi un articolo** spenta, non parte niente. Le email
+partono da un thread dell'editor, una alla volta; un articolo da mandare è
+scritto su disco, quindi un riavvio non lo perde, e se il server di posta
+non risponde si riprova ogni minuto.
+
+**Disiscriversi.** In fondo a ogni email c'è **Disiscriviti** (anche qui una
+pagina con un pulsante), e i programmi di posta mostrano il loro pulsante di
+disiscrizione con un clic (`List-Unsubscribe-Post`). Funziona anche con la
+newsletter spenta.
+
+**Gli iscritti.** Nella stessa sezione vedi quanti sono confermati e quanti
+in attesa, l'elenco (con **Rimuovi**), l'esito dell'ultimo invio e **Scarica
+l'elenco (CSV)**. Il backup `.zip` li contiene.
+
+Per la privacy: tieni solo l'indirizzo, la lingua e le date; dillo
+nell'informativa, il cui link compare sotto il modulo se l'hai indicato in
+"Cookie e privacy".
+
 ## 9. Statistiche delle visite
 
 Gli script di statistica vanno solo nelle pagine pubbliche: l'editor non
@@ -1017,6 +1088,20 @@ validi quando arrivano campi nuovi.
 | `favicon` | Una favicon tua; vuota, PyBlog genera `favicon.svg`. |
 | `backlink_site` | Il sito esterno che ripubblica gli articoli e ospita i backlink: l'Analisi SEO propone anchor text adatti. |
 
+### 13.3b Newsletter (`newsletter`)
+
+| Campo | Significato |
+|---|---|
+| `enabled` | `true` accende il modulo e gli invii (predefinito `false`). |
+| `enabled_since` | Quando è stata accesa (lo scrive PyBlog): si mandano solo gli articoli pubblicati da allora. |
+| `in_sidebar`, `after_article` | Dove compare il modulo (predefiniti `true`). |
+| `title`, `text` | Titolo e testo del modulo; vuoti, quelli predefiniti. |
+| `send_on_publish` | `true` (predefinito): un articolo pubblicato per la prima volta va agli iscritti. |
+| `sender_name`, `sender_email` | Il mittente (il nome vuoto = il titolo del sito). |
+| `smtp_host`, `smtp_port`, `smtp_security`, `smtp_user`, `smtp_password` | L'account SMTP; `smtp_security` è `starttls` (predefinito), `ssl` o `none`. La password può venire da `PYBLOG_SMTP_PASSWORD`, che ha la precedenza. |
+
+Gli iscritti non stanno qui ma in `subscribers.json`.
+
 ### 13.4 Commenti
 
 | Campo | Significato |
@@ -1111,6 +1196,7 @@ output/media/          le immagini e i video caricati
 config.json            le impostazioni (escluso da git)
 admin_password.txt     l'impronta della password, mai la password (escluso da git)
 config.broken.json     la copia di un config.json che non si leggeva
+subscribers.json       gli iscritti alla newsletter (escluso da git)
 ```
 
 Un articolo in `posts/<slug>.json`:
@@ -1128,6 +1214,8 @@ Un articolo in `posts/<slug>.json`:
 | `translation_authorized`, `translation_confirmed` | Se la traduzione è permessa e se è confermata (pubblicata). |
 | `custom_code_ids`, `custom_code_off_ids` | I codici del sito spuntati ("da spuntare") e spenti ("di serie") su questo articolo. |
 | `custom_code` | I codici solo di questo articolo, con gli stessi campi di quelli del sito tranne `scope`; il loro `id` comincia con `art-`. |
+| `first_published` | Quando è stato pubblicato la prima volta (lo scrive PyBlog). |
+| `notify_subscribers`, `newsletter_sent` | Se avvisare gli iscritti alla prima pubblicazione, e se è già stato mandato. |
 
 ---
 
@@ -1173,6 +1261,9 @@ entra nell'amministrazione può fare molto: tieni la password al sicuro.
 | Password dimenticata | — | `python3 pyblog.py password` sul server |
 | `config.json` rotto | una modifica a mano | i dati sono in `config.broken.json` (vedi [13.10](#1310-se-configjson-si-rompe-e-le-versioni-vecchie)) |
 | Certbot fallisce | il dominio non punta al server | controlla i record DNS e riprova |
+| Il modulo della newsletter risponde 404 | nginx non passa `/iscriviti` a PyBlog, o la newsletter è spenta | il blocco `location ~ ^/(iscriviti|conferma|disiscrivi)$` di `nginx.conf.example`; la spunta nelle Impostazioni |
+| Le email non partono | dati SMTP sbagliati, o il provider rifiuta il mittente | **Manda un'email di prova** dice l'errore; l'ultimo invio fallito è scritto nella sezione Newsletter |
+| Le email finiscono nella posta indesiderata | il dominio del mittente non autorizza il server di posta | imposta SPF e DKIM come dice il tuo provider SMTP |
 
 ---
 

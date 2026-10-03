@@ -311,6 +311,16 @@ then `sudo systemctl restart pyblog`. In **Settings → Translation** choose
 the service and leave the key field empty. Tip: a key used only for the
 blog, with a monthly spending cap set in the service's console.
 
+### 6.6 (Optional) The newsletter
+
+To let readers subscribe and send them an email for every new article you
+need an SMTP account (your mail provider's, or Brevo, Mailgun, Amazon SES).
+In **Settings → Newsletter** tick **Turn on the newsletter**, fill in
+**Sending the emails**, click **Send a test email** and save. Put the SMTP
+password in `/etc/pyblog.env` as `PYBLOG_SMTP_PASSWORD=...` (then `sudo
+systemctl restart pyblog`). The nginx configuration of step 4.1 already
+passes the form to PyBlog. All the details in chapter 8b of the manual.
+
 ---
 
 ## Part 7 — Keep it healthy
@@ -328,7 +338,7 @@ $ sudo crontab -e
 and add these two lines:
 
 ```
-0 3 * * * tar -czf /var/backups/pyblog-$(date +\%F).tar.gz -C /opt/pyblog posts config.json admin_password.txt output/media
+0 3 * * * tar -czf /var/backups/pyblog-$(date +\%F).tar.gz --ignore-failed-read -C /opt/pyblog posts config.json admin_password.txt subscribers.json output/media
 30 3 * * * find /var/backups -name 'pyblog-*.tar.gz' -mtime +30 -delete
 ```
 

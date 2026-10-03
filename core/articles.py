@@ -262,6 +262,8 @@ def article_from_data(data, slug):
         "custom_code_ids": snippet_ids,
         "custom_code_off_ids": off_ids,
         "custom_code": own_snippets(data.get("custom_code", [])),
+        # Whether the subscribers get an email when it is first published.
+        "notify_subscribers": data.get("notify_subscribers", True) is not False,
         "date": data.get("date"),
         "date_modified": datetime.now(timezone.utc).isoformat(),
         # --- Translated version (the language that is not the main one) ---
@@ -318,6 +320,8 @@ def publish_due_articles(now=None):
         art.pop("_file", None)
         art["date"] = normalized_moment(art.get("publish_at", ""))
         art["status"] = "published"
+        if not art.get("first_published"):
+            art["first_published"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         art["publish_at"] = ""
         art["date_modified"] = datetime.now(timezone.utc).isoformat()
         write_json_atomically(POSTS_DIR / f"{art['slug']}.json", art)
@@ -481,12 +485,49 @@ def save_article(data, new_article=False):
     # The version this save replaces goes to the history, which follows the
     # article when its slug changes.
     previous_slug = original if original != "" and original != slug else slug
+    previous = None
     if not new_article:
+        previous = read_article_file(POSTS_DIR / f"{previous_slug}.json")
         if previous_slug != slug:
             move_history(previous_slug, slug)
-        keep_version(slug, read_article_file(POSTS_DIR / f"{previous_slug}.json"), article)
+        keep_version(slug, previous, article)
+    remember_publication(article, previous)
     write_json_atomically(POSTS_DIR / f"{slug}.json", article)
     return slug
+
+
+def remember_publication(article, previous):
+    """
+    Carry over what the editor does not send: whether the newsletter already
+    announced the article, and when it was first published. An article
+    published before this field existed counts as published on its date.
+    """
+    if previous is not None:
+        for key in ("newsletter_sent", "first_published"):
+            if previous.get(key):
+                article[key] = previous[key]
+    if article.get("status") == "published" and not article.get("first_published"):
+        if previous is not None and previous.get("status") == "published":
+            article["first_published"] = previous.get("date") or article["date"]
+        else:
+            article["first_published"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def mark_newsletter_sent(slug):
+    """Note on the article that the subscribers have had it."""
+    path_value = POSTS_DIR / f"{slug}.json"
+    art = read_article_file(path_value)
+    if art is None:
+        return
+    art["newsletter_sent"] = True
+    write_json_atomically(path_value, art)
+
+
+def article_language_available(art, language):
+    """Tell whether an article can be read in a language of the site."""
+    if language == main_language():
+        return True
+    return art.get("translation_confirmed", False) is True
 
 
 def article_for_preview(data):

@@ -212,7 +212,9 @@ html:has(body.pagina-config) { scroll-padding-bottom:7rem; }
 .pannello-pubblica { display:flex; flex-direction:column; gap:0.55rem; padding-bottom:1rem; margin-bottom:0.3rem; border-bottom:1px solid #e4e4e7; }
 .pannello-pubblica:not([data-stato="draft"]) .solo-bozza,
 .pannello-pubblica:not([data-stato="published"]) .solo-pubblicato,
-.pannello-pubblica:not([data-stato="scheduled"]) .solo-programmato { display:none; }
+.pannello-pubblica:not([data-stato="scheduled"]) .solo-programmato,
+.pannello-pubblica[data-stato="published"] .solo-non-pubblicato { display:none; }
+.avvisa-iscritti { margin:0 !important; font-weight:400 !important; font-size:0.875rem !important; }
 .stato-articolo { margin:0; font-size:0.88rem; color:#555; display:flex; align-items:baseline; gap:0.45rem; flex-wrap:wrap; }
 .stato-articolo strong { color:#222; }
 .stato-pallino { width:0.6rem; height:0.6rem; border-radius:50%; background:#d97706; flex:none; align-self:center; }
@@ -760,3 +762,14 @@ select.campo-input { padding-right:2rem; }
   .fv-elenco { max-height:35vh; border-right:0; border-bottom:1px solid var(--a-bordo); }
   .fv-piede .pulsante { flex:1; }
 }
+
+/* ===========================================================================
+   SETTINGS: newsletter
+   =========================================================================== */
+
+.campo-gruppo { border:0; margin:0; padding:0; display:flex; flex-direction:column; gap:0.5rem; }
+.campo-gruppo legend { font-weight:600; font-size:0.875rem; margin-bottom:0.25rem; padding:0; }
+.nl-elenco { list-style:none; margin:0; padding:0; border:1px solid var(--a-bordo); border-radius:8px; max-height:20rem; overflow-y:auto; }
+.nl-elenco li { display:flex; align-items:center; gap:0.75rem; padding:0.4rem 0.75rem; border-top:1px solid #eef0f3; }
+.nl-elenco li:first-child { border-top:0; }
+.nl-email { flex:1; min-width:0; overflow-wrap:anywhere; }

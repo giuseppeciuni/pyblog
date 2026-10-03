@@ -19,7 +19,7 @@ import re
 import threading
 from datetime import datetime, timezone
 
-from core import render
+from core import newsletter, render
 from core.articles import (articles_visible_in_language, card_slug,
                            collect_tags, excerpt_from_html,
                            extract_article_tags, html_content_is_empty,
@@ -1631,6 +1631,7 @@ def build_sidebar(language, page_kind, articles, article=(), toc_html="",
     parts.append(biography)
     parts.append(sidebar_ads(page_kind, article))
     parts.append(projects)
+    parts.append(newsletter_sidebar_box(language))
     if page_kind == "article" and toc_html != "":
         parts.append(toc_html)
         return "\n".join(part for part in parts if part != "")
@@ -1924,7 +1925,7 @@ def generate_article_page(art, language="it", all_articles=None):
         toc_telefono=toc_phone,
         contenuto_articolo=content,
         codice_fine_testo=block(custom_code_block("article_end", "article", art)),
-        author_box=generate_author_box(language),
+        author_box=generate_author_box(language) + newsletter_after_article(language),
         article_nav=generate_article_nav(art, all_articles, language),
         back_label=back_label,
         related=block(related_block),
@@ -2180,6 +2181,70 @@ def projects_home_html(language):
                          id_titolo="titolo-progetti", titolo=T("progetti", language),
                          contenuto='        <ul class="progetti-griglia">\n' + "\n".join(rows)
                          + "\n        </ul>\n").rstrip("\n")
+
+
+def newsletter_form(language, place):
+    """The sign-up form of the newsletter; place keeps its ids unique."""
+    current = newsletter.settings()
+    text = current["text"] or T("nl_testo_default", language)
+    privacy = ""
+    privacy_url = consent_settings()["privacy_url"]
+    if privacy_url != "":
+        privacy = (f'          <p class="newsletter-privacy"><a href="{esc(privacy_url)}">'
+                   f'{T("consenso_privacy", language)}</a></p>\n')
+    return render.render(
+        "public/newsletter_form.html",
+        testo=esc(text),
+        lingua=language,
+        id="nl-" + place,
+        label_email=esc(T("nl_email_label", language)),
+        iscriviti=T("nl_iscriviti", language),
+        privacy=privacy,
+    ).rstrip("\n")
+
+
+def newsletter_title(language):
+    return newsletter.settings()["title"] or T("nl_titolo_default", language)
+
+
+def newsletter_sidebar_box(language):
+    """The form as a box of the sidebar, when the author put it there."""
+    current = newsletter.settings()
+    if not current["enabled"] or not current["in_sidebar"]:
+        return ""
+    return sidebar_box("box-newsletter", esc(newsletter_title(language)),
+                       newsletter_form(language, "barra"))
+
+
+def newsletter_after_article(language):
+    """The form at the end of every article, when the author wants it there."""
+    current = newsletter.settings()
+    if not current["enabled"] or not current["after_article"]:
+        return ""
+    return ('    <aside class="newsletter-articolo" aria-labelledby="nl-articolo-titolo">\n'
+            f'      <h2 id="nl-articolo-titolo">{esc(newsletter_title(language))}</h2>\n'
+            + newsletter_form(language, "articolo") + "\n    </aside>\n")
+
+
+def newsletter_message_page(language, title, text, action=""):
+    """
+    The pages the subscription answers with: "check your inbox", "confirm",
+    "you are out". action is an optional form with the button that does it.
+    """
+    prefix = language_url_prefix(language)
+    principale = render.render(
+        "public/newsletter_pagina.html",
+        titolo=esc(title),
+        testo=esc(text),
+        azione=block(action),
+        url_home=prefix + "/",
+        torna_home=T("torna_homepage", language),
+    )
+    contenuto = ('  <main id="content" class="main-content">\n' + principale
+                 + '  </main>\n')
+    meta_extra = '  <meta name="robots" content="noindex">'
+    return render_page(language, f"{esc(title)} &middot; {esc(CONFIG['site_title'])}",
+                       contenuto, meta_extra=meta_extra)
 
 
 def generate_biography_page(language="it", articles=None):

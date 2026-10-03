@@ -2480,6 +2480,7 @@ function articleData(stato) {
     status: stato || statoArticolo,
     // The moment a scheduled article goes out, in UTC; ignored otherwise.
     publish_at: (stato || statoArticolo) === 'scheduled' ? scheduledMoment() : '',
+    notify_subscribers: notifySubscribers(),
     original_slug: slugOriginale,
     custom_code_ids: articleCodeIds('optin', true, pbPage('custom_code_ids', [])),
     custom_code_off_ids: articleCodeIds('sempre', false, pbPage('custom_code_off_ids', [])),
@@ -3733,6 +3734,7 @@ function saveConfig(pulsante) {
       content: quillBio.root.innerHTML,
       content_en: quillBioEn.root.innerHTML
     },
+    newsletter: newsletterData(),
     projects: {
       enabled: document.getElementById('projects_enabled').checked,
       position: document.getElementById('projects_position').value,
@@ -4408,4 +4410,66 @@ function restoreVersion() {
   } else {
     applica();
   }
+}
+
+
+/* --- Newsletter ------------------------------------------------------------ */
+
+// The newsletter fields of the Settings, as saved. An empty password keeps
+// the one already saved (the server sees to that).
+function newsletterData() {
+  var valore = function(id) { return document.getElementById(id).value.trim(); };
+  return {
+    enabled: document.getElementById('nl_enabled').checked,
+    in_sidebar: document.getElementById('nl_in_sidebar').checked,
+    after_article: document.getElementById('nl_after_article').checked,
+    send_on_publish: document.getElementById('nl_send_on_publish').checked,
+    title: valore('nl_title'),
+    text: valore('nl_text'),
+    sender_name: valore('nl_sender_name'),
+    sender_email: valore('nl_sender_email'),
+    smtp_host: valore('nl_smtp_host'),
+    smtp_port: parseInt(valore('nl_smtp_port'), 10) || 587,
+    smtp_security: document.getElementById('nl_smtp_security').value,
+    smtp_user: valore('nl_smtp_user'),
+    smtp_password: document.getElementById('nl_smtp_password').value
+  };
+}
+
+// A test email with what is written in the form, saved or not.
+function sendNewsletterTest(pulsante) {
+  pbBusy(pulsante, true);
+  pbStatus('nl-prova-stato', '');
+  pbPostJson('/newsletter-prova', newsletterData())
+    .then(function(res) {
+      pbBusy(pulsante, false);
+      if (res.ok) {
+        pbToast(t('js_nl_prova_ok').replace('{to}', res.to), 'success');
+      } else {
+        pbToast(t('js_nl_prova_errore').replace('{error}', res.error), 'danger');
+      }
+    })
+    .catch(function() {
+      pbBusy(pulsante, false);
+      pbToast(t('js_nl_prova_errore').replace('{error}', ''), 'danger');
+    });
+}
+
+function removeSubscriber(pulsante) {
+  var email = pulsante.getAttribute('data-email');
+  pbConfirm(t('js_nl_rimuovi_titolo'), email, t('admin_nl_rimuovi'), 'danger', function() {
+    pbPostJson('/newsletter-rimuovi', { email: email })
+      .then(function(res) {
+        if (res.ok) {
+          pulsante.closest('li').remove();
+          pbToast(t('js_nl_rimosso').replace('{email}', email), 'success');
+        }
+      });
+  });
+}
+
+// In the editor: whether the subscribers hear about this article.
+function notifySubscribers() {
+  var spunta = document.getElementById('notify_subscribers');
+  return spunta ? spunta.checked : true;
 }

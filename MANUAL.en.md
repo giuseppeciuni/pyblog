@@ -23,6 +23,7 @@ administration can be switched to Italian from its menu.
 6. [External code: analytics, ads, widgets](#6-external-code-analytics-ads-widgets)
 7. [The cookie banner](#7-the-cookie-banner)
 8. [Comments](#8-comments)
+   - [8b. Newsletter](#8b-newsletter)
 9. [Visit statistics](#9-visit-statistics)
 10. [Two languages and automatic translation](#10-two-languages-and-automatic-translation)
 11. [The public site: what gets generated](#11-the-public-site-what-gets-generated)
@@ -283,16 +284,18 @@ converted by themselves on the first start.
 
 ### 2.11 Backup and restore
 
-What to save: `posts/`, `config.json`, `admin_password.txt` and
+What to save: `posts/`, `config.json`, `admin_password.txt`,
+`subscribers.json` (the subscribers, if you use the newsletter) and
 `output/media/` (the uploaded files). The rest of `output/` is regenerated
 by `build`.
 
 - **From the menu:** **Download the backup** downloads a `.zip` with
-  articles (and their earlier versions), images and settings.
+  articles (and their earlier versions), images, settings and newsletter
+  subscribers.
 - **Every night on the server**, with cron (`sudo crontab -e`):
 
   ```
-  0 3 * * * tar -czf /var/backups/pyblog-$(date +\%F).tar.gz -C /opt/pyblog posts config.json admin_password.txt output/media
+  0 3 * * * tar -czf /var/backups/pyblog-$(date +\%F).tar.gz --ignore-failed-read -C /opt/pyblog posts config.json admin_password.txt subscribers.json output/media
   30 3 * * * find /var/backups -name 'pyblog-*.tar.gz' -mtime +30 -delete
   ```
 
@@ -567,6 +570,12 @@ biography is on.
 
 None, **Giscus** or **Disqus**: see [8](#8-comments).
 
+### 5.6b Newsletter
+
+The sign-up form, where it shows, its texts, the automatic sending on
+publication, the SMTP account with the test email and the list of
+subscribers: see [8b](#8b-newsletter).
+
 ### 5.7 Translation
 
 The service (DeepL, Google Translate, Anthropic Claude, OpenAI, DeepSeek) and
@@ -788,6 +797,66 @@ https://disqus.com, create the site and get the **shortname**; in
 **Settings → Comments** choose Disqus, type it and save.
 
 ---
+
+## 8b. Newsletter
+
+Readers subscribe from the site and get an email when you publish an
+article. Everything stays on your server: the subscribers live in
+`subscribers.json` (next to `config.json`, and just as private) and the
+emails leave from your SMTP account, with no service in between.
+
+**What it needs.** The editor online (way C of chapter 2.5, the tutorial's):
+the sign-up form is on the static site but must reach PyBlog, and nginx
+passes it `/iscriviti`, `/conferma` and `/disiscrivi` (with a request limit
+of their own). And an **SMTP account**: your mail provider's or a service
+such as Brevo, Mailgun or Amazon SES, which gives you server, port, username
+and password.
+
+**Turning it on.** In **Settings → Newsletter**: tick **Turn on the
+newsletter**, choose where the form shows (in the sidebar, at the end of
+every article), fill in **Sending the emails** and click **Send a test
+email**: it goes to the sender address, with the values written there, even
+before saving. Then **Save and update the site**. The SMTP password is
+better kept in `/etc/pyblog.env` as `PYBLOG_SMTP_PASSWORD=...`: it takes
+precedence and never shows in the page; an empty field keeps the saved one.
+
+**Subscribing, with double opt-in.**
+
+1. The reader types their address and clicks **Subscribe**: the page says
+   "Check your inbox", whatever happened (so the form does not reveal who is
+   already subscribed).
+2. An email arrives with the confirmation link; asking again sends the link
+   at most every ten minutes.
+3. The link opens a page with the **Confirm my subscription** button: the
+   link alone does not confirm, because mail scanners open every link.
+   Without confirmation the address receives nothing else.
+
+A hidden field stops the robots that fill in forms, and each internet
+address can make at most five requests an hour.
+
+**Sending.** When you publish an article for the **first time**, the
+confirmed subscribers get an email with the title, the first lines and the
+link, in their language if the article is translated. Scheduled articles too,
+at the time they go out. Not sent: articles published before the newsletter
+was turned on (even if you edit them later), the ones for which you untick
+**Tell the subscribers when it is published** in the editor, and the same
+article twice. With **Tell the subscribers when you publish an article** off,
+nothing goes out. The emails leave from a thread of the editor, one at a
+time; an article to send is written to disk, so a restart does not lose it,
+and if the mail server does not answer it tries again every minute.
+
+**Unsubscribing.** At the bottom of every email there is **Unsubscribe** (a
+page with a button here too), and mail programs show their own one-click
+unsubscribe button (`List-Unsubscribe-Post`). It works with the newsletter
+off too.
+
+**The subscribers.** In the same section you see how many are confirmed and
+how many waiting, the list (with **Remove**), the result of the last sending
+and **Download the list (CSV)**. The `.zip` backup contains them.
+
+For privacy: only the address, the language and the dates are kept; say so
+in your privacy policy, whose link shows under the form if you set it in
+"Cookies and privacy".
 
 ## 9. Visit statistics
 
@@ -1012,6 +1081,20 @@ fields arrive.
 | `favicon` | A favicon of your own; empty, PyBlog generates `favicon.svg`. |
 | `backlink_site` | The outside site that republishes the articles and hosts the backlinks: the SEO analysis suggests suitable anchor texts. |
 
+### 13.3b Newsletter (`newsletter`)
+
+| Field | Meaning |
+|---|---|
+| `enabled` | `true` turns on the form and the sending (default `false`). |
+| `enabled_since` | When it was turned on (written by PyBlog): only articles published since then are sent. |
+| `in_sidebar`, `after_article` | Where the form shows (default `true`). |
+| `title`, `text` | Title and text of the form; empty, the default ones. |
+| `send_on_publish` | `true` (default): an article published for the first time goes to the subscribers. |
+| `sender_name`, `sender_email` | The sender (an empty name = the site title). |
+| `smtp_host`, `smtp_port`, `smtp_security`, `smtp_user`, `smtp_password` | The SMTP account; `smtp_security` is `starttls` (default), `ssl` or `none`. The password can come from `PYBLOG_SMTP_PASSWORD`, which takes precedence. |
+
+The subscribers are not here but in `subscribers.json`.
+
 ### 13.4 Comments
 
 | Field | Meaning |
@@ -1105,6 +1188,7 @@ output/media/          the uploaded images and videos
 config.json            the settings (excluded from git)
 admin_password.txt     the password's fingerprint, never the password (excluded from git)
 config.broken.json     the copy of a config.json that could not be read
+subscribers.json       the newsletter's subscribers (excluded from git)
 ```
 
 An article in `posts/<slug>.json`:
@@ -1122,6 +1206,8 @@ An article in `posts/<slug>.json`:
 | `translation_authorized`, `translation_confirmed` | Whether the translation is allowed and whether it is confirmed (published). |
 | `custom_code_ids`, `custom_code_off_ids` | The site's code ticked ("tick to enable") and switched off ("by default") on this article. |
 | `custom_code` | The code of this article only, with the same fields as the site's except `scope`; its `id` starts with `art-`. |
+| `first_published` | When it was first published (written by PyBlog). |
+| `notify_subscribers`, `newsletter_sent` | Whether to tell the subscribers on first publication, and whether it has been sent already. |
 
 ---
 
@@ -1168,6 +1254,9 @@ password safe.
 | Forgotten password | — | `python3 pyblog.py password` on the server |
 | `config.json` broken | a hand edit | the data is in `config.broken.json` (see [13.10](#1310-if-configjson-breaks-and-old-versions)) |
 | Certbot fails | the domain does not point at the server | check the DNS records and try again |
+| The newsletter form answers 404 | nginx does not pass `/iscriviti` to PyBlog, or the newsletter is off | the `location ~ ^/(iscriviti|conferma|disiscrivi)$` block of `nginx.conf.example`; the checkbox in the Settings |
+| Emails do not go out | wrong SMTP values, or the provider refuses the sender | **Send a test email** says the error; the last failed sending is written in the Newsletter section |
+| Emails end up in spam | the sender's domain does not authorise the mail server | set SPF and DKIM as your SMTP provider says |
 
 ---
 

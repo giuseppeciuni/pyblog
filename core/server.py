@@ -19,17 +19,17 @@ import threading
 import time
 import urllib.parse
 import zipfile
-from datetime import datetime
+from datetime import datetime, timezone
 
 from core import build as build_module
-from core import i18n, render
+from core import i18n, newsletter, render
 from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
 from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, SlugTakenError,
                            article_for_preview, delete_article,
                            due_scheduled_articles, html_content_is_empty,
                            list_versions, load_article, load_articles,
-                           load_version,
+                           load_version, publish_due_articles,
                            max_image_side, requested_slug, save_article,
                            save_uploaded_file, validate_upload)
 from core.docx_import import convert_docx, looks_like_docx
@@ -108,7 +108,7 @@ CSRF_PROTECTED_ROUTES = (
     "/save", "/delete", "/save-config", "/save-config-raw", "/toggle-status",
     "/rebuild", "/upload", "/admin-language", "/change-password",
     "/translate", "/generate-description", "/generate-preview", "/analyze-seo",
-    "/import-docx", "/preview",
+    "/import-docx", "/preview", "/newsletter-prova", "/newsletter-rimuovi",
 )
 
 # The files the administration area serves from static/. Naming them makes
@@ -118,7 +118,7 @@ ADMIN_STATIC_FILES = ("common.css", "admin.css", "admin.js")
 # The GET routes handled by the administration, as opposed to the static site.
 ADMIN_GET_ROUTES = ("/admin", "/config", "/edit", "/change-password",
                     "/preview", "/export", "/scegli-punto", "/versioni",
-                    "/versione")
+                    "/versione", "/newsletter-iscritti.csv")
 
 
 # ---------------------------------------------------------------------------
@@ -198,6 +198,8 @@ JS_TRANSLATION_KEYS = (
     "js_versione_errore", "js_versione_perdi", "admin_stato_bozza",
     "admin_stato_pubblicato", "admin_stato_programmato", "admin_chiudi",
     "js_versione_scegli",
+    "js_nl_prova_ok", "js_nl_prova_errore", "js_nl_rimuovi_titolo", "js_nl_rimosso",
+    "admin_nl_rimuovi",
 ) + tuple(key for key in i18n.UI_TRANSLATIONS
           # The window that chooses a point on the page, and the names it
           # gives the blocks of the page.
@@ -373,6 +375,7 @@ CONFIG_SECTIONS = [
     ("progetti", "admin_sez_progetti"),
     ("pagine", "admin_sez_pagine"),
     ("commenti", "admin_sez_commenti"),
+    ("newsletter", "admin_sez_newsletter"),
     ("traduzione", "admin_sez_traduzione"),
     ("codici", "admin_sez_codici"),
     ("cookie", "admin_sez_cookie"),
@@ -507,6 +510,21 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
         page_data=js(page_data),
         script_extra=build_module.block(script_extra),
     )
+
+
+def notify_checkbox(art, la):
+    """
+    "Tell the subscribers when it is published", in the publishing panel of
+    a draft or a scheduled article, when the newsletter can send. Not for an
+    article the subscribers already had.
+    """
+    current = newsletter.settings()
+    if not current["enabled"] or not current["send_on_publish"] or art.get("newsletter_sent"):
+        return ""
+    checked = checked_if(art.get("notify_subscribers", True) is not False)
+    return ('      <label class="riga-flag avvisa-iscritti solo-non-pubblicato">'
+            f'<input type="checkbox" id="notify_subscribers" {checked}> '
+            f'{T("admin_nl_avvisa", la)}</label>\n')
 
 
 def moment_html(moment, la):
@@ -791,6 +809,7 @@ def editor_page(art, csrf):
         hint_stato_bozza=T("admin_stato_bozza_hint", la),
         label_stato_pubblicato=T("admin_stato_pubblicato", la),
         label_stato_programmato=T("admin_stato_programmato", la),
+        spunta_avvisa=notify_checkbox(art, la),
         label_versioni=T("admin_versioni", la),
         hint_versioni=T("admin_versioni_hint", la),
         versioni_nascosto="" if art.get("slug", "") else " hidden",
@@ -1389,8 +1408,85 @@ def config_page(csrf):
     if len(project_cards) > 0:
         empty_note_hidden = " hidden"
 
+    nl = newsletter.settings(config)
+    nl_state = newsletter.load_state()
+    nl_rows = []
+    for reader in nl_state["subscribers"]:
+        stato = T("admin_nl_confermato" if reader.get("status") == "confirmed" else "admin_nl_attesa", la)
+        email = esc(reader.get("email", ""))
+        nl_rows.append(
+            f'      <li><span class="nl-email">{email}</span> <span class="hint">{stato}</span>'
+            f'<button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo" '
+            f'data-email="{email}" onclick="removeSubscriber(this)">{T("admin_nl_rimuovi", la)}</button></li>')
+    if nl_rows:
+        nl_list = '    <ul class="nl-elenco">\n' + "\n".join(nl_rows) + "\n    </ul>"
+    else:
+        nl_list = f'    <p class="aiuto">{T("admin_nl_nessuno", la)}</p>'
+    nl_confirmed = sum(1 for r in nl_state["subscribers"] if r.get("status") == "confirmed")
+    last = nl_state["last"]
+    nl_last = ""
+    if last.get("title"):
+        if last.get("error"):
+            nl_last = (f'    <p class="avviso avviso-danger">' + esc(T("admin_nl_ultimo_errore", la)
+                       .replace("{title}", last["title"]).replace("{error}", last["error"])) + "</p>")
+        else:
+            nl_last = (f'    <p class="aiuto">' + esc(T("admin_nl_ultimo", la)
+                       .replace("{title}", last["title"]).replace("{sent}", str(last.get("sent", 0)))) + "</p>")
+
     context = dict(
         titolo_impostazioni=T("admin_impostazioni", la),
+        checked_nl=checked_if(nl["enabled"]),
+        label_nl_attiva=T("admin_nl_attiva", la),
+        hint_nl_attiva=T("admin_nl_attiva_hint", la),
+        label_nl_dove=T("admin_nl_dove", la),
+        checked_nl_barra=checked_if(nl["in_sidebar"]),
+        label_nl_barra=T("admin_nl_barra", la),
+        checked_nl_articolo=checked_if(nl["after_article"]),
+        label_nl_articolo=T("admin_nl_articolo", la),
+        label_nl_titolo=T("admin_nl_titolo", la),
+        valore_nl_titolo=esc(nl["title"]),
+        ph_nl_titolo=esc(T("nl_titolo_default", site_language)),
+        label_nl_testo=T("admin_nl_testo", la),
+        valore_nl_testo=esc(nl["text"]),
+        ph_nl_testo=esc(T("nl_testo_default", site_language)),
+        hint_nl_testi=T("admin_nl_testi_hint", la),
+        checked_nl_invio=checked_if(nl["send_on_publish"]),
+        label_nl_invio=T("admin_nl_invio_auto", la),
+        hint_nl_invio=T("admin_nl_invio_auto_hint", la),
+        label_gr_nl_spedizione=T("admin_gr_nl_spedizione", la),
+        hint_gr_nl_spedizione=T("admin_gr_nl_spedizione_hint", la),
+        label_nl_mittente_nome=T("admin_nl_mittente_nome", la),
+        valore_nl_mittente_nome=esc(nl["sender_name"]),
+        hint_nl_mittente_nome=T("admin_nl_mittente_nome_hint", la),
+        label_nl_mittente_email=T("admin_nl_mittente_email", la),
+        valore_nl_mittente_email=esc(nl["sender_email"]),
+        label_nl_smtp_host=T("admin_nl_smtp_host", la),
+        valore_nl_smtp_host=esc(nl["smtp_host"]),
+        label_nl_smtp_port=T("admin_nl_smtp_port", la),
+        valore_nl_smtp_port=nl["smtp_port"],
+        hint_nl_smtp_port=T("admin_nl_smtp_port_hint", la),
+        label_nl_smtp_sicurezza=T("admin_nl_smtp_sicurezza", la),
+        sel_nl_starttls=selected_if(nl["smtp_security"], "starttls"),
+        sel_nl_ssl=selected_if(nl["smtp_security"], "ssl"),
+        sel_nl_none=selected_if(nl["smtp_security"], "none"),
+        label_nl_starttls=T("admin_nl_sic_starttls", la),
+        label_nl_ssl=T("admin_nl_sic_ssl", la),
+        label_nl_none=T("admin_nl_sic_none", la),
+        label_nl_smtp_utente=T("admin_nl_smtp_utente", la),
+        valore_nl_smtp_utente=esc(nl["smtp_user"]),
+        label_nl_smtp_password=T("admin_nl_smtp_password", la),
+        # The password is never written back into the page: an empty field
+        # keeps the saved one, as the translation keys do.
+        ph_nl_password=esc(T("admin_nl_password_salvata", la)) if nl["smtp_password"] else "",
+        hint_nl_smtp_password=T("admin_nl_smtp_password_hint", la),
+        label_nl_prova=T("admin_nl_prova", la),
+        hint_nl_prova=T("admin_nl_prova_hint", la),
+        label_gr_nl_iscritti=T("admin_gr_nl_iscritti", la),
+        nl_conteggio=T("admin_nl_conteggio", la).replace("{c}", str(nl_confirmed)).replace(
+            "{p}", str(len(nl_state["subscribers"]) - nl_confirmed)),
+        nl_ultimo=nl_last,
+        nl_elenco=nl_list,
+        label_nl_esporta=T("admin_nl_esporta", la),
         checked_bio=checked_if(biography["enabled"]),
         label_bio_attiva=T("admin_bio_attiva", la),
         hint_bio_attiva=T("admin_bio_attiva_hint", la),
@@ -1977,6 +2073,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._handle_admin_get(route, query)
             return
 
+        # --- The newsletter's links from the emails ---
+        if route in ("/conferma", "/disiscrivi"):
+            self._handle_newsletter_link(route, query)
+            return
+
         # --- Everything else is the public static site ---
         if route == "/favicon.ico":
             # The browser always asks for it: if it exists in output we serve
@@ -2028,6 +2129,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._handle_export()
         elif route == "/scegli-punto":
             self._handle_point_page(query)
+        elif route == "/newsletter-iscritti.csv":
+            data = newsletter.subscribers_csv().encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/csv; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="iscritti.csv"')
+            self.send_header("Content-Length", str(len(data)))
+            self._no_store()
+            self._security_headers(False)
+            self.end_headers()
+            self.wfile.write(data)
         elif route == "/versioni":
             # The earlier versions of an article, for the editor's window.
             self._send_json({"ok": True, "versions": list_versions(query.get("slug", [""])[0])})
@@ -2039,6 +2150,92 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self._send_json({"ok": True, "version": version})
         else:
             self.send_error(404)
+
+    # --- Newsletter -----------------------------------------------------------
+
+    def _site_url(self):
+        """The site's address for the links in the emails."""
+        host = self.headers.get("Host", f"localhost:{PORT}")
+        proto = self.headers.get("X-Forwarded-Proto", "http")
+        return public_site_url(f"{proto}://{host}")
+
+    def _send_public(self, page, status=200):
+        """A public page answered by Python: no admin CSP, never cached."""
+        data = page.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self._no_store()
+        self._security_headers(False)
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _newsletter_page(self, language, prefix, action="", status=200):
+        """One of the answers of the newsletter, as a page of the site."""
+        site = CONFIG.get("site_title", "")
+        self._send_public(build_module.newsletter_message_page(
+            language, T(prefix + "_titolo", language),
+            T(prefix + "_testo", language).replace("{site}", site), action), status)
+
+    def _handle_newsletter_post(self, route):
+        """
+        The sign-up form of the site, and the buttons of the confirmation
+        and unsubscribe pages. None of them needs a session: the form asks
+        for nothing more than an address, the others carry their token.
+        """
+        form = self._read_form()
+        language = form.get("lingua", [main_language()])[0]
+        if language not in ("it", "en"):
+            language = main_language()
+        # Leaving always works, even with the newsletter switched off.
+        if route != "/disiscrivi" and not newsletter.settings()["enabled"]:
+            self.send_error(404)
+            return
+        if route == "/iscriviti":
+            # The hidden field is invisible to people: whoever fills it in is
+            # a robot, and gets the same answer as everybody, with no email.
+            if form.get("sito", [""])[0].strip() != "":
+                self._newsletter_page(language, "nl_richiesta")
+                return
+            if not newsletter.allowed_request(self._client_address()):
+                self._newsletter_page(language, "nl_troppi", status=429)
+                return
+            result = newsletter.subscribe(form.get("email", [""])[0], language, self._site_url())
+            if result == "invalid":
+                self._newsletter_page(language, "nl_invalido", status=400)
+            elif result == "error":
+                self._newsletter_page(language, "nl_errore", status=503)
+            else:
+                self._newsletter_page(language, "nl_richiesta")
+            return
+        token = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get("t", [""])[0]
+        language = newsletter.token_language(token) or language
+        if route == "/conferma":
+            done = newsletter.confirm(token)
+            self._newsletter_page(language, "nl_confermata" if done else "nl_link")
+        else:
+            done = newsletter.unsubscribe(token)
+            self._newsletter_page(language, "nl_disiscritto" if done else "nl_link")
+
+    def _handle_newsletter_link(self, route, query):
+        """
+        The page a link in an email opens: a button that does the thing. The
+        link alone changes nothing, because mail scanners open every link.
+        """
+        token = query.get("t", [""])[0]
+        language = newsletter.token_language(token)
+        if language == "" or (route == "/conferma" and not newsletter.settings()["enabled"]):
+            self._newsletter_page(language or main_language(), "nl_link", status=404)
+            return
+        if route == "/conferma":
+            prefix, button = "nl_conferma_pagina", T("nl_conferma_pulsante", language)
+        else:
+            prefix, button = "nl_disiscrivi", T("nl_disiscrivi_pulsante", language)
+        action = (f'        <form method="post" action="{route}?t={urllib.parse.quote(token)}">\n'
+                  f'          <input type="hidden" name="lingua" value="{language}">\n'
+                  f'          <button class="pulsante pulsante-primario" type="submit">{esc(button)}</button>\n'
+                  '        </form>')
+        self._newsletter_page(language, prefix, action)
 
     def _handle_point_page(self, query):
         """
@@ -2093,6 +2290,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if POSTS_DIR.exists():
                 for path_value in sorted(POSTS_DIR.glob("*.json")):
                     zip_file.write(path_value, "posts/" + path_value.name)
+                # The newsletter's subscribers, when there are any.
+                if newsletter.SUBSCRIBERS_FILE.exists():
+                    zip_file.write(newsletter.SUBSCRIBERS_FILE, "subscribers.json")
                 # The earlier versions of the articles come along.
                 for path_value in sorted(POSTS_DIR.glob(".history/*/*.json")):
                     zip_file.write(path_value, path_value.relative_to(POSTS_DIR.parent).as_posix())
@@ -2146,6 +2346,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._handle_login()
             return
 
+        # --- The newsletter's public forms (readers, not the author) ---
+        if route in ("/iscriviti", "/conferma", "/disiscrivi"):
+            self._handle_newsletter_post(route)
+            return
+
         # --- From here on everything requires authentication ---
         if not self._user_is_authenticated():
             self._send_json({"ok": False, "error": T("err_unauthorized", la)})
@@ -2195,6 +2400,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "/save-config": self._api_save_config,
             "/save-config-raw": self._api_save_config_raw,
             "/rebuild": self._api_rebuild,
+            "/newsletter-prova": self._api_newsletter_test,
+            "/newsletter-rimuovi": self._api_newsletter_remove,
         }
         handler = handlers.get(route)
         if handler is None:
@@ -2261,6 +2468,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if old_slug and old_slug != new_slug:
                 delete_article(old_slug)
             build()  # rebuilds the static HTML right away
+        self._announce([new_slug])
         # The address of the public page, for the editor's "View online".
         result = {"ok": True, "slug": new_slug,
                   "url": build_module.article_url({"slug": new_slug}, main_language())}
@@ -2310,7 +2518,35 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             article["status"] = new_status
             save_article(article)
             build()
+        self._announce([article["slug"]])
         return {"ok": True}
+
+    def _announce(self, slugs):
+        """
+        Hand the articles just published to the newsletter, which sends each
+        one the first time only, and wake the sending thread.
+        """
+        newsletter.notify_published(slugs)
+        if NEWSLETTER_WAKE is not None:
+            NEWSLETTER_WAKE.set()
+
+    def _api_newsletter_test(self, data):
+        """A test email with the values of the form, saved or not."""
+        values = dict(newsletter.settings({"newsletter": data}))
+        if values["smtp_password"] == "" and data.get("keep_password", True):
+            values["smtp_password"] = newsletter.settings()["smtp_password"]
+        if not newsletter.valid_email(values["sender_email"]) or values["smtp_host"] == "":
+            return {"ok": False, "error": T("admin_nl_mittente_email", admin_language()) + " / "
+                    + T("admin_nl_smtp_host", admin_language())}
+        try:
+            newsletter.send_test(values, values["sender_email"])
+        except (OSError, newsletter.smtplib.SMTPException) as error:
+            return {"ok": False, "error": str(error)}
+        return {"ok": True, "to": values["sender_email"]}
+
+    def _api_newsletter_remove(self, data):
+        """Remove a subscriber from the Settings."""
+        return {"ok": newsletter.remove(str(data.get("email", "")))}
 
     def _api_save_config(self, data):
         """Save the settings form and rebuild the site."""
@@ -2322,6 +2558,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             # ALL the fields (e.g. admin_language): without this merge, every
             # save would wipe them.
             config_attuale = load_config()
+            # The moment the newsletter is switched on: only what is
+            # published from then on goes to the subscribers.
+            nuova = data.get("newsletter")
+            if isinstance(nuova, dict):
+                vecchia = config_attuale.get("newsletter", {})
+                if not isinstance(vecchia, dict):
+                    vecchia = {}
+                since = vecchia.get("enabled_since", "")
+                if nuova.get("enabled") is True and since == "":
+                    since = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+                nuova["enabled_since"] = since
+                # An empty password field keeps the saved password.
+                if nuova.get("smtp_password", "") == "" and vecchia.get("smtp_password"):
+                    nuova["smtp_password"] = vecchia["smtp_password"]
             for key in data:
                 config_attuale[key] = data[key]
             save_config(config_attuale)
@@ -2637,6 +2887,22 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         pass  # silences the request log
 
 
+def public_site_url(fallback):
+    """
+    The site's address for the links in the emails: the domain of the
+    Settings, or - while it is still empty or the example one - the address
+    the editor is reached at, which at least works for a try on a computer.
+    """
+    base = CONFIG.get("base_url", "").rstrip("/")
+    if base != "" and "tuodominio" not in base and "mysite" not in base:
+        return base
+    return fallback
+
+
+# Set by serve(): wakes the newsletter's sending thread when an article is
+# published, instead of waiting for its next round.
+NEWSLETTER_WAKE = None
+
 # How often the editor looks for scheduled articles whose moment has come.
 SCHEDULE_CHECK_SECONDS = 60
 
@@ -2650,7 +2916,12 @@ def publish_when_due(stop):
     while not stop.wait(SCHEDULE_CHECK_SECONDS):
         try:
             if due_scheduled_articles():
-                build()
+                with BUILD_LOCK:
+                    published = publish_due_articles()
+                    build()
+                newsletter.notify_published(published)
+                if NEWSLETTER_WAKE is not None:
+                    NEWSLETTER_WAKE.set()
         except Exception as error:  # the scheduler must never stop the editor
             print(f"WARNING: scheduled publishing failed ({error}).")
 
@@ -2684,6 +2955,14 @@ def serve(host="127.0.0.1", port=PORT):
         print("  (Ctrl+C to stop)\n")
         stop = threading.Event()
         threading.Thread(target=publish_when_due, args=(stop,), daemon=True).start()
+        global NEWSLETTER_WAKE
+        NEWSLETTER_WAKE = threading.Event()
+        # The links in the emails need the site's address; on a computer
+        # without one, the editor's own address will do for a try.
+        threading.Thread(target=newsletter.sender_loop,
+                         args=(stop, lambda: public_site_url(f"http://localhost:{port}"),
+                               NEWSLETTER_WAKE),
+                         daemon=True).start()
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
