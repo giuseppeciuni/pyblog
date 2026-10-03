@@ -20,7 +20,7 @@ import sys
 RADICE = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RADICE))
 
-from core.articles import load_article, save_article  # noqa: E402
+from core.articles import HISTORY_DIR, load_article, save_article  # noqa: E402
 from core.build import build, snippet_applies  # noqa: E402
 from core.config import OUTPUT_DIR  # noqa: E402
 from core.config import CONFIG_FILE, POSTS_DIR, load_config, save_config  # noqa: E402
@@ -503,6 +503,9 @@ def main():
         config_originale = CONFIG_FILE.read_text(encoding="utf-8")
     file_articolo = POSTS_DIR / f"{CON_SPUNTA}.json"
     articolo_originale = file_articolo.read_text(encoding="utf-8")
+    # Saving the article also keeps its previous version in the history:
+    # the versions this test makes are removed with the rest.
+    versioni_prima = set(HISTORY_DIR.glob("*/*.json")) if HISTORY_DIR.exists() else set()
 
     config = load_config()
     config["custom_code"] = SNIPPET_DI_PROVA
@@ -527,6 +530,14 @@ def main():
         test_consenso()
     finally:
         file_articolo.write_text(articolo_originale, encoding="utf-8")
+        if HISTORY_DIR.exists():
+            for versione in set(HISTORY_DIR.glob("*/*.json")) - versioni_prima:
+                versione.unlink()
+            for cartella in sorted(HISTORY_DIR.glob("*"), reverse=True):
+                if cartella.is_dir() and not any(cartella.iterdir()):
+                    cartella.rmdir()
+            if not any(HISTORY_DIR.iterdir()):
+                HISTORY_DIR.rmdir()
         if config_originale is None:
             CONFIG_FILE.unlink(missing_ok=True)
         else:
