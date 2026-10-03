@@ -263,19 +263,19 @@ Only **Python 3.8 or higher**. No `pip install`, no virtualenv.
 
 ## Documentation
 
-The documentation is in two files, written in Italian:
+The documentation is in two files, in English and in Italian:
 
-- **[`TUTORIAL.md`](TUTORIAL.md)** — step by step, from an empty Ubuntu server to the site online with HTTPS: install, configure, start, first article, backups and updates
-- **[`MANUALE.md`](MANUALE.md)** — the complete manual: every way to install it, every page of the administration, every setting and every `config.json` key, external code, cookie banner, comments, analytics, translation, import/export, security and troubleshooting
+- **[`TUTORIAL.en.md`](TUTORIAL.en.md)** ([italiano](TUTORIAL.md)) — step by step, from an empty Ubuntu server to the site online with HTTPS: install, configure, start, first article, backups and updates
+- **[`MANUAL.en.md`](MANUAL.en.md)** ([italiano](MANUALE.md)) — the complete manual: every way to install it, every page of the administration, every setting and every `config.json` key, external code, cookie banner, comments, analytics, translation, import/export, security and troubleshooting
 - **`config.example.json`** — configuration template with all fields
 
 ## Production deployment
 
-PyBlog runs on an Ubuntu server with nginx as a "gatekeeper": it serves the static pages to the public and forwards only the admin area to Python. When you publish an article, the pages regenerate themselves — no rsync, no manual deploy. The step-by-step guide with systemd and certbot (HTTPS) is [`TUTORIAL.md`](TUTORIAL.md).
+PyBlog runs on an Ubuntu server with nginx as a "gatekeeper": it serves the static pages to the public and forwards only the admin area to Python. When you publish an article, the pages regenerate themselves — no rsync, no manual deploy. The step-by-step guide with systemd and certbot (HTTPS) is [`TUTORIAL.en.md`](TUTORIAL.en.md).
 
 ## Comments
 
-PyBlog supports three options, chosen from the Settings page: none, **Giscus** (uses GitHub Discussions, free and tracking-free, ideal for technical blogs) or **Disqus** (social login, easier for readers). Configuration details in [`MANUALE.md`](MANUALE.md).
+PyBlog supports three options, chosen from the Settings page: none, **Giscus** (uses GitHub Discussions, free and tracking-free, ideal for technical blogs) or **Disqus** (social login, easier for readers). Configuration details in [`MANUAL.en.md`](MANUAL.en.md).
 
 ## License
 

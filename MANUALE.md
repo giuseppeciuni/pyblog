@@ -1,5 +1,7 @@
 # PyBlog — Manuale
 
+*In English: [MANUAL.en.md](MANUAL.en.md)*
+
 Tutto su PyBlog: come funziona, ogni modo di installarlo, ogni pagina
 dell'amministrazione, ogni impostazione e ogni chiave di `config.json`.
 

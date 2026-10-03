@@ -129,10 +129,10 @@ Solo **Python 3.8 o superiore**. Niente `pip install`, niente virtualenv.
 
 ## Documentazione
 
-La documentazione sta in due file:
+La documentazione sta in due file, in italiano e in inglese:
 
-- **[`TUTORIAL.md`](TUTORIAL.md)** — passo per passo, da un server Ubuntu vuoto al sito online con HTTPS: installazione, configurazione, avvio, primo articolo, backup e aggiornamenti
-- **[`MANUALE.md`](MANUALE.md)** — il manuale completo: ogni modo di installarlo, ogni pagina dell'amministrazione, ogni impostazione e ogni chiave di `config.json`, codici esterni, banner dei cookie, commenti, statistiche, traduzione, import/export, sicurezza e soluzione dei problemi
+- **[`TUTORIAL.md`](TUTORIAL.md)** ([English](TUTORIAL.en.md)) — passo per passo, da un server Ubuntu vuoto al sito online con HTTPS: installazione, configurazione, avvio, primo articolo, backup e aggiornamenti
+- **[`MANUALE.md`](MANUALE.md)** ([English](MANUAL.en.md)) — il manuale completo: ogni modo di installarlo, ogni pagina dell'amministrazione, ogni impostazione e ogni chiave di `config.json`, codici esterni, banner dei cookie, commenti, statistiche, traduzione, import/export, sicurezza e soluzione dei problemi
 - **`config.example.json`** — modello di configurazione con tutti i campi
 
 ## Deploy in produzione

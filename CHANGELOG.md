@@ -98,7 +98,8 @@ All notable changes to PyBlog are documented in this file.
   server to the site online with HTTPS, one checked step at a time;
   `MANUALE.md` holds everything else, from every setting to every
   `config.json` key. They replace `GUIDA.md`, `GUIDE.md`,
-  `CONFIGURAZIONE.md`, `CONFIGURATION.md` and `DEPLOY-REMOTO.md`.
+  `CONFIGURAZIONE.md`, `CONFIGURATION.md` and `DEPLOY-REMOTO.md`. Both
+  exist in English too: `TUTORIAL.en.md` and `MANUAL.en.md`.
 - **Biography and projects on the homepage.** Each has a section of its
   own in the Settings and goes where the author wants it: in the sidebar,
   above or below the articles. The biography shows the photo and its first
