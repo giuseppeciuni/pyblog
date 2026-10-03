@@ -210,12 +210,21 @@ html:has(body.pagina-config) { scroll-padding-bottom:7rem; }
    then only the buttons that make sense in that state. The state lives in
    data-stato, and admin.js changes it after publishing or taking back. */
 .pannello-pubblica { display:flex; flex-direction:column; gap:0.55rem; padding-bottom:1rem; margin-bottom:0.3rem; border-bottom:1px solid #e4e4e7; }
-.pannello-pubblica[data-stato="draft"] .solo-pubblicato,
-.pannello-pubblica[data-stato="published"] .solo-bozza { display:none; }
+.pannello-pubblica:not([data-stato="draft"]) .solo-bozza,
+.pannello-pubblica:not([data-stato="published"]) .solo-pubblicato,
+.pannello-pubblica:not([data-stato="scheduled"]) .solo-programmato { display:none; }
 .stato-articolo { margin:0; font-size:0.88rem; color:#555; display:flex; align-items:baseline; gap:0.45rem; flex-wrap:wrap; }
 .stato-articolo strong { color:#222; }
 .stato-pallino { width:0.6rem; height:0.6rem; border-radius:50%; background:#d97706; flex:none; align-self:center; }
 .pannello-pubblica[data-stato="published"] .stato-pallino { background:#16a34a; }
+.pannello-pubblica[data-stato="scheduled"] .stato-pallino { background:var(--a-accento); }
+/* The quiet actions under the buttons, and the form that sets the moment. */
+.azioni-secondarie { display:flex; flex-direction:column; align-items:flex-start; gap:0.125rem; }
+.programma-modulo { display:flex; flex-direction:column; gap:0.375rem; padding:0.75rem; border:1px solid var(--a-bordo);
+                    border-radius:8px; background:#fff; }
+.programma-modulo[hidden] { display:none; }
+.programma-modulo label { margin:0 !important; }
+.programma-modulo .pulsante { align-self:flex-start; }
 .riga-azioni { display:flex; gap:0.5rem; }
 .riga-azioni .pulsante { flex:1; }
 /* Taking an article back and deleting it are rare: quiet buttons. */
@@ -504,6 +513,7 @@ select.campo-input { padding-right:2rem; }
 .pill-pallino { width:8px; height:8px; border-radius:50%; background:currentColor; }
 .pill-pubblicato { background:#e6f4ea; color:#15703a; }
 .pill-bozza { background:#fff1dc; color:#9a4d07; }
+.pill-programmato { background:var(--a-attivo); color:var(--a-accento-scuro); }
 
 /* ===========================================================================
    DASHBOARD (/admin)
@@ -606,7 +616,10 @@ select.campo-input { padding-right:2rem; }
     padding:0.625rem 1rem calc(0.625rem + env(safe-area-inset-bottom));
     display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:0.375rem 0.75rem; align-items:center; }
   .menu-compatto .pannello-pubblica .stato-articolo { grid-column:1 / -1; grid-row:1; }
-  .menu-compatto .pannello-pubblica .link-azione { grid-column:1; grid-row:2; justify-self:start; }
+  .menu-compatto .pannello-pubblica .azioni-secondarie { grid-column:1; grid-row:2; flex-direction:row; flex-wrap:wrap; column-gap:0.25rem; }
+  /* Under a thumb every button needs its 44px, the quiet ones too. */
+  .menu-compatto .pannello-pubblica .pulsante-piccolo { min-height:44px; }
+  .menu-compatto .pannello-pubblica .programma-modulo { grid-column:1 / -1; grid-row:4; }
   .menu-compatto .pannello-pubblica .pb-autosave { grid-column:2; grid-row:2; min-height:0; text-align:right; }
   .menu-compatto .pannello-pubblica .pb-autosave:empty { display:none; }
   .menu-compatto .pannello-pubblica .riga-azioni { grid-column:1; grid-row:3; min-width:0; }

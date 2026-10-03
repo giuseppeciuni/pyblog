@@ -15,6 +15,7 @@ import json
 import mimetypes
 import secrets
 import tempfile
+import threading
 import time
 import urllib.parse
 import zipfile
@@ -26,7 +27,8 @@ from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
 from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, SlugTakenError,
                            article_for_preview, delete_article,
-                           html_content_is_empty, load_article, load_articles,
+                           due_scheduled_articles, html_content_is_empty,
+                           load_article, load_articles,
                            max_image_side, requested_slug, save_article,
                            save_uploaded_file, validate_upload)
 from core.docx_import import convert_docx, looks_like_docx
@@ -185,6 +187,10 @@ JS_TRANSLATION_KEYS = (
     "js_annulla_modifiche_titolo", "js_annulla_modifiche_corpo",
     "js_impostazioni_non_salvate", "admin_progetto_senza_nome",
     "admin_progetto_elimina", "js_aggiornato_alle",
+    "js_programma_titolo", "js_programma_corpo", "js_programma_data",
+    "js_programmato", "js_programmazione_annullata", "js_modifiche_salvate",
+    "admin_pubblica_ora", "admin_programma_annulla", "admin_esce_il",
+    "admin_programma_conferma", "js_salvato_alle",
 ) + tuple(key for key in i18n.UI_TRANSLATIONS
           # The window that chooses a point on the page, and the names it
           # gives the blocks of the page.
@@ -496,6 +502,19 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
     )
 
 
+def moment_html(moment, la):
+    """
+    "goes out on <date>" for a scheduled article. The date is written by
+    admin.js in the reader's own time zone and language; the text inside is
+    what shows without JavaScript, in UTC.
+    """
+    if moment == "":
+        return ""
+    fallback = moment.replace("T", " ")[:16] + " UTC"
+    return T("admin_esce_il", la).replace(
+        "{date}", f'<time class="ora-locale" datetime="{esc(moment)}">{esc(fallback)}</time>')
+
+
 def alert_block(message, kind):
     """A message above a form ("danger" or "success"), or nothing."""
     if message == "":
@@ -563,9 +582,12 @@ def admin_page(articles, csrf):
     # We count published and drafts for the summary and the filters.
     published_count = 0
     draft_count = 0
+    scheduled_count = 0
     for art in articles:
         if art.get("status") == "published":
             published_count = published_count + 1
+        elif art.get("status") == "scheduled":
+            scheduled_count = scheduled_count + 1
         else:
             draft_count = draft_count + 1
 
@@ -587,6 +609,14 @@ def admin_page(articles, csrf):
             # it can be sorted by. Drafts sort first, because they are the
             # ones still waiting for work.
             status_order = "1"
+        elif art.get("status") == "scheduled":
+            # Scheduled: it goes out by itself. The quick action publishes
+            # it at once; the second one, in the menu, takes the schedule back.
+            pill_class = "pill-programmato"
+            status_label = T("admin_stato_programmato", la)
+            status_action = "published"
+            status_action_label = T("admin_pubblica_ora", la)
+            status_order = "s"
         else:
             pill_class = "pill-bozza"
             status_label = T("admin_bozza", la)
@@ -611,9 +641,20 @@ def admin_page(articles, csrf):
                 f'target="_blank" rel="noopener">{preview_label}'
                 f'<span class="icona-esterna" aria-hidden="true"></span></a>')
 
+        # A scheduled article says when it goes out instead of its date, and
+        # its menu can also take the schedule back.
+        shown_date = format_date(art["date"], la)
+        cancel_item = ""
+        if art.get("status") == "scheduled":
+            shown_date = moment_html(art.get("publish_at", ""), la)
+            cancel_item = (f'<button role="menuitem" tabindex="-1" type="button" '
+                           f'onclick="changeStatus(this, {js_attr(art["slug"])}, &quot;draft&quot;)">'
+                           f'{T("admin_programma_annulla", la)}</button>')
+
         lines.append(render.render(
             "admin/dashboard_row.html",
             numero=number,
+            voce_annulla_programmazione=cancel_item,
             titolo_minuscolo=esc(art["title"].lower()),
             data_iso=esc(art.get("date", "")),
             ordine_stato=status_order,
@@ -627,7 +668,7 @@ def admin_page(articles, csrf):
             slug_js=js_attr(art["slug"]),
             titolo=esc(art["title"]),
             titolo_js=js_attr(art["title"]),
-            data=format_date(art["date"], la),
+            data=shown_date,
             label_modifica=T("admin_modifica", la),
             label_altre_azioni=esc(T("admin_altre_azioni", la).replace("{title}", art["title"])),
             icona_altro=icon(ICON_MORE, 20),
@@ -646,6 +687,9 @@ def admin_page(articles, csrf):
     summary = (T("admin_riepilogo_articoli", la)
                .replace("{p}", str(published_count))
                .replace("{b}", str(draft_count)))
+    if scheduled_count > 0:
+        summary = summary + T("admin_riepilogo_programmati", la).replace(
+            "{s}", str(scheduled_count))
 
     contenuto = render.render(
         "admin/dashboard.html",
@@ -659,6 +703,9 @@ def admin_page(articles, csrf):
         pubblicati=published_count,
         label_bozze=T("admin_bozze", la),
         bozze=draft_count,
+        label_programmati=T("admin_programmati", la),
+        programmati=scheduled_count,
+        programmati_nascosto="" if scheduled_count > 0 else " hidden",
         label_cerca=esc(T("admin_cerca_articoli", la)),
         label_ordina=T("admin_ordina", la),
         ordina_recenti=T("admin_ordina_recenti", la),
@@ -704,8 +751,9 @@ def editor_page(art, csrf):
     # published, a published article updated or taken back. Anything else
     # on disk is treated as a draft, as everywhere else.
     status = art.get("status", "draft")
-    if status != "published":
+    if status not in ("published", "scheduled"):
         status = "draft"
+    publish_at = art.get("publish_at", "") if status == "scheduled" else ""
     url_online = ""
     if art.get("slug", "") != "":
         url_online = build_module.article_url(art, main_language())
@@ -735,6 +783,16 @@ def editor_page(art, csrf):
         label_stato_bozza=T("admin_stato_bozza", la),
         hint_stato_bozza=T("admin_stato_bozza_hint", la),
         label_stato_pubblicato=T("admin_stato_pubblicato", la),
+        label_stato_programmato=T("admin_stato_programmato", la),
+        esce_il=moment_html(publish_at, la),
+        label_salva_modifiche=T("admin_salva_modifiche", la),
+        label_pubblica_ora=T("admin_pubblica_ora", la),
+        label_programma_annulla=T("admin_programma_annulla", la),
+        label_programma=T("admin_programma", la),
+        label_programma_cambia=T("admin_programma_cambia", la),
+        label_programma_quando=T("admin_programma_quando", la),
+        hint_programma=T("admin_programma_hint", la),
+        label_programma_conferma=T("admin_programma_conferma", la),
         url_online=esc(url_online),
         label_vedi_online=T("admin_vedi_online", la),
         label_pubblica=T("admin_pubblica", la),
@@ -809,6 +867,7 @@ def editor_page(art, csrf):
         "translation_authorized": art.get("translation_authorized", False),
         "translation_confirmed": art.get("translation_confirmed", False),
         "status": status,
+        "publish_at": publish_at,
         "main_language": main_language(),
         "secondary_language": secondary_language(),
         # The article's choices about the site's code, as saved: admin.js
@@ -2556,6 +2615,24 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         pass  # silences the request log
 
 
+# How often the editor looks for scheduled articles whose moment has come.
+SCHEDULE_CHECK_SECONDS = 60
+
+
+def publish_when_due(stop):
+    """
+    The scheduler: while the editor runs, a scheduled article goes out
+    within a minute of its moment, with nobody at the keyboard. The check
+    is a scan of the articles, the build happens only when one is due.
+    """
+    while not stop.wait(SCHEDULE_CHECK_SECONDS):
+        try:
+            if due_scheduled_articles():
+                build()
+        except Exception as error:  # the scheduler must never stop the editor
+            print(f"WARNING: scheduled publishing failed ({error}).")
+
+
 def serve(host="127.0.0.1", port=PORT):
     """
     Start the editor server. For safety it listens ONLY on localhost: the
@@ -2583,7 +2660,11 @@ def serve(host="127.0.0.1", port=PORT):
         print(f"  Articles are saved in:       {POSTS_DIR}")
         print(f"  Static HTML is generated in: {OUTPUT_DIR}")
         print("  (Ctrl+C to stop)\n")
+        stop = threading.Event()
+        threading.Thread(target=publish_when_due, args=(stop,), daemon=True).start()
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
             print("\n  Server stopped.")
+        finally:
+            stop.set()

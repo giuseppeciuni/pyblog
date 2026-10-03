@@ -1922,6 +1922,7 @@ function initEditorPage() {
   document.getElementById('translation_confirmed').checked = pbPage('translation_confirmed', false);
   slugOriginale = pbPage('slug', '');
   statoArticolo = pbPage('status', 'draft');
+  document.getElementById('publish_at').value = localInputValue(pbPage('publish_at', ''));
 
   updateTranslationSection();
   updateDescriptionCounter();
@@ -1993,6 +1994,8 @@ function installSaveShortcut() {
     evento.preventDefault();
     if (statoArticolo === 'published') {
       updateArticle(document.getElementById('btn-aggiorna'));
+    } else if (statoArticolo === 'scheduled') {
+      saveScheduled(document.getElementById('btn-salva-programmato'));
     } else {
       saveDraft(document.getElementById('btn-salva-bozza'));
     }
@@ -2475,6 +2478,8 @@ function articleData(stato) {
     tags: document.getElementById('tags').value,
     image: document.getElementById('image').value,
     status: stato || statoArticolo,
+    // The moment a scheduled article goes out, in UTC; ignored otherwise.
+    publish_at: (stato || statoArticolo) === 'scheduled' ? scheduledMoment() : '',
     original_slug: slugOriginale,
     custom_code_ids: articleCodeIds('optin', true, pbPage('custom_code_ids', [])),
     custom_code_off_ids: articleCodeIds('sempre', false, pbPage('custom_code_off_ids', [])),
@@ -2506,6 +2511,11 @@ function applySavedSlug(res) {
 function updateStatePanel(indirizzo) {
   var pannello = document.getElementById('pannello-pubblica');
   if (pannello) { pannello.setAttribute('data-stato', statoArticolo); }
+  var quando = document.getElementById('programmato-quando');
+  if (quando && statoArticolo === 'scheduled') {
+    quando.textContent = t('admin_esce_il').replace('{date}', formatMoment(scheduledMoment()));
+  }
+  toggleScheduleForm(null, false);
   var link = document.getElementById('link-online');
   if (link && indirizzo) { link.setAttribute('href', indirizzo); }
 }
@@ -2517,6 +2527,103 @@ function updateStatePanel(indirizzo) {
 
 function saveDraft(pulsante) {
   saveWithStatus('draft', pulsante, t('js_bozza_salvata'));
+}
+
+/* --- Scheduled publishing -------------------------------------------------- */
+
+// The field holds the author's local time ("2026-10-04T09:00"); the server
+// keeps the moment in UTC. These two convert between them.
+function scheduledMoment() {
+  var valore = document.getElementById('publish_at').value;
+  if (!valore) { return ''; }
+  var momento = new Date(valore);
+  return isNaN(momento.getTime()) ? '' : momento.toISOString();
+}
+
+function localInputValue(iso) {
+  if (!iso) { return ''; }
+  var momento = new Date(iso);
+  if (isNaN(momento.getTime())) { return ''; }
+  var due = function(n) { return (n < 10 ? '0' : '') + n; };
+  return momento.getFullYear() + '-' + due(momento.getMonth() + 1) + '-' + due(momento.getDate()) +
+    'T' + due(momento.getHours()) + ':' + due(momento.getMinutes());
+}
+
+// "saturday 4 october, 09:00", in the language of the administration.
+function formatMoment(iso) {
+  var momento = new Date(iso);
+  if (isNaN(momento.getTime())) { return iso; }
+  return momento.toLocaleString(document.documentElement.lang || undefined, {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+// Every <time class="ora-locale"> written by the server shows UTC; here it
+// becomes the reader's own time.
+function localizeMoments(radice) {
+  var tempi = (radice || document).querySelectorAll('time.ora-locale');
+  for (var i = 0; i < tempi.length; i++) {
+    tempi[i].textContent = formatMoment(tempi[i].getAttribute('datetime'));
+  }
+}
+document.addEventListener('DOMContentLoaded', function() { localizeMoments(); });
+
+// Opens or closes the little form with the date and time. With no button
+// (null) it is closed, as after a save.
+function toggleScheduleForm(pulsante, apri) {
+  var modulo = document.getElementById('programma-modulo');
+  if (!modulo) { return; }
+  if (apri === undefined) { apri = modulo.hidden; }
+  modulo.hidden = !apri;
+  var pulsanti = document.querySelectorAll('[aria-controls="programma-modulo"]');
+  for (var i = 0; i < pulsanti.length; i++) {
+    pulsanti[i].setAttribute('aria-expanded', apri ? 'true' : 'false');
+  }
+  var campo = document.getElementById('publish_at');
+  if (apri) {
+    if (!campo.value) {
+      // Tomorrow at nine is a sensible first proposal.
+      var domani = new Date();
+      domani.setDate(domani.getDate() + 1);
+      domani.setHours(9, 0, 0, 0);
+      campo.value = localInputValue(domani.toISOString());
+    }
+    campo.focus();
+  }
+}
+
+function scheduleArticle(pulsante) {
+  var titolo = document.getElementById('title').value.trim();
+  if (titolo === '') {
+    pbToast(t('js_titolo_per_pubblicare'), 'warning');
+    document.getElementById('title').focus();
+    return;
+  }
+  var momento = scheduledMoment();
+  if (momento === '' || new Date(momento).getTime() <= Date.now()) {
+    pbToast(t('js_programma_data'), 'warning');
+    document.getElementById('publish_at').focus();
+    return;
+  }
+  var quando = formatMoment(momento);
+  pbConfirm(t('js_programma_titolo'),
+            t('js_programma_corpo').replace('{title}', titolo).replace('{date}', quando),
+            t('admin_programma_conferma'), 'primary', function() {
+    saveWithStatus('scheduled', pulsante, t('js_programmato').replace('{date}', quando));
+  });
+}
+
+function saveScheduled(pulsante) {
+  saveWithStatus('scheduled', pulsante, t('js_modifiche_salvate'));
+}
+
+function publishNow(pulsante) {
+  publishArticle(pulsante);
+}
+
+function cancelSchedule(pulsante) {
+  saveWithStatus('draft', pulsante, t('js_programmazione_annullata'));
 }
 
 function updateArticle(pulsante) {
@@ -2563,7 +2670,9 @@ function saveWithStatus(stato, pulsante, messaggio) {
       statoArticolo = stato;
       updateStatePanel(res.url);
       markEditorClean();
-      var ora = stato === 'published' ? t('js_aggiornato_alle') : t('js_autosaved_at');
+      var ora = t('js_autosaved_at');
+      if (stato === 'published') { ora = t('js_aggiornato_alle'); }
+      if (stato === 'scheduled') { ora = t('js_salvato_alle'); }
       setAutosaveIndicator(ora.replace('{time}', currentTime()), false);
       // The address bar still says "new article" after the first save of a
       // new one; correcting it means a reload would reopen the right article.
@@ -3757,10 +3866,12 @@ function sortArticles() {
       return a.getAttribute('data-titolo').localeCompare(b.getAttribute('data-titolo'));
     }
     if (scelta === 'stato') {
-      var statoA = a.getAttribute('data-stato');
-      var statoB = b.getAttribute('data-stato');
+      // Drafts first, then the scheduled ones, then the published ones.
+      var ordine = { '0': 0, 's': 1, '1': 2 };
+      var statoA = ordine[a.getAttribute('data-stato')];
+      var statoB = ordine[b.getAttribute('data-stato')];
       if (statoA !== statoB) {
-        return statoA.localeCompare(statoB);
+        return statoA - statoB;
       }
       // Within one status, the newest first: the same order as the default.
       return b.getAttribute('data-data').localeCompare(a.getAttribute('data-data'));

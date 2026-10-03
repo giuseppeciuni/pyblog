@@ -414,6 +414,22 @@ hanno senso in quello stato:
   prima; **Ritira dalla pubblicazione** toglie la pagina dal sito e
   l'articolo torna bozza.
 
+**Programmata** ("Programmato · esce il..."): l'articolo esce da solo a
+un'ora scelta. Da una bozza, **Programma la pubblicazione…** apre un campo
+con data e ora (nell'ora del tuo computer; la proposta è domani alle 9) e
+**Programma** chiede conferma. Fino a quel momento i lettori non lo vedono;
+poi esce entro un minuto, datato all'ora programmata, così sta in cima agli
+elenchi come un articolo nuovo. Intanto puoi correggerlo con **Salva le
+modifiche**, **Cambia data e ora…**, **Pubblica ora** o **Annulla la
+programmazione** (torna bozza). Nella pagina Articoli ha l'etichetta
+"Programmato", dice quando esce e ha un suo filtro.
+
+L'uscita la fa l'editor acceso, che controlla ogni minuto; anche ogni
+`build` pubblica gli articoli arrivati alla loro ora. Se l'editor non resta
+acceso (il modo A del capitolo 2.5), un `cron` che rigenera e carica il sito
+fa lo stesso lavoro, per esempio ogni cinque minuti:
+`*/5 * * * * cd /percorso/pyblog && python3 pyblog.py build && rsync -az --delete output/ utente@tuodominio.it:/var/www/blog/`.
+
 **Anteprima** apre la pagina vera, con la grafica del sito, così com'è in
 quel momento nell'editor, **senza salvare niente**. Pubblicare e ritirare
 chiedono conferma. Sotto i pulsanti una riga dice se ci sono "Modifiche non
@@ -1083,7 +1099,8 @@ Un articolo in `posts/<slug>.json`:
 | Campo | Significato |
 |---|---|
 | `title`, `slug`, `date`, `date_modified` | Titolo, indirizzo, data di creazione e dell'ultima modifica. |
-| `status` | `published` o `draft`. |
+| `status` | `published`, `draft` o `scheduled`. |
+| `publish_at` | Per `scheduled`: il momento in cui esce, in UTC (`2026-10-04T07:00:00+00:00`); vuoto negli altri stati. |
 | `content` | Il testo, in HTML. |
 | `description`, `preview` | La descrizione SEO e l'anteprima per i lettori. |
 | `tags` | I tag, separati da virgola. |

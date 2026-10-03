@@ -71,6 +71,13 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Scheduled publishing.** A draft can be scheduled for a date and time:
+  readers cannot see it until then, and it goes out by itself within a
+  minute, dated at that moment. The editor checks every minute while it
+  runs, and every `build` publishes what is due, so a site rebuilt by cron
+  works too. The article can still be edited, rescheduled, published at
+  once or put back to draft; the Articles page labels it, says when it goes
+  out and has a filter for it.
 - **Choose on the page where a piece of code goes.** Next to the fixed
   positions, an external code can go "at a point you choose on the page":
   a window shows the real page (the homepage or an article, generated

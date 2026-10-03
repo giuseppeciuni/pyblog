@@ -234,11 +234,17 @@ def article_from_data(data, slug):
     # this one. Same rule for ids that no longer exist.
     off_ids = id_list(data.get("custom_code_off_ids", []))
 
-    # Anything but the two known states would be published by nobody and
-    # listed as a draft by the dashboard: it is a draft.
+    # Anything but the known states would be published by nobody and
+    # listed as a draft by the dashboard: it is a draft. A scheduled article
+    # needs the moment it goes out; without a valid one it stays a draft.
     status = data.get("status", "draft")
-    if status not in ("draft", "published"):
+    if status not in ("draft", "published", "scheduled"):
         status = "draft"
+    publish_at = ""
+    if status == "scheduled":
+        publish_at = normalized_moment(data.get("publish_at", ""))
+        if publish_at == "":
+            status = "draft"
 
     return {
         "title": title_value,
@@ -251,6 +257,7 @@ def article_from_data(data, slug):
         "tags": data.get("tags", "").strip(),
         "image": data.get("image", "").strip(),
         "status": status,
+        "publish_at": publish_at,
         "custom_code_ids": snippet_ids,
         "custom_code_off_ids": off_ids,
         "custom_code": own_snippets(data.get("custom_code", [])),
@@ -264,6 +271,57 @@ def article_from_data(data, slug):
         "translation_authorized": translation_authorized,
         "translation_confirmed": translation_confirmed,
     }
+
+
+def normalized_moment(value):
+    """
+    A moment in time as ISO 8601 in UTC, or "" when it is not one. The
+    editor sends the author's local time with its offset; a moment without
+    an offset is read as UTC.
+    """
+    if not isinstance(value, str) or value.strip() == "":
+        return ""
+    text = value.strip().replace("Z", "+00:00")
+    try:
+        moment = datetime.fromisoformat(text)
+    except ValueError:
+        return ""
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    return moment.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def due_scheduled_articles(now=None):
+    """The scheduled articles whose moment has come, oldest moment first."""
+    if now is None:
+        now = datetime.now(timezone.utc)
+    due = []
+    for art in load_articles():
+        if art.get("status") != "scheduled":
+            continue
+        moment = normalized_moment(art.get("publish_at", ""))
+        if moment != "" and datetime.fromisoformat(moment) <= now:
+            due.append(art)
+    due.sort(key=lambda a: a.get("publish_at", ""))
+    return due
+
+
+def publish_due_articles(now=None):
+    """
+    Publish the scheduled articles whose moment has come, and return their
+    slugs. The article goes out dated at the moment it was scheduled for, so
+    it takes its place at the top of the lists as a new article does.
+    """
+    published = []
+    for art in due_scheduled_articles(now):
+        art.pop("_file", None)
+        art["date"] = normalized_moment(art.get("publish_at", ""))
+        art["status"] = "published"
+        art["publish_at"] = ""
+        art["date_modified"] = datetime.now(timezone.utc).isoformat()
+        write_json_atomically(POSTS_DIR / f"{art['slug']}.json", art)
+        published.append(art["slug"])
+    return published
 
 
 def saved_date(slug, original):

@@ -417,6 +417,22 @@ buttons that make sense in that status:
   first; **Unpublish** takes the page off the site and the article goes back
   to draft.
 
+**Scheduled** ("Scheduled · goes out on..."): the article goes out by itself
+at a chosen time. From a draft, **Schedule publication…** opens a date and
+time field (in your computer's time; it proposes tomorrow at 9) and
+**Schedule** asks for confirmation. Until then readers cannot see it; then it
+goes out within a minute, dated at the scheduled time, so it sits at the top
+of the lists like a new article. Meanwhile you can correct it with **Save
+changes**, **Change date and time…**, **Publish now** or **Cancel the
+schedule** (back to draft). On the Articles page it has the "Scheduled"
+label, says when it goes out and has a filter of its own.
+
+The editor, while running, does the publishing: it checks every minute; every
+`build` also publishes the articles whose time has come. If the editor does
+not stay on (way A of chapter 2.5), a `cron` that rebuilds and uploads the
+site does the same job, for example every five minutes:
+`*/5 * * * * cd /path/to/pyblog && python3 pyblog.py build && rsync -az --delete output/ user@yourdomain.com:/var/www/blog/`.
+
 **Preview** opens the real page, with the site's styling, as it is in the
 editor at that moment, **without saving anything**. Publishing and
 unpublishing ask for confirmation. Under the buttons a line says when there
@@ -1078,7 +1094,8 @@ An article in `posts/<slug>.json`:
 | Field | Meaning |
 |---|---|
 | `title`, `slug`, `date`, `date_modified` | Title, address, creation date and date of the last change. |
-| `status` | `published` or `draft`. |
+| `status` | `published`, `draft` or `scheduled`. |
+| `publish_at` | For `scheduled`: the moment it goes out, in UTC (`2026-10-04T07:00:00+00:00`); empty in the other statuses. |
 | `content` | The text, in HTML. |
 | `description`, `preview` | The SEO description and the reader preview. |
 | `tags` | The tags, comma separated. |

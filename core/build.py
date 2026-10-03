@@ -23,7 +23,8 @@ from core import render
 from core.articles import (articles_visible_in_language, card_slug,
                            collect_tags, excerpt_from_html,
                            extract_article_tags, html_content_is_empty,
-                           load_articles, plain_text, slugify)
+                           load_articles, plain_text, publish_due_articles,
+                           slugify)
 from core.config import (CONFIG, CONFIG_DEFAULT, MEDIA_DIR, OUTPUT_DIR,
                          ai_training_config, archive_file_name,
                          articles_per_page_count, feed_file_name,
@@ -3173,6 +3174,9 @@ def _build_unlocked():
     # The folder of the secondary language.
     (OUTPUT_DIR / sec_folder / "posts").mkdir(parents=True, exist_ok=True)
 
+    # Scheduled articles whose moment has come go out with this build: a
+    # site rebuilt by cron, with no editor running, publishes them too.
+    publish_due_articles()
     tutti = load_articles()
     published_articles = [a for a in tutti if a.get("status") == "published"]
 

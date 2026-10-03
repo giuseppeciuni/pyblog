@@ -51,11 +51,15 @@
         <span class="solo-bozza"><strong>$label_stato_bozza</strong> &middot; $hint_stato_bozza</span>
         <span class="solo-pubblicato"><strong>$label_stato_pubblicato</strong> &middot;
           <a id="link-online" href="$url_online" target="_blank" rel="noopener">$label_vedi_online<span class="icona-esterna" aria-hidden="true"></span></a></span>
+        <span class="solo-programmato"><strong>$label_stato_programmato</strong> &middot;
+          <span id="programmato-quando">$esce_il</span></span>
       </p>
       <button type="button" id="btn-pubblica" class="pulsante pulsante-primario pulsante-largo solo-bozza"
               title="$tip_pubblica" onclick="publishArticle(this)">$label_pubblica</button>
       <button type="button" id="btn-aggiorna" class="pulsante pulsante-primario pulsante-largo solo-pubblicato"
               title="$tip_aggiorna" onclick="updateArticle(this)">$label_aggiorna</button>
+      <button type="button" id="btn-salva-programmato" class="pulsante pulsante-primario pulsante-largo solo-programmato"
+              onclick="saveScheduled(this)">$label_salva_modifiche</button>
       <div class="riga-azioni">
         <button type="button" id="btn-salva-bozza" class="pulsante solo-bozza"
                 title="$tip_salva_bozza" onclick="saveDraft(this)">$label_salva_bozza</button>
@@ -63,7 +67,22 @@
                 title="$tip_anteprima" onclick="previewArticle()">$label_anteprima<span class="icona-esterna" aria-hidden="true"></span></button>
       </div>
       <span id="autosave-status" class="pb-autosave" role="status" aria-live="polite"></span>
-      <button type="button" class="pulsante pulsante-testo pulsante-piccolo link-azione solo-pubblicato" onclick="unpublishArticle(this)">$label_ritira</button>
+      <div class="azioni-secondarie">
+        <button type="button" class="pulsante pulsante-testo pulsante-piccolo link-azione solo-pubblicato" onclick="unpublishArticle(this)">$label_ritira</button>
+        <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-programmato" onclick="publishNow(this)">$label_pubblica_ora</button>
+        <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-programmato" onclick="cancelSchedule(this)">$label_programma_annulla</button>
+        <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-bozza" id="btn-programma"
+                aria-expanded="false" aria-controls="programma-modulo" onclick="toggleScheduleForm(this)">$label_programma</button>
+        <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-programmato" id="btn-programma-cambia"
+                aria-expanded="false" aria-controls="programma-modulo" onclick="toggleScheduleForm(this)">$label_programma_cambia</button>
+      </div>
+      <div class="programma-modulo" id="programma-modulo" hidden>
+        <label for="publish_at">$label_programma_quando</label>
+        <input type="datetime-local" id="publish_at" aria-describedby="publish_at-aiuto">
+        <p class="hint" id="publish_at-aiuto">$hint_programma</p>
+        <button type="button" class="pulsante pulsante-primario pulsante-piccolo" id="btn-programma-conferma"
+                onclick="scheduleArticle(this)">$label_programma_conferma</button>
+      </div>
     </div>
 
     <h2>$label_sezione_metadati</h2>
