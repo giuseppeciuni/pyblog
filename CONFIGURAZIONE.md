@@ -34,7 +34,9 @@ Impostazioni. Ma se vuoi capirlo o modificarlo via SSH, ecco ogni parametro.
 |------------------|-----------------------------------------------------------------|
 | `home_content` | HTML della parte alta della homepage (biografia, presentazione). Si scrive con l'editor visuale, non a mano. |
 | `home_cards_enabled` | Interruttore generale del blocco delle card (default `true`). Con `false` l'intero blocco sparisce dalla homepage, qualunque cosa dicano le singole card, e le loro pagine non vengono generate. Si imposta anche dalla pagina Impostazioni, sezione "Pagine". |
-| `home_cards`      | Lista delle "card" editoriali (Biografia, Progetti, ecc.), elencate nel riquadro "Esplora" della barra laterale: ognuna ha la sua pagina. Ogni card ha `active` (true/false), `title` e `content`. Una card con `active` a `false`, o senza contenuto, non appare e non ha una sua pagina. |
+| `home_cards`      | Lista delle "card" editoriali (contatti, avvisi, ecc.), elencate nel riquadro "Esplora" della barra laterale: ognuna ha la sua pagina. Ogni card ha `active` (true/false), `title` e `content`. Una card con `active` a `false`, o senza contenuto, non appare e non ha una sua pagina. |
+| `biography`       | La biografia: `enabled` (default `false`), `position` (`"sidebar"`, `"top"` sopra gli articoli, `"bottom"` sotto; default `"sidebar"`), `photo` (vuota = la foto dell'autore in `seo.author_image`), `content` e `content_en` (HTML, si scrivono con l'editor). In home compaiono la foto e le prime righe; il testo intero va in `/pagine/biografia.html` (`/pagine/biography.html` se il sito e' in inglese). Una card con lo stesso nome viene saltata finche' la biografia e' accesa. Si imposta dalle Impostazioni, sezione "Biografia". |
+| `projects`        | I progetti: `enabled` (default `false`), `position` (come sopra, default `"top"`) e `items`, la lista dei progetti nell'ordine in cui compaiono. Ogni progetto ha `name`, `description`, `description_en`, `url`, `image` e `visible`; uno senza nome o con `visible` a `false` non compare. Si imposta dalle Impostazioni, sezione "Progetti". |
 
 ## SEO e dati dell'autore (`seo`)
 

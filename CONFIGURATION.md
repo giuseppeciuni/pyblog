@@ -35,7 +35,9 @@ is every parameter.
 |------------------|-------------------------------------------------------------------|
 | `home_content` | HTML of the top part of the homepage (biography, introduction). Written with the visual editor, not by hand. |
 | `home_cards_enabled` | Master switch of the cards block (default `true`). With `false` the whole block disappears from the homepage, whatever each card says, and their pages are not generated. Can also be set from the Settings page, "Pages" section. |
-| `home_cards`      | List of the editorial "cards" (Biography, Projects, etc.), listed in the "Explore" box of the sidebar: each one has a page of its own. Each card has `active` (true/false), `title` and `content`. A card with `active` set to `false`, or with no content, does not appear and has no page of its own. |
+| `home_cards`      | List of the editorial "cards" (contacts, notices, etc.), listed in the "Explore" box of the sidebar: each one has a page of its own. Each card has `active` (true/false), `title` and `content`. A card with `active` set to `false`, or with no content, does not appear and has no page of its own. |
+| `biography`       | The biography: `enabled` (default `false`), `position` (`"sidebar"`, `"top"` above the articles, `"bottom"` below them; default `"sidebar"`), `photo` (empty = the author's photo in `seo.author_image`), `content` and `content_en` (HTML, written with the editor). The homepage shows the photo and the first lines; the whole text goes to `/pagine/biography.html` (`/pagine/biografia.html` when the site is in Italian). A card with the same name is skipped while the biography is on. Set it from the Settings, "Biography" section. |
+| `projects`        | The projects: `enabled` (default `false`), `position` (as above, default `"top"`) and `items`, the list of projects in the order they show. Each project has `name`, `description`, `description_en`, `url`, `image` and `visible`; one without a name or with `visible` set to `false` does not show. Set it from the Settings, "Projects" section. |
 
 ## SEO and author data (`seo`)
 

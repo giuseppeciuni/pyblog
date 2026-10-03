@@ -92,7 +92,7 @@ Click "Settings". Here you set everything without touching code.
 
 The settings are split into sections, one per job, and the menu on the
 left lists them one under the other: "Site and author", "Homepage",
-"Pages", "Comments", "Translation", "Analytics and ads", "Cookies and
+"Biography", "Projects", "Pages", "Comments", "Translation", "Analytics and ads", "Cookies and
 privacy", "AI training", "Advanced". On a phone the page opens on the list
 of sections; inside a section, the arrow at the top goes back to the list.
 
@@ -129,16 +129,28 @@ opens from a button.
    Here you also set whether to highlight the latest article, how many words
    to show for the articles without a preview and how many articles to show
    per page (see "Pagination and archive" below).
-4. In "Pages" decide which pages to list in the "Explore" box of the
-   sidebar. Each page (Biography, Projects, Highlights, Service notices) has
+4. In "Biography" write who you are, with the visual editor, and choose a
+   photo (without one, the photo from "Site and author" is used). The
+   homepage shows the photo and the first lines, with "Read the biography"
+   leading to a page with the whole text. Choose where it goes: in the
+   sidebar, above or below the articles. Below there is the version in the
+   other language, which you can translate automatically.
+5. In "Projects" add a card for each project: name, a short description,
+   the link and, if you like, an image. The arrows change the order, the
+   "Show this project" checkbox hides it without deleting it. Above or
+   below the articles the projects are a grid, in the sidebar a list.
+   Biography and projects stay off until you tick "Show the biography" and
+   "Show the projects".
+6. In "Pages" decide which pages to list in the "Explore" box of the
+   sidebar. Each page (for example Highlights, Service notices) has
    its own "Show this card" checkbox: checked, it appears in "Explore" and
    gets a page of its own; unchecked, it disappears. The checkbox at the
    top, "Show the cards section", covers the whole block: uncheck it and
    they all go at once, and when you check it again every card comes back
    the way you left it.
-5. In "Comments" choose Giscus, Disqus or none
+7. In "Comments" choose Giscus, Disqus or none
    (see PART 5 for how to get the values).
-6. Click "Save and rebuild site". Done: the configuration is saved.
+8. Click "Save and rebuild site". Done: the configuration is saved.
 
 ### Step 2.4 — Write your first article
 

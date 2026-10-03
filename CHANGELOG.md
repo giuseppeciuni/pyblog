@@ -66,6 +66,15 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Biography and projects on the homepage.** Each has a section of its
+  own in the Settings and goes where the author wants it: in the sidebar,
+  above or below the articles. The biography shows the photo and its first
+  lines, with "Read the biography" leading to a page with the whole text,
+  translated too. The projects are cards with name, short description,
+  link and an optional image, which can be hidden and reordered: a grid in
+  the main column, a list in the sidebar. Both stay off until turned on,
+  and the placeholder Biography and Projects cards are gone from the
+  starting configuration, so they do not show twice.
 - **A side menu for the administration.** The top bar put pages and rare
   tools on the same level, and the tools came back as buttons on the
   dashboard. A side menu now keeps the pages at the top (Articles with

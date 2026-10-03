@@ -93,7 +93,7 @@ Clicca su "Impostazioni". Qui imposti tutto senza toccare codice.
 
 Le impostazioni sono divise in sezioni, una per cosa da fare, e nel menu
 a sinistra compaiono una sotto l'altra: "Sito e autore", "Home page",
-"Pagine", "Commenti", "Traduzione", "Statistiche e annunci", "Cookie e
+"Biografia", "Progetti", "Pagine", "Commenti", "Traduzione", "Statistiche e annunci", "Cookie e
 privacy", "Addestramento AI", "Avanzate". Sul telefono la pagina apre
 l'elenco delle sezioni; dentro una sezione, la freccia in alto torna
 all'elenco.
@@ -133,16 +133,29 @@ il menu si apre da un pulsante.
    evidenza l'ultimo articolo, quante parole mostrare per gli articoli
    senza anteprima e quanti articoli mostrare per pagina (vedi
    "Paginazione e archivio" piu' sotto).
-4. In "Pagine" decidi quali pagine elencare nel riquadro "Esplora" della
-   barra laterale. Ogni pagina (Biografia, Progetti, Informazioni in
+4. In "Biografia" scrivi chi sei, con l'editor visuale, e scegli una foto
+   (se non ne metti una si usa quella di "Sito e autore"). In home
+   compaiono la foto e le prime righe, con "Leggi la biografia" che porta a
+   una pagina con tutto il testo. Scegli dove metterla: nella barra
+   laterale, sopra o sotto gli articoli. Sotto c'e' la versione nell'altra
+   lingua, che puoi tradurre in automatico.
+5. In "Progetti" aggiungi una scheda per ogni progetto: nome, una
+   descrizione breve, il link e, se vuoi, un'immagine. Le frecce cambiano
+   l'ordine, la spunta "Mostra questo progetto" lo nasconde senza
+   cancellarlo. Sopra o sotto gli articoli i progetti sono una griglia,
+   nella barra laterale un elenco.
+   Biografia e progetti restano spenti finche' non spunti "Mostra la
+   biografia" e "Mostra i progetti".
+6. In "Pagine" decidi quali pagine elencare nel riquadro "Esplora" della
+   barra laterale. Ogni pagina (per esempio Informazioni in
    evidenza, Comunicazioni di servizio) ha la sua spunta "Mostra questa
    card": con la spunta compare in "Esplora" e ha una sua pagina, senza
    spunta sparisce. La spunta in cima, "Mostra la sezione delle card", vale
    per tutto il blocco: se la togli spariscono tutte insieme, e quando la
    rimetti ogni card torna come l'avevi lasciata.
-5. In "Commenti" scegli se usare Giscus, Disqus o nessuno
+7. In "Commenti" scegli se usare Giscus, Disqus o nessuno
    (vedi la PARTE 5 per come ottenere i dati).
-6. Clicca "Salva e rigenera sito". Fatto: la configurazione e' salvata.
+8. Clicca "Salva e rigenera sito". Fatto: la configurazione e' salvata.
 
 ### Passo 2.4 — Scrivi il tuo primo articolo
 
