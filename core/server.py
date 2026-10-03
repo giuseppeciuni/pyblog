@@ -439,6 +439,9 @@ def admin_navbar(active_page, language, articles_count=None):
         label_strumenti=T("admin_strumenti", language),
         icona_rigenera=icon(ICON_REBUILD),
         label_rigenera=T("admin_rigenera", language),
+        desc_rigenera=T("admin_rigenera_desc", language),
+        desc_backup=T("admin_backup_desc", language),
+        desc_vedi_sito=T("admin_vedi_sito_desc", language),
         icona_backup=icon(ICON_BACKUP),
         label_backup=T("admin_scarica_backup", language),
         icona_blog=icon(ICON_BLOG),
@@ -491,10 +494,11 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
 
 
 def alert_block(message, kind):
-    """A Bootstrap alert, or nothing when there is no message."""
+    """A message above a form ("danger" or "success"), or nothing."""
     if message == "":
         return ""
-    return f'<div class="alert alert-{kind} py-2">{esc(message)}</div>'
+    role = "alert" if kind == "danger" else "status"
+    return f'<p class="avviso avviso-{kind}" role="{role}">{esc(message)}</p>'
 
 
 def login_page(error_message=""):
@@ -521,6 +525,7 @@ def set_password_page(error_message=""):
         errore=alert_block(error_message, "danger"),
         label_nuova=T("admin_nuova_password", la),
         label_conferma=T("admin_conferma_password", la),
+        hint_lunghezza=T("admin_password_lunghezza", la),
         crea_accedi=T("admin_crea_accedi", la),
     )
     return admin_page_shell(T("admin_crea_password_titolo", la), contenuto, la)
@@ -532,6 +537,8 @@ def change_password_page(csrf, error_message="", success_message=""):
     contenuto = render.render(
         "admin/change_password.html",
         titolo=T("admin_cambia_password", la),
+        sottotitolo=T("admin_cambia_password_desc", la),
+        hint_lunghezza=T("admin_password_lunghezza", la),
         errore=alert_block(error_message, "danger"),
         successo=alert_block(success_message, "success"),
         csrf_token=esc(csrf),
@@ -682,7 +689,7 @@ def editor_page(art, csrf):
         menu_item = "articles"
         # Deleting sits at the very bottom of the sidebar, small: it used to
         # be a red button as big as Save, right under it.
-        delete_button = (f'<button type="button" class="btn-elimina-articolo" '
+        delete_button = (f'<button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo btn-elimina-articolo" '
                          f'onclick="deleteItem()">{T("admin_elimina_articolo", la)}</button>')
     else:
         art = {}
@@ -718,6 +725,9 @@ def editor_page(art, csrf):
         tip_table=esc(T("tip_table", la)),
         label_tabella=T("admin_inserisci_tabella", la),
         label_torna_articoli=T("admin_torna_articoli", la),
+        label_inserisci=T("admin_inserisci", la),
+        label_indirizzo=T("admin_indirizzo_slug", la),
+        hint_indirizzo=T("admin_indirizzo_slug_hint", la),
         stato=status,
         label_stato_bozza=T("admin_stato_bozza", la),
         hint_stato_bozza=T("admin_stato_bozza_hint", la),
@@ -739,17 +749,17 @@ def editor_page(art, csrf):
         label_tag=T("admin_tag", la),
         valore_tag=esc(art.get("tags", "")),
         label_immagine=T("admin_immagine_copertina", la),
-        hint_immagine=T("admin_immagine_copertina_hint", la),
+        hint_immagine=help_text(T("admin_immagine_copertina_hint", la)),
         valore_immagine=esc(art.get("image", "")),
         ph_immagine="https://... /media/...",
         label_carica_copertina=T("admin_carica_copertina", la),
         label_rimuovi_copertina=T("admin_rimuovi_copertina", la),
         label_anteprima_lettori=T("admin_anteprima_lettori", la),
-        hint_anteprima=T("admin_anteprima_hint", la),
+        hint_anteprima=help_text(T("admin_anteprima_hint", la)),
         valore_anteprima=esc(art.get("preview", "")),
         label_genera_anteprima=T("admin_genera_anteprima", la),
         label_descrizione_seo=T("admin_descrizione_seo", la),
-        hint_descrizione=T("admin_descrizione_hint", la),
+        hint_descrizione=help_text(T("admin_descrizione_hint", la)),
         valore_descrizione=esc(art.get("description", "")),
         label_suggerisci=T("admin_suggerisci_descrizione", la),
         label_analisi_seo=T("admin_analisi_seo", la),
@@ -759,7 +769,7 @@ def editor_page(art, csrf):
         label_autorizza=TL("admin_autorizza_traduzione", la),
         label_traduci=T("admin_traduci_auto", la),
         label_anteprima_en=TL("admin_anteprima_en", la),
-        hint_anteprima_en=TL("admin_anteprima_en_hint", la),
+        hint_anteprima_en=help_text(TL("admin_anteprima_en_hint", la)),
         label_conferma_traduzione=TL("admin_conferma_traduzione", la),
         codice_traduzione=secondary_language().upper(),
         label_codice_titolo=T("admin_codice_articolo_titolo", la),
@@ -1316,6 +1326,8 @@ def config_page(csrf):
         label_umami_id=T("admin_umami_id", la),
         hint_giscus="https://giscus.app",
         label_annulla_modifiche=T("admin_annulla_modifiche", la),
+        nota_salva=T("admin_salva_nota", la),
+        label_inserisci=T("admin_inserisci", la),
         label_parte_alta=T("admin_parte_alta_home", la),
         hint_parte_alta=T("admin_parte_alta_hint", la),
         tip_upload_image=esc(T("tip_upload_image", la)),

@@ -130,7 +130,8 @@ function pbConfirm(titolo, corpo, etichettaConferma, kind, quandoConfermato) {
   // confirming twice cannot fire the first action again.
   var conferma = vecchio.cloneNode(false);
   conferma.textContent = etichettaConferma;
-  conferma.className = 'btn btn-' + kind;
+  // The buttons of the shared family: a deleting action is red.
+  conferma.className = 'pulsante pulsante-primario' + (kind === 'danger' ? ' pulsante-pericolo' : '');
   vecchio.parentNode.replaceChild(conferma, vecchio);
 
   var istanza = bootstrap.Modal.getOrCreateInstance(finestra);
@@ -2849,6 +2850,7 @@ function updateSaveBar() {
   barra.hidden = !configModificata && (sezione === 'avanzate' || sezione === 'elenco');
   barra.classList.toggle('modificata', configModificata);
   document.getElementById('annulla-modifiche').hidden = !configModificata;
+  document.getElementById('salva-nota').hidden = configModificata;
   document.getElementById('save-status').textContent =
     configModificata ? t('js_modifiche_da_salvare') : '';
 }

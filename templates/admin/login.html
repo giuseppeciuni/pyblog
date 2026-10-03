@@ -1,18 +1,15 @@
-<div class="pb-box-centrato">
-  <div class="pb-box">
-    <div class="card pb-card shadow-sm">
-      <div class="card-body p-4">
-        <h1 class="h4 mb-1">$titolo</h1>
-        <p class="text-secondary small mb-4">$invito</p>
-        $errore
-        <form method="POST" action="/login">
-          <div class="mb-3">
-            <label for="password" class="form-label fw-semibold">$label_password</label>
-            <input type="password" class="form-control" id="password" name="password" autofocus>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">$accedi</button>
-        </form>
+<div class="accesso">
+  <div class="gruppo accesso-scatola">
+    <p class="accesso-marchio">PyBlog</p>
+    <h1 class="pagina-titolo">$titolo</h1>
+    <p class="aiuto">$invito</p>
+    $errore
+    <form method="POST" action="/login" class="accesso-modulo">
+      <div class="campo">
+        <label for="password">$label_password</label>
+        <input type="password" class="campo-input" id="password" name="password" autocomplete="current-password" autofocus required>
       </div>
-    </div>
+      <button type="submit" class="pulsante pulsante-primario pulsante-largo">$accedi</button>
+    </form>
   </div>
 </div>

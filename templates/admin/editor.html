@@ -1,6 +1,8 @@
 <div class="editor-wrap">
-<a class="torna-articoli" href="/admin">$label_torna_articoli</a>
-<h1 class="mb-3">$titolo_pagina_h1</h1>
+<div class="editor-testata">
+  <a class="sezione-occhiello torna-articoli" href="/admin">$label_torna_articoli</a>
+  <h1 class="pagina-titolo">$titolo_pagina_h1</h1>
+</div>
 
 <div class="editor-layout">
 
@@ -12,9 +14,10 @@
     <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
       <label class="mb-0" id="etichetta-contenuto">$label_contenuto</label>
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <button type="button" class="btn-importa-word" data-tooltip="$tip_import_docx"
+        <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_import_docx"
                 id="btn-importa-docx" onclick="document.getElementById('file-docx').click()">
-          <span aria-hidden="true">&#128462;</span> $label_importa_word
+          <svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+          $label_importa_word
         </button>
         <input type="file" id="file-docx" accept=".docx" style="display:none" aria-label="$label_importa_word"
                onchange="importDocx()">
@@ -24,11 +27,12 @@
     <p class="hint" style="margin:0.2rem 0 0">$hint_docx</p>
     <div id="editor" aria-labelledby="etichetta-contenuto"></div>
 
-    <div class="video-bar">
-      <button type="button" data-tooltip="$tip_upload_image" onclick="document.getElementById('file-image').click()">$label_carica_immagine</button>
-      <button type="button" data-tooltip="$tip_youtube" onclick="insertYoutube()">$label_youtube</button>
-      <button type="button" data-tooltip="$tip_upload_video" onclick="document.getElementById('file-video').click()">$label_carica_video</button>
-      <button type="button" data-tooltip="$tip_table" onclick="insertTable()">$label_tabella</button>
+    <div class="video-bar" role="group" aria-label="$label_inserisci">
+      <span class="video-bar-titolo" aria-hidden="true">$label_inserisci</span>
+      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_image" onclick="document.getElementById('file-image').click()">$label_carica_immagine</button>
+      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_youtube" onclick="insertYoutube()">$label_youtube</button>
+      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_video" onclick="document.getElementById('file-video').click()">$label_carica_video</button>
+      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_table" onclick="insertTable()">$label_tabella</button>
       <input type="file" id="file-image" aria-label="$label_carica_immagine" accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml, .svg, .png, .jpg, .jpeg, .gif, .webp" style="display:none" onchange="uploadImage()">
       <input type="file" id="file-video" aria-label="$label_carica_video" accept="video/mp4, video/webm, .mp4, .webm" style="display:none" onchange="uploadVideo()">
       <span id="upload-status" class="hint"></span>
@@ -48,23 +52,24 @@
         <span class="solo-pubblicato"><strong>$label_stato_pubblicato</strong> &middot;
           <a id="link-online" href="$url_online" target="_blank" rel="noopener">$label_vedi_online<span class="icona-esterna" aria-hidden="true"></span></a></span>
       </p>
-      <button type="button" id="btn-pubblica" class="btn-azione-primaria solo-bozza"
+      <button type="button" id="btn-pubblica" class="pulsante pulsante-primario pulsante-largo solo-bozza"
               title="$tip_pubblica" onclick="publishArticle(this)">$label_pubblica</button>
-      <button type="button" id="btn-aggiorna" class="btn-azione-primaria solo-pubblicato"
+      <button type="button" id="btn-aggiorna" class="pulsante pulsante-primario pulsante-largo solo-pubblicato"
               title="$tip_aggiorna" onclick="updateArticle(this)">$label_aggiorna</button>
       <div class="riga-azioni">
-        <button type="button" id="btn-salva-bozza" class="btn-azione solo-bozza"
+        <button type="button" id="btn-salva-bozza" class="pulsante solo-bozza"
                 title="$tip_salva_bozza" onclick="saveDraft(this)">$label_salva_bozza</button>
-        <button type="button" id="btn-anteprima" class="btn-azione"
+        <button type="button" id="btn-anteprima" class="pulsante"
                 title="$tip_anteprima" onclick="previewArticle()">$label_anteprima<span class="icona-esterna" aria-hidden="true"></span></button>
       </div>
       <span id="autosave-status" class="pb-autosave" role="status" aria-live="polite"></span>
-      <button type="button" class="link-azione solo-pubblicato" onclick="unpublishArticle(this)">$label_ritira</button>
+      <button type="button" class="pulsante pulsante-testo pulsante-piccolo link-azione solo-pubblicato" onclick="unpublishArticle(this)">$label_ritira</button>
     </div>
 
     <h2>$label_sezione_metadati</h2>
-    <label for="slug">Slug <span class="hint">(URL)</span></label>
-    <input type="text" id="slug" value="$valore_slug" placeholder="auto">
+    <label for="slug">$label_indirizzo</label>
+    <input type="text" id="slug" value="$valore_slug" placeholder="auto" aria-describedby="slug-aiuto">
+    <p class="hint" id="slug-aiuto">$hint_indirizzo</p>
 
     <label for="tags">$label_tag</label>
     <input type="text" id="tags" value="$valore_tag" placeholder="AI, Python">
@@ -75,9 +80,9 @@
       <input type="text" id="image" value="$valore_immagine"
              placeholder="$ph_immagine" aria-describedby="image-aiuto" oninput="updateCoverPreview()">
       <div class="copertina-azioni">
-        <button type="button" class="btn-suggerisci"
+        <button type="button" class="pulsante pulsante-piccolo"
                 onclick="document.getElementById('file-cover').click()">$label_carica_copertina</button>
-        <button type="button" class="btn-rimuovi-cover" id="btn-rimuovi-cover" hidden
+        <button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo" id="btn-rimuovi-cover" hidden
                 onclick="removeCoverImage()">$label_rimuovi_copertina</button>
         <span id="cover-status" class="hint"></span>
       </div>
@@ -92,7 +97,7 @@
       <textarea id="reader_preview" rows="6" maxlength="900" aria-describedby="reader_preview-aiuto" oninput="updatePreviewCounter()">$valore_anteprima</textarea>
       <div class="d-flex justify-content-between align-items-center" style="margin-top:0.2rem">
         <span class="hint" id="preview-counter"></span>
-        <button type="button" class="btn-suggerisci" onclick="generatePreview(this)">$label_genera_anteprima</button>
+        <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="generatePreview(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_genera_anteprima</button>
       </div>
       <span id="preview-status" class="hint"></span>
     </div>
@@ -103,7 +108,7 @@
       <textarea id="description" rows="6" maxlength="320" aria-describedby="description-aiuto" oninput="updateDescriptionCounter()">$valore_descrizione</textarea>
       <div class="d-flex justify-content-between align-items-center" style="margin-top:0.2rem">
         <span class="hint" id="description-counter"></span>
-        <button type="button" class="btn-suggerisci" onclick="suggestDescription(this)">$label_suggerisci</button>
+        <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="suggestDescription(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_suggerisci</button>
       </div>
       <span id="description-status" class="hint"></span>
     </div>
@@ -111,7 +116,7 @@
     <div class="card-campo">
       <h2>$label_analisi_seo</h2>
       <p class="hint" style="margin:0 0 0.3rem">$hint_analisi_seo</p>
-      <button type="button" id="seo-analyze-btn" class="btn-suggerisci" onclick="analyzeSeo()">$label_analizza</button>
+      <button type="button" id="seo-analyze-btn" class="pulsante pulsante-ai pulsante-piccolo" onclick="analyzeSeo()"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_analizza</button>
       <span id="seo-status" class="hint"></span>
       <div id="seo-results" style="display:none"></div>
     </div>
@@ -126,7 +131,7 @@
       <div id="lista-codice-proprio" class="lista-codice">
 $codice_proprio_html
       </div>
-      <button type="button" class="btn-suggerisci" onclick="addOwnCode()">$label_codice_proprio_aggiungi</button>
+      <button type="button" class="pulsante pulsante-piccolo" onclick="addOwnCode()">$label_codice_proprio_aggiungi</button>
       <!-- The blank card of the button: inert until cloned, see the Settings. -->
       <template id="codice-proprio-modello">
 $codice_proprio_modello
@@ -142,7 +147,7 @@ $codice_proprio_modello
 
       <div id="translation-block" style="display:none">
         <div class="translation-bar">
-          <button type="button" onclick="translateArticle(this)">$label_traduci</button>
+          <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="translateArticle(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_traduci</button>
           <span id="translation-status" class="hint"></span>
         </div>
 
@@ -159,7 +164,7 @@ $codice_proprio_modello
         <div id="editor-en" aria-labelledby="etichetta-contenuto-en"></div>
 
         <div class="translation-bar" style="margin-top:1rem">
-          <button type="button" onclick="previewTranslation()">$label_anteprima_en</button>
+          <button type="button" class="pulsante pulsante-piccolo" onclick="previewTranslation()">$label_anteprima_en<span class="icona-esterna" aria-hidden="true"></span></button>
           <span class="hint">$hint_anteprima_en</span>
         </div>
 

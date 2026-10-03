@@ -147,6 +147,9 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible {
 .pulsante.pulsante-ai:hover { background:var(--pb-ai-soft-strong); color:var(--pb-ai); }
 .pulsante.pulsante-pericolo { color:var(--pb-danger); }
 .pulsante.pulsante-pericolo.pulsante-testo:hover { background:var(--pb-danger-soft); }
+.pulsante-primario.pulsante-pericolo, .pulsante-primario.pulsante-pericolo:hover {
+  background:var(--pb-danger); border-color:var(--pb-danger); color:var(--pb-on-accent); }
+.pulsante-primario.pulsante-pericolo:hover { filter:brightness(0.92); }
 .pulsante-icona { width:var(--pb-control-height); padding:0; }
 .pulsante-largo { width:100%; }
 .pulsante-piccolo { min-height:32px; padding:0 0.75rem; font-size:0.875rem; }

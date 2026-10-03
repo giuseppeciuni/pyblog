@@ -12,6 +12,7 @@ What is worth checking is what each state offers, and that the preview - the
 one button that must never write - really writes nothing: previewing a
 published article used to save it, and so put its half-done changes online.
 """
+import re
 import http.server
 import json
 import pathlib
@@ -61,7 +62,8 @@ def test_pannello_per_stato():
     check('"Salva e chiudi" non c\'è più', "saveAndClose" not in bozza)
     check("Elimina sta in fondo alla barra, dopo la traduzione",
           bozza.rfind("btn-elimina-articolo") > bozza.rfind("translation-section"))
-    check("c'è il link per tornare agli articoli", 'class="torna-articoli" href="/admin"' in bozza)
+    check("c'è il link per tornare agli articoli",
+          re.search(r'class="[^"]*\btorna-articoli\b[^"]*" href="/admin"', bozza) is not None)
 
     nuovo = server.editor_page(None, "TOKEN")
     check("un articolo nuovo è una bozza, senza Elimina",

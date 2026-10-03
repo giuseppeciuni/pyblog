@@ -9,12 +9,12 @@ $voci
   <div class="menu-spazio"></div>
   <p class="menu-gruppo" id="menu-strumenti">$label_strumenti</p>
   <div class="menu-voci" role="group" aria-labelledby="menu-strumenti">
-    <button class="voce" type="button" onclick="rebuildSite(this)">$icona_rigenera<span class="voce-testo">$label_rigenera</span></button>
-    <a class="voce" href="/export">$icona_backup<span class="voce-testo">$label_backup</span></a>
+    <button class="voce" type="button" onclick="rebuildSite(this)">$icona_rigenera<span class="voce-testo">$label_rigenera<span class="voce-desc">$desc_rigenera</span></span></button>
+    <a class="voce" href="/export">$icona_backup<span class="voce-testo">$label_backup<span class="voce-desc">$desc_backup</span></span></a>
   </div>
   <div class="menu-separatore"></div>
   <div class="menu-voci">
-    <a class="voce" href="/" target="_blank" rel="noopener">$icona_blog<span class="voce-testo">$label_vedi_blog<span class="icona-esterna" aria-hidden="true"></span><span class="vh"> $label_nuova_scheda</span></span></a>
+    <a class="voce" href="/" target="_blank" rel="noopener">$icona_blog<span class="voce-testo">$label_vedi_blog<span class="icona-esterna" aria-hidden="true"></span><span class="vh"> $label_nuova_scheda</span><span class="voce-desc">$desc_vedi_sito</span></span></a>
     <a class="voce"$corrente_password href="/change-password">$icona_password<span class="voce-testo">$label_password</span></a>
     <button class="voce" type="button" lang="$prossima_lingua" onclick="changeAdminLanguage('$prossima_lingua')" aria-describedby="menu-lingua-aiuto">$icona_lingua<span class="voce-testo">$nome_prossima_lingua</span></button>
     <span class="vh" id="menu-lingua-aiuto">$label_lingua</span>
