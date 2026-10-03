@@ -1783,8 +1783,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return
         if path_value.exists() and path_value.is_file():
             self._send_file(path_value)
-        else:
-            self.send_error(404, "Generate the site first (the 'Rebuild site' button).")
+            return
+        # A missing page answers with the site's own 404 page, as nginx does
+        # online: the preview should show what readers will see.
+        not_found = OUTPUT_DIR / "404.html"
+        if not_found.is_file():
+            data = not_found.read_bytes()
+            self.send_response(404)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self._security_headers(False)
+            self.end_headers()
+            self.wfile.write(data)
+            return
+        self.send_error(404, "Generate the site first (the 'Rebuild site' button).")
 
     def _serve_admin_static(self, route):
         """

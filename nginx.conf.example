@@ -70,6 +70,10 @@ server {
         try_files $uri $uri/ =404;
     }
 
+    # A missing page shows the site's own 404 page (with the search and the
+    # latest articles) instead of nginx's bare one.
+    error_page 404 /404.html;
+
     location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg|woff2)$ {
         expires 30d;
         add_header Cache-Control "public, immutable";
