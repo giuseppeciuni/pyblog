@@ -183,7 +183,8 @@ JS_TRANSLATION_KEYS = (
     "js_ritira_titolo", "js_ritira_corpo", "js_titolo_per_pubblicare",
     "js_modifiche_da_salvare", "admin_annulla_modifiche",
     "js_annulla_modifiche_titolo", "js_annulla_modifiche_corpo",
-    "js_impostazioni_non_salvate", "js_aggiornato_alle",
+    "js_impostazioni_non_salvate", "admin_progetto_senza_nome",
+    "admin_progetto_elimina", "js_aggiornato_alle",
 )
 
 # Toolbar tooltips: CSS selector of the Quill button -> translated label.
@@ -343,6 +344,8 @@ ICON_LANGUAGE = ('<circle cx="12" cy="12" r="9"/>'
                  '<path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>')
 ICON_LOGOUT = '<path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l-4-4 4-4M6 12h10"/>'
 ICON_BACK = '<path d="M15 18l-6-6 6-6"/>'
+ICON_UP = '<path d="M12 19V5M5 12l7-7 7 7"/>'
+ICON_DOWN = '<path d="M12 5v14M19 12l-7 7-7-7"/>'
 ICON_NEXT = '<path d="M9 18l6-6-6-6"/>'
 
 # The sections of the Settings page, in the order of the menu: the things
@@ -350,6 +353,8 @@ ICON_NEXT = '<path d="M9 18l6-6-6-6"/>'
 CONFIG_SECTIONS = [
     ("sito", "admin_sez_sito"),
     ("home", "admin_sez_home"),
+    ("biografia", "admin_sez_biografia"),
+    ("progetti", "admin_sez_progetti"),
     ("pagine", "admin_sez_pagine"),
     ("commenti", "admin_sez_commenti"),
     ("traduzione", "admin_sez_traduzione"),
@@ -1122,6 +1127,40 @@ def checked_if(value):
     return ""
 
 
+def project_card(item, la):
+    """
+    The card of one project in the Settings. With item None it is the blank
+    card admin.js clones for "Add a project".
+    """
+    if item is None:
+        item = {"name": "", "description": "", "description_en": "",
+                "url": "", "image": "", "visible": True}
+    return render.render(
+        "admin/project_card.html",
+        checked=checked_if(item.get("visible", True)),
+        label_visibile=T("admin_progetto_visibile", la),
+        label_su=esc(T("admin_sposta_su", la)),
+        label_giu=esc(T("admin_sposta_giu", la)),
+        icona_su=icon(ICON_UP),
+        icona_giu=icon(ICON_DOWN),
+        label_elimina=T("admin_progetto_elimina", la),
+        label_nome=T("admin_progetto_nome", la),
+        nome=esc(item.get("name", "")),
+        label_descrizione=T("admin_progetto_descrizione", la),
+        descrizione=esc(item.get("description", "")),
+        hint_descrizione=T("admin_progetto_descrizione_hint", la),
+        label_descrizione_en=TL("admin_progetto_descrizione_en", la),
+        descrizione_en=esc(item.get("description_en", "")),
+        label_link=T("admin_progetto_link", la),
+        link=esc(item.get("url", "")),
+        hint_link=T("admin_progetto_link_hint", la),
+        label_immagine=T("admin_progetto_immagine", la),
+        immagine=esc(item.get("image", "")),
+        hint_immagine=T("admin_progetto_immagine_hint", la),
+        label_carica=T("admin_carica_immagine", la),
+    ).rstrip("\n")
+
+
 def help_text(text):
     """
     A hint written to sit in brackets after a label, turned into a sentence
@@ -1228,8 +1267,44 @@ def config_page(csrf):
     # html.escape on the placeholders too: they end up in an HTML attribute.
     ph = {k: esc(v) for k, v in ph.items()}
 
+    biography = build_module.biography_settings(config)
+    projects = build_module.projects_settings(config)
+    project_cards = [project_card(item, la) for item in projects["items"]]
+    empty_note_hidden = ""
+    if len(project_cards) > 0:
+        empty_note_hidden = " hidden"
+
     context = dict(
         titolo_impostazioni=T("admin_impostazioni", la),
+        checked_bio=checked_if(biography["enabled"]),
+        label_bio_attiva=T("admin_bio_attiva", la),
+        hint_bio_attiva=T("admin_bio_attiva_hint", la),
+        label_posizione_home=T("admin_posizione_home", la),
+        label_pos_sidebar=T("admin_pos_sidebar", la),
+        label_pos_top=T("admin_pos_top", la),
+        label_pos_bottom=T("admin_pos_bottom", la),
+        sel_bio_sidebar=selected_if(biography["position"], "sidebar"),
+        sel_bio_top=selected_if(biography["position"], "top"),
+        sel_bio_bottom=selected_if(biography["position"], "bottom"),
+        label_bio_foto=T("admin_bio_foto", la),
+        valore_bio_foto=esc(biography["photo"]),
+        hint_bio_foto=T("admin_bio_foto_hint", la),
+        label_carica_foto=T("admin_carica_foto", la),
+        label_rimuovi=T("admin_rimuovi", la),
+        label_bio_testo=T("admin_bio_testo", la),
+        label_bio_testo_en=TL("admin_bio_testo_en", la),
+        hint_bio_testo_en=TL("admin_bio_testo_en_hint", la),
+        checked_progetti=checked_if(projects["enabled"]),
+        label_progetti_attivi=T("admin_progetti_attivi", la),
+        hint_progetti_attivi=T("admin_progetti_attivi_hint", la),
+        sel_progetti_sidebar=selected_if(projects["position"], "sidebar"),
+        sel_progetti_top=selected_if(projects["position"], "top"),
+        sel_progetti_bottom=selected_if(projects["position"], "bottom"),
+        progetti_html="\n".join(project_cards),
+        progetti_vuoto_nascosto=empty_note_hidden,
+        label_progetti_vuoto=T("admin_progetti_vuoto", la),
+        label_progetto_aggiungi=T("admin_progetto_aggiungi", la),
+        progetto_modello=project_card(None, la),
         elenco_sezioni=config_sections_list(la),
         label_gr_sito=T("admin_gr_sito", la),
         label_gr_autore=T("admin_gr_autore", la),
@@ -1446,6 +1521,8 @@ def config_page(csrf):
         "home_content": config.get("home_content", ""),
         "home_content_en": config.get("home_content_en", ""),
         "card_contents": card_contents,
+        "bio_content": biography["content"],
+        "bio_content_en": biography["content_en"],
         "config_raw": json.dumps(config, ensure_ascii=False, indent=2),
         # "Ask everyone again" raises this number by one; the visitors'
         # browsers keep the number their choice was made under.

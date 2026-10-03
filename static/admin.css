@@ -634,3 +634,29 @@ select.campo-input { padding-right:2rem; }
   .menu-compatto .pannello-pubblica .btn-azione-primaria { grid-column:2; grid-row:3; width:auto; min-height:44px; }
   .menu-compatto .pannello-pubblica .btn-azione { min-height:44px; }
 }
+
+/* ===========================================================================
+   SETTINGS: biography and projects
+   =========================================================================== */
+
+#editor-bio { height:340px; background:#fff; }
+#editor-bio-en { height:280px; background:#fff; }
+.campo-foto { display:flex; gap:1rem; align-items:flex-start; }
+.campo-foto > .campo { flex:1; }
+.foto-anteprima { width:96px; height:96px; flex:none; border-radius:50%; object-fit:cover;
+                  border:1px solid var(--a-bordo); background:var(--a-sfondo); }
+.foto-anteprima[hidden] { display:none; }
+.lista-progetti { display:flex; flex-direction:column; gap:1.25rem; }
+.lista-progetti:empty { display:none; }
+.progetto-testata { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.5rem; }
+.progetto-azioni { display:flex; align-items:center; gap:0.25rem; }
+.impostazioni label.campo-spunta { display:flex; align-items:center; gap:0.6rem; font-size:1rem; cursor:pointer; }
+.impostazioni label.campo-spunta input { margin:0; }
+.progetto-config label.campo-etichettato > .etichetta { margin-top:0; }
+.progetto-anteprima { width:100%; max-width:16rem; aspect-ratio:16 / 9; object-fit:cover; min-width:0; min-height:0;
+                      border:1px solid var(--a-bordo); border-radius:8px; background:var(--a-sfondo); }
+.progetto-anteprima[hidden] { display:none; }
+.impostazioni .voce-pericolo { color:var(--a-pericolo); }
+@media (max-width: 520px) {
+  .campo-foto { flex-direction:column; }
+}

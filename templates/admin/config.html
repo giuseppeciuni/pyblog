@@ -165,6 +165,94 @@ $testata_home
   </div>
 </section>
 
+<section class="sezione" id="sezione-biografia" data-sezione="biografia" aria-labelledby="titolo-biografia" hidden>
+$testata_biografia
+  <div class="gruppo">
+    <div class="campo-spunta">
+      <input type="checkbox" id="bio_enabled" aria-describedby="bio_enabled-aiuto" $checked_bio>
+      <div>
+        <label for="bio_enabled">$label_bio_attiva</label>
+        <p class="aiuto" id="bio_enabled-aiuto">$hint_bio_attiva</p>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="bio_position">$label_posizione_home</label>
+      <select class="campo-input" id="bio_position">
+        <option value="sidebar" $sel_bio_sidebar>$label_pos_sidebar</option>
+        <option value="top" $sel_bio_top>$label_pos_top</option>
+        <option value="bottom" $sel_bio_bottom>$label_pos_bottom</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="gruppo">
+    <h2><label for="bio_photo">$label_bio_foto</label></h2>
+    <div class="campo-foto">
+      <img class="foto-anteprima" id="bio-photo-preview" alt="" hidden>
+      <div class="campo">
+        <input class="campo-input" type="text" id="bio_photo" value="$valore_bio_foto" aria-describedby="bio_photo-aiuto" oninput="updateBioPhotoPreview()">
+        <p class="aiuto" id="bio_photo-aiuto">$hint_bio_foto</p>
+        <div class="azioni">
+          <button type="button" class="pulsante" onclick="document.getElementById('file-bio-photo').click()">$label_carica_foto</button>
+          <button type="button" class="pulsante pulsante-testo" id="bio-photo-remove" onclick="removeBioPhoto()" hidden>$label_rimuovi</button>
+          <span id="bio-photo-status" class="hint" role="status"></span>
+        </div>
+        <input type="file" id="file-bio-photo" aria-label="$label_carica_foto" hidden onchange="uploadBioPhoto()"
+               accept="image/png, image/jpeg, image/gif, image/webp, .png, .jpg, .jpeg, .gif, .webp">
+      </div>
+    </div>
+  </div>
+
+  <div class="gruppo">
+    <h2 id="titolo-bio-testo">$label_bio_testo</h2>
+    <div id="editor-bio" aria-labelledby="titolo-bio-testo"></div>
+  </div>
+
+  <div class="gruppo">
+    <h2 id="titolo-bio-en">$label_bio_testo_en</h2>
+    <p class="aiuto" id="bio-en-aiuto">$hint_bio_testo_en</p>
+    <div class="translation-bar">
+      <button type="button" onclick="translateBiography(this)">$label_traduci_italiano</button>
+      <span id="bio-en-status" class="hint" role="status"></span>
+    </div>
+    <div id="editor-bio-en" aria-labelledby="titolo-bio-en" aria-describedby="bio-en-aiuto"></div>
+  </div>
+</section>
+
+<section class="sezione" id="sezione-progetti" data-sezione="progetti" aria-labelledby="titolo-progetti" hidden>
+$testata_progetti
+  <div class="gruppo">
+    <div class="campo-spunta">
+      <input type="checkbox" id="projects_enabled" aria-describedby="projects_enabled-aiuto" $checked_progetti>
+      <div>
+        <label for="projects_enabled">$label_progetti_attivi</label>
+        <p class="aiuto" id="projects_enabled-aiuto">$hint_progetti_attivi</p>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="projects_position">$label_posizione_home</label>
+      <select class="campo-input" id="projects_position">
+        <option value="sidebar" $sel_progetti_sidebar>$label_pos_sidebar</option>
+        <option value="top" $sel_progetti_top>$label_pos_top</option>
+        <option value="bottom" $sel_progetti_bottom>$label_pos_bottom</option>
+      </select>
+    </div>
+  </div>
+  <div id="lista-progetti" class="lista-progetti">
+$progetti_html
+  </div>
+  <p class="aiuto" id="progetti-vuoto-nota"$progetti_vuoto_nascosto>$label_progetti_vuoto</p>
+  <div class="azioni">
+    <button type="button" class="pulsante" onclick="addProject()">$label_progetto_aggiungi</button>
+  </div>
+  <input type="file" id="file-progetto" aria-label="$label_carica_immagine" hidden onchange="uploadProjectImage()"
+         accept="image/png, image/jpeg, image/gif, image/webp, .png, .jpg, .jpeg, .gif, .webp">
+  <!-- The blank card of "Add a project": inert until cloned. -->
+  <template id="progetto-modello">
+$progetto_modello
+  </template>
+</section>
+
 <section class="sezione" id="sezione-pagine" data-sezione="pagine" aria-labelledby="titolo-pagine" hidden>
 $testata_pagine
   <div class="gruppo">

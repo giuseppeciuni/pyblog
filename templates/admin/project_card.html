@@ -1,0 +1,34 @@
+  <div class="gruppo progetto-config">
+    <div class="progetto-testata">
+      <label class="campo-spunta"><input type="checkbox" class="progetto-visibile" $checked> <span>$label_visibile</span></label>
+      <div class="progetto-azioni">
+        <button type="button" class="pulsante pulsante-icona" onclick="moveProject(this, -1)" aria-label="$label_su" title="$label_su">$icona_su</button>
+        <button type="button" class="pulsante pulsante-icona" onclick="moveProject(this, 1)" aria-label="$label_giu" title="$label_giu">$icona_giu</button>
+        <button type="button" class="pulsante pulsante-testo voce-pericolo" onclick="removeProject(this)">$label_elimina</button>
+      </div>
+    </div>
+    <label class="campo-etichettato"><span class="etichetta">$label_nome</span>
+      <input type="text" class="progetto-nome" value="$nome" maxlength="120"></label>
+    <div class="campo">
+      <label class="campo-etichettato"><span class="etichetta">$label_descrizione</span>
+        <textarea class="progetto-descrizione" rows="2" maxlength="240">$descrizione</textarea></label>
+      <p class="aiuto">$hint_descrizione</p>
+    </div>
+    <label class="campo-etichettato"><span class="etichetta">$label_descrizione_en</span>
+      <textarea class="progetto-descrizione-en" rows="2" maxlength="240">$descrizione_en</textarea></label>
+    <div class="campo">
+      <label class="campo-etichettato"><span class="etichetta">$label_link</span>
+        <input type="url" class="progetto-link" value="$link" placeholder="https://"></label>
+      <p class="aiuto">$hint_link</p>
+    </div>
+    <div class="campo">
+      <label class="campo-etichettato"><span class="etichetta">$label_immagine</span>
+        <input type="text" class="progetto-immagine" value="$immagine" oninput="updateProjectPreview(this.closest('.progetto-config'))"></label>
+      <p class="aiuto">$hint_immagine</p>
+      <div class="azioni">
+        <button type="button" class="pulsante" onclick="chooseProjectImage(this)">$label_carica</button>
+        <span class="hint progetto-stato" role="status"></span>
+      </div>
+      <img class="progetto-anteprima" alt="" hidden>
+    </div>
+  </div>

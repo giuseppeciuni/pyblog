@@ -736,3 +736,73 @@ body.zoom-aperto { overflow:hidden; }
   .consenso-pulsanti { justify-content:stretch; }
   .consenso-pulsante { flex:1 1 auto; }
 }
+
+/* --- Biography and projects on the homepage --------------------------------
+   Both can sit in the sidebar (a box like the others) or in the main column,
+   above or below the articles (a section with its own heading). */
+.home-sezione { margin:0 0 2rem; }
+.home-sezione-titolo {
+  font-size:0.78rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--secondario); margin:0 0 0.8rem;
+}
+/* After the list of articles the section needs room from the pagination. */
+.articles-section + .home-sezione { margin-top:2.5rem; }
+
+.bio-breve { display:flex; gap:1rem; align-items:flex-start; }
+.bio-foto { flex:0 0 auto; width:72px; height:72px; min-width:0; border-radius:50%; object-fit:cover; }
+.bio-testo { min-width:0; }
+.bio-estratto { margin:0; line-height:1.6; }
+.bio-link { margin:0.5rem 0 0; }
+.bio-link a { text-decoration:none; font-weight:600; }
+.bio-link a:hover { text-decoration:underline; }
+/* In the main column the biography is a card, like the articles. */
+.home-biografia .bio-breve {
+  background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px; padding:1.1rem 1.2rem;
+}
+.home-biografia .bio-foto { width:96px; height:96px; }
+/* In the sidebar the photo goes on top, the box is narrow. */
+.box-biografia .bio-breve { flex-direction:column; gap:0.7rem; }
+.box-biografia .bio-foto { width:64px; height:64px; }
+@media (max-width: 520px) {
+  .home-biografia .bio-breve { flex-direction:column; }
+}
+/* The photo on the biography page, beside the start of the text. */
+.card-page .bio-pagina-foto {
+  float:right; width:160px; height:160px; object-fit:cover; border-radius:50%;
+  margin:0 0 1rem 1.5rem; box-shadow:0 6px 20px rgba(0,0,0,0.08);
+}
+@media (max-width: 520px) {
+  .card-page .bio-pagina-foto { float:none; display:block; width:120px; height:120px; margin:0 0 1rem; }
+}
+
+.progetti-griglia {
+  list-style:none; margin:0; padding:0;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(14rem, 1fr)); gap:1rem;
+}
+.progetto { position:relative; min-width:0; }
+.progetti-griglia .progetto {
+  background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px;
+  padding:1rem 1.1rem; display:flex; flex-direction:column; gap:0.4rem;
+  transition:box-shadow 0.15s ease, transform 0.15s ease;
+}
+.progetti-griglia .progetto:has(a):hover { box-shadow:0 6px 20px rgba(0,0,0,0.08); transform:translateY(-1px); }
+.progetto-immagine {
+  width:100%; aspect-ratio:16 / 9; min-width:0; min-height:0; object-fit:cover; border-radius:8px;
+  background:var(--bordo);
+}
+.progetto-nome { margin:0; font-size:1.02rem; line-height:1.35; }
+.progetto-nome a { color:var(--testo); text-decoration:none; }
+.progetto-nome a:hover { color:var(--link); }
+/* The name's link covers the whole card. */
+.progetti-griglia .progetto-nome a::after { content:""; position:absolute; inset:0; border-radius:12px; }
+.progetto-nome a:focus-visible { outline:none; }
+.progetti-griglia .progetto:has(a:focus-visible) { outline:3px solid var(--link); outline-offset:2px; }
+.progetto-descrizione { margin:0; color:var(--secondario); font-size:0.92rem; line-height:1.5; }
+/* In the sidebar: a compact list, the image as a small thumbnail. */
+.progetti-lista { list-style:none; margin:0; padding:0; display:grid; gap:0.8rem; }
+.progetti-lista .progetto { display:grid; grid-template-columns:auto 1fr; column-gap:0.7rem; }
+.progetti-lista .progetto-immagine { grid-row:span 2; width:48px; height:48px; aspect-ratio:auto; }
+.progetti-lista .progetto-nome { font-size:0.95rem; }
+.progetti-lista .progetto-nome a { color:var(--link); font-weight:600; }
+.progetti-lista .progetto-descrizione { font-size:0.82rem; grid-column:2; }
+.progetti-lista .progetto:not(:has(.progetto-immagine)) { display:block; }

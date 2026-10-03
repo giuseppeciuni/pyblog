@@ -224,17 +224,9 @@ CONFIG_DEFAULT = {
     # Editorial cards of the homepage, shown below the introduction.
     # Each card has a title and HTML content (written with the editor).
     # You can enable/disable and edit them from the Settings page.
+    # The biography and the projects have sections of their own (below), so
+    # they are not among the starting cards: they would show twice.
     "home_cards": [
-        {
-            "active": True,
-            "title": "Biografia",
-            "content": "<p>Racconta qui chi sei, la tua esperienza e di cosa ti occupi.</p>",
-        },
-        {
-            "active": True,
-            "title": "Progetti",
-            "content": "<p>Elenca qui i tuoi progetti principali, con una breve descrizione di ciascuno.</p>",
-        },
         {
             "active": True,
             "title": "Informazioni in evidenza",
@@ -246,6 +238,27 @@ CONFIG_DEFAULT = {
             "content": "<p>Usa questo spazio per avvisi importanti ai lettori.</p>",
         },
     ],
+
+    # The biography: a few lines and the photo on the homepage, with a link
+    # to the page that holds it whole. position is "sidebar", "top" (above
+    # the articles) or "bottom" (below them). Off until the author turns it on.
+    "biography": {
+        "enabled": False,
+        "position": "sidebar",
+        "photo": "",
+        "content": "",
+        "content_en": "",
+    },
+
+    # The projects: one card each, in a grid on the homepage (a list when
+    # they sit in the sidebar). Every item has name, description,
+    # description_en, url, image and visible; the order of the list is the
+    # order on the page. Off until the author turns it on.
+    "projects": {
+        "enabled": False,
+        "position": "top",
+        "items": [],
+    },
 }
 
 

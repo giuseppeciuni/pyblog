@@ -2637,6 +2637,8 @@ function deleteItem() {
 
 var quillHome = null;
 var quillHomeEn = null;
+var quillBio = null;
+var quillBioEn = null;
 var editorCard = [];
 var configRawIniziale = '';
 
@@ -2679,6 +2681,27 @@ function initConfigPage() {
     handlePastedImages(editorCardSingolo, null);
     editorCard.push(editorCardSingolo);
   }
+
+  // The biography: the whole text, and its translation.
+  quillBio = new Quill('#editor-bio', {
+    theme: 'snow',
+    modules: { blotFormatter: {}, toolbar: TOOLBAR_HOME }
+  });
+  quillBio.root.innerHTML = pbPage('bio_content', '');
+  quillBio.update(Quill.sources.SILENT);
+  attachImageOverlay(quillBio);
+  handlePastedImages(quillBio, null);
+  quillBioEn = new Quill('#editor-bio-en', {
+    theme: 'snow',
+    modules: { blotFormatter: {}, toolbar: TOOLBAR_HOME }
+  });
+  quillBioEn.root.innerHTML = pbPage('bio_content_en', '');
+  quillBioEn.update(Quill.sources.SILENT);
+  attachImageOverlay(quillBioEn);
+  handlePastedImages(quillBioEn, null);
+  updateBioPhotoPreview();
+  var progetti = document.querySelectorAll('#lista-progetti .progetto-config');
+  for (var pr = 0; pr < progetti.length; pr++) { updateProjectPreview(progetti[pr]); }
 
   applyToolbarTooltips();
 
@@ -2793,12 +2816,15 @@ function watchConfigChanges() {
   };
   pagina.addEventListener('input', segna);
   pagina.addEventListener('change', segna);
-  var editors = [quillHome, quillHomeEn].concat(editorCard);
+  var editors = [quillHome, quillHomeEn, quillBio, quillBioEn].concat(editorCard);
   for (var i = 0; i < editors.length; i++) {
     editors[i].on('text-change', markConfigDirty);
   }
   new MutationObserver(markConfigDirty)
     .observe(document.getElementById('lista-codice'), { childList: true });
+  // Adding, removing and moving a project changes the list itself.
+  new MutationObserver(markConfigDirty)
+    .observe(document.getElementById('lista-progetti'), { childList: true });
 
   window.addEventListener('beforeunload', function(evento) {
     if (!configModificata) { return undefined; }
@@ -2838,29 +2864,170 @@ function discardConfigChanges() {
 
 // Translates the home introduction from Italian to English with AI.
 function translateHome(pulsante) {
-  if (quillHome.getText().trim() === '') {
-    pbStatus('home-en-status', t('js_write_intro_first'));
+  translateEditorInto(pulsante, quillHome, quillHomeEn, 'home-en-status');
+}
+
+// Translates the biography the same way.
+function translateBiography(pulsante) {
+  translateEditorInto(pulsante, quillBio, quillBioEn, 'bio-en-status');
+}
+
+// Sends the text of one editor to the translation service and puts the
+// result into the other one.
+function translateEditorInto(pulsante, origine, destinazione, idStato) {
+  if (origine.getText().trim() === '') {
+    pbStatus(idStato, t('js_write_intro_first'));
     return;
   }
   pbBusy(pulsante, true);
-  pbStatus('home-en-status', t('js_translating'));
+  pbStatus(idStato, t('js_translating'));
 
-  pbPostJson('/translate', { text: quillHome.root.innerHTML })
+  pbPostJson('/translate', { text: origine.root.innerHTML })
     .then(function(res) {
       pbBusy(pulsante, false);
       if (res.ok === true) {
-        quillHomeEn.root.innerHTML = res.text;
-        pbStatus('home-en-status',
+        destinazione.root.innerHTML = res.text;
+        pbStatus(idStato,
           avvisoMedia(t('js_translated_home'), res.media_recovered || 0));
       } else {
-        pbStatus('home-en-status', t('js_error_prefix') + res.error);
+        pbStatus(idStato, t('js_error_prefix') + res.error);
       }
     })
     .catch(function() {
       pbBusy(pulsante, false);
-      pbStatus('home-en-status', '');
+      pbStatus(idStato, '');
       pbToast(t('js_net_error_translation'), 'danger');
     });
+}
+
+/* --- Settings: the biography's photo ------------------------------------- */
+
+function updateBioPhotoPreview() {
+  var indirizzo = document.getElementById('bio_photo').value.trim();
+  var anteprima = document.getElementById('bio-photo-preview');
+  document.getElementById('bio-photo-remove').hidden = indirizzo === '';
+  if (indirizzo === '') {
+    anteprima.removeAttribute('src');
+    anteprima.hidden = true;
+    return;
+  }
+  anteprima.src = indirizzo;
+  anteprima.hidden = false;
+}
+
+function uploadBioPhoto() {
+  uploadChosenFile('file-bio-photo', pbPage('max_image_mb', 10), 'bio-photo-status',
+                   t('js_uploading_image'))
+    .then(function(url) {
+      if (url === null) { return; }
+      document.getElementById('bio_photo').value = url;
+      updateBioPhotoPreview();
+      markConfigDirty();
+      pbStatus('bio-photo-status', t('js_image_uploaded'));
+    });
+}
+
+// Clears the photo; the file stays in the media folder, as for the covers.
+function removeBioPhoto() {
+  document.getElementById('bio_photo').value = '';
+  updateBioPhotoPreview();
+  markConfigDirty();
+  pbStatus('bio-photo-status', '');
+}
+
+/* --- Settings: the projects ---------------------------------------------- */
+
+// A new project starts as the blank card of the template, at the end of the
+// list, with the cursor on its name.
+function addProject() {
+  var modello = document.getElementById('progetto-modello');
+  var card = modello.content.firstElementChild.cloneNode(true);
+  document.getElementById('lista-progetti').appendChild(card);
+  updateProjectsNote();
+  card.querySelector('.progetto-nome').focus();
+}
+
+// Moves a project one place up or down: the order of the list is the order
+// on the homepage. The focus stays on the button that was pressed.
+function moveProject(pulsante, passo) {
+  var card = pulsante.closest('.progetto-config');
+  var lista = card.parentNode;
+  if (passo < 0 && card.previousElementSibling) {
+    lista.insertBefore(card, card.previousElementSibling);
+  } else if (passo > 0 && card.nextElementSibling) {
+    lista.insertBefore(card.nextElementSibling, card);
+  }
+  pulsante.focus();
+}
+
+function removeProject(pulsante) {
+  var card = pulsante.closest('.progetto-config');
+  var nome = card.querySelector('.progetto-nome').value.trim() || t('admin_progetto_senza_nome');
+  pbConfirm(t('admin_progetto_elimina'), nome, t('admin_progetto_elimina'), 'danger',
+    function() {
+      card.remove();
+      updateProjectsNote();
+    });
+}
+
+function updateProjectsNote() {
+  document.getElementById('progetti-vuoto-nota').hidden =
+    document.querySelectorAll('#lista-progetti .progetto-config').length > 0;
+}
+
+// One file field serves every card: it remembers which card asked.
+var progettoInCaricamento = null;
+
+function chooseProjectImage(pulsante) {
+  progettoInCaricamento = pulsante.closest('.progetto-config');
+  document.getElementById('file-progetto').click();
+}
+
+function uploadProjectImage() {
+  var card = progettoInCaricamento;
+  if (card === null) { return; }
+  var stato = card.querySelector('.progetto-stato');
+  stato.id = 'progetto-stato-attivo';
+  uploadChosenFile('file-progetto', pbPage('max_image_mb', 10), 'progetto-stato-attivo',
+                   t('js_uploading_image'))
+    .then(function(url) {
+      stato.removeAttribute('id');
+      if (url === null) { return; }
+      card.querySelector('.progetto-immagine').value = url;
+      updateProjectPreview(card);
+      markConfigDirty();
+      stato.textContent = t('js_image_uploaded');
+    });
+}
+
+function updateProjectPreview(card) {
+  var indirizzo = card.querySelector('.progetto-immagine').value.trim();
+  var anteprima = card.querySelector('.progetto-anteprima');
+  if (indirizzo === '') {
+    anteprima.removeAttribute('src');
+    anteprima.hidden = true;
+    return;
+  }
+  anteprima.src = indirizzo;
+  anteprima.hidden = false;
+}
+
+// The projects as they are saved, in the order of the list.
+function projectsData() {
+  var carte = document.querySelectorAll('#lista-progetti .progetto-config');
+  var elenco = [];
+  for (var i = 0; i < carte.length; i++) {
+    var c = carte[i];
+    elenco.push({
+      name: c.querySelector('.progetto-nome').value.trim(),
+      description: c.querySelector('.progetto-descrizione').value.trim(),
+      description_en: c.querySelector('.progetto-descrizione-en').value.trim(),
+      url: c.querySelector('.progetto-link').value.trim(),
+      image: c.querySelector('.progetto-immagine').value.trim(),
+      visible: c.querySelector('.progetto-visibile').checked
+    });
+  }
+  return elenco;
 }
 
 // Shows only the field group of the chosen comment system.
@@ -3422,6 +3589,18 @@ function saveConfig(pulsante) {
     home_content: quillHome.root.innerHTML,
     home_content_en: quillHomeEn.root.innerHTML,
     home_cards_enabled: document.getElementById('home_cards_enabled').checked,
+    biography: {
+      enabled: document.getElementById('bio_enabled').checked,
+      position: document.getElementById('bio_position').value,
+      photo: document.getElementById('bio_photo').value.trim(),
+      content: quillBio.root.innerHTML,
+      content_en: quillBioEn.root.innerHTML
+    },
+    projects: {
+      enabled: document.getElementById('projects_enabled').checked,
+      position: document.getElementById('projects_position').value,
+      items: projectsData()
+    },
     home_cards: cardDati,
     custom_code: customCodeData(document.getElementById('lista-codice'), 'snip'),
     ads_txt: document.getElementById('ads_txt').value.trim(),

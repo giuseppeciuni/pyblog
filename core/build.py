@@ -1529,7 +1529,7 @@ def sidebar_ads(page_kind, article):
 
 
 def build_sidebar(language, page_kind, articles, article=(), toc_html="",
-                  intro=""):
+                  intro="", biography="", projects=""):
     """
     The sidebar of a page.
 
@@ -1537,14 +1537,18 @@ def build_sidebar(language, page_kind, articles, article=(), toc_html="",
     code, the cards, the follow links. Article: the author, the sidebar
     code, and the table of contents last, because it is the one that stays
     on screen while the article scrolls. Other pages: the author, the code,
-    the cards, the topics and the follow links.
+    the cards, the topics and the follow links. The homepage can also hold
+    the biography (after the introduction) and the projects (after the
+    sidebar code), when the author put them there.
     """
     parts = []
     if intro != "":
         parts.append(sidebar_box("box-intro", "", intro))
-    else:
+    elif biography == "":
         parts.append(profile_box(language))
+    parts.append(biography)
     parts.append(sidebar_ads(page_kind, article))
+    parts.append(projects)
     if page_kind == "article" and toc_html != "":
         parts.append(toc_html)
         return "\n".join(part for part in parts if part != "")
@@ -1891,14 +1895,243 @@ def published_home_cards():
     """
     if not home_cards_enabled():
         return []
+    # A card named like the biography would write its page over the
+    # biography's: while the biography is online, the biography wins.
+    taken = ""
+    if biography_published():
+        taken = biography_slug()
     published = []
     for card in CONFIG.get("home_cards", []):
         if not card.get("active", False):
             continue
         if html_content_is_empty(card.get("content", "")):
             continue
+        if taken != "" and card_slug(card.get("title", "")) == taken:
+            continue
         published.append(card)
     return published
+
+
+# ---------------------------------------------------------------------------
+# BIOGRAPHY AND PROJECTS
+# ---------------------------------------------------------------------------
+
+# Where the biography and the projects can sit on the homepage.
+HOME_POSITIONS = ("sidebar", "top", "bottom")
+
+
+def home_position(value, default):
+    """A position from the configuration, or the default when it is not one."""
+    if value in HOME_POSITIONS:
+        return value
+    return default
+
+
+def text_setting(value):
+    """A text value of the configuration, whatever was saved in its place."""
+    if not isinstance(value, str):
+        return ""
+    return value.strip()
+
+
+def safe_link(url):
+    """
+    An address fit for a link: http, https, mailto or a path on the site.
+    Anything else - a javascript: address above all - becomes "".
+    """
+    url = text_setting(url)
+    if url == "":
+        return ""
+    lowered = url.lower()
+    if lowered.startswith(("http://", "https://", "mailto:", "/", "#")):
+        return url
+    if ":" in url.split("/")[0]:
+        return ""
+    return url
+
+
+def biography_settings(config=None):
+    """
+    The biography block of the configuration, with its defaults filled in.
+    The form saves it as it is, so every value is checked here.
+    """
+    if config is None:
+        config = CONFIG
+    value = config.get("biography", {})
+    if not isinstance(value, dict):
+        value = {}
+    return {
+        "enabled": value.get("enabled", False) is True,
+        "position": home_position(value.get("position"), "sidebar"),
+        "photo": text_setting(value.get("photo", "")),
+        "content": value.get("content", "") if isinstance(value.get("content"), str) else "",
+        "content_en": value.get("content_en", "") if isinstance(value.get("content_en"), str) else "",
+    }
+
+
+def biography_published():
+    """The biography goes online when it is switched on and has a text."""
+    bio = biography_settings()
+    return bio["enabled"] and not html_content_is_empty(bio["content"])
+
+
+def biography_slug():
+    """The file name of the biography page, in the site's main language."""
+    return card_slug(T("biografia", main_language()))
+
+
+def biography_content(language):
+    """The biography in a language, or in the main one when not translated."""
+    bio = biography_settings()
+    if language != main_language() and not html_content_is_empty(bio["content_en"]):
+        return bio["content_en"]
+    return bio["content"]
+
+
+def biography_photo_html(css_class):
+    """The photo of the biography, the author's one when it has none of its own."""
+    photo = biography_settings()["photo"] or seo_data().get("author_image", "")
+    if photo == "":
+        return ""
+    return (f'<img class="{css_class}" src="{esc(photo)}" '
+            f'alt="{esc(CONFIG.get("author", ""))}" loading="lazy">')
+
+
+def biography_page_url(language):
+    """The address of the biography page in a language."""
+    return f"{language_url_prefix(language)}/pagine/{biography_slug()}.html"
+
+
+def biography_home_html(language):
+    """
+    The biography on the homepage: the photo, its first lines and the link to
+    the whole of it. A box in the sidebar, a section in the main column.
+    """
+    photo = biography_photo_html("bio-foto")
+    if photo != "":
+        photo = photo + "\n          "
+    # The sidebar is narrow: fewer words, or the box outgrows the others.
+    words = 45
+    if biography_settings()["position"] == "sidebar":
+        words = 30
+    inner = render.render(
+        "public/biografia_breve.html",
+        foto=photo,
+        estratto=esc(excerpt_words(biography_content(language), words)),
+        url_pagina=biography_page_url(language),
+        leggi=T("leggi_biografia", language),
+    )
+    if biography_settings()["position"] == "sidebar":
+        return sidebar_box("box-biografia", T("biografia", language), inner)
+    return render.render("public/home_sezione.html", classe="home-biografia",
+                         id_titolo="titolo-biografia", titolo=T("biografia", language),
+                         contenuto=inner).rstrip("\n")
+
+
+def projects_settings(config=None):
+    """
+    The projects block of the configuration, with its defaults filled in and
+    every item checked: a project needs at least a name.
+    """
+    if config is None:
+        config = CONFIG
+    value = config.get("projects", {})
+    if not isinstance(value, dict):
+        value = {}
+    items = []
+    raw_items = value.get("items", [])
+    if not isinstance(raw_items, list):
+        raw_items = []
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        items.append({
+            "name": text_setting(item.get("name", "")),
+            "description": text_setting(item.get("description", "")),
+            "description_en": text_setting(item.get("description_en", "")),
+            "url": text_setting(item.get("url", "")),
+            "image": text_setting(item.get("image", "")),
+            "visible": item.get("visible", True) is not False,
+        })
+    return {
+        "enabled": value.get("enabled", False) is True,
+        "position": home_position(value.get("position"), "top"),
+        "items": items,
+    }
+
+
+def published_projects():
+    """The projects that show: the block switched on, the item visible and named."""
+    settings = projects_settings()
+    if not settings["enabled"]:
+        return []
+    return [item for item in settings["items"] if item["visible"] and item["name"] != ""]
+
+
+def projects_home_html(language):
+    """The projects on the homepage: a grid in the main column, a list in the sidebar."""
+    projects = published_projects()
+    if len(projects) == 0:
+        return ""
+    rows = []
+    for item in projects:
+        name = esc(item["name"])
+        link = safe_link(item["url"])
+        if link != "":
+            name = f'<a href="{esc(link)}">{name}</a>'
+        image = ""
+        if item["image"] != "":
+            image = (f'<img class="progetto-immagine" src="{esc(item["image"])}" '
+                     'alt="" loading="lazy">\n            ')
+        description = item["description"]
+        if language != main_language() and item["description_en"] != "":
+            description = item["description_en"]
+        if description != "":
+            description = f'<p class="progetto-descrizione">{esc(description)}</p>\n          '
+        rows.append(render.render("public/progetto.html", immagine=image, nome=name,
+                                  descrizione=description).rstrip("\n"))
+    if projects_settings()["position"] == "sidebar":
+        return sidebar_box("box-progetti", T("progetti", language),
+                           '        <ul class="progetti-lista">\n' + "\n".join(rows)
+                           + "\n        </ul>")
+    return render.render("public/home_sezione.html", classe="home-progetti",
+                         id_titolo="titolo-progetti", titolo=T("progetti", language),
+                         contenuto='        <ul class="progetti-griglia">\n' + "\n".join(rows)
+                         + "\n        </ul>\n").rstrip("\n")
+
+
+def generate_biography_page(language="it", articles=None):
+    """The page with the whole biography, in the same frame as the cards' pages."""
+    if articles is None:
+        articles = []
+    title_value = T("biografia", language)
+    content = biography_content(language)
+    photo = biography_photo_html("bio-pagina-foto")
+    if photo != "":
+        photo = photo + "\n        "
+    prefix = language_url_prefix(language)
+    principale = render.render(
+        "public/card_page.html",
+        url_home=prefix + "/",
+        label_home=T("home", language),
+        titolo=esc(title_value),
+        contenuto_card=photo + add_lazy_loading(content),
+        torna_home=T("torna_homepage", language),
+    )
+    contenuto = two_columns(principale, build_sidebar(language, "card", articles), language)
+    url_canonico = CONFIG["base_url"] + biography_page_url(language)
+    meta_extra = "\n".join([
+        f'  <meta name="description" content="{esc(excerpt_from_html(content, 150))}">',
+        f'  <link rel="canonical" href="{url_canonico}">',
+        f'  <meta property="og:title" content="{esc(title_value)}">',
+        '  <meta property="og:type" content="profile">',
+    ])
+    return render_page(
+        language,
+        f"{esc(title_value)} &middot; {esc(CONFIG['site_title'])}",
+        contenuto,
+        meta_extra=meta_extra,
+    )
 
 
 def article_card_fields(art, language):
@@ -2020,16 +2253,40 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
     intro = ""
     if page == 1:
         intro = home_intro_html(language)
-    principale = articles_block
+    above = []
+    below = []
     sidebar_intro = ""
     if intro != "" and home_intro_position() == "top":
-        principale = block(intro) + articles_block
+        above.append(intro)
     elif intro != "":
         sidebar_intro = intro
 
+    # The biography and the projects, on the first page only like the
+    # introduction, wherever the author put them.
+    side = {"biography": "", "projects": ""}
+    if page == 1:
+        pieces = []
+        if biography_published():
+            pieces.append(("biography", biography_settings()["position"],
+                           biography_home_html(language)))
+        projects_html = projects_home_html(language)
+        if projects_html != "":
+            pieces.append(("projects", projects_settings()["position"], projects_html))
+        for name, position, html_piece in pieces:
+            if position == "sidebar":
+                side[name] = html_piece
+            elif position == "top":
+                above.append(html_piece)
+            else:
+                below.append(html_piece)
+
+    principale = "".join(block(piece) for piece in above) + articles_block
+    principale = principale + "".join(block(piece) for piece in below)
+
     contenuto = two_columns(
         principale,
-        build_sidebar(language, "home", articles, intro=sidebar_intro),
+        build_sidebar(language, "home", articles, intro=sidebar_intro,
+                      biography=side["biography"], projects=side["projects"]),
         language,
         argomenti=topics_bar(articles, language),
     )
@@ -2526,6 +2783,11 @@ def generate_sitemap(articles):
                 lines.append(url_entry(sec_prefix + "/tag/" + tag_slug + ".html"))
                 break
 
+    # The biography page, in both languages like the cards.
+    if biography_published():
+        lines.append(url_entry(main_prefix + "/pagine/" + biography_slug() + ".html"))
+        lines.append(url_entry(sec_prefix + "/pagine/" + biography_slug() + ".html"))
+
     # Pages of the published cards (both languages: build() always writes them).
     for card in published_home_cards():
         slug = card_slug(card.get("title", ""))
@@ -2896,6 +3158,16 @@ def _build_unlocked():
         (OUTPUT_DIR / sec_folder / "pagine").mkdir(parents=True, exist_ok=True)
         write_page(OUTPUT_DIR / sec_folder / "pagine" / f"{slug}.html",
                    generate_card_page(card, ls, published_articles))
+
+    # The page of the whole biography, in both languages. Switched off, it is
+    # not written, and the sweep removes the one a previous build left.
+    if biography_published():
+        (OUTPUT_DIR / "pagine").mkdir(parents=True, exist_ok=True)
+        write_page(OUTPUT_DIR / "pagine" / f"{biography_slug()}.html",
+                   generate_biography_page(lp, published_articles))
+        (OUTPUT_DIR / sec_folder / "pagine").mkdir(parents=True, exist_ok=True)
+        write_page(OUTPUT_DIR / sec_folder / "pagine" / f"{biography_slug()}.html",
+                   generate_biography_page(ls, published_articles))
 
     # Homepage in the main language (at the root) and in the secondary one.
     # If pagination is active, we also generate /pagina/2.html, /pagina/3...
