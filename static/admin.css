@@ -88,8 +88,6 @@ body { background:var(--a-sfondo); color:var(--a-testo); }
 .campo-spunta label { font-size:1rem; cursor:pointer; }
 .campo-spunta .aiuto { margin-top:0.125rem; }
 .impostazioni .azioni { display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center; }
-.pulsante.pulsante-testo { border-color:transparent; background:transparent; color:var(--a-accento); padding:0 0.5rem; }
-.pulsante.pulsante-testo:hover { background:var(--a-attivo); color:var(--a-accento-scuro); }
 /* Labels that wrap their field: the cards of code are cloned in the browser,
    where ids would have to be invented. */
 label.campo-etichettato { display:block; font-weight:400; margin:0; }
@@ -507,29 +505,17 @@ button:disabled { opacity: 0.65; cursor: default; }
   .menu, .menu.aperto { transition:none; }
 }
 
-/* Buttons and fields of the new pages. Bootstrap stays loaded for the
-   modal and the toasts, so these use their own names instead of .btn. */
-.pulsante { display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; min-height:40px;
-            padding:0 1rem; border-radius:8px; border:1px solid var(--a-bordo-campo); background:var(--a-superficie);
-            color:var(--a-testo); font:inherit; font-size:0.9375rem; font-weight:600; text-decoration:none;
-            cursor:pointer; flex:none; white-space:nowrap; }
-.pulsante:hover { background:var(--a-sfondo); color:var(--a-testo); }
-.pulsante-primario { background:var(--a-accento); border-color:var(--a-accento); color:#fff; }
-.pulsante-primario:hover { background:var(--a-accento-scuro); border-color:var(--a-accento-scuro); color:#fff; }
-.pulsante-icona { width:40px; padding:0; }
-.campo-input { height:40px; padding:0 0.75rem; border:1px solid var(--a-bordo-campo); border-radius:8px;
-               font:inherit; font-size:1rem; background:var(--a-superficie); color:var(--a-testo); box-sizing:border-box; }
+/* Buttons and fields come from common.css (.pulsante, .campo-input), shared
+   with the public site. Bootstrap stays loaded for the modal and the toasts
+   only, so nothing here uses its .btn. */
+.campo-input { height:var(--pb-control-height); }
+textarea.campo-input { height:auto; }
 select.campo-input { padding-right:2rem; }
 .pill { display:inline-flex; align-items:center; gap:0.375rem; font-size:0.8125rem; font-weight:600;
         padding:0.125rem 0.625rem; border-radius:999px; white-space:nowrap; }
 .pill-pallino { width:8px; height:8px; border-radius:50%; background:currentColor; }
 .pill-pubblicato { background:#e6f4ea; color:#15703a; }
 .pill-bozza { background:#fff1dc; color:#9a4d07; }
-@media (max-width: 860px) {
-  .pulsante, .campo-input { min-height:44px; }
-  .campo-input { height:44px; }
-  .pulsante-icona { width:44px; }
-}
 
 /* ===========================================================================
    DASHBOARD (/admin)

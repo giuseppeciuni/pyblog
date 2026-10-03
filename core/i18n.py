@@ -60,6 +60,8 @@ UI_TRANSLATIONS = {
     "articles": {"it": "Articoli", "en": "Articles"},
     "home": {"it": "Home", "en": "Home"},
     "esplora": {"it": "Esplora", "en": "Explore"},
+    "rss_titolo": {"it": "Feed RSS: ricevi i nuovi articoli in un lettore di feed",
+                   "en": "RSS feed: get the new articles in a feed reader"},
     "biografia": {"it": "Biografia", "en": "Biography"},
     "leggi_biografia": {"it": "Leggi la biografia", "en": "Read the biography"},
     "progetti": {"it": "Progetti", "en": "Projects"},

@@ -30,7 +30,7 @@ from core.config import (CONFIG, CONFIG_DEFAULT, MEDIA_DIR, OUTPUT_DIR,
                          language_url_prefix, main_language,
                          pagination_folder, reload_global_config,
                          secondary_language, seo_data)
-from core.i18n import T
+from core.i18n import LANGUAGE_NAMES, T
 from core.render import esc, js
 
 # A build rewrites the whole output folder. Two requests rebuilding at the
@@ -739,6 +739,8 @@ def site_header(language="it", nav_extra="", is_home=False):
         url_altra_lingua=language_url_prefix(other_language) + "/",
         altra_lingua=other_language,
         altra_lingua_label=other_language.upper(),
+        altra_lingua_nome=esc(LANGUAGE_NAMES[other_language][other_language].capitalize()),
+        title_rss=esc(T("rss_titolo", language)),
         aria_tema=esc(T("cambia_tema", language)),
         title_tema=esc(T("tema_chiaro_scuro", language)),
     ).rstrip("\n")
@@ -763,6 +765,7 @@ def site_footer(language="it", consent_active=False):
         url_archivio=prefix + "/" + archive_file_name(language),
         label_archivio=T("archivio", language),
         url_feed=feed_url(language),
+        title_rss=esc(T("rss_titolo", language)),
         link_preferenze=consent_footer_link(language, consent_active),
         riga_social=riga_social,
     ).rstrip("\n")
