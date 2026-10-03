@@ -659,3 +659,17 @@ select.campo-input { padding-right:2rem; }
 .modal-content { border-radius:12px; border-color:var(--a-bordo); }
 .modal-footer { gap:0.5rem; }
 .modal-footer > * { margin:0; }
+
+/* The worked examples above the list of external code. */
+.guida-esempi { border:1px solid var(--a-bordo); border-radius:10px; background:var(--a-sfondo); }
+.guida-esempi > summary { cursor:pointer; padding:0.75rem 1rem; font-weight:600; color:var(--a-accento-scuro); }
+.guida-corpo { padding:0 1rem 1rem; display:flex; flex-direction:column; gap:0.75rem; }
+.guida-lista { margin:0; padding-left:1.25rem; display:flex; flex-direction:column; gap:1.25rem; }
+.guida-lista h3 { font-size:1rem; margin:0 0 0.5rem; }
+.guida-lista p { margin:0; font-size:0.9375rem; line-height:1.55; }
+.guida-etichetta { font-size:0.75rem !important; font-weight:700; text-transform:uppercase; letter-spacing:0.04em;
+                   color:var(--a-testo-2); margin:0.6rem 0 0.25rem !important; }
+.guida-codice { margin:0; padding:0.75rem; background:#fff; border:1px solid var(--a-bordo); border-radius:8px;
+                font-family:var(--pb-font-mono); font-size:0.8rem; line-height:1.5; white-space:pre; overflow-x:auto; }
+.guida-nota { margin:0; font-size:0.875rem; color:#8a4b00; background:#fff7e6; border:1px solid #f3dcb0;
+              border-radius:8px; padding:0.6rem 0.8rem; }

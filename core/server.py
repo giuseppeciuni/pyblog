@@ -1171,6 +1171,25 @@ def project_card(item, la):
     ).rstrip("\n")
 
 
+def code_guide(la, open_it):
+    """The three worked examples above the list of external code."""
+    return render.render(
+        "admin/codici_guida.html",
+        aperta=" open" if open_it else "",
+        titolo=T("admin_guida_codici_titolo", la),
+        intro=T("admin_guida_codici_intro", la),
+        ti_danno=T("admin_guida_ti_danno", la),
+        cosa_fai=T("admin_guida_cosa_fai", la),
+        es1_titolo=T("admin_guida_es1_titolo", la),
+        es1_passi=T("admin_guida_es1_passi", la),
+        es2_titolo=T("admin_guida_es2_titolo", la),
+        es2_passi=T("admin_guida_es2_passi", la),
+        es3_titolo=T("admin_guida_es3_titolo", la),
+        es3_passi=T("admin_guida_es3_passi", la),
+        fiducia=T("admin_guida_fiducia", la),
+    ).rstrip("\n")
+
+
 def help_text(text):
     """
     A hint written to sit in brackets after a label, turned into a sentence
@@ -1327,6 +1346,7 @@ def config_page(csrf):
         hint_giscus="https://giscus.app",
         label_annulla_modifiche=T("admin_annulla_modifiche", la),
         nota_salva=T("admin_salva_nota", la),
+        guida_codici=code_guide(la, len(config.get("custom_code", []) or []) == 0),
         label_inserisci=T("admin_inserisci", la),
         label_parte_alta=T("admin_parte_alta_home", la),
         hint_parte_alta=T("admin_parte_alta_hint", la),
