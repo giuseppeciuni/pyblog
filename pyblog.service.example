@@ -32,7 +32,9 @@ RestartSec=5
 #   PYBLOG_LLM_API_KEY      (Anthropic / custom endpoint)
 #   PYBLOG_OPENAI_API_KEY   PYBLOG_DEEPSEEK_API_KEY
 #   PYBLOG_DEEPL_API_KEY    PYBLOG_GOOGLE_API_KEY
-EnvironmentFile=/etc/pyblog.env
+# The leading "-" makes the file optional: without it, a missing
+# /etc/pyblog.env would stop the service from starting at all.
+EnvironmentFile=-/etc/pyblog.env
 # Simpler but less protected alternative (unit files are world-readable):
 # Environment=PYBLOG_LLM_API_KEY=sk-REPLACE-ME
 

@@ -129,18 +129,19 @@ Solo **Python 3.8 o superiore**. Niente `pip install`, niente virtualenv.
 
 ## Documentazione
 
-- **`GUIDA.md`** — guida passo-passo: installazione, scrittura, pubblicazione online
-- **`DEPLOY-REMOTO.md`** — deploy su server Ubuntu con nginx, systemd e HTTPS
-- **`CONFIGURAZIONE.md`** — riferimento di tutti i parametri di configurazione
+La documentazione sta in due file:
+
+- **[`TUTORIAL.md`](TUTORIAL.md)** — passo per passo, da un server Ubuntu vuoto al sito online con HTTPS: installazione, configurazione, avvio, primo articolo, backup e aggiornamenti
+- **[`MANUALE.md`](MANUALE.md)** — il manuale completo: ogni modo di installarlo, ogni pagina dell'amministrazione, ogni impostazione e ogni chiave di `config.json`, codici esterni, banner dei cookie, commenti, statistiche, traduzione, import/export, sicurezza e soluzione dei problemi
 - **`config.example.json`** — modello di configurazione con tutti i campi
 
 ## Deploy in produzione
 
-PyBlog gira su un server Ubuntu con nginx come "portinaio": serve le pagine statiche al pubblico e inoltra a Python solo l'area admin. Quando pubblichi un articolo, le pagine si rigenerano da sole — nessun rsync, nessun deploy manuale. La guida completa con systemd e certbot (HTTPS) è in `DEPLOY-REMOTO.md`.
+PyBlog gira su un server Ubuntu con nginx come "portinaio": serve le pagine statiche al pubblico e inoltra a Python solo l'area admin. Quando pubblichi un articolo, le pagine si rigenerano da sole — nessun rsync, nessun deploy manuale. La guida passo per passo con systemd e certbot (HTTPS) è [`TUTORIAL.md`](TUTORIAL.md).
 
 ## I commenti
 
-PyBlog supporta tre opzioni, scelte dalla pagina Impostazioni: nessuno, **Giscus** (usa le GitHub Discussions, gratuito e senza tracciamento, ideale per blog tecnici) o **Disqus** (login social, più facile per i lettori). Dettagli di configurazione in `GUIDA.md`.
+PyBlog supporta tre opzioni, scelte dalla pagina Impostazioni: nessuno, **Giscus** (usa le GitHub Discussions, gratuito e senza tracciamento, ideale per blog tecnici) o **Disqus** (login social, più facile per i lettori). Dettagli di configurazione nel [`MANUALE.md`](MANUALE.md).
 
 ## Licenza
 

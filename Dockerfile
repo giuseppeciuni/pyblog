@@ -22,5 +22,5 @@ EXPOSE 8000
 # Inside the container the server MUST listen on 0.0.0.0, otherwise it
 # would be unreachable from outside the container itself.
 # Port 8000 should still be exposed only to localhost or behind a
-# reverse proxy with HTTPS (see nginx.conf.example and DEPLOY-REMOTO.md).
+# reverse proxy with HTTPS (see nginx.conf.example and TUTORIAL.md).
 CMD ["python3", "pyblog.py", "serve", "8000", "0.0.0.0"]

@@ -6,6 +6,11 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **A missing page shows the site's 404 page.** The preview answered with
+  Python's bare error page and `nginx.conf.example` with nginx's: now both
+  answer with the site's own page, search and latest articles included.
+- **The systemd service starts without `/etc/pyblog.env`.** The file of
+  secret keys is now optional in `pyblog.service.example`.
 - **The editor no longer looks shrunk on a phone.** The help bubbles of the
   buttons were always there, just invisible, and the ones near the right
   edge made the page wider than the screen: the browser shrank the whole
@@ -66,6 +71,34 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Choose on the page where a piece of code goes.** Next to the fixed
+  positions, an external code can go "at a point you choose on the page":
+  a window shows the real page (the homepage or an article, generated
+  without any code), the blocks light up under the mouse, a click picks one
+  and "before" or "after" says on which side. The same blocks are in a
+  list, for the keyboard and screen readers. The point is saved so that it
+  holds for every page of that kind ("After · Paragraph 2 of the text");
+  the published page carries the code inert and `site.js` moves it there,
+  waiting for consent when it needs it. Article-only code can use it too.
+  The admin route `/scegli-punto` is new: nginx must pass it to Python
+  (it is in `nginx.conf.example`).
+- **External code explained with examples.** Above the list, a guide with
+  three real cases (analytics, an ad halfway through the articles, any
+  widget) shows the code a service gives you and what to choose here; the
+  help texts of position and consent say which to pick for the common
+  services.
+- **One look for the whole platform.** Buttons, fields and focus are one
+  family shared by the public site and the administration, dark theme
+  included: login, password pages and confirmation windows no longer use
+  Bootstrap's own blue, the editor lost its grey, purple and bordered
+  buttons, every AI action looks the same. Words are the same everywhere
+  ("site", "page", "Save and update the site", "Address (slug)"), and the
+  tools of the menu say what they do under their name.
+- **Two documents instead of seven.** `TUTORIAL.md` takes an empty Ubuntu
+  server to the site online with HTTPS, one checked step at a time;
+  `MANUALE.md` holds everything else, from every setting to every
+  `config.json` key. They replace `GUIDA.md`, `GUIDE.md`,
+  `CONFIGURAZIONE.md`, `CONFIGURATION.md` and `DEPLOY-REMOTO.md`.
 - **Biography and projects on the homepage.** Each has a section of its
   own in the Settings and goes where the author wants it: in the sidebar,
   above or below the articles. The biography shows the photo and its first
