@@ -71,6 +71,14 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Earlier versions of an article.** Every save keeps the version it
+  replaces (autosaves closer than ten minutes are merged, a published
+  version is always kept, 50 per article, in `posts/.history/`). In the
+  editor, "Earlier versions" lists them, shows one and brings it back into
+  the fields, to be saved like any edit. Versions follow a renamed article,
+  go with a deleted one and are in the backup. The admin routes `/versioni`
+  and `/versione` are new: nginx must pass them to Python (they are in
+  `nginx.conf.example`).
 - **Scheduled publishing.** A draft can be scheduled for a date and time:
   readers cannot see it until then, and it goes out by itself within a
   minute, dated at that moment. The editor checks every minute while it

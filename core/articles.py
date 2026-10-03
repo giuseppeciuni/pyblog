@@ -9,8 +9,9 @@ import html
 import json
 import re
 import secrets
+import shutil
 import xml.etree.ElementTree as ElementTree
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from core import images
@@ -324,6 +325,116 @@ def publish_due_articles(now=None):
     return published
 
 
+# ---------------------------------------------------------------------------
+# HISTORY: the earlier versions of an article
+# ---------------------------------------------------------------------------
+# Every save keeps the version it replaces in posts/.history/<slug>/, one
+# file per version named after the moment it was saved. Autosave writes a
+# draft every minute, so versions closer than HISTORY_GAP to the last one
+# kept are not kept again - except a published version, which is always
+# kept: it is the one readers saw. HISTORY_LIMIT versions per article.
+
+HISTORY_DIR = POSTS_DIR / ".history"
+HISTORY_LIMIT = 50
+HISTORY_GAP = timedelta(minutes=10)
+VERSION_ID_PATTERN = re.compile(r"^\d{8}T\d{6}Z$")
+# The fields that make a version: a save that changes none of them (only
+# date_modified) is not a new version.
+VERSION_FIELDS = ("title", "description", "preview", "content", "tags", "image",
+                  "status", "publish_at", "title_en", "description_en",
+                  "preview_en", "content_en", "custom_code")
+
+
+def history_folder(slug):
+    """The folder with the earlier versions of an article."""
+    return HISTORY_DIR / slug
+
+
+def version_id(moment):
+    """The file name of a version saved at a moment: 20261003T094400Z."""
+    return moment.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def version_moment(identifier):
+    """The moment of a version id, as an aware datetime."""
+    return datetime.strptime(identifier, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
+
+
+def keep_version(slug, previous, new_article, now=None):
+    """
+    Keep the version an article is about to replace, when it is worth it:
+    something that makes a version changed, and either the last version kept
+    is older than HISTORY_GAP or the version replaced was the published one.
+    """
+    if previous is None:
+        return
+    if all(previous.get(field) == new_article.get(field) for field in VERSION_FIELDS):
+        return
+    if now is None:
+        now = datetime.now(timezone.utc)
+    folder = history_folder(slug)
+    kept = sorted(p.stem for p in folder.glob("*.json")) if folder.is_dir() else []
+    if kept and previous.get("status") != "published":
+        if now - version_moment(kept[-1]) < HISTORY_GAP:
+            return
+    folder.mkdir(parents=True, exist_ok=True)
+    previous = {k: v for k, v in previous.items() if k != "_file"}
+    write_json_atomically(folder / f"{version_id(now)}.json", previous)
+    kept.append(version_id(now))
+    for old in sorted(set(kept))[:-HISTORY_LIMIT]:
+        (folder / f"{old}.json").unlink(missing_ok=True)
+
+
+def move_history(old_slug, new_slug):
+    """A renamed article takes its versions with it."""
+    old_folder = history_folder(old_slug)
+    if not old_folder.is_dir() or old_slug == new_slug:
+        return
+    new_folder = history_folder(new_slug)
+    if new_folder.exists():
+        shutil.rmtree(new_folder)
+    HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    old_folder.rename(new_folder)
+
+
+def list_versions(slug):
+    """
+    The earlier versions of an article, newest first: id, the moment it
+    was replaced, title, status and number of words.
+    """
+    if not slug_is_valid(slug):
+        return []
+    folder = history_folder(slug)
+    if not folder.is_dir():
+        return []
+    versions = []
+    for path_value in sorted(folder.glob("*.json"), reverse=True):
+        if not VERSION_ID_PATTERN.match(path_value.stem):
+            continue
+        data = read_article_file(path_value)
+        if data is None:
+            continue
+        versions.append({
+            "id": path_value.stem,
+            "saved_at": version_moment(path_value.stem).isoformat(),
+            "title": data.get("title", ""),
+            "status": data.get("status", "draft"),
+            "words": len(plain_text(data.get("content", "")).split()),
+        })
+    return versions
+
+
+def load_version(slug, identifier):
+    """One earlier version of an article, or None."""
+    if not slug_is_valid(slug) or not VERSION_ID_PATTERN.match(str(identifier)):
+        return None
+    data = read_article_file(history_folder(slug) / f"{identifier}.json")
+    if data is None:
+        return None
+    data.pop("_file", None)
+    return data
+
+
 def saved_date(slug, original):
     """
     The publication date of the article already on disk, or None.
@@ -367,6 +478,13 @@ def save_article(data, new_article=False):
     if article["date"] is None:
         article["date"] = datetime.now(timezone.utc).isoformat()
 
+    # The version this save replaces goes to the history, which follows the
+    # article when its slug changes.
+    previous_slug = original if original != "" and original != slug else slug
+    if not new_article:
+        if previous_slug != slug:
+            move_history(previous_slug, slug)
+        keep_version(slug, read_article_file(POSTS_DIR / f"{previous_slug}.json"), article)
     write_json_atomically(POSTS_DIR / f"{slug}.json", article)
     return slug
 
@@ -409,6 +527,12 @@ def delete_article(slug):
     path_value = POSTS_DIR / f"{slug}.json"
     if path_value.exists():
         path_value.unlink()
+        # Its versions go with it: the backup is the way back. A history
+        # folder left empty goes too, so nothing remains of the article.
+        if history_folder(slug).is_dir():
+            shutil.rmtree(history_folder(slug))
+        if HISTORY_DIR.is_dir() and not any(HISTORY_DIR.iterdir()):
+            HISTORY_DIR.rmdir()
         return True
     return False
 

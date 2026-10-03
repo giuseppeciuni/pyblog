@@ -288,7 +288,7 @@ What to save: `posts/`, `config.json`, `admin_password.txt` and
 by `build`.
 
 - **From the menu:** **Download the backup** downloads a `.zip` with
-  articles, images and settings.
+  articles (and their earlier versions), images and settings.
 - **Every night on the server**, with cron (`sudo crontab -e`):
 
   ```
@@ -438,6 +438,23 @@ editor at that moment, **without saving anything**. Publishing and
 unpublishing ask for confirmation. Under the buttons a line says when there
 are "Unsaved changes"; if you leave with something to save, the browser asks
 you. **Delete article** is at the bottom of the column.
+
+### 4.4b Earlier versions
+
+Every save keeps the version it replaces. Under the publishing panel,
+**Earlier versions** opens the list, newest first: for each, the moment, the
+status, the words and the title. Choose one to see it; **Bring back into the
+editor** puts that version's title, text, description, preview, tags, cover
+and translation back in the fields. Nothing is saved until you save: save to
+keep it, leave without saving to drop it. The address, the status and the
+article's code stay as they are. If the editor has unsaved changes, it asks
+for confirmation.
+
+Autosave writes every minute, so a version is kept only if the last one is
+more than ten minutes old; a **published** version is always kept, because
+it is the one readers saw. The last 50 versions per article are kept, in
+`posts/.history/<address>/`. Versions follow the article when its address
+changes and go away when you delete it; the backup includes them.
 
 ### 4.5 The AI helpers
 
@@ -1082,6 +1099,7 @@ core/                  the program (configuration, texts, templates, articles,
 templates/             the HTML templates of the site (public/) and of the administration (admin/)
 static/                common.css, style.css, site.js (site); admin.css, admin.js
 posts/                 the articles, one JSON file each: your sources
+posts/.history/        the earlier versions of every article
 output/                the generated site: this is the folder that goes online
 output/media/          the uploaded images and videos
 config.json            the settings (excluded from git)

@@ -27,7 +27,7 @@ server {
     # --- Administration: proxied to the PyBlog server on localhost ---
     # Every dynamic route of the editor, in one place. Everything else
     # is served as static files.
-    location ~ ^/(admin|edit|config|login|logout|change-password|preview|export|save|delete|toggle-status|save-config|save-config-raw|rebuild|upload|import-docx|translate|generate-description|generate-preview|analyze-seo|admin-language|set-password|scegli-punto)$ {
+    location ~ ^/(admin|edit|config|login|logout|change-password|preview|export|save|delete|toggle-status|save-config|save-config-raw|rebuild|upload|import-docx|translate|generate-description|generate-preview|analyze-seo|admin-language|set-password|scegli-punto|versioni|versione)$ {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
         # The visitor's real address. PyBlog uses it to lock out only the

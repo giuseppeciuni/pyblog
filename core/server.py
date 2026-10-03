@@ -28,7 +28,8 @@ from core.ai import (analyze_article_seo, generate_reader_preview,
 from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, SlugTakenError,
                            article_for_preview, delete_article,
                            due_scheduled_articles, html_content_is_empty,
-                           load_article, load_articles,
+                           list_versions, load_article, load_articles,
+                           load_version,
                            max_image_side, requested_slug, save_article,
                            save_uploaded_file, validate_upload)
 from core.docx_import import convert_docx, looks_like_docx
@@ -116,7 +117,8 @@ ADMIN_STATIC_FILES = ("common.css", "admin.css", "admin.js")
 
 # The GET routes handled by the administration, as opposed to the static site.
 ADMIN_GET_ROUTES = ("/admin", "/config", "/edit", "/change-password",
-                    "/preview", "/export", "/scegli-punto")
+                    "/preview", "/export", "/scegli-punto", "/versioni",
+                    "/versione")
 
 
 # ---------------------------------------------------------------------------
@@ -191,6 +193,11 @@ JS_TRANSLATION_KEYS = (
     "js_programmato", "js_programmazione_annullata", "js_modifiche_salvate",
     "admin_pubblica_ora", "admin_programma_annulla", "admin_esce_il",
     "admin_programma_conferma", "js_salvato_alle",
+    "admin_versioni", "js_versioni_vuoto", "js_versione_mostra",
+    "js_versione_ripristina", "js_versione_ripristinata", "js_versione_parole",
+    "js_versione_errore", "js_versione_perdi", "admin_stato_bozza",
+    "admin_stato_pubblicato", "admin_stato_programmato", "admin_chiudi",
+    "js_versione_scegli",
 ) + tuple(key for key in i18n.UI_TRANSLATIONS
           # The window that chooses a point on the page, and the names it
           # gives the blocks of the page.
@@ -784,6 +791,9 @@ def editor_page(art, csrf):
         hint_stato_bozza=T("admin_stato_bozza_hint", la),
         label_stato_pubblicato=T("admin_stato_pubblicato", la),
         label_stato_programmato=T("admin_stato_programmato", la),
+        label_versioni=T("admin_versioni", la),
+        hint_versioni=T("admin_versioni_hint", la),
+        versioni_nascosto="" if art.get("slug", "") else " hidden",
         esce_il=moment_html(publish_at, la),
         label_salva_modifiche=T("admin_salva_modifiche", la),
         label_pubblica_ora=T("admin_pubblica_ora", la),
@@ -2018,6 +2028,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._handle_export()
         elif route == "/scegli-punto":
             self._handle_point_page(query)
+        elif route == "/versioni":
+            # The earlier versions of an article, for the editor's window.
+            self._send_json({"ok": True, "versions": list_versions(query.get("slug", [""])[0])})
+        elif route == "/versione":
+            version = load_version(query.get("slug", [""])[0], query.get("id", [""])[0])
+            if version is None:
+                self._send_json({"ok": False, "error": T("err_article_not_found", admin_language())})
+            else:
+                self._send_json({"ok": True, "version": version})
         else:
             self.send_error(404)
 
@@ -2074,6 +2093,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if POSTS_DIR.exists():
                 for path_value in sorted(POSTS_DIR.glob("*.json")):
                     zip_file.write(path_value, "posts/" + path_value.name)
+                # The earlier versions of the articles come along.
+                for path_value in sorted(POSTS_DIR.glob(".history/*/*.json")):
+                    zip_file.write(path_value, path_value.relative_to(POSTS_DIR.parent).as_posix())
             # We add the configuration, if it exists.
             if CONFIG_FILE.exists():
                 zip_file.write(CONFIG_FILE, "config.json")

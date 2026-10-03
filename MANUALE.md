@@ -284,8 +284,8 @@ vengono convertiti da soli al primo avvio.
 Da salvare: `posts/`, `config.json`, `admin_password.txt` e `output/media/`
 (i file caricati). Tutto il resto di `output/` si rigenera con `build`.
 
-- **Dal menu:** **Scarica il backup** scarica uno `.zip` con articoli,
-  immagini e impostazioni.
+- **Dal menu:** **Scarica il backup** scarica uno `.zip` con articoli (e
+  le loro versioni precedenti), immagini e impostazioni.
 - **Ogni notte sul server**, con cron (`sudo crontab -e`):
 
   ```
@@ -435,6 +435,24 @@ quel momento nell'editor, **senza salvare niente**. Pubblicare e ritirare
 chiedono conferma. Sotto i pulsanti una riga dice se ci sono "Modifiche non
 salvate"; se esci con qualcosa da salvare, il browser te lo chiede.
 **Elimina l'articolo** è in fondo alla colonna.
+
+### 4.4b Le versioni precedenti
+
+Ogni salvataggio tiene la versione che sostituisce. Sotto il pannello di
+pubblicazione, **Versioni precedenti** apre l'elenco, dalla più recente: per
+ognuna il momento, lo stato, le parole e il titolo. Scegline una per
+vederla; **Riporta nell'editor** rimette nei campi titolo, testo,
+descrizione, anteprima, tag, copertina e traduzione di quella versione.
+Niente è salvato finché non salvi: per tenerla salva, per lasciar perdere
+esci senza salvare. L'indirizzo, lo stato e i codici dell'articolo restano
+come sono. Se nell'editor ci sono modifiche non salvate, chiede conferma.
+
+L'autosalvataggio scrive ogni minuto, quindi una versione viene tenuta solo
+se l'ultima ha più di dieci minuti; una versione **pubblicata** si tiene
+sempre, perché è quella che hanno letto i lettori. Si tengono le ultime 50
+versioni per articolo, in `posts/.history/<indirizzo>/`. Le versioni seguono
+l'articolo quando cambia indirizzo e se ne vanno quando lo elimini; il
+backup le contiene.
 
 ### 4.5 Gli aiuti di AI
 
@@ -1087,6 +1105,7 @@ core/                  il programma (configurazione, testi, modelli, articoli,
 templates/             i modelli HTML del sito (public/) e dell'amministrazione (admin/)
 static/                common.css, style.css, site.js (sito); admin.css, admin.js
 posts/                 gli articoli, un file JSON ciascuno: le tue fonti
+posts/.history/        le versioni precedenti di ogni articolo
 output/                il sito generato: è questa la cartella che va online
 output/media/          le immagini e i video caricati
 config.json            le impostazioni (escluso da git)

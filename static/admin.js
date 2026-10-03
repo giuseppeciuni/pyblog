@@ -2509,6 +2509,11 @@ function applySavedSlug(res) {
 // The panel at the top of the sidebar shows the buttons of the state the
 // article is in, and where the published page lives.
 function updateStatePanel(indirizzo) {
+  // A saved article has versions to look at.
+  if (slugOriginale !== '') {
+    var versioni = document.querySelectorAll('#btn-versioni, #versioni-aiuto');
+    for (var v = 0; v < versioni.length; v++) { versioni[v].hidden = false; }
+  }
   var pannello = document.getElementById('pannello-pubblica');
   if (pannello) { pannello.setAttribute('data-stato', statoArticolo); }
   var quando = document.getElementById('programmato-quando');
@@ -4256,4 +4261,151 @@ function confirmPoint() {
   posizione.dispatchEvent(new Event('change', { bubbles: true }));
   document.getElementById('scelta-punto').close();
   puntoScheda.querySelector('.codice-punto .pulsante').focus();
+}
+
+
+/* --- Earlier versions of an article --------------------------------------- */
+
+// The window lists the versions kept by the saves, newest first; choosing
+// one shows it, and "Bring back into the editor" puts its texts in the
+// fields. Nothing is saved: the author saves to keep it, as with any edit.
+// The address, the status and the article's own code stay as they are.
+
+var versioneMostrata = null;
+
+function versionsWindow() {
+  var finestra = document.getElementById('finestra-versioni');
+  if (finestra) { return finestra; }
+  finestra = document.createElement('dialog');
+  finestra.id = 'finestra-versioni';
+  finestra.className = 'finestra-versioni';
+  finestra.setAttribute('aria-labelledby', 'versioni-titolo');
+  finestra.innerHTML =
+    '<div class="fv-testata"><h2 id="versioni-titolo"></h2>' +
+      '<button type="button" class="pulsante pulsante-testo" id="fv-chiudi"></button></div>' +
+    '<div class="fv-corpo">' +
+      '<ul class="fv-elenco" id="fv-elenco"></ul>' +
+      '<div class="fv-vista" id="fv-vista" tabindex="-1">' +
+        '<p class="aiuto" id="fv-vuota"></p>' +
+        '<div id="fv-contenuto" hidden>' +
+          '<p class="fv-quando" id="fv-quando"></p><h3 id="fv-titolo-articolo"></h3>' +
+          '<div class="ql-snow"><div class="ql-editor fv-testo" id="fv-testo"></div></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="fv-piede"><button type="button" class="pulsante pulsante-primario" id="fv-ripristina" disabled></button></div>';
+  document.body.appendChild(finestra);
+  document.getElementById('versioni-titolo').textContent = t('admin_versioni');
+  document.getElementById('fv-chiudi').textContent = t('admin_chiudi');
+  document.getElementById('fv-ripristina').textContent = t('js_versione_ripristina');
+  document.getElementById('fv-chiudi').addEventListener('click', function() { finestra.close(); });
+  document.getElementById('fv-ripristina').addEventListener('click', restoreVersion);
+  return finestra;
+}
+
+function versionStatusLabel(stato) {
+  if (stato === 'published') { return t('admin_stato_pubblicato'); }
+  if (stato === 'scheduled') { return t('admin_stato_programmato'); }
+  return t('admin_stato_bozza');
+}
+
+function openVersions() {
+  var finestra = versionsWindow();
+  versioneMostrata = null;
+  document.getElementById('fv-ripristina').disabled = true;
+  document.getElementById('fv-contenuto').hidden = true;
+  document.getElementById('fv-vuota').textContent = '';
+  var elenco = document.getElementById('fv-elenco');
+  elenco.innerHTML = '';
+  finestra.showModal();
+  fetch('/versioni?slug=' + encodeURIComponent(slugOriginale), { credentials: 'same-origin' })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      var versioni = res.versions || [];
+      if (versioni.length === 0) {
+        document.getElementById('fv-vuota').textContent = t('js_versioni_vuoto');
+        return;
+      }
+      document.getElementById('fv-vuota').textContent = t('js_versione_scegli');
+      for (var i = 0; i < versioni.length; i++) {
+        var v = versioni[i];
+        var voce = document.createElement('li');
+        var pulsante = document.createElement('button');
+        pulsante.type = 'button';
+        pulsante.className = 'fv-voce';
+        pulsante.setAttribute('aria-pressed', 'false');
+        pulsante.dataset.id = v.id;
+        var quando = document.createElement('span');
+        quando.className = 'fv-voce-quando';
+        quando.textContent = formatMoment(v.saved_at);
+        var dettagli = document.createElement('span');
+        dettagli.className = 'fv-voce-dettagli';
+        dettagli.textContent = versionStatusLabel(v.status) + ' · ' +
+          t('js_versione_parole').replace('{n}', v.words) + ' · ' + v.title;
+        pulsante.appendChild(quando);
+        pulsante.appendChild(dettagli);
+        pulsante.addEventListener('click', showVersion);
+        voce.appendChild(pulsante);
+        elenco.appendChild(voce);
+      }
+      elenco.querySelector('.fv-voce').focus();
+    })
+    .catch(function() { document.getElementById('fv-vuota').textContent = t('js_versione_errore'); });
+}
+
+function showVersion(evento) {
+  var pulsante = evento.currentTarget;
+  var voci = document.querySelectorAll('#fv-elenco .fv-voce');
+  for (var i = 0; i < voci.length; i++) { voci[i].setAttribute('aria-pressed', voci[i] === pulsante ? 'true' : 'false'); }
+  fetch('/versione?slug=' + encodeURIComponent(slugOriginale) + '&id=' + encodeURIComponent(pulsante.dataset.id),
+        { credentials: 'same-origin' })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (!res.ok) { pbToast(t('js_versione_errore'), 'danger'); return; }
+      versioneMostrata = res.version;
+      versioneMostrata._quando = pulsante.querySelector('.fv-voce-quando').textContent;
+      document.getElementById('fv-vuota').textContent = '';
+      document.getElementById('fv-contenuto').hidden = false;
+      document.getElementById('fv-quando').textContent = versioneMostrata._quando + ' · ' + versionStatusLabel(versioneMostrata.status);
+      document.getElementById('fv-titolo-articolo').textContent = versioneMostrata.title || '';
+      // The article's own HTML, written by the author: the same trust as
+      // the editor, and the admin CSP stops any script in it.
+      document.getElementById('fv-testo').innerHTML = versioneMostrata.content || '';
+      document.getElementById('fv-ripristina').disabled = false;
+    })
+    .catch(function() { pbToast(t('js_versione_errore'), 'danger'); });
+}
+
+function restoreVersion() {
+  if (!versioneMostrata) { return; }
+  var applica = function() {
+    var v = versioneMostrata;
+    var campi = { title: 'title', description: 'description', preview: 'reader_preview', tags: 'tags',
+                  image: 'image', title_en: 'title_en', description_en: 'description_en', preview_en: 'preview_en' };
+    for (var chiave in campi) {
+      var campo = document.getElementById(campi[chiave]);
+      if (campo) { campo.value = v[chiave] || ''; }
+    }
+    quill.root.innerHTML = v.content || '';
+    quillEn.root.innerHTML = v.content_en || '';
+    document.getElementById('translation_authorized').checked = v.translation_authorized === true;
+    document.getElementById('translation_confirmed').checked = v.translation_confirmed === true;
+    updateTranslationSection();
+    updateCoverPreview();
+    updateDescriptionCounter();
+    updatePreviewCounter();
+    markEditorDirty();
+    var finestra = document.getElementById('finestra-versioni');
+    if (finestra.open) { finestra.close(); }
+    pbToast(t('js_versione_ripristinata').replace('{date}', v._quando), 'success');
+    document.getElementById('title').focus();
+  };
+  if (editorDirty) {
+    // A <dialog> sits above everything, the confirmation window included:
+    // it closes first, so the question can be seen and answered.
+    document.getElementById('finestra-versioni').close();
+    pbConfirm(t('js_versione_ripristina'), t('js_versione_perdi'), t('js_versione_ripristina'), 'primary', applica);
+  } else {
+    applica();
+  }
 }
