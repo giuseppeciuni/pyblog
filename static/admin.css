@@ -581,29 +581,8 @@ select.campo-input { padding-right:2rem; }
 }
 
 /* ===========================================================================
-   EDITOR IN THE SHELL: a narrow menu of icons, the page gets the room
+   EDITOR IN THE SHELL: on a phone the screen belongs to the article
    =========================================================================== */
-
-@media (min-width: 861px) {
-  .menu-compatto { --a-larghezza-menu:64px; }
-  /* The names become bubbles beside the icons, so the menu must not clip. */
-  .menu-compatto .menu { padding:1rem 0.5rem; overflow:visible; }
-  .menu-compatto .menu-marchio { padding:0.25rem 0 1rem; align-items:center; }
-  .menu-compatto .menu-marchio-nome { font-size:0.75rem; }
-  .menu-compatto .menu-marchio-sito, .menu-compatto .menu-gruppo, .menu-compatto .voce-conta { display:none; }
-  .menu-compatto .menu-separatore { margin:0.5rem 0.25rem; }
-  .menu-compatto .voce { position:relative; justify-content:center; padding:0; width:48px; height:44px; }
-  .menu-compatto .voce .voce-testo {
-    position:absolute; left:calc(100% + 10px); top:50%; transform:translateY(-50%); z-index:2000;
-    background:#1f2328; color:#fff; font-size:0.8125rem; font-weight:400; white-space:nowrap;
-    padding:0.35rem 0.6rem; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.25);
-    opacity:0; visibility:hidden; pointer-events:none; transition:opacity 0.12s ease 0.2s, visibility 0s linear 0.32s; }
-  .menu-compatto .voce-desc { color:#cbd5e1; }
-  .menu-compatto .voce:has(.voce-desc) { min-height:44px; padding:0; }
-  .menu-compatto .voce:has(.voce-desc) .icona { align-self:center; margin:0; }
-  .menu-compatto .voce:hover .voce-testo, .menu-compatto .voce:focus-visible .voce-testo {
-    opacity:1; visibility:visible; transition-delay:0.2s, 0.2s; }
-}
 
 @media (max-width: 860px) {
   /* While writing, the screen belongs to the article: no bottom bar, and
