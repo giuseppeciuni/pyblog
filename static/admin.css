@@ -5,7 +5,10 @@
   --a-testo:#1f2328; --a-testo-2:#5b6470; --a-sfondo:#f6f7f9; --a-superficie:#fff;
   --a-bordo:#e3e6ea; --a-bordo-campo:#c9ced6; --a-accento:#0066cc; --a-accento-scuro:#0057ad;
   --a-attivo:#e8f1fb; --a-pericolo:#b42318; --a-fuoco:0 0 0 3px rgba(0,102,204,0.35);
-  --a-larghezza-menu:248px; --a-altezza-barra:64px; }
+  --a-larghezza-menu:248px; --a-altezza-barra:64px;
+  /* How wide the pages beside the menu grow: the list of articles, and the
+     Settings, whose forms read better a little narrower. */
+  --a-larghezza-pagina:1240px; --a-larghezza-modulo:1040px; }
 /* Explanatory bubble on the toolbar buttons (and any element carrying a
    data-tooltip attribute). Pure CSS: it appears instantly on hover, unlike
    the browser's native title, which waits about a second. */
@@ -57,7 +60,7 @@ body { background:var(--a-sfondo); color:var(--a-testo); }
 
 /* One section at a time, in white cards, one column: a form reads top to
    bottom and every help line sits under its own field. */
-.pagina.pagina-stretta { max-width:760px; }
+.pagina.pagina-stretta { max-width:var(--a-larghezza-modulo); }
 .impostazioni { padding-bottom:0; }
 .impostazioni .sezione { display:flex; flex-direction:column; gap:1.25rem; }
 .impostazioni .sezione[hidden], .sezioni-elenco[hidden], .barra-salva[hidden] { display:none; }
@@ -532,7 +535,7 @@ select.campo-input { padding-right:2rem; }
    DASHBOARD (/admin)
    =========================================================================== */
 
-.pagina { max-width:1000px; margin:0 auto; padding:2rem 2.5rem 4rem; display:flex; flex-direction:column; gap:1.25rem; }
+.pagina { max-width:var(--a-larghezza-pagina); margin:0 auto; padding:2rem 2.5rem 4rem; display:flex; flex-direction:column; gap:1.25rem; }
 .pagina-testata { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:1rem; }
 .pagina-titolo { margin:0; font-size:1.5rem; font-weight:650; }
 .pagina-sottotitolo { margin:0; color:var(--a-testo-2); }
