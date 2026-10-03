@@ -658,6 +658,62 @@ function apriZoom(indirizzo, testoAlternativo, opzioni) {
   chiudi.focus();
 }
 
+/* --- 6b) Code placed at a point chosen on the page -------------------------- */
+
+// Turns an inert <template> into live code, in the very place it stands. A
+// script cloned out of a template does not run: it has to be created anew.
+// External scripts keep their own async; the others keep the order they were
+// written in, which is what a loader followed by its set-up expects.
+function attivaModello(modello) {
+  var frammento = modello.content.cloneNode(true);
+  var script = frammento.querySelectorAll('script');
+  for (var j = 0; j < script.length; j++) {
+    var vecchio = script[j];
+    var nuovo = document.createElement('script');
+    for (var k = 0; k < vecchio.attributes.length; k++) {
+      nuovo.setAttribute(vecchio.attributes[k].name, vecchio.attributes[k].value);
+    }
+    if (vecchio.src) { nuovo.async = vecchio.hasAttribute('async'); }
+    nuovo.text = vecchio.text;
+    vecchio.parentNode.replaceChild(nuovo, vecchio);
+  }
+  modello.parentNode.replaceChild(frammento, modello);
+}
+
+// The author chose, by clicking on the page, the block a piece of code goes
+// before or after. The code arrives inert at the end of the page, naming
+// that block; here it moves next to it. If it waits for consent it stays
+// inert in its new place, and the consent section below wakes it there; if
+// not, it runs now. A page without that block simply does not show it.
+// This listener is registered before the consent one, so it runs first.
+document.addEventListener('DOMContentLoaded', function() {
+  var modelli = document.querySelectorAll('template[data-pb-ancora]');
+  for (var i = 0; i < modelli.length; i++) {
+    var modello = modelli[i];
+    var bersaglio = null;
+    try {
+      bersaglio = document.querySelector(modello.getAttribute('data-pb-ancora'));
+    } catch (e) {
+      bersaglio = null;
+    }
+    if (bersaglio === null) {
+      modello.parentNode.removeChild(modello);
+      continue;
+    }
+    var contenitore = document.createElement('div');
+    contenitore.className = 'codice-posizionato';
+    if (modello.getAttribute('data-pb-dove') === 'before') {
+      bersaglio.parentNode.insertBefore(contenitore, bersaglio);
+    } else {
+      bersaglio.parentNode.insertBefore(contenitore, bersaglio.nextSibling);
+    }
+    contenitore.appendChild(modello);
+    if (!modello.hasAttribute('data-pb-consenso')) {
+      attivaModello(modello);
+    }
+  }
+});
+
 /* --- 7) Consent to statistics and advertising ------------------------------ */
 
 // The code that needs the visitor's consent reaches the page inside inert
@@ -694,27 +750,10 @@ document.addEventListener('DOMContentLoaded', function() {
     try { localStorage.setItem(CHIAVE, JSON.stringify(valore)); } catch (e) { }
   }
 
-  // A script cloned out of a template does not run: it has to be created
-  // anew. External scripts keep their own async; the others keep the order
-  // they were written in, which is what a loader followed by its set-up
-  // expects.
   function attivaCategoria(categoria) {
     var modelli = document.querySelectorAll('template[data-pb-consenso="' + categoria + '"]');
     for (var i = 0; i < modelli.length; i++) {
-      var modello = modelli[i];
-      var frammento = modello.content.cloneNode(true);
-      var script = frammento.querySelectorAll('script');
-      for (var j = 0; j < script.length; j++) {
-        var vecchio = script[j];
-        var nuovo = document.createElement('script');
-        for (var k = 0; k < vecchio.attributes.length; k++) {
-          nuovo.setAttribute(vecchio.attributes[k].name, vecchio.attributes[k].value);
-        }
-        if (vecchio.src) { nuovo.async = vecchio.hasAttribute('async'); }
-        nuovo.text = vecchio.text;
-        vecchio.parentNode.replaceChild(nuovo, vecchio);
-      }
-      modello.parentNode.replaceChild(frammento, modello);
+      attivaModello(modelli[i]);
     }
   }
 

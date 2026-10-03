@@ -673,3 +673,40 @@ select.campo-input { padding-right:2rem; }
                 font-family:var(--pb-font-mono); font-size:0.8rem; line-height:1.5; white-space:pre; overflow-x:auto; }
 .guida-nota { margin:0; font-size:0.875rem; color:#8a4b00; background:#fff7e6; border:1px solid #f3dcb0;
               border-radius:8px; padding:0.6rem 0.8rem; }
+
+/* ===========================================================================
+   THE WINDOW THAT CHOOSES A POINT ON THE PAGE
+   =========================================================================== */
+
+.scelta-punto { width:min(1280px, calc(100vw - 2rem)); height:calc(100vh - 2rem); max-height:none; max-width:none;
+                padding:0; border:1px solid var(--a-bordo); border-radius:12px; color:var(--a-testo);
+                background:var(--a-superficie); box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.scelta-punto[open] { display:flex; flex-direction:column; }
+.scelta-punto::backdrop { background:rgba(15,23,42,0.55); }
+.sp-testata { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:0.75rem 1.5rem;
+              padding:1rem 1.25rem; border-bottom:1px solid var(--a-bordo); }
+.sp-testata-testo { flex:1 1 28rem; min-width:0; }
+.sp-testata h2 { margin:0 0 0.25rem; font-size:1.25rem; }
+.sp-campo-pagina { flex:0 1 22rem; min-width:0; }
+#sp-avviso { margin:0.75rem 1.25rem 0; }
+#sp-avviso:empty { display:none; }
+.sp-corpo { flex:1; min-height:0; padding:0.75rem 1.25rem; background:var(--a-sfondo); }
+#sp-iframe { width:100%; height:100%; border:1px solid var(--a-bordo); border-radius:8px; background:#fff; }
+.sp-piede { display:flex; flex-wrap:wrap; align-items:flex-end; gap:0.75rem 1.5rem; padding:0.875rem 1.25rem;
+            border-top:1px solid var(--a-bordo); }
+.sp-campo-blocco { flex:1 1 22rem; min-width:0; }
+.sp-dove { border:0; margin:0; padding:0; display:flex; gap:1rem; align-items:center; }
+.sp-dove legend { float:left; font-weight:600; font-size:0.875rem; margin:0 0.5rem 0 0; padding:0; width:auto; }
+.sp-azioni { margin-left:auto; }
+/* In a code card: the chosen point and the button that opens the page. */
+.codice-punto { display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem 0.75rem; margin-top:0.8rem;
+                padding:0.75rem; border:1px dashed var(--a-accento); border-radius:8px; background:var(--a-attivo); }
+.codice-punto[hidden] { display:none; }
+.codice-punto .codice-aiuto { flex-basis:100%; margin:0; }
+.codice-punto-riga { margin:0; flex:1 1 16rem; }
+.codice-punto-etichetta { font-weight:600; }
+@media (max-width: 860px) {
+  .scelta-punto { width:100vw; height:100vh; border-radius:0; border:0; }
+  .sp-azioni { width:100%; }
+  .sp-azioni .pulsante { flex:1; }
+}

@@ -30,6 +30,7 @@
               <option value="article_middle" $sel_article_middle>$label_pos_article_middle</option>
               <option value="article_end" $sel_article_end>$label_pos_article_end</option>
               <option value="before_footer" $sel_before_footer>$label_pos_before_footer</option>
+              <option value="anchor" $sel_anchor>$label_pos_anchor</option>
             </optgroup>
           </select>
         </label>
@@ -40,6 +41,16 @@ $blocco_ambito        <label class="campo-etichettato"><span class="etichetta">$
             <option value="marketing" $sel_marketing>$label_cons_marketing</option>
           </select>
         </label>
+      </div>
+      <div class="codice-punto"$punto_nascosto>
+        <p class="codice-punto-riga"><span class="codice-punto-etichetta">$label_punto:</span>
+          <span class="codice-punto-testo">$punto_testo</span></p>
+        <button type="button" class="pulsante pulsante-piccolo" onclick="openPointPicker(this)">$label_scegli_punto</button>
+        <p class="hint codice-aiuto">$hint_punto</p>
+        <input type="hidden" class="codice-ancora" value="$ancora">
+        <input type="hidden" class="codice-ancora-dove" value="$ancora_dove">
+        <input type="hidden" class="codice-ancora-etichetta" value="$ancora_etichetta">
+        <input type="hidden" class="codice-ancora-pagina" value="$ancora_pagina">
       </div>
       <p class="hint codice-aiuto">$hint_posizione</p>
       <p class="hint codice-aiuto">$hint_consenso</p>

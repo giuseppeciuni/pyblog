@@ -354,12 +354,26 @@ def analytics_snippet():
 # CUSTOM CODE
 # ---------------------------------------------------------------------------
 
+# The page the author uses to choose a point for a piece of code is the real
+# page, generated on the spot, but without the code itself: an advertisement
+# or a tracker has no business running in the administration. The switch is
+# per thread, so the pages the server builds meanwhile are not affected.
+CODE_SWITCH = threading.local()
+
+
+def code_suppressed():
+    """Tell whether the page being generated leaves out every custom code."""
+    return getattr(CODE_SWITCH, "off", False) is True
+
+
 def custom_code_list():
     """
     Return the custom code snippets of the configuration, skipping anything
     malformed. A hand-edited config.json is the only way to get a snippet
     that is not a dictionary here, and one bad entry should not stop a build.
     """
+    if code_suppressed():
+        return []
     snippets = CONFIG.get("custom_code", [])
     if not isinstance(snippets, list):
         return []
@@ -390,6 +404,8 @@ def article_off_ids(art):
 
 def article_own_snippets(art):
     """The pieces of code written inside one article, for that article only."""
+    if code_suppressed():
+        return []
     own = art.get("custom_code", [])
     if not isinstance(own, list):
         return []
@@ -554,7 +570,30 @@ SNIPPET_SCOPES = ("home", "articles", "home_articles",
 # list of articles on the homepage (after the third one) and the sidebar.
 SNIPPET_POSITIONS = ("head", "body_start", "body_end",
                      "after_header", "before_footer", "article_end", "nav",
-                     "article_start", "article_middle", "home_feed", "sidebar")
+                     "article_start", "article_middle", "home_feed", "sidebar",
+                     "anchor")
+
+# "anchor" is a point the author chose by clicking on the page itself: a CSS
+# selector and whether the code goes before or after what it names. The
+# page carries the code inert, and site.js moves it there and runs it.
+ANCHOR_SIDES = ("before", "after")
+
+def snippet_anchor(snippet):
+    """
+    The point chosen on the page, as (selector, side), or None when the
+    snippet has none worth using. The selector is written by admin.js; a
+    hand-edited one that could close the attribute is refused.
+    """
+    selector = snippet.get("anchor_selector", "")
+    if not isinstance(selector, str):
+        return None
+    selector = selector.strip()
+    if selector == "" or len(selector) > 400 or any(c in selector for c in "<\n\r"):
+        return None
+    side = snippet.get("anchor_where", "after")
+    if side not in ANCHOR_SIDES:
+        side = "after"
+    return selector, side
 
 
 def snippet_applies(snippet, page_kind, article_ids, off_ids=()):
@@ -614,6 +653,8 @@ def custom_code_block(position, page_kind, article=()):
     that needs the visitor's consent arrives held back, see wrap_for_consent.
     """
     ticked, switched_off, own = code_context(article)
+    if position == "anchor":
+        return anchored_code_block(page_kind, article)
     parts = []
     for snippet in custom_code_list():
         if snippet_position(snippet) != position:
@@ -631,6 +672,40 @@ def custom_code_block(position, page_kind, article=()):
             if code != "":
                 parts.append(wrap_for_consent(code, snippet_consent(snippet)))
     return "\n".join(parts)
+
+
+def anchored_code(snippet):
+    """
+    One snippet with a chosen point, held in a <template> that names the
+    point. site.js moves it there; code that needs consent keeps waiting in
+    its template, in the new place, exactly as it waits anywhere else.
+    """
+    anchor = snippet_anchor(snippet)
+    code = str(snippet.get("code", "")).strip()
+    if anchor is None or code == "":
+        return ""
+    selector, side = anchor
+    category = snippet_consent(snippet)
+    consent = ""
+    if category != "necessary" and consent_enabled():
+        consent = ' data-pb-consenso="' + category + '"'
+    return (f'<template data-pb-ancora="{esc(selector)}" data-pb-dove="{side}"{consent}>'
+            + code + "</template>")
+
+
+def anchored_code_block(page_kind, article=()):
+    """The snippets of a page that go to a point chosen on the page."""
+    ticked, switched_off, own = code_context(article)
+    parts = []
+    for snippet in custom_code_list():
+        if snippet_position(snippet) == "anchor" and snippet_applies(
+                snippet, page_kind, ticked, switched_off):
+            parts.append(anchored_code(snippet))
+    if page_kind == "article":
+        for snippet in own:
+            if snippet.get("enabled", True) is not False and snippet_position(snippet) == "anchor":
+                parts.append(anchored_code(snippet))
+    return "\n".join(part for part in parts if part != "")
 
 
 def person_jsonld():
@@ -849,6 +924,7 @@ def render_page(language, titolo_pagina, contenuto, meta_extra="",
     # the page, so a snippet can use what they define.
     head_extra = block(head_extra) + custom_code_block("head", page_kind, context)
     script_extra = block(script_extra) + custom_code_block("body_end", page_kind, context)
+    script_extra = block(script_extra) + custom_code_block("anchor", page_kind, context)
     body_open = custom_code_block("body_start", page_kind, context)
     if len(categories) > 0:
         script_extra = block(script_extra) + consent_banner_html(language, categories)

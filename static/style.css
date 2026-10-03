@@ -224,6 +224,8 @@ header.site { border-bottom:1px solid var(--bordo); }
    The custom code placed between the articles, in the sidebar or inside the
    text. The slot itself is quiet: an ad brings its own look. */
 .annuncio { margin:1.2rem 0; text-align:center; overflow:hidden; min-width:0; }
+/* Code placed at a point the author chose on the page (site.js puts it there). */
+.codice-posizionato { margin:1.2rem 0; min-width:0; max-width:100%; }
 .annuncio:empty { display:none; }
 .annuncio-barra { margin:0; }
 .annuncio-testo { margin:1.8rem 0; }

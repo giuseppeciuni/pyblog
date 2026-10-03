@@ -3160,7 +3160,14 @@ function updateCardSummary(card) {
   if (nome === '') { nome = t('admin_codice_senza_nome'); }
   card.querySelector('.codice-sommario-nome').textContent = nome;
 
-  var pezzi = [selectedLabel(card.querySelector('.codice-posizione'))];
+  var posizione = card.querySelector('.codice-posizione');
+  var pezzi = [selectedLabel(posizione)];
+  var etichettaPunto = card.querySelector('.codice-ancora-etichetta');
+  if (posizione.value === 'anchor' && etichettaPunto && etichettaPunto.value !== '') {
+    pezzi = [etichettaPunto.value];
+  }
+  var riquadroPunto = card.querySelector('.codice-punto');
+  if (riquadroPunto) { riquadroPunto.hidden = posizione.value !== 'anchor'; }
   var ambito = card.querySelector('.codice-ambito');
   if (ambito !== null) { pezzi.push(selectedLabel(ambito)); }
   pezzi.push(consentLabel(card.querySelector('.codice-consenso').value));
@@ -3182,6 +3189,11 @@ function watchCodeList(lista, quandoCambia) {
     if (card === null) { return; }
     updateCardSummary(card);
     if (quandoCambia) { quandoCambia(); }
+    // Choosing "a point on the page" with no point yet opens the page.
+    if (evento.type === 'change' && evento.target.classList.contains('codice-posizione')
+        && evento.target.value === 'anchor' && card.querySelector('.codice-ancora').value === '') {
+      openPointPicker(evento.target);
+    }
   };
   lista.addEventListener('input', aggiorna);
   lista.addEventListener('change', aggiorna);
@@ -3233,6 +3245,15 @@ function customCodeData(lista, prefisso) {
     };
     var ambito = card.querySelector('.codice-ambito');
     if (ambito !== null) { snippet.scope = ambito.value; }
+    // The point chosen on the page travels with the snippet even when another
+    // position is picked for now: going back to it finds it again.
+    var ancora = card.querySelector('.codice-ancora');
+    if (ancora !== null && ancora.value !== '') {
+      snippet.anchor_selector = ancora.value;
+      snippet.anchor_where = card.querySelector('.codice-ancora-dove').value || 'after';
+      snippet.anchor_label = card.querySelector('.codice-ancora-etichetta').value;
+      snippet.anchor_page = card.querySelector('.codice-ancora-pagina').value;
+    }
     dati.push(snippet);
   }
   return dati;
@@ -3755,4 +3776,373 @@ function sortArticles() {
   for (var j = 0; j < carte.length; j++) {
     contenitore.appendChild(carte[j]);
   }
+}
+
+
+/* --- Choosing on the page where a piece of code goes ---------------------- */
+
+// The window shows the real page (the homepage or an article, generated
+// without any code) in a frame of the same site. Moving over it lights up
+// the blocks; a click chooses one, and "before" or "after" says on which
+// side the code goes. The same blocks are listed in a dropdown, for the
+// keyboard and for screen readers. What is saved is a CSS selector that
+// names the block in a way every page of that kind shares: "the third
+// paragraph of the text", not "this paragraph of this article".
+
+var puntoScheda = null;      // the card the window is choosing for
+var puntoBlocchi = [];       // the blocks of the page on show
+var puntoScelto = null;      // the block chosen, or null
+
+// The containers whose children can be chosen, from the outside in.
+var PUNTO_CONTENITORI = ['body', '.layout-colonne', 'main', '.colonna-principale',
+  'article.post', '.post-content', '.articles-section', '.articles-list',
+  '.barra-laterale'];
+
+function puntoT(chiave, valori) {
+  var testo = t(chiave);
+  for (var nome in (valori || {})) { testo = testo.replace('{' + nome + '}', valori[nome]); }
+  return testo;
+}
+
+function openPointPicker(origine) {
+  puntoScheda = origine.closest('.codice-config');
+  var finestra = pointPickerWindow();
+  var scelta = document.getElementById('sp-pagina');
+  scelta.innerHTML = '';
+  var avviso = document.getElementById('sp-avviso');
+  avviso.textContent = '';
+  var nellEditor = pbPage('page', '') === 'editor';
+  var opzioni = [];
+  if (nellEditor) {
+    var slug = pbPage('slug', '');
+    if (slug === '') {
+      avviso.textContent = t('js_sp_salva_prima');
+    } else {
+      opzioni.push({ valore: slug, testo: puntoT('js_sp_articolo', { title: document.getElementById('title').value }) });
+    }
+  } else {
+    opzioni.push({ valore: '', testo: t('js_sp_home') });
+    var articoli = pbPage('articoli_punto', []);
+    for (var i = 0; i < articoli.length; i++) {
+      opzioni.push({ valore: articoli[i].slug, testo: puntoT('js_sp_articolo', { title: articoli[i].title }) });
+    }
+    if (articoli.length === 0) { avviso.textContent = t('js_sp_nessun_articolo'); }
+  }
+  for (var j = 0; j < opzioni.length; j++) {
+    var o = document.createElement('option');
+    o.value = opzioni[j].valore;
+    o.textContent = opzioni[j].testo;
+    scelta.appendChild(o);
+  }
+  // Start from the page the point was chosen on, or the one the scope suggests.
+  var paginaSalvata = puntoScheda.querySelector('.codice-ancora-pagina').value;
+  var ambito = puntoScheda.querySelector('.codice-ambito');
+  var preferisciArticolo = paginaSalvata === 'article' ||
+    (paginaSalvata === '' && ambito !== null && ['articles', 'optin'].indexOf(ambito.value) !== -1);
+  if (!nellEditor && preferisciArticolo && scelta.options.length > 1) { scelta.selectedIndex = 1; }
+  var dove = puntoScheda.querySelector('.codice-ancora-dove').value || 'after';
+  document.querySelector('input[name="sp-dove"][value="' + dove + '"]').checked = true;
+  document.getElementById('sp-conferma').disabled = true;
+  if (!finestra.open) { finestra.showModal(); }
+  if (scelta.options.length > 0) {
+    loadPointPage();
+  } else {
+    document.getElementById('sp-iframe').removeAttribute('src');
+  }
+}
+
+// The window is built once, the first time it is needed.
+function pointPickerWindow() {
+  var finestra = document.getElementById('scelta-punto');
+  if (finestra) { return finestra; }
+  finestra = document.createElement('dialog');
+  finestra.id = 'scelta-punto';
+  finestra.className = 'scelta-punto';
+  finestra.setAttribute('aria-labelledby', 'sp-titolo');
+  finestra.innerHTML =
+    '<div class="sp-testata">' +
+      '<div class="sp-testata-testo"><h2 id="sp-titolo"></h2><p class="aiuto" id="sp-istruzioni"></p></div>' +
+      '<div class="campo sp-campo-pagina"><label for="sp-pagina"></label><select class="campo-input" id="sp-pagina"></select></div>' +
+    '</div>' +
+    '<p class="avviso avviso-danger" id="sp-avviso" role="status"></p>' +
+    '<div class="sp-corpo"><iframe id="sp-iframe"></iframe></div>' +
+    '<div class="sp-piede">' +
+      '<div class="campo sp-campo-blocco"><label for="sp-elenco"></label><select class="campo-input" id="sp-elenco"></select></div>' +
+      '<fieldset class="sp-dove"><legend></legend>' +
+        '<label class="campo-spunta"><input type="radio" name="sp-dove" value="before"> <span></span></label>' +
+        '<label class="campo-spunta"><input type="radio" name="sp-dove" value="after" checked> <span></span></label>' +
+      '</fieldset>' +
+      '<div class="azioni sp-azioni">' +
+        '<button type="button" class="pulsante" id="sp-annulla"></button>' +
+        '<button type="button" class="pulsante pulsante-primario" id="sp-conferma" disabled></button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(finestra);
+  document.getElementById('sp-titolo').textContent = t('js_sp_titolo');
+  document.getElementById('sp-istruzioni').textContent = t('js_sp_istruzioni');
+  finestra.querySelector('label[for="sp-pagina"]').textContent = t('js_sp_pagina');
+  finestra.querySelector('label[for="sp-elenco"]').textContent = t('js_sp_punto');
+  finestra.querySelector('.sp-dove legend').textContent = t('js_sp_dove');
+  var etichette = finestra.querySelectorAll('.sp-dove span');
+  etichette[0].textContent = t('js_pd_prima');
+  etichette[1].textContent = t('js_pd_dopo');
+  document.getElementById('sp-annulla').textContent = t('admin_annulla');
+  document.getElementById('sp-conferma').textContent = t('js_sp_metti');
+  document.getElementById('sp-iframe').title = t('js_sp_titolo');
+
+  document.getElementById('sp-pagina').addEventListener('change', loadPointPage);
+  document.getElementById('sp-elenco').addEventListener('change', function() {
+    var indice = parseInt(this.value, 10);
+    choosePointBlock(isNaN(indice) ? null : puntoBlocchi[indice], true);
+  });
+  var radio = finestra.querySelectorAll('input[name="sp-dove"]');
+  for (var i = 0; i < radio.length; i++) {
+    radio[i].addEventListener('change', drawPointMark);
+  }
+  document.getElementById('sp-annulla').addEventListener('click', function() { finestra.close(); });
+  document.getElementById('sp-conferma').addEventListener('click', confirmPoint);
+  document.getElementById('sp-iframe').addEventListener('load', preparePointPage);
+  return finestra;
+}
+
+function loadPointPage() {
+  puntoBlocchi = [];
+  puntoScelto = null;
+  document.getElementById('sp-elenco').innerHTML = '';
+  document.getElementById('sp-conferma').disabled = true;
+  var slug = document.getElementById('sp-pagina').value;
+  document.getElementById('sp-iframe').src = '/scegli-punto' + (slug ? '?slug=' + encodeURIComponent(slug) : '');
+}
+
+// The page has loaded in the frame: list its blocks, light them up on hover,
+// and stop its links and forms - here a click chooses, it does not go.
+function preparePointPage() {
+  var cornice = document.getElementById('sp-iframe');
+  var doc = cornice.contentDocument;
+  if (!doc || !doc.body) { return; }
+  var stile = doc.createElement('style');
+  stile.textContent =
+    '.pb-sp-sopra { outline:2px dashed #0066cc !important; outline-offset:3px; cursor:pointer !important; }' +
+    '.pb-sp-scelto { outline:3px solid #0066cc !important; outline-offset:3px; }' +
+    '.pb-sp-segno { margin:8px 0; padding:10px 14px; border:2px dashed #0066cc; border-radius:8px;' +
+    ' background:#e8f1fb; color:#0057ad; font:600 14px/1.4 system-ui, sans-serif; text-align:center; }';
+  doc.head.appendChild(stile);
+
+  puntoBlocchi = pointBlocksOf(doc);
+  var elenco = document.getElementById('sp-elenco');
+  elenco.innerHTML = '';
+  var vuota = document.createElement('option');
+  vuota.value = '';
+  vuota.textContent = t('js_sp_scegli');
+  elenco.appendChild(vuota);
+  for (var i = 0; i < puntoBlocchi.length; i++) {
+    var o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = describeBlock(puntoBlocchi[i]);
+    elenco.appendChild(o);
+  }
+
+  var sopra = null;
+  doc.addEventListener('mouseover', function(evento) {
+    var blocco = pointBlockFrom(evento.target);
+    if (sopra && sopra !== blocco) { sopra.classList.remove('pb-sp-sopra'); }
+    sopra = blocco;
+    if (blocco) { blocco.classList.add('pb-sp-sopra'); }
+  });
+  doc.addEventListener('click', function(evento) {
+    evento.preventDefault();
+    evento.stopPropagation();
+    var blocco = pointBlockFrom(evento.target);
+    if (blocco) { choosePointBlock(blocco, false); }
+  }, true);
+  doc.addEventListener('submit', function(evento) { evento.preventDefault(); }, true);
+
+  // A point already saved is found again, when this page has it.
+  var salvato = puntoScheda ? puntoScheda.querySelector('.codice-ancora').value : '';
+  if (salvato !== '') {
+    var trovato = null;
+    try { trovato = doc.querySelector(salvato); } catch (e) { trovato = null; }
+    if (trovato && puntoBlocchi.indexOf(trovato) !== -1) { choosePointBlock(trovato, true); }
+  }
+}
+
+// The blocks that can be chosen: the children of the main containers that
+// have a size, in the order of the page.
+function pointBlocksOf(doc) {
+  var blocchi = [];
+  for (var i = 0; i < PUNTO_CONTENITORI.length; i++) {
+    var contenitori = doc.querySelectorAll(PUNTO_CONTENITORI[i]);
+    for (var c = 0; c < contenitori.length; c++) {
+      var figli = contenitori[c].children;
+      for (var f = 0; f < figli.length; f++) {
+        var el = figli[f];
+        var nome = el.tagName.toLowerCase();
+        if (['script', 'style', 'template', 'link', 'meta', 'dialog'].indexOf(nome) !== -1) { continue; }
+        if (el.classList.contains('skip-to-content') || el.classList.contains('pb-sp-segno')) { continue; }
+        if (el.id === 'pb-consenso') { continue; }
+        // The containers themselves are not chosen: their children are.
+        var eContenitore = false;
+        for (var k = 0; k < PUNTO_CONTENITORI.length; k++) {
+          if (el.matches(PUNTO_CONTENITORI[k])) { eContenitore = true; }
+        }
+        if (eContenitore) { continue; }
+        var r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) { continue; }
+        if (blocchi.indexOf(el) === -1) { blocchi.push(el); }
+      }
+    }
+  }
+  blocchi.sort(function(a, b) {
+    return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+  });
+  return blocchi;
+}
+
+function pointBlockFrom(nodo) {
+  while (nodo && nodo.nodeType === 1) {
+    if (puntoBlocchi.indexOf(nodo) !== -1) { return nodo; }
+    nodo = nodo.parentElement;
+  }
+  return null;
+}
+
+function choosePointBlock(blocco, scorri) {
+  var precedente = puntoScelto;
+  if (precedente) { precedente.classList.remove('pb-sp-scelto'); }
+  puntoScelto = blocco;
+  document.getElementById('sp-conferma').disabled = blocco === null;
+  document.getElementById('sp-elenco').value = blocco ? String(puntoBlocchi.indexOf(blocco)) : '';
+  if (blocco) {
+    blocco.classList.add('pb-sp-scelto');
+    if (scorri) { blocco.scrollIntoView({ block: 'center' }); }
+  }
+  drawPointMark();
+}
+
+// The dashed box that shows where the code will go.
+function drawPointMark() {
+  var doc = document.getElementById('sp-iframe').contentDocument;
+  if (!doc) { return; }
+  var vecchio = doc.querySelector('.pb-sp-segno');
+  if (vecchio) { vecchio.parentNode.removeChild(vecchio); }
+  if (!puntoScelto) { return; }
+  var segno = doc.createElement('div');
+  segno.className = 'pb-sp-segno';
+  var nome = puntoScheda ? puntoScheda.querySelector('.codice-nome').value.trim() : '';
+  segno.textContent = puntoT('js_sp_qui', { name: nome || t('admin_codice_senza_nome') });
+  if (pointSide() === 'before') {
+    puntoScelto.parentNode.insertBefore(segno, puntoScelto);
+  } else {
+    puntoScelto.parentNode.insertBefore(segno, puntoScelto.nextSibling);
+  }
+}
+
+function pointSide() {
+  var scelto = document.querySelector('input[name="sp-dove"]:checked');
+  return scelto ? scelto.value : 'after';
+}
+
+// A selector that names the block the same way on every page of its kind:
+// an id or a class found once on the page, otherwise its place among the
+// elements of the same tag inside such a parent.
+function pointSelector(el) {
+  var doc = el.ownerDocument;
+  var nome = el.tagName.toLowerCase();
+  if (nome === 'body') { return 'body'; }
+  if (el.id && el.id !== 'content' && doc.querySelectorAll('#' + CSS.escape(el.id)).length === 1) {
+    return '#' + CSS.escape(el.id);
+  }
+  for (var i = 0; i < el.classList.length; i++) {
+    var classe = el.classList[i];
+    if (classe.indexOf('pb-sp-') === 0) { continue; }
+    var candidato = nome + '.' + CSS.escape(classe);
+    if (doc.querySelectorAll(candidato).length === 1) { return candidato; }
+  }
+  var posto = 1;
+  for (var fratello = el.previousElementSibling; fratello; fratello = fratello.previousElementSibling) {
+    if (fratello.tagName === el.tagName && !fratello.classList.contains('pb-sp-segno')) { posto++; }
+  }
+  return pointSelector(el.parentElement) + ' > ' + nome + ':nth-of-type(' + posto + ')';
+}
+
+// The place of an element among the ones of its tag in its parent.
+function pointOrdinal(el) {
+  var posto = 1;
+  for (var f = el.previousElementSibling; f; f = f.previousElementSibling) {
+    if (f.tagName === el.tagName && !f.classList.contains('pb-sp-segno')) { posto++; }
+  }
+  return posto;
+}
+
+// A name for a block that the author recognises on any page of its kind.
+function describeBlock(el) {
+  var c = el.classList;
+  var nome = el.tagName.toLowerCase();
+  var genitore = el.parentElement;
+  if (nome === 'header') { return t('js_pd_intestazione'); }
+  if (nome === 'footer') { return t('js_pd_piede'); }
+  if (c.contains('barra-argomenti')) { return t('js_pd_argomenti'); }
+  if (c.contains('home-intro')) { return t('js_pd_presentazione'); }
+  if (c.contains('home-biografia')) { return t('js_pd_biografia'); }
+  if (c.contains('home-progetti')) { return t('js_pd_progetti'); }
+  if (c.contains('articles-section')) { return t('js_pd_elenco'); }
+  if (c.contains('articles-head')) { return t('js_pd_testata_elenco'); }
+  if (c.contains('art-row')) { return puntoT('js_pd_articolo_n', { n: pointOrdinal(el) }); }
+  if (c.contains('paginazione')) { return t('js_pd_paginazione'); }
+  if (c.contains('box')) {
+    var titolo = el.querySelector('.box-titolo');
+    if (titolo && titolo.textContent.trim() !== '') {
+      return puntoT('js_pd_riquadro', { title: titolo.textContent.trim() });
+    }
+    return puntoT('js_pd_riquadro_n', { n: pointOrdinal(el) });
+  }
+  if (c.contains('language-switcher')) { return t('js_pd_lingue'); }
+  if (c.contains('breadcrumbs')) { return t('js_pd_percorso'); }
+  if (nome === 'h1') { return t('js_pd_titolo'); }
+  if (c.contains('meta')) { return t('js_pd_meta'); }
+  if (c.contains('articolo-copertina')) { return t('js_pd_copertina'); }
+  if (c.contains('toc-telefono')) { return t('js_pd_indice'); }
+  if (c.contains('post-content')) { return t('js_pd_testo'); }
+  if (c.contains('author-box')) { return t('js_pd_autore'); }
+  if (c.contains('article-nav')) { return t('js_pd_navigazione'); }
+  if (c.contains('post-ritorno')) { return t('js_pd_ritorno'); }
+  if (c.contains('related-articles')) { return t('js_pd_correlati'); }
+  if (c.contains('commenti')) { return t('js_pd_commenti'); }
+  if (genitore && genitore.classList.contains('post-content')) {
+    var n = pointOrdinal(el);
+    if (nome === 'p') {
+      if (el.querySelector('img') && el.textContent.trim() === '') { return puntoT('js_pd_immagine', { n: n }); }
+      return puntoT('js_pd_paragrafo', { n: n });
+    }
+    if (/^h[2-6]$/.test(nome)) {
+      var testo = el.textContent.trim();
+      if (testo.length > 40) { testo = testo.slice(0, 40) + '…'; }
+      return puntoT('js_pd_titoletto', { n: n, text: testo });
+    }
+    if (nome === 'ul' || nome === 'ol') { return puntoT('js_pd_elenco_testo', { n: n }); }
+    if (nome === 'figure' || nome === 'img') { return puntoT('js_pd_immagine', { n: n }); }
+    if (nome === 'pre') { return puntoT('js_pd_codice', { n: n }); }
+    if (nome === 'blockquote') { return puntoT('js_pd_citazione', { n: n }); }
+    if (nome === 'table') { return puntoT('js_pd_tabella', { n: n }); }
+  }
+  return puntoT('js_pd_blocco', { n: pointOrdinal(el), tag: nome });
+}
+
+// "Put it here": the card gets the point, its summary says where, and the
+// form knows something changed.
+function confirmPoint() {
+  if (!puntoScelto || !puntoScheda) { return; }
+  var lato = pointSide();
+  var etichetta = t(lato === 'before' ? 'js_pd_prima' : 'js_pd_dopo') + ' · ' + describeBlock(puntoScelto);
+  puntoScheda.querySelector('.codice-ancora').value = pointSelector(puntoScelto);
+  puntoScheda.querySelector('.codice-ancora-dove').value = lato;
+  puntoScheda.querySelector('.codice-ancora-etichetta').value = etichetta;
+  puntoScheda.querySelector('.codice-ancora-pagina').value =
+    document.getElementById('sp-pagina').value === '' ? 'home' : 'article';
+  puntoScheda.querySelector('.codice-punto-testo').textContent = etichetta;
+  var posizione = puntoScheda.querySelector('.codice-posizione');
+  posizione.value = 'anchor';
+  posizione.dispatchEvent(new Event('change', { bubbles: true }));
+  document.getElementById('scelta-punto').close();
+  puntoScheda.querySelector('.codice-punto .pulsante').focus();
 }

@@ -114,7 +114,7 @@ ADMIN_STATIC_FILES = ("common.css", "admin.css", "admin.js")
 
 # The GET routes handled by the administration, as opposed to the static site.
 ADMIN_GET_ROUTES = ("/admin", "/config", "/edit", "/change-password",
-                    "/preview", "/export")
+                    "/preview", "/export", "/scegli-punto")
 
 
 # ---------------------------------------------------------------------------
@@ -185,7 +185,10 @@ JS_TRANSLATION_KEYS = (
     "js_annulla_modifiche_titolo", "js_annulla_modifiche_corpo",
     "js_impostazioni_non_salvate", "admin_progetto_senza_nome",
     "admin_progetto_elimina", "js_aggiornato_alle",
-)
+) + tuple(key for key in i18n.UI_TRANSLATIONS
+          # The window that chooses a point on the page, and the names it
+          # gives the blocks of the page.
+          if key.startswith(("js_sp_", "js_pd_")))
 
 # Toolbar tooltips: CSS selector of the Quill button -> translated label.
 # The selectors are the ones Quill 1.3.x generates.
@@ -879,6 +882,7 @@ POSITION_LABEL_KEYS = {
     "article_middle": "admin_codice_pos_article_middle",
     "article_end": "admin_codice_pos_article_end",
     "before_footer": "admin_codice_pos_before_footer",
+    "anchor": "admin_codice_pos_anchor",
 }
 
 SCOPE_LABEL_KEYS = {
@@ -899,6 +903,8 @@ def snippet_summary(snippet, la, own=False):
     """
     position = snippet.get("position", "head")
     pieces = [T(POSITION_LABEL_KEYS.get(position, "admin_codice_pos_head"), la)]
+    if position == "anchor" and str(snippet.get("anchor_label", "")).strip() != "":
+        pieces = [str(snippet["anchor_label"]).strip()]
     if not own:
         pieces.append(T(SCOPE_LABEL_KEYS.get(snippet.get("scope", "home"),
                                              "admin_codice_scope_home"), la))
@@ -981,6 +987,17 @@ def custom_code_card(snippet, index_value, la, own=False, open_card=False):
         "hint_consenso": T("admin_codice_consenso_hint_proprio" if own else "admin_codice_consenso_hint", la),
         "label_codice": esc(T("admin_codice_codice", la)),
         "codice": esc(snippet.get("code", "")),
+        # The point chosen on the page, for the "anchor" position.
+        "punto_nascosto": "" if position == "anchor" else " hidden",
+        "label_punto": T("admin_punto", la),
+        "punto_testo": esc(str(snippet.get("anchor_label", "")).strip()
+                           or T("admin_punto_nessuno", la)),
+        "label_scegli_punto": T("admin_scegli_punto", la),
+        "hint_punto": T("admin_punto_hint", la),
+        "ancora": esc(str(snippet.get("anchor_selector", ""))),
+        "ancora_dove": esc(str(snippet.get("anchor_where", "after"))),
+        "ancora_etichetta": esc(str(snippet.get("anchor_label", ""))),
+        "ancora_pagina": esc(str(snippet.get("anchor_page", ""))),
     }
     for key, label_key in POSITION_LABEL_KEYS.items():
         values["sel_" + key] = selected_if(position, key)
@@ -1553,6 +1570,9 @@ def config_page(csrf):
         "home_content": config.get("home_content", ""),
         "home_content_en": config.get("home_content_en", ""),
         "card_contents": card_contents,
+        # The pages offered by the window that chooses a point for code.
+        "articoli_punto": [{"slug": a["slug"], "title": a.get("title", "")}
+                           for a in load_articles() if a.get("status") == "published"][:30],
         "bio_content": biography["content"],
         "bio_content_en": biography["content_en"],
         "config_raw": json.dumps(config, ensure_ascii=False, indent=2),
@@ -1937,8 +1957,43 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         elif route == "/export":
             # Downloads a ZIP backup with all the articles and the configuration.
             self._handle_export()
+        elif route == "/scegli-punto":
+            self._handle_point_page(query)
         else:
             self.send_error(404)
+
+    def _handle_point_page(self, query):
+        """
+        The real page - the homepage or an article - on which the author
+        clicks to choose where a piece of code goes. It is generated on the
+        spot, in the site's main language and without any custom code, and
+        it may be framed by the administration only.
+        """
+        published = [a for a in load_articles() if a.get("status") == "published"]
+        slug = query.get("slug", [""])[0]
+        language = main_language()
+        build_module.CODE_SWITCH.off = True
+        try:
+            if slug != "":
+                art = load_article(slug)
+                if art is None:
+                    self.send_error(404, "Article not found.")
+                    return
+                page = generate_article_page(art, language, published)
+            else:
+                page = build_module.generate_homepage(published, language, 1, 1)
+        finally:
+            build_module.CODE_SWITCH.off = False
+        data = page.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self._no_store()
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        self.end_headers()
+        self.wfile.write(data)
 
     def _handle_export(self):
         """
