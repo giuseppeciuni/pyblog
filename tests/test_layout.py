@@ -111,6 +111,13 @@ def test_righe_e_anteprime():
     # The filler words are all "parola": the last one before the dots must be
     # a whole one, not "par" or "parol".
     check("e non spezza le parole", estratto[:-1].split()[-1] == "parola", estratto[-30:])
+    for testo, atteso in (("<p>Uno due tre. Quattro</p>", "Uno due tre…"),
+                          ("<p>Davvero? Sì, certo</p>", "Davvero…"),
+                          ("<p>Primo, secondo; terzo</p>", "Primo…")):
+        parole = len(atteso.split())
+        ottenuto = build.excerpt_words(testo, parole)
+        check(f"il taglio dopo la punteggiatura non lascia «.…» ({ottenuto})",
+              ottenuto == atteso, ottenuto)
     check("i grassetti non lasciano spazi", "un grassetto e un esponente E=mc2" in estratto,
           estratto)
     check("i titoletti non entrano nell'anteprima",

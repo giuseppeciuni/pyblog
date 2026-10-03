@@ -198,7 +198,9 @@ def excerpt_words(html_content_value, words):
     pieces = text.split()
     if len(pieces) <= words:
         return text
-    return " ".join(pieces[:words]).rstrip(",;:-") + "…"
+    # A cut that falls after a full stop would read "artificiale.…": the
+    # punctuation goes, and the ellipsis alone says the text goes on.
+    return " ".join(pieces[:words]).rstrip(",;:-.!?…") + "…"
 
 
 # The parts of an article that are not running text: headings, code, tables
