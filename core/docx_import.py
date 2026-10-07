@@ -27,6 +27,11 @@ into Quill 1.3.7, and Quill only keeps what it can map onto its own model:
     them itself: <li class="ql-indent-1"> for a second-level item;
   - a line break between two blocks becomes an empty paragraph in Quill, so
     the blocks are joined with nothing between them;
+  - a <br> inside a block is deleted by Quill, which glues the two lines
+    into one ("ciao mamma.Si sono qui!"): the lines of a paragraph of Word
+    become blocks of their own, the way Quill itself writes a new line;
+  - a picture shares its line with whatever text is in its paragraph, so a
+    picture followed by its caption gets a paragraph to itself;
   - a table is wrapped in the div.raw-html-block the editor registers a blot
     for, otherwise Quill deletes it.
 
@@ -54,6 +59,7 @@ A = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
 V = "{urn:schemas-microsoft-com:vml}"
 WP = "{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}"
 MC = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
+PIC = "{http://schemas.openxmlformats.org/drawingml/2006/picture}"
 
 # Paragraph styles, recognised by style id or by style name, lowercased with
 # everything but letters and digits removed. Word writes the English name of
@@ -106,12 +112,41 @@ MAX_TABLE_DEPTH = 0
 # Quill indents list items from 1 to 8 levels.
 MAX_LIST_LEVEL = 8
 
-# An image wider than this is left without a width, so it fills the column of
-# the article (680-720 pixels) instead of being held at its Word size.
+# An image at least this wide fills the column of the article (680-720
+# pixels) instead of being held at its Word size.
 MAX_IMAGE_WIDTH = 680
 
-# English Metric Units per pixel at 96 dpi: Word measures drawings in EMU.
+# English Metric Units per pixel at 96 dpi: Word measures drawings in EMU,
+# the page in twentieths of a point, and old VML pictures in points.
 EMU_PER_PIXEL = 9525
+EMU_PER_TWIP = 635
+EMU_PER_POINT = 12700
+
+# A picture that takes this share of the text width in Word went from margin
+# to margin there, and goes from margin to margin in the article too.
+FULL_WIDTH_SHARE = 0.9
+
+# A picture no taller than this is an icon or a symbol, and stays in the
+# line of text wherever it is. A bigger one that opens or closes a line gets
+# a paragraph to itself (see _line_blocks).
+INLINE_PICTURE_MAX = 48 * EMU_PER_PIXEL
+
+# A floating picture whose top is lower than this under the top of the
+# paragraph it is anchored to (half a centimetre, about one line of text)
+# has text of that paragraph above it: it goes after the paragraph. One
+# anchored higher goes before it.
+FLOAT_BELOW_OFFSET = 180000
+
+# Marks left in the inline HTML of a paragraph while it is being rendered:
+# the places where the paragraph has to be cut into separate blocks. One is
+# a line break; the other pair goes around a picture that needs a line of
+# its own. A NUL cannot come from the document (XML forbids it) and
+# html.escape never writes one, so a mark is never mistaken for text.
+LINE_BREAK = "\x00br\x00"
+PICTURE_OPEN = "\x00pic\x00"
+PICTURE_CLOSE = "\x00/pic\x00"
+CUT_PATTERN = re.compile("(" + re.escape(LINE_BREAK) + "|" + re.escape(PICTURE_OPEN)
+                         + ".*?" + re.escape(PICTURE_CLOSE) + ")", re.DOTALL)
 
 # No part of a .docx needs to be bigger than this once unpacked. A ZIP can
 # hold a part that expands to gigabytes; it is refused before it is read.
@@ -165,6 +200,131 @@ def _is_monospace(font):
 def _plain(html_value):
     """The text of a piece of HTML, without tags and entities."""
     return html.unescape(re.sub(r"<[^>]+>", "", html_value)).strip()
+
+
+def _is_blank(html_value):
+    """Tell whether a piece of inline HTML shows nothing: no text, no picture."""
+    return _plain(html_value) == "" and "<img" not in html_value
+
+
+def _without_marks(inline_html, line_break):
+    """
+    Inline HTML with its cut marks resolved in place, for the blocks that
+    cannot be cut: a heading and a list item take a space for a line break,
+    a table cell takes a <br>. The pictures stay where they are.
+    """
+    return (inline_html.replace(LINE_BREAK, line_break)
+            .replace(PICTURE_OPEN, "").replace(PICTURE_CLOSE, ""))
+
+
+def _wrap_around_marks(inline_html, opening, closing):
+    """
+    Put a tag around a piece of inline HTML, leaving the cut marks outside
+    it: a link that runs over a line break becomes one link per line, and a
+    linked picture keeps its link when it moves to a line of its own.
+    """
+    pieces = []
+    for part in CUT_PATTERN.split(inline_html):
+        if part == LINE_BREAK or part.strip() == "":
+            pieces.append(part)
+        elif part.startswith(PICTURE_OPEN):
+            picture = part[len(PICTURE_OPEN):-len(PICTURE_CLOSE)]
+            pieces.append(PICTURE_OPEN + opening + picture + closing + PICTURE_CLOSE)
+        else:
+            pieces.append(opening + part + closing)
+    return "".join(pieces)
+
+
+# One piece of a link followed by another piece of the same link: the first
+# closes where the second opens, with nothing between them.
+SPLIT_LINK_PATTERN = re.compile(r'(<a href="[^"]*">)((?:(?!</?a[ >]).)*)</a>\1', re.DOTALL)
+
+
+def _join_links(inline_html):
+    """
+    Put back together a link written in pieces. A link is closed and opened
+    again around every mark (see _wrap_around_marks); where the mark did not
+    cut the line after all - a picture in the middle of a linked sentence -
+    the pieces are side by side, and are one link again.
+    """
+    while True:
+        joined = SPLIT_LINK_PATTERN.sub(r"\1\2", inline_html)
+        if joined == inline_html:
+            return joined
+        inline_html = joined
+
+
+def _cut_lines(inline_html):
+    """
+    Cut the inline HTML of a paragraph at its marks. The result is a list of
+    lines, one for every line break, and each line is a list of ("text",
+    html) and ("picture", html) pieces in reading order.
+    """
+    lines = [[]]
+    for part in CUT_PATTERN.split(inline_html):
+        if part == "":
+            continue
+        if part == LINE_BREAK:
+            lines.append([])
+        elif part.startswith(PICTURE_OPEN):
+            lines[-1].append(("picture", part[len(PICTURE_OPEN):-len(PICTURE_CLOSE)]))
+        else:
+            lines[-1].append(("text", part))
+    return lines
+
+
+def _line_blocks(line):
+    """
+    The blocks one line becomes: its text, and the pictures that open or
+    close it on a line of their own - a picture and its caption, a sentence
+    and the chart it announces. A picture with text on both sides is in the
+    middle of a sentence, and stays there. Pictures with only spaces between
+    them stay together, side by side as they were.
+    """
+    written = [index for index, (kind, value) in enumerate(line)
+               if kind == "text" and not _is_blank(value)]
+    blocks = []
+    for index, (kind, value) in enumerate(line):
+        if kind == "picture" and len(written) > 0 and written[0] < index < written[-1]:
+            kind = "text"
+        elif kind == "text" and _is_blank(value):
+            # Spaces between two pictures are not a line of text: they stay
+            # as the gap between the pictures.
+            if len(blocks) > 0:
+                blocks[-1][1] = blocks[-1][1] + " "
+            continue
+        if len(blocks) > 0 and blocks[-1][0] == kind:
+            blocks[-1][1] = blocks[-1][1] + value
+        else:
+            blocks.append([kind, value])
+    return [(kind, _join_links(value.strip())) for kind, value in blocks]
+
+
+def _to_emu(text):
+    """A whole number of EMU out of an attribute or an element, or None."""
+    try:
+        return int((text or "").strip())
+    except ValueError:
+        return None
+
+
+def _style_length(style, name):
+    """
+    A length out of the style of a VML shape ("width:170.1pt;height:147pt"),
+    in EMU, or None. Word and LibreOffice write these in points; inches are
+    read too, anything else is left alone.
+    """
+    match = re.search(r"(?:^|;)\s*" + re.escape(name) + r"\s*:\s*(-?[\d.]+)(pt|in)\b",
+                      style or "")
+    if match is None:
+        return None
+    try:
+        value = float(match.group(1))
+    except ValueError:
+        return None
+    if match.group(2) == "in":
+        value = value * 72
+    return round(value * EMU_PER_POINT)
 
 
 # ---------------------------------------------------------------------------
@@ -473,9 +633,12 @@ class DocxConverter:
         self.fields = []
         # Where the paragraph being rendered writes its pieces.
         self.paragraph_pieces = []
-        # Text boxes met inside the paragraph being rendered: their
-        # paragraphs are emitted after it, as blocks of their own.
-        self.extra_entries = []
+        # Floating pictures and text boxes met inside the paragraph being
+        # rendered, each with its placement (see float_placement) and its
+        # entries: they are emitted before or after it, as blocks of their own.
+        self.floats = []
+        # The width of the text on the page, in EMU, once the body is known.
+        self.text_width = None
 
     def warn(self, key, **params):
         """
@@ -674,13 +837,19 @@ class DocxConverter:
                 buffer.append(" ")
             elif name == "br":
                 # Page and column breaks belong to paper, not to a web page:
-                # a space keeps the words on either side apart.
+                # a space keeps the words on either side apart. A line break
+                # is a mark of its own, outside the formatting tags, so the
+                # paragraph can be cut there.
                 if child.get(W + "type") in (None, "textWrapping"):
-                    buffer.append("<br>")
+                    flush()
+                    if not hidden:
+                        self.emit(LINE_BREAK)
                 else:
                     buffer.append(" ")
             elif name == "cr":
-                buffer.append("<br>")
+                flush()
+                if not hidden:
+                    self.emit(LINE_BREAK)
             elif name == "noBreakHyphen":
                 buffer.append("-")
             elif name == "sym":
@@ -750,7 +919,8 @@ class DocxConverter:
         lowered = target.lower()
         for scheme in ALLOWED_LINK_SCHEMES:
             if lowered.startswith(scheme):
-                return '<a href="' + html.escape(target) + '">' + inner + "</a>"
+                return _wrap_around_marks(
+                    inner, '<a href="' + html.escape(target) + '">', "</a>")
         self.warn("warn_docx_link_skipped", href=target[:80])
         return inner
 
@@ -815,20 +985,52 @@ class DocxConverter:
 
     def render_graphic(self, element, context):
         """
-        A drawing, a VML picture or an AlternateContent: an image, a text box,
-        or both. A text box's paragraphs become blocks of their own after the
-        current paragraph; an image is returned as an <img>.
+        A drawing, a VML picture or an AlternateContent: pictures, text
+        boxes, or both.
+
+        A picture that sits in the line of text, the way Word's "in line
+        with text" does, is returned as an <img>. A floating picture and a
+        text box have no place in the line: they become blocks of their own,
+        before or after the paragraph they are anchored to, and nothing is
+        returned for them. Inside a list item a floating picture stays in
+        the item: a block between two items would end the list there.
         """
         if _local(element.tag) == "AlternateContent":
             element = self.choose_alternative(element)
             if element is None:
                 return ""
-        for box in list(element.iter(W + "txbxContent")):
-            self.extra_entries.extend(self.render_box(box))
-        if element.find(".//" + A + "blip") is not None or \
-                element.find(".//" + V + "imagedata") is not None:
-            return self.render_image(element)
-        return ""
+        parts = self.drawing_parts(element)
+        if len(parts) == 0:
+            return ""
+        placement = self.float_placement(element)
+        in_line = placement is None or bool(context.get("in_list_item"))
+        if placement is None:
+            # A text box in the line of text has no position of its own: its
+            # paragraphs follow the one it is in.
+            placement = {"where": "after", "offset": 0, "align": ""}
+
+        inline = []
+        entries = []
+        # The pictures of one drawing - a group of two side by side - share
+        # a paragraph, as they shared the drawing.
+        pictures = []
+        for kind, value in parts:
+            if kind == "image" and in_line:
+                inline.append(value)
+            elif kind == "image":
+                pictures.append(_without_marks(value, ""))
+            else:
+                if len(pictures) > 0:
+                    entries.append({"kind": "para", "html": " ".join(pictures),
+                                    "align": placement["align"]})
+                    pictures = []
+                entries.extend(value)
+        if len(pictures) > 0:
+            entries.append({"kind": "para", "html": " ".join(pictures),
+                            "align": placement["align"]})
+        if len(entries) > 0:
+            self.floats.append(dict(placement, entries=entries))
+        return "".join(inline)
 
     def choose_alternative(self, element):
         """
@@ -842,79 +1044,227 @@ class DocxConverter:
                 return choice
         return element.find(MC + "Fallback")
 
+    def drawing_parts(self, element):
+        """
+        What a drawing holds, in the order it is written: ("image", html)
+        for every picture and ("box", entries) for every text box.
+
+        A picture inside a text box belongs to the box, whose own paragraphs
+        render it. Looking for pictures at any depth is what used to show a
+        picture with a caption twice, the second time glued to the text of
+        the paragraph and with the size of the frame around it.
+        """
+        found = []
+
+        def walk(node, picture, shape, scale, grouped):
+            for child in node:
+                tag = child.tag
+                if tag == W + "txbxContent":
+                    found.append(("box", child, None, 1.0, False))
+                elif tag == A + "blip":
+                    found.append(("blip", child, picture, scale, grouped))
+                elif tag == V + "imagedata":
+                    found.append(("vml", child, shape, scale, grouped))
+                elif tag == PIC + "pic":
+                    walk(child, child, shape, scale, grouped)
+                elif _local(tag) in ("wgp", "grpSp", "wpc"):
+                    walk(child, picture, shape, scale * self.group_scale(child), True)
+                elif isinstance(tag, str) and tag.startswith(V) and child.get("style"):
+                    walk(child, picture, child, scale, grouped)
+                else:
+                    walk(child, picture, shape, scale, grouped)
+
+        walk(element, None, None, 1.0, False)
+
+        # The frame of the drawing itself: its size on the page and the
+        # alternative text the author typed. They describe the picture only
+        # when the picture is all the drawing holds, not one shape of a group.
+        frame = None
+        for node in element.iter():
+            if node.tag in (WP + "inline", WP + "anchor"):
+                frame = node
+                break
+
+        parts = []
+        for kind, node, owner, scale, grouped in found:
+            if kind == "box":
+                entries = self.render_box(node)
+                if len(entries) > 0:
+                    parts.append(("box", entries))
+                continue
+            if kind == "blip":
+                rel_id = node.get(R + "embed") or node.get(R + "link")
+                alt, width, height = self.picture_description(owner, scale)
+                if frame is not None and not grouped:
+                    alt, width, height = self.frame_description(frame, alt, width, height)
+            else:
+                rel_id = node.get(R + "id")
+                alt, width, height = "", None, None
+                if owner is not None:
+                    alt = owner.get("alt") or ""
+                    width = _style_length(owner.get("style"), "width")
+                    height = _style_length(owner.get("style"), "height")
+            image = self.image_html(rel_id, alt.strip(), width, height)
+            if image != "":
+                parts.append(("image", image))
+        return parts
+
+    def group_scale(self, group):
+        """
+        How much a group of shapes was stretched after it was made. The
+        shapes inside keep the measures they had; the group says how wide it
+        is now (a:ext) and how wide it was then (a:chExt).
+        """
+        for child in group:
+            if _local(child.tag) != "grpSpPr":
+                continue
+            transform = child.find(A + "xfrm")
+            if transform is None:
+                return 1.0
+            now = transform.find(A + "ext")
+            then = transform.find(A + "chExt")
+            if now is None or then is None:
+                return 1.0
+            width_now = _to_emu(now.get("cx"))
+            width_then = _to_emu(then.get("cx"))
+            if not width_now or not width_then or width_now < 0 or width_then < 0:
+                return 1.0
+            return width_now / width_then
+        return 1.0
+
+    def picture_description(self, picture, scale):
+        """
+        The alternative text and the size (in EMU) a pic:pic says of itself.
+        Inside a group this is all there is to know about the picture.
+        """
+        alt = ""
+        width = None
+        height = None
+        if picture is None:
+            return alt, width, height
+        properties = picture.find(PIC + "nvPicPr/" + PIC + "cNvPr")
+        if properties is not None:
+            alt = properties.get("descr") or properties.get("title") or ""
+        size = picture.find(PIC + "spPr/" + A + "xfrm/" + A + "ext")
+        if size is not None:
+            own_width = _to_emu(size.get("cx"))
+            own_height = _to_emu(size.get("cy"))
+            if own_width:
+                width = round(own_width * scale)
+            if own_height:
+                height = round(own_height * scale)
+        return alt, width, height
+
+    def frame_description(self, frame, alt, width, height):
+        """
+        The alternative text and the size of a picture that stands alone in
+        its drawing. Word keeps the text the author typed in wp:docPr, and
+        the size the picture has on the page in wp:extent: both win over
+        what the picture says of itself.
+        """
+        properties = frame.find(WP + "docPr")
+        if properties is not None:
+            alt = properties.get("descr") or properties.get("title") or alt
+        extent = frame.find(WP + "extent")
+        if extent is not None:
+            width = _to_emu(extent.get("cx")) or width
+            height = _to_emu(extent.get("cy")) or height
+        return alt, width, height
+
+    def float_placement(self, element):
+        """
+        Where a floating drawing goes, or None for a drawing that sits in
+        the line of text: "where" is "before" or "after" the paragraph,
+        "offset" is how far its top is from the top of that paragraph (in
+        EMU), "align" its alignment class.
+
+        Word anchors a floating picture to a paragraph and says how far down
+        from the top of that paragraph it starts. Anchored at the top, the
+        text of the paragraph runs beside it or under it: the picture comes
+        first. Anchored lower, some of that text is above it: the picture
+        comes after. It is an approximation - a web page has no picture with
+        text flowing around it at a given height - but it keeps the picture
+        next to the text it was next to, and out of the middle of a sentence.
+        """
+        for node in element.iter():
+            if node.tag == WP + "inline":
+                return None
+            if node.tag == WP + "anchor":
+                return self.anchor_placement(node)
+            if isinstance(node.tag, str) and node.tag.startswith(V) and node.get("style"):
+                return self.vml_placement(node.get("style"))
+        return None
+
+    def anchor_placement(self, anchor):
+        """The placement of a DrawingML wp:anchor. See float_placement."""
+        offset = 0
+        below = False
+        vertical = anchor.find(WP + "positionV")
+        # A position measured from the page or from the margin says nothing
+        # about the paragraph: the picture is taken as anchored at its top.
+        if vertical is not None and vertical.get("relativeFrom") in ("paragraph", "line"):
+            offset = _to_emu(vertical.findtext(WP + "posOffset")) or 0
+            below = (vertical.findtext(WP + "align") or "").strip() == "bottom"
+        side = ""
+        horizontal = anchor.find(WP + "positionH")
+        if horizontal is not None:
+            side = (horizontal.findtext(WP + "align") or "").strip()
+        return self.placement(offset, below, side)
+
+    def vml_placement(self, style):
+        """The placement of an old VML shape, read from its CSS-like style."""
+        if re.search(r"(?:^|;)\s*position\s*:\s*absolute", style) is None:
+            return None
+        offset = 0
+        below = False
+        relative = re.search(r"mso-position-vertical-relative\s*:\s*([a-z-]+)", style)
+        if relative is None or relative.group(1) in ("text", "line", "paragraph"):
+            offset = _style_length(style, "margin-top") or 0
+            vertical = re.search(r"mso-position-vertical\s*:\s*([a-z]+)", style)
+            below = vertical is not None and vertical.group(1) == "bottom"
+        side = ""
+        horizontal = re.search(r"mso-position-horizontal\s*:\s*([a-z]+)", style)
+        if horizontal is not None:
+            side = horizontal.group(1)
+        return self.placement(offset, below, side)
+
+    def placement(self, offset, below, side):
+        """Before or after the paragraph, and the class of the alignment."""
+        where = "before"
+        if below or offset > FLOAT_BELOW_OFFSET:
+            where = "after"
+        alignment = ""
+        if side == "center":
+            alignment = " class=\"ql-align-center\""
+        elif side == "right":
+            alignment = " class=\"ql-align-right\""
+        return {"where": where, "offset": offset, "align": alignment}
+
     def render_box(self, box):
         """The blocks inside a text box, rendered without disturbing the paragraph around it."""
-        saved = (self.paragraph_pieces, self.extra_entries, self.fields)
+        saved = (self.paragraph_pieces, self.floats, self.fields)
         self.paragraph_pieces = []
-        self.extra_entries = []
+        self.floats = []
         self.fields = []
         try:
             entries = self.render_blocks(box)
         finally:
-            self.paragraph_pieces, self.extra_entries, self.fields = saved
+            self.paragraph_pieces, self.floats, self.fields = saved
         return entries
 
-    def find_image_relationship_id(self, element):
+    def image_html(self, rel_id, alt, width, height):
         """
-        Find the relationship id of an image, in either of the two ways Word
-        writes one: the modern DrawingML <a:blip r:embed="..."> and the legacy
-        VML <v:imagedata r:id="...">, still produced by older documents and by
-        some converters.
-        """
-        blip = element.find(".//" + A + "blip")
-        if blip is not None:
-            embed = blip.get(R + "embed")
-            if embed is not None:
-                return embed
-            link = blip.get(R + "link")
-            if link is not None:
-                return link
-        image_data = element.find(".//" + V + "imagedata")
-        if image_data is not None:
-            rel_id = image_data.get(R + "id")
-            if rel_id is not None:
-                return rel_id
-        return None
+        The <img> of one picture, saved in the media folder on the way, or
+        an empty string (plus a warning) when the picture cannot be used, so
+        one bad picture never stops the import. width and height are the
+        size the picture has on the page of the document, in EMU, when the
+        document says it.
 
-    def image_description(self, element):
+        Anything bigger than an icon is wrapped in the marks that can give
+        it a paragraph of its own, away from the text of its line.
         """
-        The alternative text and the displayed width (in pixels) of an image.
-
-        Word keeps the alternative text the author typed in wp:docPr, and the
-        size the picture has on the page in wp:extent, in EMU. A legacy VML
-        picture keeps both on v:shape instead.
-        """
-        alt = ""
-        width = None
-        properties = element.find(".//" + WP + "docPr")
-        if properties is not None:
-            alt = properties.get("descr") or properties.get("title") or ""
-        extent = element.find(".//" + WP + "extent")
-        if extent is not None:
-            try:
-                width = round(int(extent.get("cx", "0")) / EMU_PER_PIXEL)
-            except ValueError:
-                width = None
-        shape = element.find(".//" + V + "shape")
-        if shape is not None:
-            if alt == "":
-                alt = shape.get("alt") or ""
-            match = re.search(r"width:\s*([\d.]+)pt", shape.get("style") or "")
-            if width is None and match is not None:
-                width = round(float(match.group(1)) * 96 / 72)
-        return alt.strip(), width
-
-    def render_image(self, element):
-        """
-        Extract an embedded image, save it in the media folder and return the
-        <img> tag. Returns an empty string (plus a warning) when the image
-        cannot be used, so one bad picture never stops the import.
-        """
-        rel_id = self.find_image_relationship_id(element)
         if rel_id is None:
             return ""
-        alt, width = self.image_description(element)
-
         if rel_id not in self.saved_images:
             self.saved_images[rel_id] = self.save_image(rel_id)
         url = self.saved_images[rel_id]
@@ -923,9 +1273,64 @@ class DocxConverter:
         tag = '<img src="' + html.escape(url) + '"'
         if alt != "":
             tag = tag + ' alt="' + html.escape(alt) + '"'
-        if width is not None and 0 < width < MAX_IMAGE_WIDTH:
-            tag = tag + ' width="' + str(width) + '"'
-        return tag + ' loading="lazy">'
+        tag = tag + self.width_attribute(width) + ' loading="lazy">'
+        size = height
+        if size is None:
+            size = width
+        if size is not None and 0 < size <= INLINE_PICTURE_MAX:
+            return tag
+        return PICTURE_OPEN + tag + PICTURE_CLOSE
+
+    def width_attribute(self, width):
+        """
+        The width attribute of a picture, from the width it has in Word.
+
+        The size on the page is kept in pixels, so a small picture stays
+        small on a wide screen and a big one still shrinks on a phone (the
+        stylesheet never lets a picture be wider than its column). A picture
+        that went from margin to margin in the document goes from margin to
+        margin in the article: its width is 100%, whatever the two columns
+        measure.
+        """
+        if width is None or width <= 0:
+            return ""
+        pixels = round(width / EMU_PER_PIXEL)
+        if pixels < 1:
+            return ""
+        full = pixels >= MAX_IMAGE_WIDTH
+        if self.text_width is not None and width >= FULL_WIDTH_SHARE * self.text_width:
+            full = True
+        if full:
+            return ' width="100%"'
+        return ' width="' + str(pixels) + '"'
+
+    def page_text_width(self, body):
+        """
+        The width of the text on the page, in EMU: the page less its two
+        margins, divided by the number of columns. None when the document
+        does not say, and then pictures are only measured in pixels.
+        """
+        section = body.find(W + "sectPr")
+        if section is None:
+            return None
+        size = section.find(W + "pgSz")
+        if size is None:
+            return None
+        margins = section.find(W + "pgMar")
+        try:
+            width = int(size.get(W + "w", ""))
+            if margins is not None:
+                width = width - int(margins.get(W + "left", "0")) \
+                    - int(margins.get(W + "right", "0"))
+            columns = 1
+            layout = section.find(W + "cols")
+            if layout is not None:
+                columns = max(1, int(layout.get(W + "num", "1")))
+        except ValueError:
+            return None
+        if width <= 0:
+            return None
+        return width * EMU_PER_TWIP / columns
 
     def save_image(self, rel_id):
         """Save the image a relationship points to; return its URL or ""."""
@@ -1080,8 +1485,12 @@ class DocxConverter:
 
     def render_paragraph(self, paragraph, context=None):
         """
-        Render one w:p into a list of entries for the assembler: the paragraph
-        itself, followed by the paragraphs of any text box it anchors.
+        Render one w:p into a list of entries for the assembler.
+
+        One paragraph of Word can be several blocks of the article: a line
+        break starts a new one, a picture with text around it gets one to
+        itself, and the floating pictures and text boxes anchored to the
+        paragraph go before or after it.
 
         An entry is a dict with a "kind": title, subtitle, heading, item,
         quote, code, para, empty or skip.
@@ -1105,63 +1514,178 @@ class DocxConverter:
         code_like = kind is not None and kind[0] == "code"
         if kind is None and self.paragraph_is_monospace(paragraph, inherited):
             code_like = True
+        # A heading numbered by its style is still a heading, not a list item.
+        list_info = None
+        if not heading_like:
+            list_info = self.paragraph_list_info(paragraph, style_id)
 
         fields_open_before = len(self.fields) > 0
         saved_pieces = self.paragraph_pieces
-        saved_extra = self.extra_entries
+        saved_floats = self.floats
         self.paragraph_pieces = []
-        self.extra_entries = []
-        render_context = dict(context, in_heading=heading_like, code_block=code_like)
+        self.floats = []
+        render_context = dict(context, in_heading=heading_like, code_block=code_like,
+                              in_list_item=list_info is not None)
         self.render_inline(paragraph, inherited, render_context)
         inner = "".join(self.paragraph_pieces).strip()
-        extra = self.extra_entries
+        floats = self.floats
         self.paragraph_pieces = saved_pieces
-        self.extra_entries = saved_extra
+        self.floats = saved_floats
         fields_open_after = len(self.fields) > 0
+        if fields_open_after:
+            self.end_line_in_field()
 
         if kind is not None and kind[0] == "toc":
             self.warn("warn_docx_toc_skipped")
-            entry = {"kind": "skip"}
+            entries = [{"kind": "skip"}]
         elif (fields_open_before or fields_open_after) and inner == "":
             # A paragraph whose whole text went into a field that spans
             # several paragraphs: Word's table of contents. Nothing to show.
-            entry = {"kind": "skip"}
+            entries = [{"kind": "skip"}]
         else:
-            entry = self.classify(paragraph, style_id, kind, inner, code_like, inherited)
-        return [entry] + extra
+            entries = self.classify(paragraph, kind, inner, code_like, inherited,
+                                    list_info, context)
+        return self.with_floats(entries, floats)
 
-    def classify(self, paragraph, style_id, kind, inner, code_like, inherited):
-        """Turn a rendered paragraph into the entry the assembler needs."""
-        empty = _plain(inner) == "" and "<img" not in inner
+    def end_line_in_field(self):
+        """
+        A paragraph has ended inside a field that is still open: a
+        bibliography, a list of figures. The field collects the text of all
+        its paragraphs and hands it over where it closes; the mark keeps
+        each paragraph on a line of its own there, instead of one long line.
+        """
+        field = self.fields[-1]
+        if field["phase"] == "result" and len(field["parts"]) > 0 \
+                and field["parts"][-1] != LINE_BREAK:
+            field["parts"].append(LINE_BREAK)
+
+    def with_floats(self, entries, floats):
+        """
+        Put the floating pictures and text boxes of a paragraph before it or
+        after it, from the highest to the lowest.
+
+        They all go on the side of the highest one. The floats of one
+        paragraph belong together - a picture and the caption Word puts in a
+        text box under it, two pictures side by side - and the caption sits
+        lower than the picture by definition: placed each by its own height,
+        the picture would end up before the paragraph and its caption after
+        it. A paragraph that held nothing else leaves no empty line behind.
+        """
+        if len(floats) == 0:
+            return entries
+        ordered = sorted(floats, key=lambda item: item["offset"])
+        blocks = []
+        for item in ordered:
+            blocks.extend(item["entries"])
+        if all(entry["kind"] in ("empty", "skip") for entry in entries):
+            return blocks
+        if ordered[0]["where"] == "before":
+            return blocks + entries
+        return entries + blocks
+
+    def classify(self, paragraph, kind, inner, code_like, inherited, list_info, context):
+        """
+        Turn a rendered paragraph into the entries the assembler needs.
+
+        This is where the marks left in the text are resolved, and each kind
+        of block does it its own way. A paragraph and a quotation are cut:
+        Quill has no line break inside a block, so every line becomes a block
+        like the one it came from. A title, a heading and a list item cannot
+        be cut without becoming two headings or two items: the line break
+        turns into a space. A table cell is outside Quill's reach, and keeps
+        a real <br>.
+        """
         alignment = self.paragraph_alignment_class(paragraph)
+        name = ""
+        if kind is not None:
+            name = kind[0]
 
-        if kind is not None and kind[0] == "title":
-            if empty:
-                return {"kind": "empty"}
-            return {"kind": "title", "text": _plain(inner), "html": inner}
-        if kind is not None and kind[0] == "subtitle":
-            if empty:
-                return {"kind": "empty"}
-            return {"kind": "subtitle", "text": _plain(inner), "html": inner,
-                    "align": alignment}
-        if kind is not None and kind[0] == "heading":
-            if empty:
-                return {"kind": "empty"}
-            return {"kind": "heading", "level": kind[1], "html": inner, "align": alignment}
+        if context.get("in_cell"):
+            return [self.cell_entry(paragraph, _without_marks(inner, "<br>"),
+                                    code_like, inherited, list_info)]
 
-        list_info = self.paragraph_list_info(paragraph, style_id)
+        lines = _cut_lines(inner)
+        if name in ("title", "subtitle", "heading"):
+            return self.heading_entries(kind, lines, alignment)
+
         if list_info is not None:
-            if empty:
-                return {"kind": "skip"}
-            return {"kind": "item", "level": list_info[0], "list": list_info[1], "html": inner}
+            texts = []
+            for line in lines:
+                text = "".join(value for _, value in line).strip()
+                if not _is_blank(text):
+                    texts.append(text)
+            if len(texts) == 0:
+                return [{"kind": "skip"}]
+            return [{"kind": "item", "level": list_info[0], "list": list_info[1],
+                     "html": " ".join(texts)}]
 
         if code_like:
+            return [{"kind": "code", "text": self.paragraph_code_text(paragraph, inherited)}]
+
+        entries = []
+        for line in lines:
+            blocks = _line_blocks(line)
+            if len(blocks) == 0:
+                # Two line breaks in a row: the empty line between them.
+                entries.append({"kind": "empty"})
+            for block_kind, value in blocks:
+                if block_kind == "text" and name == "quote":
+                    entries.append({"kind": "quote", "html": value})
+                else:
+                    entries.append({"kind": "para", "html": value, "align": alignment})
+        # A line break at the very start or end of a paragraph shows nothing.
+        while len(entries) > 0 and entries[0]["kind"] == "empty":
+            entries.pop(0)
+        while len(entries) > 0 and entries[-1]["kind"] == "empty":
+            entries.pop()
+        if len(entries) == 0:
+            return [{"kind": "empty"}]
+        return entries
+
+    def heading_entries(self, kind, lines, alignment):
+        """
+        A title, a subtitle or a heading is one line, whatever Word did
+        inside it: a line break becomes a space. A picture is not part of a
+        heading: it goes before or after it, on the side it was.
+        """
+        texts = []
+        before = []
+        after = []
+        for line in lines:
+            for block_kind, value in _line_blocks(line):
+                if block_kind == "text":
+                    texts.append(value)
+                    continue
+                picture = {"kind": "para", "html": value, "align": alignment}
+                if len(texts) == 0:
+                    before.append(picture)
+                else:
+                    after.append(picture)
+        text = " ".join(texts)
+        if text == "":
+            if len(before) == 0:
+                return [{"kind": "empty"}]
+            return before
+        if kind[0] == "title":
+            entry = {"kind": "title", "text": _plain(text), "html": text}
+        elif kind[0] == "subtitle":
+            entry = {"kind": "subtitle", "text": _plain(text), "html": text,
+                     "align": alignment}
+        else:
+            entry = {"kind": "heading", "level": kind[1], "html": text, "align": alignment}
+        return before + [entry] + after
+
+    def cell_entry(self, paragraph, inner, code_like, inherited, list_info):
+        """One paragraph of a table cell: a cell holds lines, not blocks."""
+        if list_info is not None:
+            if _is_blank(inner):
+                return {"kind": "skip"}
+            return {"kind": "item", "level": list_info[0], "list": list_info[1], "html": inner}
+        if code_like:
             return {"kind": "code", "text": self.paragraph_code_text(paragraph, inherited)}
-        if empty:
+        if _is_blank(inner):
             return {"kind": "empty"}
-        if kind is not None and kind[0] == "quote":
-            return {"kind": "quote", "html": inner}
-        return {"kind": "para", "html": inner, "align": alignment}
+        return {"kind": "para", "html": inner, "align": ""}
 
     # --- Tables -------------------------------------------------------------
 
@@ -1309,7 +1833,7 @@ class DocxConverter:
         Paragraphs are separated by <br>, list items keep a bullet.
         """
         pieces = []
-        context = {"in_header_cell": header}
+        context = {"in_header_cell": header, "in_cell": True}
 
         def walk(node):
             for child in node:
@@ -1359,11 +1883,51 @@ class DocxConverter:
             if name == "p":
                 entries.extend(self.render_paragraph(element))
             elif name == "tbl":
-                table_html = self.render_table(element)
-                if table_html != "":
-                    entries.append({"kind": "table", "html": table_html})
+                entries.extend(self.table_entries(element))
             # sectPr (page setup), bookmarks and the rest carry no content.
         return entries
+
+    def table_entries(self, table):
+        """
+        The entries a w:tbl becomes: one table, or - for a table that is
+        only there to lay out the page - the blocks inside its cells, read
+        row by row.
+        """
+        if self.is_layout_table(table):
+            entries = []
+            for row in self.own_rows(table):
+                for cell in self.own_cells(row):
+                    entries.extend(self.render_blocks(cell))
+            if len(entries) > 0:
+                self.warn("warn_docx_layout_table")
+            return entries
+        table_html = self.render_table(table)
+        if table_html == "":
+            return []
+        return [{"kind": "table", "html": table_html}]
+
+    def is_layout_table(self, table):
+        """
+        Tell whether a table is Word's page furniture rather than data.
+
+        Word has no other way to put a picture beside a text or to keep a
+        caption with its picture, so authors use a table for it, usually
+        with its borders hidden. The editor's tables always have a header
+        row: rendered as one, such a table shows its picture and its text in
+        bold on a grey band, in a smaller size. A single row is a strip of
+        blocks side by side and a single column is a stack of them, never a
+        grid of data: those are taken apart, and their content becomes the
+        ordinary text and pictures it is. The same rule decides what a
+        table pasted from Word becomes in the editor (isLayoutTable, in
+        admin.js); a grid with more rows and columns is always kept.
+        """
+        rows = self.own_rows(table)
+        if len(rows) <= 1:
+            return True
+        for row in rows:
+            if len(self.own_cells(row)) > 1:
+                return False
+        return True
 
     def _block_children(self, container):
         """
@@ -1409,13 +1973,15 @@ class DocxConverter:
             note = self.notes[kind][note_id]
             texts = []
             for paragraph in note.iter(W + "p"):
-                saved = (self.paragraph_pieces, self.fields)
+                saved = (self.paragraph_pieces, self.fields, self.floats)
                 self.paragraph_pieces = []
                 self.fields = []
+                self.floats = []
                 style_id = self.paragraph_style_id(paragraph)
                 self.render_inline(paragraph, self.style_format(style_id), {})
-                text = "".join(self.paragraph_pieces).strip()
-                self.paragraph_pieces, self.fields = saved
+                # A note is one item of a list: a line break is a space.
+                text = _without_marks("".join(self.paragraph_pieces), " ").strip()
+                self.paragraph_pieces, self.fields, self.floats = saved
                 if text != "":
                     texts.append(text)
             items.append("<li>" + " ".join(texts) + "</li>")
@@ -1450,6 +2016,10 @@ class DocxConverter:
         if self.title == "":
             for index, entry in enumerate(entries):
                 if entry["kind"] == "empty":
+                    continue
+                if entry["kind"] == "para" and _plain(entry["html"]) == "":
+                    # A picture above the title - a logo, a cover - does not
+                    # make the heading under it any less the title.
                     continue
                 if entry["kind"] == "heading" and entry["level"] == 1:
                     self.title = _plain(entry["html"])
@@ -1528,6 +2098,7 @@ class DocxConverter:
 
     def convert(self, body):
         """Convert the document body into the article HTML."""
+        self.text_width = self.page_text_width(body)
         return self.assemble(self.render_blocks(body))
 
 
@@ -1715,6 +2286,8 @@ def describe_warning(warning):
         return f"link dropped, address not allowed ({warning.get('href', '')})"
     if key == "warn_docx_nested_table":
         return "a nested table was flattened to text"
+    if key == "warn_docx_layout_table":
+        return "a table used for layout was taken apart: its content is now ordinary text"
     if key == "warn_docx_numbering_missing":
         return "list numbering could not be read: bulleted lists were used"
     if key == "warn_docx_toc_skipped":

@@ -404,8 +404,26 @@ Heading 1 style at the beginning) becomes the article's title and the
 subtitle the description, if it is empty. Word's table of contents, hidden
 text, WMF/EMF images (no browser shows them), linked rather than embedded
 images, links that are not http, https or mailto, and equations are left
-out: a notice says what was skipped. The imported article is **not saved
-yet**: look it over, then save.
+out: a notice says what was skipped.
+
+Three things in Word have no equivalent in the editor, and are adapted:
+
+- **Line breaks inside a paragraph** (Shift+Enter): each line becomes a
+  paragraph, with the same alignment. In headings and list items the line
+  break becomes a space; in table cells it stays.
+- **Pictures:** a picture followed by its caption, or by text on the same
+  line, gets a line of its own and the text the next one. It stays in the
+  sentence only with text on both sides, or when it is an icon. A
+  "floating" picture, with the text flowing around it, goes before the
+  paragraph it is anchored to (after it, if it sat lower down in Word)
+  together with its caption. Every picture keeps the width it had in the
+  document; one that went from margin to margin fills the article's column.
+- **Tables used for layout:** a table with a single row or a single column
+  (a picture beside a text, a picture with its caption) is taken apart and
+  its content becomes ordinary text, as when pasting from Word; a notice
+  says so. Real tables, with several rows and columns, stay tables.
+
+The imported article is **not saved yet**: look it over, then save.
 
 ### 4.4 Status and publishing
 

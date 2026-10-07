@@ -139,7 +139,9 @@ def test_full_document():
 
     check("tracked insertion is kept", "Testo inserito con revisioni attive." in content)
     check("tracked deletion is dropped", "Testo cancellato" not in content)
-    check("line break becomes <br>", "Riga uno<br>riga due" in content)
+    # Quill deletes a <br> inside a block, gluing the two lines together.
+    check("a line break starts a new paragraph",
+          "<p>Riga uno</p><p>riga due</p>" in content)
 
     check("markup in the text is escaped",
           "&lt;script&gt;alert(1)&lt;/script&gt;" in content
@@ -231,6 +233,150 @@ def test_word_document():
     check("nothing between the blocks", "</p>\n" not in content and "</h2>\n" not in content)
 
 
+def test_lines_and_pictures():
+    """Line breaks, pictures with their captions, tables used to lay out the page."""
+    print("\ndocumento-righe.docx")
+    result = convert_docx_file(HERE / "documento-righe.docx")
+    check("conversion succeeds", result["ok"], result.get("error_key", ""))
+    if not result["ok"]:
+        return
+    content = result["content"]
+    keys = warning_keys(result)
+    link = '<a href="https://example.com/normale">'
+
+    def picture(description, width="200"):
+        """The <img> the importer writes for the picture with this alternative text."""
+        return ('<img src="/media/documento-righe-grafico.png" alt="' + description
+                + '" width="' + width + '" loading="lazy">')
+
+    # --- Line breaks: Quill has none inside a block ---
+    check("a line break in the title is a space",
+          result["title"] == "Righe, immagini e tabelle", repr(result["title"]))
+    check("the two lines of a paragraph are two paragraphs",
+          "<p>ciao mamma.</p><p>Si sono qui!</p>" in content)
+    check("each line keeps the bold of the run that was cut",
+          "<p><strong>Grassetto prima</strong></p><p><strong>grassetto dopo</strong></p>"
+          in content)
+    check("each line keeps the alignment of the paragraph",
+          '<p class="ql-align-center">Centrato sopra</p>'
+          '<p class="ql-align-center">centrato sotto</p>' in content)
+    check("a link over two lines is a link on each",
+          "<p>Un " + link + "collegamento su</a></p><p>" + link + "due righe</a> e basta.</p>"
+          in content)
+    check("two line breaks leave an empty line, a last one leaves nothing",
+          "<p>Prima riga</p><p><br></p><p>terza riga, dopo una vuota</p><h2>" in content)
+    check("a heading stays one heading", "<h2>Sezione su due righe</h2>" in content)
+    check("a list item stays one item", "<ul><li>Voce su due righe</li></ul>" in content)
+    check("a quotation is cut like a paragraph",
+          "<blockquote>Citazione, prima riga</blockquote>"
+          "<blockquote>citazione, seconda riga</blockquote>" in content)
+    check("a footnote stays one line",
+          content.endswith("<h2>Note</h2><ol><li>Nota su due righe.</li></ol>"))
+    check("a table cell keeps its line break", "<td>riga uno<br>riga due</td>" in content)
+    outside_tables = content.replace("<p><br></p>", "")
+    for table in content.split('<div class="raw-html-block"')[1:]:
+        outside_tables = outside_tables.replace(table.split("</div>")[0], "")
+    check("no <br> is left where Quill would delete it", "<br" not in outside_tables,
+          outside_tables)
+    check("the paragraphs of a field that spans them stay apart",
+          "<p>Rossi, Primo libro, 2020.</p><p>Bianchi, Secondo libro, 2021.</p>"
+          "<p>Verdi, Terzo libro, 2022.</p>" in content)
+    check("no cutting mark reaches the article", "\x00" not in content)
+
+    # --- Pictures in the line of text ---
+    check("a picture, its caption and the text after it are three blocks",
+          '<p class="ql-align-center">' + picture("Con didascalia") + "</p>"
+          '<p class="ql-align-center"><strong>Didascalia in grassetto</strong></p>'
+          '<p class="ql-align-center">Testo normale dopo la didascalia.</p>' in content)
+    check("text right after a picture gets a paragraph of its own",
+          "<p>" + picture("Prima del testo") + "</p><p>Testo subito dopo l'immagine.</p>"
+          in content)
+    check("and so does a picture right after a text",
+          "<p>Testo subito prima dell'immagine.</p><p>" + picture("Dopo il testo") + "</p>"
+          in content)
+    check("a picture in the middle of a sentence stays there",
+          "<p>Questa figura " + picture("In mezzo") + " sta in mezzo alla frase.</p>" in content)
+    check("an icon stays in its line",
+          "<p>" + picture("Icona", "16") + " Nota: un'icona resta nella riga.</p>" in content)
+    check("a linked picture and the linked text after it both keep the link",
+          "<p>" + link + picture("Con collegamento") + "</a></p>"
+          "<p>" + link + "Testo del collegamento</a></p>" in content)
+    check("a picture from margin to margin fills the column",
+          "<p>" + picture("Da margine a margine", "100%") + "</p>" in content)
+    check("a picture is not part of a heading",
+          "<p>" + picture("Nel titolo") + "</p><h2>Sezione con immagine</h2>" in content)
+
+    # --- Floating pictures and text boxes ---
+    check("a picture floating at the top of a paragraph goes before it, aligned",
+          '<p class="ql-align-center">' + picture("Flottante in cima") + "</p>"
+          "<p>Paragrafo con un'immagine flottante in cima.</p>" in content)
+    check("one floating lower down goes after it",
+          "<p>Paragrafo con un'immagine flottante in basso.</p>"
+          "<p>" + picture("Flottante in basso") + "</p>" in content)
+    check("a caption in a text box follows its picture, before the paragraph",
+          "<p>" + picture("Con didascalia in casella") + "</p>"
+          '<p class="ql-align-center"><strong>Figura 1 - didascalia in una casella</strong></p>'
+          "<p>Paragrafo a cui sono ancorate immagine e didascalia.</p>" in content)
+    # It used to come out twice: once from the frame, with the frame's size
+    # and no alternative text, glued to the text of the paragraph.
+    around_frame = content.split("immagine e didascalia.</p>")[-1].split("<p>Paragrafo a cui e'")[0]
+    check("a picture inside a frame is written once", around_frame.count("<img") == 1,
+          around_frame)
+    check("with its own size, not the frame's, and its caption under it",
+          "<p>" + picture("Dentro la cornice") + "</p><p>Figura 2: didascalia nella cornice</p>"
+          "<p>Paragrafo a cui e' ancorata la cornice.</p>" in content)
+    check("a paragraph that only held a floating picture leaves no empty line",
+          "<p>" + picture("Sola nel paragrafo") + "</p>"
+          "<p>Dopo il paragrafo che aveva solo un'immagine flottante.</p>" in content)
+    check("in a list item a floating picture stays in the item",
+          "<ol><li>Voce con immagine flottante" + picture("Nella voce") + "</li>"
+          "<li>Voce seguente</li></ol>" in content)
+    check("grouped pictures share a paragraph, each with its text and its real size",
+          "<p>" + picture("Sinistra", "300") + " " + picture("Destra", "300") + "</p>"
+          "<p>Paragrafo con due immagini raggruppate.</p>" in content)
+    check("an old VML floating picture is placed and measured too",
+          '<p class="ql-align-center">' + picture("Vecchio stile") + "</p>"
+          "<p>Paragrafo con un'immagine flottante vecchio stile.</p>" in content)
+    check("in a table cell a floating picture has a line to itself",
+          "<td>" + picture("In cella") + "<br>testo della cella</td>" in content)
+    check("every picture of the document is in the article, once",
+          content.count("<img") == 20, str(content.count("<img")))
+
+    # --- Tables that lay out the page ---
+    check("a one-cell table is taken apart: picture, caption, text",
+          '<p class="ql-align-center">' + picture("In tabella") + "</p>"
+          '<p class="ql-align-center"><strong>Didascalia in tabella</strong></p>'
+          "<p>Testo normale nella stessa cella.</p>" in content)
+    check("a one-row table is read cell by cell",
+          "<p>" + picture("Colonna sinistra") + "</p><p>Testo della colonna destra.</p>"
+          in content)
+    check("a table inside a one-column table is a real table again",
+          "<p>Riquadro a una colonna.</p>"
+          '<div class="raw-html-block" contenteditable="false"><table class="article-table">'
+          "<tbody><tr><th>Dato A</th><th>Dato B</th></tr><tr><td>1</td><td>2</td></tr>"
+          "</tbody></table></div>" in content)
+    check("a grid stays a table even with its borders hidden",
+          "<th>Chiave</th><th>Valore</th>" in content and content.count("<table") == 2)
+    check("nothing of a layout table ends up in a header cell",
+          "Didascalia in tabella</th>" not in content and "<th><img" not in content)
+    check("the author is told a table was taken apart", "warn_docx_layout_table" in keys)
+    check("and no table was flattened to text", "warn_docx_nested_table" not in keys)
+
+
+def test_cover_picture():
+    """A picture above the first Heading 1 does not hide the title."""
+    print("\ncopertina.docx")
+    result = convert_docx_file(HERE / "copertina.docx")
+    check("conversion succeeds", result["ok"], result.get("error_key", ""))
+    if not result["ok"]:
+        return
+    check("the heading under the picture is the title",
+          result["title"] == "Titolo sotto la copertina", repr(result["title"]))
+    check("the picture opens the article",
+          result["content"].startswith('<p><img src="/media/copertina-image1'))
+    check("the title is not repeated as a heading", "<h2>" not in result["content"])
+
+
 def test_table_of_contents_as_a_field():
     """An older document's table of contents: a bare field across paragraphs."""
     print("\nsommario-campo.docx")
@@ -318,6 +464,8 @@ def main():
             leftover.unlink()
     test_full_document()
     test_word_document()
+    test_lines_and_pictures()
+    test_cover_picture()
     test_table_of_contents_as_a_field()
     test_heading_in_the_middle()
     test_missing_numbering()

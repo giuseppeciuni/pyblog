@@ -221,7 +221,8 @@ BODY = "".join([
     # once converted it must not be able to inject markup into the page.
     paragraph(run("Testo con &lt;script&gt;alert(1)&lt;/script&gt; e &amp; da neutralizzare")),
     paragraph(""),
-    table([["Esterna A", "Esterna B"]], nested=True),
+    # Two rows: a table with a single row is page layout, and is taken apart.
+    table([["Esterna A", "Esterna B"], ["Esterna C", "Esterna D"]], nested=True),
     "<w:sectPr><w:pgSz w:w=\"11906\" w:h=\"16838\"/></w:sectPr>",
 ])
 
@@ -432,6 +433,229 @@ MIDDLE_HEADING_BODY = "".join([
 ])
 
 
+# ---------------------------------------------------------------------------
+# Lines, pictures and tables used to lay out the page
+# ---------------------------------------------------------------------------
+# What a document looks like when its author pressed Shift+Enter instead of
+# Enter, dragged a picture next to a paragraph, gave it a caption or put
+# picture and text in a table to keep them together. None of it has a direct
+# translation in the editor: Quill deletes a <br> inside a block, a picture
+# shares its line with the text of its paragraph, and the editor's tables
+# always have a header row. Every item below used to come out wrong.
+
+LINE = "<w:r><w:br/></w:r>"
+
+PICTURE_URI = "http://schemas.openxmlformats.org/drawingml/2006/picture"
+SHAPE_URI = "http://schemas.microsoft.com/office/word/2010/wordprocessingShape"
+GROUP_URI = "http://schemas.microsoft.com/office/word/2010/wordprocessingGroup"
+
+
+def picture_shape(width, height, description=""):
+    """The pic:pic of a picture, with the size it has on the page (in EMU)."""
+    return ('<pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="grafico.png" descr="'
+            + description + '"/><pic:cNvPicPr/></pic:nvPicPr>'
+            '<pic:blipFill><a:blip r:embed="rId20"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+            f'<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{width}" cy="{height}"/></a:xfrm>'
+            '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic>')
+
+
+def anchor(width, height, offset, side=None, name="Immagine"):
+    """
+    The opening of a wp:anchor, the frame of a floating drawing: offset is
+    how far under the top of its paragraph it starts, in EMU.
+    """
+    horizontal = "<wp:posOffset>0</wp:posOffset>"
+    if side is not None:
+        horizontal = "<wp:align>" + side + "</wp:align>"
+    return ('<wp:anchor distT="0" distB="0" distL="114300" distR="114300" simplePos="0" '
+            'relativeHeight="251658240" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1">'
+            '<wp:simplePos x="0" y="0"/>'
+            '<wp:positionH relativeFrom="column">' + horizontal + "</wp:positionH>"
+            f'<wp:positionV relativeFrom="paragraph"><wp:posOffset>{offset}</wp:posOffset></wp:positionV>'
+            f'<wp:extent cx="{width}" cy="{height}"/><wp:wrapSquare wrapText="bothSides"/>'
+            f'<wp:docPr id="1" name="{name}"/>')
+
+
+def word_picture(description, width=1905000, height=1428750, floating=None, side=None):
+    """
+    A picture as Word writes it: in the line of text, or - when floating is
+    a number - anchored to its paragraph, that many EMU under the top of it.
+    """
+    graphic = ('<a:graphic><a:graphicData uri="' + PICTURE_URI + '">'
+               + picture_shape(width, height) + "</a:graphicData></a:graphic>")
+    if floating is None:
+        frame = (f'<wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="{width}" cy="{height}"/>'
+                 f'<wp:docPr id="1" name="Immagine" descr="{description}"/>' + graphic + "</wp:inline>")
+    else:
+        frame = (anchor(width, height, floating, side).replace(
+                    'name="Immagine"/>', f'name="Immagine" descr="{description}"/>')
+                 + graphic + "</wp:anchor>")
+    return "<w:r><w:rPr><w:noProof/></w:rPr><w:drawing>" + frame + "</w:drawing></w:r>"
+
+
+def text_box(content, offset=0, width=1905000, height=400000):
+    """
+    A floating text box holding whole paragraphs, written twice as Word
+    does: DrawingML for new readers, VML for old ones.
+    """
+    box = "<w:txbxContent>" + content + "</w:txbxContent>"
+    return ('<w:r><mc:AlternateContent><mc:Choice Requires="wps"><w:drawing>'
+            + anchor(width, height, offset, name="Casella di testo")
+            + '<a:graphic><a:graphicData uri="' + SHAPE_URI + '">'
+            "<wps:wsp><wps:spPr/><wps:txbx>" + box + "</wps:txbx><wps:bodyPr/></wps:wsp>"
+            "</a:graphicData></a:graphic></wp:anchor></w:drawing></mc:Choice>"
+            '<mc:Fallback><w:pict><v:shape style="position:absolute;margin-left:0;'
+            f'margin-top:{offset / 12700:.1f}pt;width:{width / 12700:.1f}pt;height:{height / 12700:.1f}pt">'
+            "<v:textbox>" + box + "</v:textbox></v:shape></w:pict></mc:Fallback>"
+            "</mc:AlternateContent></w:r>")
+
+
+def picture_group(shapes, width, width_when_made, height=1428750):
+    """
+    Pictures grouped into one floating drawing. The group has been stretched
+    since it was made: its shapes still carry the measures they had then.
+    """
+    return ("<w:r><w:drawing>" + anchor(width, height, 0, name="Gruppo")
+            + '<a:graphic><a:graphicData uri="' + GROUP_URI + '">'
+            '<wpg:wgp xmlns:wpg="' + GROUP_URI + '"><wpg:cNvGrpSpPr/><wpg:grpSpPr><a:xfrm>'
+            f'<a:off x="0" y="0"/><a:ext cx="{width}" cy="{height}"/>'
+            f'<a:chOff x="0" y="0"/><a:chExt cx="{width_when_made}" cy="{height}"/>'
+            "</a:xfrm></wpg:grpSpPr>" + shapes + "</wpg:wgp>"
+            "</a:graphicData></a:graphic></wp:anchor></w:drawing></w:r>")
+
+
+# A floating picture the way Word 2003 and many converters write one: VML,
+# with its position and size in a CSS-like style.
+OLD_FLOATING_PICTURE = (
+    '<w:r><w:pict><v:shape type="#_x0000_t75" alt="Vecchio stile" '
+    'style="position:absolute;margin-left:0;margin-top:0;width:150pt;height:112.5pt;'
+    'mso-position-horizontal:center;mso-position-vertical-relative:text">'
+    '<v:imagedata r:id="rId20"/></v:shape></w:pict></w:r>')
+
+# A field left open at the end of its paragraph and closed two paragraphs
+# later: the bibliography Word and the reference managers write.
+FIELD_OPEN = ('<w:r><w:fldChar w:fldCharType="begin"/></w:r>'
+              '<w:r><w:instrText xml:space="preserve"> BIBLIOGRAPHY </w:instrText></w:r>'
+              '<w:r><w:fldChar w:fldCharType="separate"/></w:r>')
+FIELD_CLOSE = '<w:r><w:fldChar w:fldCharType="end"/></w:r>'
+
+
+def layout_table(rows):
+    """
+    A table used to lay out the page: its cells hold whole paragraphs (given
+    as XML) and its borders are hidden.
+    """
+    out = ['<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders>'
+           '<w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/>'
+           '<w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders></w:tblPr>']
+    for cells in rows:
+        out.append("<w:tr>" + "".join("<w:tc><w:tcPr/>" + cell + "</w:tc>" for cell in cells)
+                   + "</w:tr>")
+    out.append("</w:tbl>")
+    return "".join(out)
+
+
+def link(runs):
+    """A hyperlink to the address of rId30."""
+    return '<w:hyperlink r:id="rId30">' + runs + "</w:hyperlink>"
+
+
+LINES_BODY = "".join([
+    paragraph(run("Righe, immagini") + LINE + run("e tabelle"), style="Titolo"),
+
+    # --- Line breaks ---
+    paragraph("<w:r><w:t>ciao mamma.</w:t><w:br/><w:t>Si sono qui!</w:t></w:r>"),
+    paragraph("<w:r><w:rPr><w:b/></w:rPr><w:t>Grassetto prima</w:t><w:br/>"
+              "<w:t>grassetto dopo</w:t></w:r>"),
+    paragraph(run("Centrato sopra") + LINE + run("centrato sotto"), alignment="center"),
+    paragraph(run("Un ") + link(run("collegamento su") + LINE + run("due righe"))
+              + run(" e basta.")),
+    paragraph(run("Prima riga") + LINE + LINE + run("terza riga, dopo una vuota") + LINE),
+    paragraph(run("Sezione su") + LINE + run("due righe"), style="Titolo1"),
+    paragraph(run("Voce su") + LINE + run("due righe"), style="Puntoelenco"),
+    paragraph(run("Citazione, prima riga") + LINE + run("citazione, seconda riga"),
+              style="Citazione"),
+    paragraph(FIELD_OPEN + run("Rossi, Primo libro, 2020.")),
+    paragraph(run("Bianchi, Secondo libro, 2021.")),
+    paragraph(run("Verdi, Terzo libro, 2022.") + FIELD_CLOSE),
+
+    # --- Pictures in the line of text ---
+    paragraph(word_picture("Con didascalia") + LINE + run("Didascalia in grassetto", bold=True)
+              + LINE + run("Testo normale dopo la didascalia."), alignment="center"),
+    paragraph(word_picture("Prima del testo") + run("Testo subito dopo l'immagine.")),
+    paragraph(run("Testo subito prima dell'immagine.") + word_picture("Dopo il testo")),
+    paragraph(run("Questa figura ") + word_picture("In mezzo")
+              + run(" sta in mezzo alla frase.")),
+    paragraph(word_picture("Icona", width=152400, height=152400)
+              + run(" Nota: un'icona resta nella riga.")),
+    paragraph(link(word_picture("Con collegamento") + run("Testo del collegamento"))),
+    paragraph(word_picture("Da margine a margine", width=6120130, height=3000000)),
+    paragraph(word_picture("Nel titolo") + run("Sezione con immagine"), style="Titolo1"),
+
+    # --- Floating pictures and text boxes ---
+    paragraph(word_picture("Flottante in cima", floating=0, side="center")
+              + run("Paragrafo con un'immagine flottante in cima.")),
+    paragraph(word_picture("Flottante in basso", floating=900000)
+              + run("Paragrafo con un'immagine flottante in basso.")),
+    # The caption Word adds to a floating picture: a text box under it,
+    # anchored to the same paragraph and written before the picture.
+    paragraph(text_box(paragraph(run("Figura 1 - didascalia in una casella", bold=True),
+                                 alignment="center"), offset=1500000)
+              + word_picture("Con didascalia in casella", floating=0)
+              + run("Paragrafo a cui sono ancorate immagine e didascalia.")),
+    # The caption LibreOffice adds: a frame around the picture and its text,
+    # wider than the picture.
+    paragraph(text_box(paragraph(word_picture("Dentro la cornice")
+                                 + run("Figura 2: didascalia nella cornice")),
+                       width=2857500, height=1900000)
+              + run("Paragrafo a cui e' ancorata la cornice.")),
+    paragraph(word_picture("Sola nel paragrafo", floating=0)),
+    paragraph(run("Dopo il paragrafo che aveva solo un'immagine flottante.")),
+    paragraph(run("Voce con immagine flottante") + word_picture("Nella voce", floating=0),
+              style="Numeroelenco"),
+    paragraph(run("Voce seguente"), style="Numeroelenco"),
+    paragraph(picture_group(picture_shape(1905000, 1428750, "Sinistra")
+                            + picture_shape(1905000, 1428750, "Destra"),
+                            width=5715000, width_when_made=3810000)
+              + run("Paragrafo con due immagini raggruppate.")),
+    paragraph(OLD_FLOATING_PICTURE + run("Paragrafo con un'immagine flottante vecchio stile.")),
+
+    # --- Tables that lay out the page, and one that is a table ---
+    layout_table([[paragraph(word_picture("In tabella"), alignment="center")
+                   + paragraph(run("Didascalia in tabella", bold=True), alignment="center")
+                   + paragraph(run("Testo normale nella stessa cella."))]]),
+    layout_table([[paragraph(word_picture("Colonna sinistra")),
+                   paragraph(run("Testo della colonna destra."))]]),
+    layout_table([[paragraph(run("Riquadro a una colonna."))],
+                  [table([["Dato A", "Dato B"], ["1", "2"]])]]),
+    layout_table([[paragraph(run("Chiave")), paragraph(run("Valore"))],
+                  [paragraph(run("riga uno") + LINE + run("riga due")),
+                   paragraph(word_picture("In cella", floating=0) + run("testo della cella"))]]),
+
+    paragraph(run("Fine") + '<w:r><w:footnoteReference w:id="1"/></w:r>' + run(".")),
+    # A4 with 2 cm margins: the text is 17 cm wide, 6120130 EMU.
+    '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>'
+    '<w:pgMar w:top="1417" w:right="1134" w:bottom="1134" w:left="1134"/></w:sectPr>',
+])
+
+LINES_DOCUMENT = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document {WORD_NS}><w:body>{LINES_BODY}</w:body></w:document>"""
+
+LINES_FOOTNOTES = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:footnotes {W_NS}>
+  <w:footnote w:id="1"><w:p><w:r><w:t>Nota su</w:t><w:br/><w:t>due righe.</w:t></w:r></w:p></w:footnote>
+</w:footnotes>"""
+
+# A picture above the first Heading 1 - a cover, a logo - and the heading is
+# still the title of the document.
+COVER_BODY = "".join([
+    paragraph(drawing("rId10")),
+    paragraph(run("Titolo sotto la copertina"), style="Heading1"),
+    paragraph(run("Il testo comincia qui.")),
+    "<w:sectPr/>",
+])
+
+
 def tiny_png(width=8, height=8, colour=(0x2a, 0x6f, 0xd0)):
     """A real, valid PNG built by hand, so the importer's magic-byte check passes."""
     rows = b""
@@ -506,6 +730,23 @@ def build_all():
         "word/footnotes.xml": WORD_FOOTNOTES,
         "word/media/grafico.png": tiny_png(width=40, height=30),
     })
+
+    # Line breaks, pictures with their captions, tables that lay out the page.
+    write_docx(HERE / "documento-righe.docx", {
+        "[Content_Types].xml": CONTENT_TYPES,
+        "_rels/.rels": ROOT_RELS,
+        "word/document.xml": LINES_DOCUMENT,
+        "word/_rels/document.xml.rels": WORD_RELS,
+        "word/styles.xml": WORD_STYLES,
+        "word/numbering.xml": WORD_NUMBERING,
+        "word/footnotes.xml": LINES_FOOTNOTES,
+        "word/media/grafico.png": tiny_png(width=40, height=30),
+    })
+
+    # A picture above the Heading 1 that is the title.
+    cover = dict(full)
+    cover["word/document.xml"] = DOCUMENT.replace(BODY, COVER_BODY)
+    write_docx(HERE / "copertina.docx", cover)
 
     # The table of contents of an older document, as a bare field.
     bare_toc = dict(full)

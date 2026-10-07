@@ -6,6 +6,23 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **Word import: lines, pictures and captions come out as they were.**
+  Three things went wrong in an imported document. A line break inside a
+  paragraph (Shift+Enter) was written as a `<br>`, which the editor
+  deletes: "ciao mamma." and "Si sono qui!" came out glued together. Each
+  line is now a paragraph of its own (a space in headings and list items).
+  A picture was glued to its caption or to the text of its paragraph, a
+  floating one landed inside the sentence it was anchored to, and a picture
+  in a frame with its caption (LibreOffice's captions, Word's text boxes)
+  came out twice, the second time with the size of the frame. Pictures now
+  get a line of their own, floating ones go before or after their paragraph
+  together with their caption, and one that went from margin to margin
+  fills the column. A table that only laid out the page (a single row or a
+  single column: a picture beside a text, a picture with its caption)
+  became a real table, whose header row showed everything in bold and in a
+  smaller size: it is now taken apart, as a table pasted from Word already
+  was, and a notice says so. The paragraphs of a field that spans several
+  (a bibliography) are no longer merged into one.
 - **The administration no longer looks unstyled after an update.** Its
   stylesheets and script had fixed addresses, so a cache in between (the
   browser's, or a CDN such as Cloudflare) could keep serving the old files

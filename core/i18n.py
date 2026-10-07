@@ -956,6 +956,9 @@ UI_TRANSLATIONS = {
     "warn_docx_nested_table": {
         "it": "Una tabella dentro un'altra tabella \u00e8 stata ridotta a testo.",
         "en": "A table inside another table was reduced to text."},
+    "warn_docx_layout_table": {
+        "it": "Una tabella usata per impaginare (una sola riga o una sola colonna) \u00e8 stata sciolta: il suo contenuto \u00e8 ora testo normale.",
+        "en": "A table used for page layout (a single row or a single column) was taken apart: its content is now ordinary text."},
     "warn_docx_numbering_missing": {
         "it": "Numerazione delle liste non leggibile: sono stati usati elenchi puntati.",
         "en": "List numbering could not be read: bulleted lists were used instead."},

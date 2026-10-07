@@ -402,6 +402,26 @@ dell'articolo e il sottotitolo la descrizione, se è vuota. Restano fuori il
 sommario di Word, il testo nascosto, le immagini WMF/EMF (che nessun browser
 mostra), le immagini collegate e non incorporate, i link che non sono http,
 https o mailto, le equazioni: un avviso dice cosa è stato saltato.
+
+Tre cose di Word non hanno un equivalente nell'editor e vengono adattate:
+
+- **A capo dentro un paragrafo** (Maiusc+Invio): ogni riga diventa un
+  paragrafo, con lo stesso allineamento. Nei titoli e nelle voci d'elenco
+  l'a capo diventa uno spazio; nelle celle delle tabelle resta.
+- **Immagini:** un'immagine seguita dalla sua didascalia, o da un testo
+  sulla stessa riga, va su una riga sua e il testo su quella dopo. Resta
+  nella frase solo se ha testo da tutte e due le parti, o se è un'icona.
+  Un'immagine "flottante", con il testo che le gira intorno, va prima del
+  paragrafo a cui è ancorata (dopo, se in Word stava più in basso) insieme
+  alla sua didascalia. Ogni immagine tiene la larghezza che aveva nel
+  documento; se andava da margine a margine riempie la colonna
+  dell'articolo.
+- **Tabelle usate per impaginare:** una tabella con una sola riga o una
+  sola colonna (un'immagine accanto a un testo, un'immagine con la sua
+  didascalia) viene sciolta e il suo contenuto diventa testo normale, come
+  quando si incolla da Word; un avviso lo segnala. Le tabelle vere, con più
+  righe e più colonne, restano tabelle.
+
 L'articolo importato **non è ancora salvato**: rivedilo, poi salva.
 
 ### 4.4 Stato e pubblicazione
