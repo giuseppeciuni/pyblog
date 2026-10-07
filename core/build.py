@@ -826,6 +826,12 @@ def site_header(language="it", nav_extra="", is_home=False):
         nav_extra = (f'<a href="{biography_page_url(language)}">{T("chi_sono", language)}</a>'
                      + ("\n      " + nav_extra.strip() if nav_extra.strip() else ""))
 
+    # The button that asks to get in touch closes the menu.
+    work = work_link(language)
+    if work is not None:
+        nav_extra = ((nav_extra.strip() + "\n      " if nav_extra.strip() else "")
+                     + f'<a class="nav-lavoro" href="{esc(work[0])}">{esc(work[1])}</a>')
+
     link_titolo = f'<a href="{prefix}/">{esc(CONFIG["site_title"])}</a>'
     if is_home:
         titolo_sito = '<h1 class="site-title">' + link_titolo + "</h1>"
@@ -1329,6 +1335,55 @@ def generate_author_box(language="it"):
         bio=bio_row,
         social=social_row,
     )
+
+
+def work_settings(config=None):
+    """The "work with me" block of the configuration, every value checked."""
+    if config is None:
+        config = CONFIG
+    value = config.get("work_with_me", {})
+    if not isinstance(value, dict):
+        value = {}
+    return {
+        "enabled": value.get("enabled", False) is True,
+        "url": text_setting(value.get("url", "")),
+        "label": text_setting(value.get("label", "")),
+        "label_en": text_setting(value.get("label_en", "")),
+        "text": text_setting(value.get("text", "")),
+        "text_en": text_setting(value.get("text_en", "")),
+    }
+
+
+def work_link(language):
+    """
+    Where "work with me" leads and what the button and the invitation say
+    in a language: (address, label, sentence), or None when it is off or
+    has nowhere safe to lead. A page of the site gets the language prefix.
+    """
+    work = work_settings()
+    link = safe_link(work["url"])
+    if not work["enabled"] or link == "":
+        return None
+    if link.startswith("/") and not link.startswith("//"):
+        link = language_url_prefix(language) + link
+    label = work["label"]
+    text = work["text"]
+    if language != main_language():
+        label = work["label_en"]
+        text = work["text_en"]
+    return link, label or T("lavora_con_me", language), text or T("lavora_invito", language)
+
+
+def work_invitation(language="it"):
+    """The invitation at the end of an article: one sentence and the button."""
+    work = work_link(language)
+    if work is None:
+        return ""
+    link, label, text = work
+    return ('        <aside class="invito-lavoro">\n'
+            f'          <p>{esc(text)}</p>\n'
+            f'          <a class="invito-pulsante" href="{esc(link)}">{esc(label)} &rarr;</a>\n'
+            "        </aside>\n")
 
 
 def original_address(art):
@@ -2211,7 +2266,7 @@ def generate_article_page(art, language="it", all_articles=None):
         contenuto_articolo=content,
         codice_fine_testo=block(custom_code_block("article_end", "article", art)),
         author_box=(labs_of_article(art, all_articles, language)
-                    + generate_author_box(language) + newsletter_after_article(language)),
+                    + work_invitation(language) + generate_author_box(language) + newsletter_after_article(language)),
         article_nav=generate_article_nav(art, all_articles, language),
         back_label=back_label,
         related=block(related_block),

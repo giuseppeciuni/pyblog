@@ -79,6 +79,18 @@ header.site { border-bottom:1px solid var(--bordo); }
   font-weight:500; padding:0.3rem 0; border-bottom:2px solid transparent;
 }
 .site-nav a:hover { border-bottom-color:var(--link); color:var(--link); }
+/* The one entry of the menu that asks for something: it looks like a button. */
+.site-nav a.nav-lavoro, .invito-pulsante {
+  background:var(--link); color:#fff; border:0; border-radius:8px; padding:0.45rem 0.9rem;
+  font-weight:600; text-decoration:none; display:inline-block;
+}
+.site-nav a.nav-lavoro:hover, .invito-pulsante:hover { color:#fff; filter:brightness(0.92); }
+.invito-lavoro {
+  border:1px solid var(--bordo); border-radius:10px; background:var(--card-bg);
+  padding:1rem 1.2rem; margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:0.8rem 1.2rem;
+  align-items:center; justify-content:space-between;
+}
+.invito-lavoro p { margin:0; font-weight:600; }
 .tema-toggle { background:none; border:1px solid var(--pb-border-control); border-radius:50%;
   width:var(--pb-control-height); height:var(--pb-control-height);
   cursor:pointer; font-size:1.1rem; line-height:1; color:var(--testo); display:inline-flex;

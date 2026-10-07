@@ -102,6 +102,10 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **"Work with me".** A button that closes the menu of every page and an
+  invitation at the end of every article, both leading where the author
+  says: a page of the site, an email address, a profile. Text and label
+  are set in Settings → Pages, in both languages.
 - **"First published on".** An article that came out first on another
   site carries the address of the original: a line under the title names
   that site and links to it and, on request, search engines are told that

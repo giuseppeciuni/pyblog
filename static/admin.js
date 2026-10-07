@@ -3749,6 +3749,14 @@ function saveConfig(pulsante) {
       position: document.getElementById('projects_position').value,
       items: projectsData()
     },
+    work_with_me: {
+      enabled: document.getElementById('work_enabled').checked,
+      url: document.getElementById('work_url').value.trim(),
+      label: document.getElementById('work_label').value.trim(),
+      label_en: document.getElementById('work_label_en').value.trim(),
+      text: document.getElementById('work_text').value.trim(),
+      text_en: document.getElementById('work_text_en').value.trim()
+    },
     home_cards: cardDati,
     custom_code: customCodeData(document.getElementById('lista-codice'), 'snip'),
     ads_txt: document.getElementById('ads_txt').value.trim(),

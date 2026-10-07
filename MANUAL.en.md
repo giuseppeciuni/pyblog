@@ -607,6 +607,14 @@ the Explore box** turns the whole box on or off (each page keeps its own
 choice). A page with the same name as the biography is skipped while the
 biography is on.
 
+At the top of the section is the **"Work with me" button**: switched on, it
+closes the menu of every page with a button that stands out and puts an
+invitation at the end of every article. **Where it leads** takes the
+destination: a page of the site (create it below, for instance "Work with
+me", and paste `/pagine/work-with-me.html`), an email address
+(`mailto:...`) or a profile. The text of the button and the sentence of the
+invitation can be changed, in both languages; empty, the defaults are used.
+
 ### 5.6 Comments
 
 None, **Giscus** or **Disqus**: see [8](#8-comments).

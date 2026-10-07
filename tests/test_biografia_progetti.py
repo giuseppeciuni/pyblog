@@ -197,6 +197,39 @@ def test_menu_titoli_anteprime():
           "<title>Note tecniche</title>" in build.generate_homepage(ARTICOLI, "it"))
 
 
+def test_lavora_con_me():
+    print("\nlavora con me")
+    imposta()
+    CONFIG["work_with_me"] = {"enabled": True, "url": "/pagine/lavora-con-me.html",
+                              "label": "", "label_en": "Hire me", "text": "Parliamone <ora>",
+                              "text_en": ""}
+    home = build.generate_homepage(ARTICOLI, "it")
+    menu = home.split("</nav>")[0]
+    check("il menu chiude con il pulsante, con la scritta predefinita",
+          '<a class="nav-lavoro" href="/pagine/lavora-con-me.html">Lavora con me</a>' in menu
+          and menu.index("nav-lavoro") > menu.index("Chi sono"), menu[-400:])
+    pagina = build.generate_article_page(articolo(1), "it", ARTICOLI)
+    invito = pagina.split('<aside class="invito-lavoro">')[1].split("</aside>")[0]
+    check("a fine articolo c'e' l'invito, con la frase scelta e senza far passare HTML",
+          "Parliamone &lt;ora&gt;" in invito and 'href="/pagine/lavora-con-me.html"' in invito
+          and pagina.index("invito-lavoro") > pagina.index('class="post-content"'))
+    inglese = build.generate_homepage(ARTICOLI, "en").split("</nav>")[0]
+    check("in inglese porta alla pagina inglese, con la sua scritta",
+          '<a class="nav-lavoro" href="/en/pagine/lavora-con-me.html">Hire me</a>' in inglese)
+    CONFIG["work_with_me"]["url"] = "mailto:io@esempio.it"
+    check("un indirizzo email resta com'e' in tutte le lingue",
+          'href="mailto:io@esempio.it"' in build.generate_homepage(ARTICOLI, "en"))
+    CONFIG["work_with_me"]["url"] = "javascript:alert(1)"
+    check("un indirizzo non valido non mostra nulla",
+          "nav-lavoro" not in build.generate_homepage(ARTICOLI, "it"))
+    CONFIG["work_with_me"] = {"enabled": False, "url": "/pagine/x.html"}
+    check("spento, niente pulsante e niente invito",
+          "nav-lavoro" not in build.generate_homepage(ARTICOLI, "it")
+          and "invito-lavoro" not in build.generate_article_page(articolo(1), "it", ARTICOLI))
+    CONFIG["work_with_me"] = "sporco"
+    check("un valore sporco vale spento", build.work_link("it") is None)
+
+
 def test_card_omonima():
     print("\ncard con lo stesso nome")
     imposta()
@@ -232,6 +265,7 @@ def main():
         test_progetti()
         test_pagina_biografia()
         test_menu_titoli_anteprime()
+        test_lavora_con_me()
         test_card_omonima()
     finally:
         CONFIG.clear()

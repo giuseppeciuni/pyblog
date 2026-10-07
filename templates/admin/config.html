@@ -257,6 +257,37 @@ $progetto_modello
 <section class="sezione" id="sezione-pagine" data-sezione="pagine" aria-labelledby="titolo-pagine" hidden>
 $testata_pagine
   <div class="gruppo">
+    <h2>$label_lavoro_titolo</h2>
+    <div class="campo-spunta">
+      <input type="checkbox" id="work_enabled" aria-describedby="work_enabled-aiuto" $checked_lavoro>
+      <div>
+        <label for="work_enabled">$label_lavoro_attivo</label>
+        <p class="aiuto" id="work_enabled-aiuto">$hint_lavoro_attivo</p>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="work_url">$label_lavoro_url</label>
+      <input class="campo-input" type="text" id="work_url" value="$valore_lavoro_url" aria-describedby="work_url-aiuto">
+      <p class="aiuto" id="work_url-aiuto">$hint_lavoro_url</p>
+    </div>
+    <div class="campo">
+      <label for="work_label">$label_lavoro_label</label>
+      <input class="campo-input" type="text" id="work_label" value="$valore_lavoro_label" placeholder="$ph_lavoro_label">
+    </div>
+    <div class="campo">
+      <label for="work_label_en">$label_lavoro_label_en</label>
+      <input class="campo-input" type="text" id="work_label_en" value="$valore_lavoro_label_en" placeholder="$ph_lavoro_label_en">
+    </div>
+    <div class="campo">
+      <label for="work_text">$label_lavoro_testo</label>
+      <input class="campo-input" type="text" id="work_text" value="$valore_lavoro_testo" placeholder="$ph_lavoro_testo">
+    </div>
+    <div class="campo">
+      <label for="work_text_en">$label_lavoro_testo_en</label>
+      <input class="campo-input" type="text" id="work_text_en" value="$valore_lavoro_testo_en" placeholder="$ph_lavoro_testo_en">
+    </div>
+  </div>
+  <div class="gruppo">
     <p class="aiuto">$hint_card_home</p>
     <div class="campo-spunta">
       <input type="checkbox" id="home_cards_enabled" aria-describedby="home_cards_enabled-aiuto" $checked_card_home_attiva>

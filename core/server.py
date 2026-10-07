@@ -1448,6 +1448,7 @@ def config_page(csrf):
     ph = {k: esc(v) for k, v in ph.items()}
 
     biography = build_module.biography_settings(config)
+    lavoro = build_module.work_settings(config)
     projects = build_module.projects_settings(config)
     project_cards = [project_card(item, la) for item in projects["items"]]
     empty_note_hidden = ""
@@ -1590,6 +1591,25 @@ def config_page(csrf):
         label_presentazione_inglese=TL("admin_presentazione_inglese", la),
         hint_presentazione_en=TL("admin_presentazione_en_hint", la),
         label_traduci_italiano=TL("admin_traduci_dall_italiano", la),
+        label_lavoro_titolo=T("admin_lavoro_titolo", la),
+        checked_lavoro=checked_if(lavoro["enabled"]),
+        label_lavoro_attivo=T("admin_lavoro_attivo", la),
+        hint_lavoro_attivo=T("admin_lavoro_attivo_hint", la),
+        label_lavoro_url=T("admin_lavoro_url", la),
+        hint_lavoro_url=T("admin_lavoro_url_hint", la),
+        valore_lavoro_url=esc(lavoro["url"]),
+        label_lavoro_label=T("admin_lavoro_label", la),
+        valore_lavoro_label=esc(lavoro["label"]),
+        ph_lavoro_label=esc(T("lavora_con_me", "it")),
+        label_lavoro_label_en=T("admin_lavoro_label_en", la),
+        valore_lavoro_label_en=esc(lavoro["label_en"]),
+        ph_lavoro_label_en=esc(T("lavora_con_me", "en")),
+        label_lavoro_testo=T("admin_lavoro_testo", la),
+        valore_lavoro_testo=esc(lavoro["text"]),
+        ph_lavoro_testo=esc(T("lavora_invito", "it")),
+        label_lavoro_testo_en=T("admin_lavoro_testo_en", la),
+        valore_lavoro_testo_en=esc(lavoro["text_en"]),
+        ph_lavoro_testo_en=esc(T("lavora_invito", "en")),
         hint_card_home=T("admin_card_home_hint", la),
         checked_card_home_attiva=checked_if(config.get("home_cards_enabled", True)),
         label_card_home_attiva=T("admin_card_home_attiva", la),

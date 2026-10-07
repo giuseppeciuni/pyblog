@@ -610,6 +610,14 @@ online; **Mostra il riquadro Esplora** accende o spegne tutto il riquadro
 (ogni pagina ricorda la sua scelta). Una pagina con lo stesso nome della
 biografia viene saltata finché la biografia è accesa.
 
+In cima alla sezione c'è il **pulsante "Lavora con me"**: acceso, chiude il
+menu di ogni pagina con un pulsante in evidenza e mette un invito alla fine
+di ogni articolo. In **Dove porta** scrivi la destinazione: una pagina del
+sito (creala qui sotto, per esempio "Lavora con me", e incolla
+`/pagine/lavora-con-me.html`), un indirizzo email (`mailto:...`) o un
+profilo. Scritta del pulsante e frase dell'invito si possono cambiare, in
+italiano e in inglese; vuote, usano quelle predefinite.
+
 ### 5.6 Commenti
 
 Nessuno, **Giscus** o **Disqus**: vedi [8](#8-commenti).

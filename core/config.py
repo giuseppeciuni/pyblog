@@ -259,6 +259,18 @@ CONFIG_DEFAULT = {
         "position": "top",
         "items": [],
     },
+
+    # "Work with me": a button in the menu of every page and an invitation
+    # at the end of every article, both leading to url - a page of the site,
+    # a mailto: address, a profile. Empty label and text use the defaults.
+    "work_with_me": {
+        "enabled": False,
+        "url": "",
+        "label": "",
+        "label_en": "",
+        "text": "",
+        "text_en": "",
+    },
 }
 
 
