@@ -1024,6 +1024,9 @@ UI_TRANSLATIONS = {
     "warn_docx_nested_table": {
         "it": "Una tabella dentro un'altra tabella \u00e8 stata ridotta a testo.",
         "en": "A table inside another table was reduced to text."},
+    "warn_docx_field_unclosed": {
+        "it": "Il documento ha un campo di Word aperto e mai chiuso: il testo che lo segue \u00e8 stato tenuto come paragrafi normali, controllalo.",
+        "en": "The document has a Word field that was opened and never closed: the text after it was kept as ordinary paragraphs, check it."},
     "warn_docx_layout_table": {
         "it": "Una tabella usata per impaginare (una sola riga o una sola colonna) \u00e8 stata sciolta: il suo contenuto \u00e8 ora testo normale.",
         "en": "A table used for page layout (a single row or a single column) was taken apart: its content is now ordinary text."},

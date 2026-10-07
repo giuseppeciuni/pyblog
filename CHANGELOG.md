@@ -6,6 +6,11 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **Word import: a field left open no longer swallows the rest of the
+  document.** A field with a start mark and no end mark (a damaged
+  document, some converters) made everything after it disappear from the
+  imported article, without a warning. That text is now kept as ordinary
+  paragraphs, and a notice asks to check it.
 - **Social previews show the cover image.** The address of the cover was
   written in the page as `/media/...`, which means nothing to the network
   building the preview: it now carries the site's address in front, in the

@@ -2120,7 +2120,33 @@ class DocxConverter:
     def convert(self, body):
         """Convert the document body into the article HTML."""
         self.text_width = self.page_text_width(body)
-        return self.assemble(self.render_blocks(body))
+        entries = self.render_blocks(body)
+        entries.extend(self.unclosed_fields())
+        return self.assemble(entries)
+
+    def unclosed_fields(self):
+        """
+        The text held by the fields that were opened and never closed.
+
+        A field collects everything after its start mark until its end mark
+        says what to do with it. A document with no end mark - damaged, or
+        written by a converter - used to lose all the text from that point
+        to the last page, without a word. That text is the rest of the
+        document: it is given back as ordinary paragraphs, with a warning.
+        A table of contents left open stays out, as a closed one does.
+        """
+        recovered = []
+        for field in self.fields:
+            words = field["instr"].strip().split()
+            if len(words) > 0 and words[0].upper() == "TOC":
+                continue
+            for line in _cut_lines("".join(field["parts"])):
+                for _, value in _line_blocks(line):
+                    recovered.append({"kind": "para", "html": value, "align": ""})
+        self.fields = []
+        if len(recovered) > 0:
+            self.warn("warn_docx_field_unclosed")
+        return recovered
 
 
 def render_list(items):
@@ -2307,6 +2333,8 @@ def describe_warning(warning):
         return f"link dropped, address not allowed ({warning.get('href', '')})"
     if key == "warn_docx_nested_table":
         return "a nested table was flattened to text"
+    if key == "warn_docx_field_unclosed":
+        return "a field was never closed: the text after it was kept as ordinary paragraphs"
     if key == "warn_docx_layout_table":
         return "a table used for layout was taken apart: its content is now ordinary text"
     if key == "warn_docx_numbering_missing":

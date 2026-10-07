@@ -384,6 +384,20 @@ def test_cover_picture():
     check("the title is not repeated as a heading", "<h2>" not in result["content"])
 
 
+def test_unclosed_field():
+    """A field with no end mark must not swallow the rest of the document."""
+    print("\ncampo-non-chiuso.docx")
+    result = convert_docx_file(HERE / "campo-non-chiuso.docx")
+    check("conversion succeeds", result["ok"], result.get("error_key", ""))
+    if not result["ok"]:
+        return
+    check("the text after the field is kept, a paragraph each, in order",
+          result["content"] == "<p>Prima del campo.</p><p>Oggi e' il</p><p>7 ottobre</p>"
+          "<p>Paragrafo dopo il campo mai chiuso.</p><p>Ultimo paragrafo.</p>",
+          result["content"])
+    check("the author is told", "warn_docx_field_unclosed" in warning_keys(result))
+
+
 def test_table_of_contents_as_a_field():
     """An older document's table of contents: a bare field across paragraphs."""
     print("\nsommario-campo.docx")
@@ -473,6 +487,7 @@ def main():
     test_word_document()
     test_lines_and_pictures()
     test_cover_picture()
+    test_unclosed_field()
     test_table_of_contents_as_a_field()
     test_heading_in_the_middle()
     test_missing_numbering()

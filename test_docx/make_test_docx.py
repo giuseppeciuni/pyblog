@@ -663,6 +663,18 @@ LINES_FOOTNOTES = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <w:footnote w:id="1"><w:p><w:r><w:t>Nota su</w:t><w:br/><w:t>due righe.</w:t></w:r></w:p></w:footnote>
 </w:footnotes>"""
 
+# A field that is opened and never closed, as a damaged document or a
+# converter can leave one: the text after it is the rest of the document.
+UNCLOSED_FIELD_BODY = "".join([
+    paragraph(run("Documento con un campo rotto"), style="Heading1"),
+    paragraph(run("Prima del campo.")),
+    paragraph(run("Oggi e' il ") + FIELD_OPEN.replace(" BIBLIOGRAPHY ", " DATE ")
+              + run("7 ottobre")),
+    paragraph(run("Paragrafo dopo il campo mai chiuso.")),
+    paragraph(run("Ultimo paragrafo.")),
+    "<w:sectPr/>",
+])
+
 # A picture above the first Heading 1 - a cover, a logo - and the heading is
 # still the title of the document.
 COVER_BODY = "".join([
@@ -759,6 +771,11 @@ def build_all():
         "word/footnotes.xml": LINES_FOOTNOTES,
         "word/media/grafico.png": tiny_png(width=40, height=30),
     })
+
+    # A field with no end mark.
+    unclosed = dict(full)
+    unclosed["word/document.xml"] = DOCUMENT.replace(BODY, UNCLOSED_FIELD_BODY)
+    write_docx(HERE / "campo-non-chiuso.docx", unclosed)
 
     # A picture above the Heading 1 that is the title.
     cover = dict(full)
