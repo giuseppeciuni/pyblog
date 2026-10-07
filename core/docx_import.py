@@ -209,9 +209,9 @@ def _is_blank(html_value):
 
 def _without_marks(inline_html, line_break):
     """
-    Inline HTML with its cut marks resolved in place, for the blocks that
-    cannot be cut: a heading and a list item take a space for a line break,
-    a table cell takes a <br>. The pictures stay where they are.
+    Inline HTML with its cut marks resolved in place, for what has to stay
+    one line: a footnote takes a space for a line break. The pictures stay
+    where they are.
     """
     return (inline_html.replace(LINE_BREAK, line_break)
             .replace(PICTURE_OPEN, "").replace(PICTURE_CLOSE, ""))
@@ -298,6 +298,27 @@ def _line_blocks(line):
         else:
             blocks.append([kind, value])
     return [(kind, _join_links(value.strip())) for kind, value in blocks]
+
+
+def _cell_html(inline_html):
+    """
+    The inline HTML of a paragraph for a table cell. A table is outside
+    Quill's reach, so a line can end with a real <br> there: at every line
+    break, and around the picture that would get a paragraph of its own
+    anywhere else.
+    """
+    rows = []
+    for line in _cut_lines(inline_html):
+        blocks = _line_blocks(line)
+        if len(blocks) == 0:
+            rows.append("")
+        for _, value in blocks:
+            rows.append(value)
+    while len(rows) > 0 and rows[0] == "":
+        rows.pop(0)
+    while len(rows) > 0 and rows[-1] == "":
+        rows.pop()
+    return "<br>".join(rows)
 
 
 def _to_emu(text):
@@ -1601,8 +1622,8 @@ class DocxConverter:
             name = kind[0]
 
         if context.get("in_cell"):
-            return [self.cell_entry(paragraph, _without_marks(inner, "<br>"),
-                                    code_like, inherited, list_info)]
+            return [self.cell_entry(paragraph, _cell_html(inner), code_like,
+                                    inherited, list_info)]
 
         lines = _cut_lines(inner)
         if name in ("title", "subtitle", "heading"):

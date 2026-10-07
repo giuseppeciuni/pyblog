@@ -334,13 +334,20 @@ def test_lines_and_pictures():
     check("grouped pictures share a paragraph, each with its text and its real size",
           "<p>" + picture("Sinistra", "300") + " " + picture("Destra", "300") + "</p>"
           "<p>Paragrafo con due immagini raggruppate.</p>" in content)
+    check("a picture grouped with its caption keeps its own size, not the group's",
+          "<p>" + picture("Raggruppata con la didascalia") + "</p>"
+          "<p>Figura 3 - didascalia nel gruppo</p>"
+          "<p>Paragrafo con immagine e didascalia raggruppate.</p>" in content)
     check("an old VML floating picture is placed and measured too",
           '<p class="ql-align-center">' + picture("Vecchio stile") + "</p>"
           "<p>Paragrafo con un'immagine flottante vecchio stile.</p>" in content)
     check("in a table cell a floating picture has a line to itself",
           "<td>" + picture("In cella") + "<br>testo della cella</td>" in content)
+    check("and so has a picture followed by its caption",
+          "<td>" + picture("Con didascalia in cella") + "<br>Didascalia in cella</td>"
+          in content)
     check("every picture of the document is in the article, once",
-          content.count("<img") == 20, str(content.count("<img")))
+          content.count("<img") == 22, str(content.count("<img")))
 
     # --- Tables that lay out the page ---
     check("a one-cell table is taken apart: picture, caption, text",

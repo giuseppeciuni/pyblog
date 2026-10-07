@@ -524,6 +524,12 @@ def picture_group(shapes, width, width_when_made, height=1428750):
             "</a:graphicData></a:graphic></wp:anchor></w:drawing></w:r>")
 
 
+def grouped_text_box(content):
+    """A text box that is one shape of a group: it has no frame of its own."""
+    return ("<wps:wsp><wps:spPr/><wps:txbx><w:txbxContent>" + content
+            + "</w:txbxContent></wps:txbx><wps:bodyPr/></wps:wsp>")
+
+
 # A floating picture the way Word 2003 and many converters write one: VML,
 # with its position and size in a CSS-like style.
 OLD_FLOATING_PICTURE = (
@@ -618,6 +624,12 @@ LINES_BODY = "".join([
                             + picture_shape(1905000, 1428750, "Destra"),
                             width=5715000, width_when_made=3810000)
               + run("Paragrafo con due immagini raggruppate.")),
+    # A picture grouped with its caption, so the two move together: the
+    # group is as wide as the caption, the picture is narrower.
+    paragraph(picture_group(picture_shape(1905000, 1428750, "Raggruppata con la didascalia")
+                            + grouped_text_box(paragraph(run("Figura 3 - didascalia nel gruppo"))),
+                            width=3810000, width_when_made=3810000, height=1900000)
+              + run("Paragrafo con immagine e didascalia raggruppate.")),
     paragraph(OLD_FLOATING_PICTURE + run("Paragrafo con un'immagine flottante vecchio stile.")),
 
     # --- Tables that lay out the page, and one that is a table ---
@@ -628,9 +640,14 @@ LINES_BODY = "".join([
                    paragraph(run("Testo della colonna destra."))]]),
     layout_table([[paragraph(run("Riquadro a una colonna."))],
                   [table([["Dato A", "Dato B"], ["1", "2"]])]]),
+    # A grid stays a table even with its borders hidden. Its cells hold
+    # lines: a line break and a picture end theirs with a <br>.
     layout_table([[paragraph(run("Chiave")), paragraph(run("Valore"))],
                   [paragraph(run("riga uno") + LINE + run("riga due")),
-                   paragraph(word_picture("In cella", floating=0) + run("testo della cella"))]]),
+                   paragraph(word_picture("In cella", floating=0) + run("testo della cella"))],
+                  [paragraph(word_picture("Con didascalia in cella")
+                             + run("Didascalia in cella")),
+                   paragraph(run("ultima cella"))]]),
 
     paragraph(run("Fine") + '<w:r><w:footnoteReference w:id="1"/></w:r>' + run(".")),
     # A4 with 2 cm margins: the text is 17 cm wide, 6120130 EMU.
