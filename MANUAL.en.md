@@ -370,6 +370,12 @@ publishing panel.
   `/serie/<name>.html`, with the parts first to last. Parts with no number
   follow the numbered ones, by date. Until a series has two parts online
   nothing shows.
+- **First published on:** if the article came out first on another site,
+  paste the address of that page: under the title it shows "First
+  published on" with the name of the site and the link. Tick **Tell search
+  engines that one is the original** only if the text here is identical:
+  Google will show the other site and not this page. If the article here
+  is longer, leave it empty.
 - **This article is a lab:** a lab puts another article into practice with
   code. Ticking the box shows three fields: the **article it refers to**,
   the **project address** (for instance the repository on GitHub) and

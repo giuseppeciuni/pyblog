@@ -265,6 +265,10 @@ def article_from_data(data, slug):
         "lab_of": str(data.get("lab_of", "") or "").strip(),
         "repo_url": str(data.get("repo_url", "") or "").strip(),
         "stack": str(data.get("stack", "") or "").strip(),
+        # Where the article came out first, when it was not here, and
+        # whether search engines are told that one is the original.
+        "original_url": str(data.get("original_url", "") or "").strip(),
+        "original_canonical": data.get("original_canonical", False) is True,
         "image": data.get("image", "").strip(),
         "status": status,
         "publish_at": publish_at,

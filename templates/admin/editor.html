@@ -109,6 +109,17 @@ $spunta_avvisa
     <datalist id="serie-esistenti">$serie_esistenti</datalist>
     <p class="hint" id="serie-aiuto">$hint_serie</p>
 
+    <label for="original_url">$label_originale</label>
+    <input type="url" id="original_url" value="$valore_originale" placeholder="https://..."
+           aria-describedby="originale-aiuto">
+    <p class="hint" id="originale-aiuto">$hint_originale</p>
+    <div class="campo-spunta">
+      <input type="checkbox" id="original_canonical" $originale_canonico_checked
+             aria-describedby="originale-canonico-aiuto">
+      <div><label for="original_canonical">$label_originale_canonico</label>
+        <p class="hint" id="originale-canonico-aiuto">$hint_originale_canonico</p></div>
+    </div>
+
     <div class="campo-spunta">
       <input type="checkbox" id="kind_lab" $lab_checked aria-describedby="lab-aiuto"
              onchange="toggleLabFields()">

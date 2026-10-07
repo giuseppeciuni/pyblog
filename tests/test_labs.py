@@ -118,6 +118,32 @@ def test_pagina_labs_e_menu():
           and "labs.html" not in build.generate_sitemap(solo_articoli))
 
 
+def test_originale():
+    print("\npubblicato in origine")
+    altrove = articolo(5, original_url="https://www.startupbusiness.it/rubrica/pezzo/")
+    pagina = build.generate_article_page(altrove, "it", [altrove])
+    check("sotto il titolo c'e' la riga con il sito e il link",
+          'Pubblicato in origine su <a href="https://www.startupbusiness.it/rubrica/pezzo/" '
+          'rel="noopener">startupbusiness.it</a>' in pagina
+          and pagina.index("pubblicato-origine") < pagina.index('class="post-content"'))
+    check("senza la spunta l'indirizzo canonico resta quello di questa pagina",
+          'rel="canonical" href="' + CONFIG["base_url"] + '/posts/articolo-5.html"' in pagina)
+    altrove["original_canonical"] = True
+    check("con la spunta i motori di ricerca vengono mandati all'originale",
+          'rel="canonical" href="https://www.startupbusiness.it/rubrica/pezzo/"'
+          in build.generate_article_page(altrove, "it", [altrove]))
+    finto = articolo(6, original_url="javascript:alert(1)", original_canonical=True)
+    pagina = build.generate_article_page(finto, "it", [finto])
+    check("un indirizzo non valido non mostra nulla e non tocca il canonico",
+          "pubblicato-origine" not in pagina and "javascript:" not in pagina)
+    salvato = article_from_data({"title": "T", "original_url": " https://x.it/a ",
+                                 "original_canonical": "si"}, "t")
+    check("i campi vengono salvati puliti",
+          salvato["original_url"] == "https://x.it/a" and salvato["original_canonical"] is False)
+    check("un articolo normale non ha la riga",
+          "pubblicato-origine" not in build.generate_article_page(TEORIA, "it", ARTICOLI))
+
+
 def test_editor():
     print("\nl'editor")
     originale = server.load_articles
@@ -152,6 +178,7 @@ def main():
         test_dati()
         test_pagina_lab()
         test_pagina_labs_e_menu()
+        test_originale()
         test_editor()
     finally:
         CONFIG.clear()

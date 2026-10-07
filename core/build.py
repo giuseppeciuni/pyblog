@@ -1331,6 +1331,29 @@ def generate_author_box(language="it"):
     )
 
 
+def original_address(art):
+    """The address an article was first published at, or "" when it is not a web address."""
+    link = safe_link(art.get("original_url", ""))
+    if link.lower().startswith(("http://", "https://")):
+        return link
+    return ""
+
+
+def original_note(art, language="it"):
+    """
+    The line under the title of an article that came out somewhere else
+    first: the name of that site, taken from the address, and the link.
+    """
+    link = original_address(art)
+    if link == "":
+        return ""
+    site = link.split("//", 1)[1].split("/", 1)[0]
+    if site.lower().startswith("www."):
+        site = site[4:]
+    return (f'        <p class="pubblicato-origine">{T("pubblicato_in_origine", language)} '
+            f'<a href="{esc(link)}" rel="noopener">{esc(site)}</a></p>\n')
+
+
 def is_lab(art):
     """Tell whether an article is a lab."""
     return art.get("kind") == "lab"
@@ -2144,10 +2167,15 @@ def generate_article_page(art, language="it", all_articles=None):
         if len(keywords) > 0:
             jsonld_data["keywords"] = ", ".join(keywords)
 
+    # An article republished as it is says where the original lives, so the
+    # two sites do not compete for the same text.
+    canonical_url = page_url
+    if art.get("original_canonical") is True and original_address(art) != "":
+        canonical_url = original_address(art)
     meta_extra = "\n".join(x for x in [
         f'  <meta name="description" content="{esc(description)}">',
         f'  <meta name="author" content="{esc(CONFIG["author"])}">',
-        f'  <link rel="canonical" href="{page_url}">',
+        f'  <link rel="canonical" href="{esc(canonical_url)}">',
         link_hreflang,
         f'  <meta property="og:title" content="{esc(title_value)}">',
         f'  <meta property="og:description" content="{esc(description)}">',
@@ -2175,6 +2203,7 @@ def generate_article_page(art, language="it", all_articles=None):
         data=format_date(art["date"], language),
         tempo_lettura=reading_time,
         tags_html=tags_html,
+        originale=original_note(art, language),
         copertina=block(cover_block),
         serie=series_box(art, all_articles, language) + lab_box(art, all_articles, language),
         codice_inizio_testo=start_code,

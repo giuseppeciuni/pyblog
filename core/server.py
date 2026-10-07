@@ -868,6 +868,12 @@ def editor_page(art, csrf):
         hint_serie=help_text(T("admin_serie_hint", la)),
         serie_esistenti="".join(f'<option value="{esc(entry["name"])}">'
                                 for entry in collect_series(load_articles()).values()),
+        label_originale=T("admin_originale", la),
+        valore_originale=esc(art.get("original_url", "")),
+        hint_originale=help_text(T("admin_originale_hint", la)),
+        originale_canonico_checked="checked" if art.get("original_canonical") is True else "",
+        label_originale_canonico=T("admin_originale_canonico", la),
+        hint_originale_canonico=help_text(T("admin_originale_canonico_hint", la)),
         label_lab=T("admin_lab", la),
         hint_lab=help_text(T("admin_lab_hint", la)),
         lab_checked="checked" if art.get("kind") == "lab" else "",

@@ -1948,7 +1948,7 @@ function initEditorPage() {
 // Every field of the form marks the article as changed when it is touched.
 function watchEditorFields() {
   var campi = ['title', 'slug', 'tags', 'series', 'series_number', 'kind_lab', 'lab_of',
-               'repo_url', 'stack', 'image', 'description',
+               'repo_url', 'stack', 'original_url', 'original_canonical', 'image', 'description',
                'reader_preview', 'title_en', 'description_en', 'preview_en',
                'translation_authorized', 'translation_confirmed'];
   for (var i = 0; i < campi.length; i++) {
@@ -2483,6 +2483,8 @@ function articleData(stato) {
     lab_of: document.getElementById('lab_of').value,
     repo_url: document.getElementById('repo_url').value,
     stack: document.getElementById('stack').value,
+    original_url: document.getElementById('original_url').value,
+    original_canonical: document.getElementById('original_canonical').checked,
     image: document.getElementById('image').value,
     status: stato || statoArticolo,
     // The moment a scheduled article goes out, in UTC; ignored otherwise.
@@ -4391,7 +4393,7 @@ function restoreVersion() {
     var v = versioneMostrata;
     var campi = { title: 'title', description: 'description', preview: 'reader_preview', tags: 'tags',
                   series: 'series', series_number: 'series_number', lab_of: 'lab_of',
-                  repo_url: 'repo_url', stack: 'stack',
+                  repo_url: 'repo_url', stack: 'stack', original_url: 'original_url',
                   image: 'image', title_en: 'title_en', description_en: 'description_en', preview_en: 'preview_en' };
     for (var chiave in campi) {
       var campo = document.getElementById(campi[chiave]);
@@ -4402,6 +4404,7 @@ function restoreVersion() {
     document.getElementById('translation_authorized').checked = v.translation_authorized === true;
     document.getElementById('translation_confirmed').checked = v.translation_confirmed === true;
     document.getElementById('kind_lab').checked = v.kind === 'lab';
+    document.getElementById('original_canonical').checked = v.original_canonical === true;
     toggleLabFields();
     updateTranslationSection();
     updateCoverPreview();

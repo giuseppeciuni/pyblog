@@ -126,6 +126,7 @@ UI_TRANSLATIONS = {
     "scritto_da": {"it": "Scritto da", "en": "Written by"},
     "nav_piu_recente": {"it": "Più recente", "en": "Newer"},
     "nav_meno_recente": {"it": "Meno recente", "en": "Older"},
+    "pubblicato_in_origine": {"it": "Pubblicato in origine su", "en": "First published on"},
     "labs": {"it": "Labs", "en": "Labs"},
     "lab": {"it": "Lab", "en": "Lab"},
     "labs_intro": {"it": "Gli articoli messi in pratica: codice che gira, con il progetto da scaricare.",
@@ -468,6 +469,15 @@ UI_TRANSLATIONS = {
         "it": "Se l'articolo fa parte di una serie, scrivine il nome (uguale per tutte le parti) e il numero della parte. Sul sito ogni parte mostra la serie, porta alla precedente e alla successiva, e la serie ha una pagina con l'elenco.",
         "en": "If the article is part of a series, write its name (the same on every part) and the number of the part. On the site each part shows the series, links to the previous and the next one, and the series has a page listing them."},
     "admin_serie_numero": {"it": "Parte n.", "en": "Part no."},
+    "admin_originale": {"it": "Pubblicato in origine su (indirizzo)", "en": "First published on (address)"},
+    "admin_originale_hint": {
+        "it": "Se l'articolo è uscito prima su un altro sito, incolla qui l'indirizzo di quella pagina: sotto il titolo compare \"Pubblicato in origine su\" con il link.",
+        "en": "If the article came out first on another site, paste the address of that page here: under the title it shows \"First published on\" with the link."},
+    "admin_originale_canonico": {"it": "Indica ai motori di ricerca che l'originale è quello",
+                                 "en": "Tell search engines that one is the original"},
+    "admin_originale_canonico_hint": {
+        "it": "Spuntala solo se qui il testo è lo stesso: Google mostrerà l'altro sito e non questa pagina. Se qui l'articolo è più ampio o diverso, lasciala vuota.",
+        "en": "Tick it only if the text here is the same: Google will show the other site and not this page. If the article here is longer or different, leave it empty."},
     "admin_lab": {"it": "Questo articolo è un lab", "en": "This article is a lab"},
     "admin_lab_hint": {
         "it": "Un lab mette in pratica un altro articolo con del codice. Sul sito ha l'etichetta Lab, un riquadro con il link al progetto e finisce nella pagina Labs; l'articolo di riferimento lo segnala in fondo al testo.",

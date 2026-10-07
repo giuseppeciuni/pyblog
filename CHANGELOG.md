@@ -102,6 +102,10 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **"First published on".** An article that came out first on another
+  site carries the address of the original: a line under the title names
+  that site and links to it and, on request, search engines are told that
+  one is the original.
 - **Labs.** An article can be marked as a lab: the practical side of
   another article, with its code. It opens with a box linking to the
   project (GitHub) and to the article it puts into practice, which in turn

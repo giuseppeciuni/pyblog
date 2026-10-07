@@ -366,6 +366,12 @@ il posto al pannello di pubblicazione.
   `/serie/<nome>.html`, con le parti dalla prima all'ultima. Le parti senza
   numero seguono quelle numerate, in ordine di data. Finché la serie ha una
   sola parte online non si vede nulla.
+- **Pubblicato in origine su:** se l'articolo è uscito prima su un altro
+  sito, incolla l'indirizzo di quella pagina: sotto il titolo compare
+  "Pubblicato in origine su" con il nome del sito e il link. La spunta
+  **Indica ai motori di ricerca che l'originale è quello** va messa solo
+  se qui il testo è identico: Google mostrerà l'altro sito e non questa
+  pagina. Se qui l'articolo è più ampio, lasciala vuota.
 - **Questo articolo è un lab:** un lab mette in pratica un altro articolo
   con del codice. Spuntando la casella compaiono tre campi: l'**articolo di
   riferimento**, l'**indirizzo del progetto** (per esempio il repository su

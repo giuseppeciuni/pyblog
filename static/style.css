@@ -317,6 +317,7 @@ header.site { border-bottom:1px solid var(--bordo); }
 .serie-box ol { margin:0.6rem 0 0; padding-left:1.4rem; }
 .serie-box li { margin:0.25rem 0; }
 .serie-box li[aria-current] { font-weight:600; }
+.pubblicato-origine { color:var(--secondario); font-size:0.9rem; margin:-1.2rem 0 1.8rem; }
 /* A lab: where its code is, what it is built with, the article behind it. */
 .lab-box {
   border:1px solid var(--bordo); border-left:3px solid var(--link); border-radius:10px;
