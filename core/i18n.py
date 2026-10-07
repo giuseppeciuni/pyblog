@@ -137,6 +137,7 @@ UI_TRANSLATIONS = {
     "pubblicato_in_origine": {"it": "Pubblicato in origine su", "en": "First published on"},
     "labs": {"it": "Labs", "en": "Labs"},
     "lab": {"it": "Lab", "en": "Lab"},
+    "labs_tutti": {"it": "Tutti i lab", "en": "All the labs"},
     "labs_intro": {"it": "Gli articoli messi in pratica: codice che gira, con il progetto da scaricare.",
                    "en": "The articles put into practice: code that runs, with the project to download."},
     "lab_codice": {"it": "Il codice del progetto", "en": "The project's code"},
@@ -517,6 +518,8 @@ UI_TRANSLATIONS = {
     "admin_originale_canonico_hint": {
         "it": "Spuntala solo se qui il testo è lo stesso: Google mostrerà l'altro sito e non questa pagina. Se qui l'articolo è più ampio o diverso, lasciala vuota.",
         "en": "Tick it only if the text here is the same: Google will show the other site and not this page. If the article here is longer or different, leave it empty."},
+    "admin_crea_lab": {"it": "Crea il lab di questo articolo", "en": "Create the lab of this article"},
+    "admin_lab_nuovo_di": {"it": "Nuovo lab di: {title}", "en": "New lab of: {title}"},
     "admin_tipo": {"it": "Tipo di articolo", "en": "Kind of article"},
     "admin_tipo_articolo": {"it": "Articolo", "en": "Article"},
     "admin_tipo_pratica": {"it": "In pratica (per chi decide)", "en": "In practice (for decision makers)"},

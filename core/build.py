@@ -1550,6 +1550,34 @@ def other_levels(art, all_articles, language="it"):
             "          <ul>\n" + "\n".join(rows) + "\n          </ul>\n        </aside>\n")
 
 
+def labs_home_html(articles, language="it", limit=3):
+    """
+    The labs on the homepage: the latest few, each with its link to the
+    code, and the way to all of them. A visitor has to see at the first
+    glance that the site has code to run, not only articles to read.
+    """
+    labs = [art for art in articles_visible_in_language(articles, language) if is_lab(art)]
+    if len(labs) == 0:
+        return ""
+    rows = []
+    for art in labs[:limit]:
+        row = (f'<a class="lab-home-titolo" href="{article_url(art, language)}">'
+               f'{esc(title_in_language(art, language))}</a>')
+        stack = str(art.get("stack", "") or "").strip()
+        if stack != "":
+            row = row + f'\n            <span class="lab-home-stack">{esc(stack)}</span>'
+        link = repository_link(art, language)
+        if link != "":
+            row = row + "\n            " + link
+        rows.append("          <li>\n            " + row + "\n          </li>")
+    return render.render(
+        "public/home_sezione.html", classe="home-labs", id_titolo="titolo-labs",
+        titolo=T("labs", language),
+        contenuto=('        <ul class="labs-home">\n' + "\n".join(rows) + "\n        </ul>\n"
+                   f'        <p class="labs-home-tutti"><a href="{labs_page_url(language)}">'
+                   f'{T("labs_tutti", language)} &rarr;</a></p>\n')).rstrip("\n")
+
+
 def generate_labs_page(articles, language="it"):
     """The page of the labs: every lab online, newest first, as on the homepage."""
     prefix = language_url_prefix(language)
@@ -2815,6 +2843,10 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         projects_html = projects_home_html(language)
         if projects_html != "":
             pieces.append(("projects", projects_settings()["position"], projects_html))
+        # The labs open the main column, after whatever the author put on top.
+        labs_html = labs_home_html(articles, language)
+        if labs_html != "":
+            pieces.append(("labs", "top", labs_html))
         for name, position, html_piece in pieces:
             if position == "sidebar":
                 side[name] = html_piece

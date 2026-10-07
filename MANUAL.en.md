@@ -393,8 +393,11 @@ remembers which ones you left open.
   **project address** (for instance the repository on GitHub), **Built
   with** (languages and libraries) and **To run it** (the commands, one per
   line), shown in the box at the top. With at least one lab online the site
-  gets the `/labs.html` page, listing them all, and the **Labs** entry in
-  the menu.
+  gets the `/labs.html` page, listing them all, the **Labs** entry in the
+  menu and, at the top of the homepage, the **Labs** section with the
+  latest three. To write the lab of an existing article use **Create the
+  lab of this article**, in the article's editor or in its menu in the
+  list: a new article opens, already set as a lab and tied to that one.
 - **Cover image:** upload a file or paste an address. It shows in the
   homepage list, at the top of the article and in social previews.
 - **Reader preview:** the text under the title in the lists; left empty, the

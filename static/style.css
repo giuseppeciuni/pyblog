@@ -336,6 +336,14 @@ header.site { border-bottom:1px solid var(--bordo); }
 .serie-box li { margin:0.25rem 0; }
 .serie-box li[aria-current] { font-weight:600; }
 .pubblicato-origine { color:var(--secondario); font-size:0.9rem; margin:-1.2rem 0 1.8rem; }
+.labs-home { list-style:none; margin:0; padding:0; display:grid; gap:0.8rem;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); }
+.labs-home li { border:1px solid var(--bordo); border-radius:10px; background:var(--card-bg);
+  padding:0.9rem 1rem; display:flex; flex-direction:column; gap:0.4rem; }
+.lab-home-titolo { font-weight:600; color:var(--testo); text-decoration:none; line-height:1.35; }
+.lab-home-titolo:hover { color:var(--link); }
+.lab-home-stack { color:var(--secondario); font-size:0.85rem; }
+.labs-home-tutti { margin:0.8rem 0 0; font-size:0.92rem; }
 /* A lab: where its code is, what it is built with, the article behind it. */
 .lab-box {
   border:1px solid var(--bordo); border-left:3px solid var(--link); border-radius:10px;

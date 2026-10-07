@@ -123,6 +123,44 @@ def test_pagina_labs_e_menu():
           and "labs.html" not in build.generate_sitemap(solo_articoli))
 
 
+def test_home_e_crea_lab():
+    print("\ni lab in home e il pulsante che ne crea uno")
+    build.note_labs(ARTICOLI)
+    home = build.generate_homepage(ARTICOLI, "it")
+    sezione = home.split('class="home-sezione home-labs"')[1].split("</section>")[0]
+    check("la home ha la sezione Labs con i lab, il codice e il link a tutti",
+          '<a class="lab-home-titolo" href="/posts/articolo-2.html">Lab uno</a>' in sezione
+          and "https://github.com/esempio/lab" in sezione and "Python 3.12" in sezione
+          and '<a href="/labs.html">Tutti i lab' in sezione, sezione[:500])
+    check("sta prima dell'elenco degli articoli",
+          home.index("home-labs") < home.index('id="articles"'))
+    check("non compare dalla seconda pagina in poi",
+          "home-labs" not in build.generate_homepage(ARTICOLI, "it", page=2, totale_pagine=2))
+    check("senza lab la home non ha la sezione",
+          "home-labs" not in build.generate_homepage([TEORIA, ARTICOLI[0]], "it"))
+
+    originale = server.load_articles
+    server.load_articles = lambda: ARTICOLI
+    try:
+        teoria = server.editor_page(dict(TEORIA), "csrf")
+        lab = server.editor_page(dict(LAB), "csrf")
+        nuovo = server.editor_page(None, "csrf", dict(TEORIA, tags="AI, Python"))
+        elenco = server.admin_page(ARTICOLI, "csrf")
+    finally:
+        server.load_articles = originale
+    check("su un articolo salvato c'e' il pulsante che crea il suo lab",
+          'id="link-crea-lab" href="/edit?lab_of=articolo-1"' in teoria)
+    check("su un lab non c'e'", 'id="link-crea-lab"' not in lab)
+    check("il nuovo articolo si apre come lab gia' legato, con i tag dell'articolo",
+          '<option value="lab" selected>' in nuovo
+          and '<option value="articolo-1" selected>' in nuovo
+          and 'id="tags" value="AI, Python"' in nuovo and "Nuovo lab di: Articolo 1" in nuovo
+          and '<div id="campi-lab" >' in nuovo)
+    check("anche dall'elenco degli articoli si crea il lab di un articolo",
+          'href="/edit?lab_of=articolo-1">Crea il lab di questo articolo</a>' in elenco
+          and 'href="/edit?lab_of=articolo-2"' not in elenco)
+
+
 def test_tre_livelli():
     print("\ni tre livelli di un tema")
     pratica = articolo(7, kind="practical", lab_of="articolo-1", title="Per chi decide")
@@ -303,6 +341,7 @@ def main():
         test_dati()
         test_pagina_lab()
         test_pagina_labs_e_menu()
+        test_home_e_crea_lab()
         test_tre_livelli()
         test_inglese()
         test_originale()

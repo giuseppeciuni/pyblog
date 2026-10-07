@@ -686,10 +686,17 @@ def admin_page(articles, csrf):
                            f'onclick="changeStatus(this, {js_attr(art["slug"])}, &quot;draft&quot;)">'
                            f'{T("admin_programma_annulla", la)}</button>')
 
+        # A plain article can get its lab from here: the editor opens on a
+        # new article already tied to this one.
+        lab_item = ""
+        if art.get("kind", "") == "":
+            lab_item = (f'<a role="menuitem" tabindex="-1" '
+                        f'href="/edit?lab_of={esc(art["slug"])}">{T("admin_crea_lab", la)}</a>')
+
         lines.append(render.render(
             "admin/dashboard_row.html",
             numero=number,
-            voce_annulla_programmazione=cancel_item,
+            voce_annulla_programmazione=cancel_item + lab_item,
             titolo_minuscolo=esc(art["title"].lower()),
             data_iso=esc(art.get("date", "")),
             ordine_stato=status_order,
@@ -780,8 +787,12 @@ def lab_of_options(art, la):
     return "".join(options)
 
 
-def editor_page(art, csrf):
-    """The page with the WYSIWYG editor (it uses Quill, loaded from a CDN)."""
+def editor_page(art, csrf, starts_from=None):
+    """
+    The page with the WYSIWYG editor (it uses Quill, loaded from a CDN).
+    starts_from is the article a new lab is being created for: the new
+    article opens as a lab already tied to it, with its tags.
+    """
     la = admin_language()
 
     # If we are editing an existing article, we take its values.
@@ -796,8 +807,20 @@ def editor_page(art, csrf):
     else:
         art = {}
         page_title = T("admin_nuovo_articolo_titolo", la)
+        if starts_from is not None:
+            art = {"kind": "lab", "lab_of": starts_from.get("slug", ""),
+                   "tags": starts_from.get("tags", "")}
+            page_title = T("admin_lab_nuovo_di", la).replace(
+                "{title}", starts_from.get("title", ""))
         menu_item = "new"
         delete_button = ""
+
+    # A saved article that is not itself a lab or a practical version can
+    # get its lab from here.
+    create_lab_link = ""
+    if art.get("slug") and art.get("kind", "") == "":
+        create_lab_link = (f'<a class="pulsante pulsante-piccolo" id="link-crea-lab" '
+                           f'href="/edit?lab_of={esc(art["slug"])}">{T("admin_crea_lab", la)}</a>')
 
     # The buttons follow the state of the article: a draft can be saved or
     # published, a published article updated or taken back. Anything else
@@ -850,6 +873,7 @@ def editor_page(art, csrf):
         hint_programma=T("admin_programma_hint", la),
         label_programma_conferma=T("admin_programma_conferma", la),
         url_online=esc(url_online),
+        link_crea_lab=create_lab_link,
         label_condividi=T("admin_condividi", la),
         hint_condividi=T("admin_condividi_hint", la),
         label_vedi_online=T("admin_vedi_online", la),
@@ -2190,7 +2214,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             art = None
             if slug:
                 art = load_article(slug)
-            self._send(editor_page(art, csrf))
+            # "Create the lab of this article": a new article, tied to it.
+            starts_from = None
+            if art is None and query.get("lab_of", [""])[0] != "":
+                starts_from = load_article(query["lab_of"][0])
+            self._send(editor_page(art, csrf, starts_from))
         elif route == "/change-password":
             self._send(change_password_page(csrf))
         elif route == "/preview":

@@ -389,8 +389,12 @@ una riga cosa contiene, e il browser ricorda quali hai lasciato aperti.
   l'**indirizzo del progetto** (per esempio il repository su GitHub),
   **Fatto con** (linguaggi e librerie) e **Per eseguirlo** (i comandi, uno
   per riga), che compaiono nel riquadro in cima. Quando c'è almeno un lab
-  online compaiono la pagina `/labs.html`, che li elenca tutti, e la voce
-  **Labs** nel menu.
+  online compaiono la pagina `/labs.html`, che li elenca tutti, la voce
+  **Labs** nel menu e, in cima alla home, la sezione **Labs** con gli
+  ultimi tre. Per scrivere il lab di un articolo che esiste già usa **Crea
+  il lab di questo articolo**, nell'editor dell'articolo o nel suo menu
+  nell'elenco: si apre un articolo nuovo già impostato come lab e legato a
+  quello.
 - **Immagine di copertina:** carichi un file o incolli un indirizzo. Appare
   nell'elenco della home, in cima all'articolo e nelle anteprime social.
 - **Anteprima per i lettori:** il testo sotto il titolo negli elenchi; vuoto,

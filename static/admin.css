@@ -204,6 +204,8 @@ html:has(body.pagina-config) { scroll-padding-bottom:7rem; }
 .editor-sidebar h2:first-child { margin-top:0; }
 /* Card for the important sidebar fields (preview, SEO): a white box
    that sets them apart visually from the rest of the metadata. */
+.crea-lab { grid-column:1 / -1; }
+.crea-lab:empty { display:none; }
 .condividi-admin { grid-column:1 / -1; }
 .condividi-admin summary { cursor:pointer; color:#0066cc; font-weight:600; min-height:44px;
   display:flex; align-items:center; }

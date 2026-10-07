@@ -107,6 +107,10 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Labs on the homepage, and a lab created from its article.** The
+  homepage opens with the latest three labs, each with its link to the
+  code. "Create the lab of this article", in the editor and in the list of
+  articles, opens a new article already set as a lab and tied to that one.
 - **A simpler editor column.** The twenty-odd fields beside the text are
   gathered into five groups that open and close: Details, Series and kind,
   Preview and search, the translation, Advanced. Only Details starts open;
