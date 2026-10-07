@@ -850,6 +850,8 @@ def editor_page(art, csrf):
         hint_programma=T("admin_programma_hint", la),
         label_programma_conferma=T("admin_programma_conferma", la),
         url_online=esc(url_online),
+        label_condividi=T("admin_condividi", la),
+        hint_condividi=T("admin_condividi_hint", la),
         label_vedi_online=T("admin_vedi_online", la),
         label_pubblica=T("admin_pubblica", la),
         tip_pubblica=esc(T("tip_pubblica_articolo", la)),
@@ -939,6 +941,8 @@ def editor_page(art, csrf):
     # article would otherwise break - or escape - the surrounding JavaScript.
     page_data = {
         "page": "editor",
+        # The public address of the site, for the links that share an article.
+        "public_base": CONFIG.get("base_url", "").rstrip("/"),
         "preview_kind": "article",
         # The browser checks these before uploading, so an oversized file
         # produces a clear message instead of a connection the server drops

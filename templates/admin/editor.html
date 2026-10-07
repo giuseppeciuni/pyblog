@@ -77,6 +77,16 @@ $spunta_avvisa
         <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-programmato" id="btn-programma-cambia"
                 aria-expanded="false" aria-controls="programma-modulo" onclick="toggleScheduleForm(this)">$label_programma_cambia</button>
       </div>
+      <details class="condividi-admin solo-pubblicato">
+        <summary>$label_condividi</summary>
+        <p class="hint">$hint_condividi</p>
+        <div class="condividi-admin-link">
+          <a id="share-linkedin" class="pulsante pulsante-piccolo" target="_blank" rel="noopener" href="#">LinkedIn</a>
+          <a id="share-hn" class="pulsante pulsante-piccolo" target="_blank" rel="noopener" href="#">Hacker News</a>
+          <a id="share-reddit" class="pulsante pulsante-piccolo" target="_blank" rel="noopener" href="#">Reddit</a>
+          <a id="share-x" class="pulsante pulsante-piccolo" target="_blank" rel="noopener" href="#">X</a>
+        </div>
+      </details>
       <div class="programma-modulo" id="programma-modulo" hidden>
         <label for="publish_at">$label_programma_quando</label>
         <input type="datetime-local" id="publish_at" aria-describedby="publish_at-aiuto">

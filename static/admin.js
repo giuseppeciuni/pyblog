@@ -1944,6 +1944,8 @@ function initEditorPage() {
   installUnsavedChangesGuard();
   installSaveShortcut();
   rememberOpenGroups();
+  updateShareLinks();
+  document.getElementById('title').addEventListener('input', updateShareLinks);
 }
 
 // Every field of the form marks the article as changed when it is touched.
@@ -2536,6 +2538,28 @@ function updateStatePanel(indirizzo) {
   toggleScheduleForm(null, false);
   var link = document.getElementById('link-online');
   if (link && indirizzo) { link.setAttribute('href', indirizzo); }
+  updateShareLinks();
+}
+
+// The links that post a published article elsewhere: each opens the
+// posting page of that site with the public address and the title filled in.
+function updateShareLinks() {
+  var online = document.getElementById('link-online');
+  if (!online) { return; }
+  var percorso = online.getAttribute('href') || '';
+  if (percorso.indexOf('http') !== 0) { percorso = pbPage('public_base', '') + percorso; }
+  var indirizzo = encodeURIComponent(percorso);
+  var titolo = encodeURIComponent(document.getElementById('title').value.trim());
+  var destinazioni = {
+    'share-linkedin': 'https://www.linkedin.com/sharing/share-offsite/?url=' + indirizzo,
+    'share-hn': 'https://news.ycombinator.com/submitlink?u=' + indirizzo + '&t=' + titolo,
+    'share-reddit': 'https://www.reddit.com/submit?url=' + indirizzo + '&title=' + titolo,
+    'share-x': 'https://twitter.com/intent/tweet?url=' + indirizzo + '&text=' + titolo
+  };
+  for (var id in destinazioni) {
+    var voce = document.getElementById(id);
+    if (voce) { voce.setAttribute('href', destinazioni[id]); }
+  }
 }
 
 // --- The four things the sidebar can do with an article ---------------------

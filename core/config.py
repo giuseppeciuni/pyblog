@@ -260,9 +260,7 @@ CONFIG_DEFAULT = {
         "items": [],
     },
 
-    # The row of links at the end of an article that hands it to LinkedIn,
-    # Hacker News, Reddit or X, and copies its address. They are plain
-    # links: nothing is loaded from those sites until the reader clicks.
+    # The button at the end of an article that copies its address.
     "share_buttons": True,
 
     # "Work with me": a button in the menu of every page and an invitation

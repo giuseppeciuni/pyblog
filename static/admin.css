@@ -204,6 +204,10 @@ html:has(body.pagina-config) { scroll-padding-bottom:7rem; }
 .editor-sidebar h2:first-child { margin-top:0; }
 /* Card for the important sidebar fields (preview, SEO): a white box
    that sets them apart visually from the rest of the metadata. */
+.condividi-admin { grid-column:1 / -1; }
+.condividi-admin summary { cursor:pointer; color:#0066cc; font-weight:600; min-height:44px;
+  display:flex; align-items:center; }
+.condividi-admin-link { display:flex; flex-wrap:wrap; gap:0.4rem; }
 /* The groups of the editor's column: closed, a title and what they hold. */
 .gruppo-editor { background:#fff; border:1px solid #e4e4e7; border-radius:8px; margin:0.35rem 0; }
 .gruppo-editor > summary { cursor:pointer; list-style:none; padding:0.7rem 2.2rem 0.7rem 0.9rem;

@@ -1338,27 +1338,15 @@ def generate_author_box(language="it"):
     )
 
 
-def share_row(page_url, title, language="it"):
+def share_row(page_url, language="it"):
     """
-    The row at the end of an article that hands it on: LinkedIn, Hacker
-    News, Reddit, X, and a button copying the address. Plain links to the
-    page each site has for this, so nothing of theirs loads with the article.
+    The button at the end of an article that copies its address, for the
+    reader who wants to pass it on. Posting the article on LinkedIn, Hacker
+    News and the like is the author's job, done from the editor.
     """
     if CONFIG.get("share_buttons", True) is not True:
         return ""
-    address = urllib.parse.quote(page_url, safe="")
-    name = urllib.parse.quote(title, safe="")
-    targets = (
-        ("LinkedIn", "https://www.linkedin.com/sharing/share-offsite/?url=" + address),
-        ("Hacker News", "https://news.ycombinator.com/submitlink?u=" + address + "&t=" + name),
-        ("Reddit", "https://www.reddit.com/submit?url=" + address + "&title=" + name),
-        ("X", "https://twitter.com/intent/tweet?url=" + address + "&text=" + name),
-    )
-    links = "".join(f'          <a href="{esc(link)}" target="_blank" rel="noopener">{label}</a>\n'
-                    for label, link in targets)
     return ('        <div class="condividi">\n'
-            f'          <span class="condividi-etichetta">{T("condividi", language)}</span>\n'
-            + links +
             f'          <button type="button" class="condividi-copia" data-url="{esc(page_url)}" '
             f'data-fatto="{esc(T("condividi_copiato", language))}">'
             f'{T("condividi_copia", language)}</button>\n'
@@ -2331,7 +2319,7 @@ def generate_article_page(art, language="it", all_articles=None):
         toc_telefono=toc_phone,
         contenuto_articolo=content,
         codice_fine_testo=block(custom_code_block("article_end", "article", art)),
-        author_box=(share_row(page_url, title_value, language)
+        author_box=(share_row(page_url, language)
                     + other_levels(art, all_articles, language)
                     + work_invitation(language) + generate_author_box(language) + newsletter_after_article(language)),
         article_nav=generate_article_nav(art, all_articles, language),

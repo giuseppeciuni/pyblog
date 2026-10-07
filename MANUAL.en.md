@@ -1113,7 +1113,7 @@ fields arrive.
 | `articles_per_page` | Articles per homepage page (default `10`; `0` = all on one page). |
 | `home_intro_position` | Where the introduction goes: `"sidebar"` (default) or `"top"`. |
 | `home_excerpt_words` | Words of the excerpt in the lists, for articles without a preview (default `40`). |
-| `share_buttons` | `true` (default) shows, at the end of an article, the links that share it on LinkedIn, Hacker News, Reddit and X and the button copying its address; `false` removes them. They are plain links: nothing is loaded from those sites. |
+| `share_buttons` | `true` (default) shows the **Copy the link** button at the end of an article; `false` removes it. Sharing on LinkedIn, Hacker News, Reddit and X is done from the editor: on a published article, **Share the article** opens that site's page already filled in. |
 | `home_featured` | `true` (default): the latest article highlighted at the top. |
 | `article_cover` | `true` (default): the cover at the top of the article. |
 | `home_order` | No longer used; ignored in old files. |

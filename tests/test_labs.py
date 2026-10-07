@@ -213,31 +213,34 @@ def test_originale():
 
 
 def test_condivisione():
-    print("\npulsanti di condivisione")
+    print("\ncondivisione")
     CONFIG["base_url"] = "https://esempio.it"
     art = articolo(8, title="Costi & modelli")
     pagina = build.generate_article_page(art, "it", [art])
     riga = pagina.split('<div class="condividi">')[1].split("</div>")[0]
-    indirizzo = "https%3A%2F%2Fesempio.it%2Fposts%2Farticolo-8.html"
-    check("ci sono LinkedIn, Hacker News, Reddit e X con l'indirizzo della pagina",
-          "linkedin.com/sharing/share-offsite/?url=" + indirizzo in riga
-          and "news.ycombinator.com/submitlink?u=" + indirizzo + "&amp;t=Costi%20%26%20modelli" in riga
-          and "reddit.com/submit?url=" + indirizzo in riga and "twitter.com/intent/tweet" in riga,
-          riga)
-    check("e il pulsante che copia il link",
+    check("sul sito c'e' solo il pulsante che copia il link",
           'class="condividi-copia" data-url="https://esempio.it/posts/articolo-8.html" '
-          'data-fatto="Link copiato">Copia il link</button>' in riga)
-    check("stanno dopo il testo", pagina.index("condividi") > pagina.index('class="post-content"'))
-    check("in inglese l'indirizzo e le scritte sono inglesi",
-          "%2Fen%2Fposts%2Farticolo-8.html" in build.generate_article_page(
-              dict(art, title_en="Costs", content_en="<p>x</p>", translation_confirmed=True),
-              "en", [art]).split('<div class="condividi">')[1].split("</div>")[0])
+          'data-fatto="Link copiato">Copia il link</button>' in riga and "<a " not in riga, riga)
+    check("nessun link ad altre piattaforme nella pagina pubblica",
+          "linkedin.com" not in pagina and "ycombinator" not in pagina
+          and "reddit.com" not in pagina and "twitter.com" not in pagina)
     CONFIG["share_buttons"] = False
-    check("spenti dalla configurazione non compaiono",
+    check("spento dalla configurazione non compare",
           'class="condividi"' not in build.generate_article_page(art, "it", [art]))
     CONFIG["share_buttons"] = True
-    script = (pathlib.Path(__file__).resolve().parent.parent / "static" / "site.js").read_text()
-    check("il sito sa copiare il link", "condividi-copia" in script)
+    originale = server.load_articles
+    server.load_articles = lambda: [art]
+    try:
+        editor = server.editor_page(art, "csrf")
+    finally:
+        server.load_articles = originale
+    check("la condivisione sulle piattaforme sta nell'editor, per gli articoli pubblicati",
+          '<details class="condividi-admin solo-pubblicato">' in editor
+          and all(f'id="share-{n}"' in editor for n in ("linkedin", "hn", "reddit", "x"))
+          and '"public_base": "https://esempio.it"' in editor)
+    script = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
+    check("e l'editor compila i link con indirizzo e titolo",
+          "function updateShareLinks()" in script and "news.ycombinator.com/submitlink" in script)
 
 
 def test_editor():
