@@ -354,13 +354,22 @@ publishing panel.
 
 ### 4.1 The fields
 
-Beside the text, under the buttons that publish, the fields are gathered
-into five groups that open and close with a click: **Details** (address,
-tags, cover), **Series and kind**, **Preview and search** (reader preview,
+The page has a single column, with the title and the text. Above it are
+the **parts of the subject** as tabs: **Theory**, **In practice** and
+**Lab**, each with its state (draft, published). A click moves from one
+article to the other; **+ Lab** and **+ In practice** create a new one
+already tied to the theory, with its tags. The buttons that save and
+publish sit in a bar at the top (at the bottom on a phone). In a lab, above
+the title, is the project box: its address on GitHub, what it is built
+with, the commands to run it.
+
+Everything else opens from the **Details** button: a panel (the whole
+screen on a phone) with five groups that open and close: **Address, tags
+and cover**, **Series and kind**, **Preview and search** (reader preview,
 description, SEO analysis), the **translated version** and **Advanced**
-(first published on, external code, earlier versions). Only Details starts
-open; a closed group says in one line what it holds, and the browser
-remembers which ones you left open.
+(first published on, external code, earlier versions). A closed group says
+in one line what it holds, and the browser remembers which ones you left
+open. **Close** or Esc shuts it.
 
 - **Title.**
 - **Address (slug):** the last part of the page's address, as in

@@ -148,14 +148,33 @@ def test_home_e_crea_lab():
         elenco = server.admin_page(ARTICOLI, "csrf")
     finally:
         server.load_articles = originale
-    check("su un articolo salvato c'e' il pulsante che crea il suo lab",
-          'id="link-crea-lab" href="/edit?lab_of=articolo-1"' in teoria)
-    check("su un lab non c'e'", 'id="link-crea-lab"' not in lab)
+    schede = teoria.split('<nav class="tema-schede"')[1].split("</nav>")[0]
+    check("sopra l'editor ci sono le parti del tema: la teoria, corrente, e i suoi lab",
+          '<span class="scheda-tema" aria-current="page"><span class="scheda-nome">Teoria</span>'
+          in schede and '<a class="scheda-tema" href="/edit?slug=articolo-2"' in schede
+          and schede.index("Teoria") < schede.index("articolo-2"), schede)
+    check("e i link che aggiungono quello che manca",
+          'id="link-crea-lab" href="/edit?lab_of=articolo-1">+ Lab</a>' in schede
+          and 'href="/edit?lab_of=articolo-1&amp;kind=practical">+ In pratica</a>' in schede)
+    schede_lab = lab.split('<nav class="tema-schede"')[1].split("</nav>")[0]
+    check("dal lab si torna alla teoria con una scheda",
+          '<a class="scheda-tema" href="/edit?slug=articolo-1"' in schede_lab
+          and 'aria-current="page"><span class="scheda-nome">Lab</span>' in schede_lab)
     check("il nuovo articolo si apre come lab gia' legato, con i tag dell'articolo",
           '<option value="lab" selected>' in nuovo
           and '<option value="articolo-1" selected>' in nuovo
           and 'id="tags" value="AI, Python"' in nuovo and "Nuovo lab di: Articolo 1" in nuovo
-          and '<div id="campi-lab" >' in nuovo)
+          and '<div id="campi-lab" class="card-lab" >' in nuovo
+          and '<span class="scheda-stato">nuovo</span>' in nuovo)
+    originale = server.load_articles
+    server.load_articles = lambda: ARTICOLI
+    try:
+        pratica = server.editor_page(None, "csrf", dict(TEORIA), "practical")
+    finally:
+        server.load_articles = originale
+    check("allo stesso modo si crea la versione pratica",
+          '<option value="practical" selected>' in pratica
+          and "Nuova versione pratica di: Articolo 1" in pratica)
     check("anche dall'elenco degli articoli si crea il lab di un articolo",
           'href="/edit?lab_of=articolo-1">Crea il lab di questo articolo</a>' in elenco
           and 'href="/edit?lab_of=articolo-2"' not in elenco)
@@ -291,7 +310,8 @@ def test_editor():
     finally:
         server.load_articles = originale
     check("il tipo e i campi del lab hanno i valori dell'articolo",
-          '<option value="lab" selected>' in pagina and '<div id="campi-lab" >' in pagina
+          '<option value="lab" selected>' in pagina
+          and '<div id="campi-lab" class="card-lab" >' in pagina
           and '<div id="campi-riferimento" >' in pagina
           and 'id="repo_url" value="https://github.com/esempio/lab"' in pagina
           and 'id="stack" value="Python 3.12, &lt;LiteLLM&gt;"' in pagina)
@@ -302,7 +322,7 @@ def test_editor():
           and 'value="articolo-2"' not in scelta, scelta)
     check("su un articolo normale i campi del lab sono nascosti",
           '<option value="" selected>' in normale
-          and '<div id="campi-lab" hidden>' in normale
+          and '<div id="campi-lab" class="card-lab" hidden>' in normale
           and '<div id="campi-riferimento" hidden>' in normale)
     def gruppo(nome):
         return pagina.split('id="gruppo-' + nome + '"')[1].split('<details class="gruppo-editor"')[0]
@@ -316,16 +336,24 @@ def test_editor():
           'id="slug"' in gruppo("dettagli") and 'id="tags"' in gruppo("dettagli")
           and 'id="image"' in gruppo("dettagli")
           and 'id="series"' in gruppo("serie") and 'id="kind"' in gruppo("serie")
-          and 'id="repo_url"' in gruppo("serie")
+          and 'id="repo_url"' not in gruppo("serie")
           and 'id="description"' in gruppo("anteprima") and 'id="reader_preview"' in gruppo("anteprima")
           and 'id="translation_authorized"' in gruppo("inglese") and 'id="editor-en"' in gruppo("inglese")
           and 'id="original_url"' in gruppo("avanzate") and 'id="lista-codice-proprio"' in gruppo("avanzate")
           and 'id="btn-versioni"' in gruppo("avanzate"))
+    check("il progetto del lab sta sopra il titolo, nella colonna del testo",
+          pagina.index('id="campi-lab"') < pagina.index('id="title"') < pagina.index('id="editor"'))
+    check("tutto il resto sta nel pannello Dettagli, che si apre da un pulsante",
+          'id="btn-dettagli" aria-expanded="false"' in pagina
+          and pagina.index('id="pannello-dettagli"') < pagina.index('id="gruppo-dettagli"')
+          and pagina.index('id="pannello-pubblica"') < pagina.index('id="title"'))
     check("i pulsanti per pubblicare restano fuori dai gruppi",
           pagina.index('id="pannello-pubblica"') < pagina.index('<details class="gruppo-editor"')
           and 'id="btn-pubblica"' not in "".join(gruppo(n) for n in
                                                   ("dettagli", "serie", "anteprima", "inglese", "avanzate")))
     script = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
+    check("il pannello si apre, si chiude e si chiude con Esc",
+          "function toggleDetails(apri)" in script and "evento.key === 'Escape'" in script)
     check("un gruppo chiuso dice cosa contiene",
           'id="riepilogo-serie"' in pagina and "function updateGroupSummaries()" in script
           and "rememberOpenGroups();" in script)

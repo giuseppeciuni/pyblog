@@ -4517,6 +4517,29 @@ function removeSubscriber(pulsante) {
 }
 
 // In the editor: whether the subscribers hear about this article.
+// Opens and closes the Details panel. It slides over the page from the
+// right on a wide screen and covers a phone's; Escape and the veil close it.
+function toggleDetails(apri) {
+  var pannello = document.getElementById('pannello-dettagli');
+  var pulsante = document.getElementById('btn-dettagli');
+  if (!pannello || !pulsante) { return; }
+  if (apri === undefined || apri === null || typeof apri !== 'boolean') {
+    apri = !document.body.classList.contains('dettagli-aperti');
+  }
+  document.body.classList.toggle('dettagli-aperti', apri);
+  pulsante.setAttribute('aria-expanded', apri ? 'true' : 'false');
+  if (apri) {
+    document.getElementById('btn-dettagli-chiudi').focus();
+  } else if (pannello.contains(document.activeElement)) {
+    pulsante.focus();
+  }
+}
+document.addEventListener('keydown', function(evento) {
+  if (evento.key === 'Escape' && document.body.classList.contains('dettagli-aperti')) {
+    toggleDetails(false);
+  }
+});
+
 // A closed group of the column says what it holds: the tags, the series
 // and the part, whether the description is there, how far the translation
 // is. The texts are rebuilt whenever a field of the column changes.

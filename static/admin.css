@@ -778,3 +778,67 @@ select.campo-input { padding-right:2rem; }
 .nl-elenco li { display:flex; align-items:center; gap:0.75rem; padding:0.4rem 0.75rem; border-top:1px solid #eef0f3; }
 .nl-elenco li:first-child { border-top:0; }
 .nl-email { flex:1; min-width:0; overflow-wrap:anywhere; }
+
+/* ===========================================================================
+   EDITOR: one column for the text, the subject's parts as tabs, the rest
+   in the Details panel
+   =========================================================================== */
+
+.editor-wrap { max-width:1040px; }
+.editor-layout { display:block; }
+.editor-barra { display:flex; align-items:center; justify-content:space-between; gap:0.75rem;
+  margin-bottom:1rem; border-bottom:1px solid #e4e4e7; }
+.tema-schede { display:flex; gap:0.25rem; overflow-x:auto; min-width:0; }
+.scheda-tema { display:flex; flex-direction:column; justify-content:center; min-height:48px;
+  padding:0.25rem 0.9rem; border-bottom:3px solid transparent; color:#3f3f46;
+  text-decoration:none; white-space:nowrap; }
+.scheda-tema[aria-current] { border-bottom-color:var(--a-accento); color:var(--a-accento); font-weight:700; }
+.scheda-stato { font-size:0.75rem; font-weight:400; color:#52525b; }
+.scheda-aggiungi { color:var(--a-accento); font-weight:600; }
+a.scheda-tema:hover { background:#f4f4f5; }
+a.scheda-tema:focus-visible { outline:3px solid var(--a-accento); outline-offset:-3px; }
+#btn-dettagli { flex:none; margin-bottom:0.25rem; }
+@media (max-width: 860px) {
+  /* On a phone the button gets its own line, so the tabs keep the width. */
+  .editor-barra { flex-wrap:wrap; justify-content:flex-end; }
+  .tema-schede { order:2; flex:1 1 100%; }
+}
+
+/* The project of a lab sits above its title: it is what makes it a lab. */
+.card-lab { background:#fff; border:1px solid #e4e4e7; border-left:3px solid var(--a-accento);
+  border-radius:8px; padding:0.9rem 1rem; margin-bottom:0.5rem; }
+.card-lab[hidden] { display:none; }
+.card-lab-titolo { font-weight:700; margin:0; }
+
+/* The Details panel: over the page from the right, the whole screen on a phone. */
+.dettagli-velo { display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.45); z-index:1040; }
+.editor-sidebar { position:fixed; top:0; right:0; bottom:0; width:min(440px, 100%); max-height:none;
+  border:0; border-left:1px solid #e4e4e7; border-radius:0; z-index:1050;
+  box-shadow:-8px 0 24px rgba(0, 0, 0, 0.12); transform:translateX(100%); visibility:hidden;
+  transition:transform 0.18s ease, visibility 0s linear 0.18s; }
+body.dettagli-aperti .editor-sidebar { transform:none; visibility:visible; transition:transform 0.18s ease; }
+body.dettagli-aperti .dettagli-velo { display:block; }
+body.dettagli-aperti { overflow:hidden; }
+.dettagli-testa { display:flex; align-items:center; justify-content:space-between; gap:0.75rem; }
+.dettagli-testa h2 { margin:0 !important; }
+@media (prefers-reduced-motion: reduce) {
+  .editor-sidebar, body.dettagli-aperti .editor-sidebar { transition:none; }
+}
+
+/* On a wide screen publishing is a strip that stays at the top while
+   writing; on a phone it is the bar at the bottom (see above). */
+@media (min-width: 861px) {
+  .pannello-pubblica { flex-direction:row; flex-wrap:wrap; align-items:center; gap:0.5rem 0.75rem;
+    background:#fafafa; border:1px solid #e4e4e7; border-radius:10px; padding:0.6rem 0.9rem;
+    margin-bottom:1.25rem; position:sticky; top:0.5rem; z-index:20; }
+  .pannello-pubblica .stato-articolo { order:1; flex:1 1 12rem; }
+  .pannello-pubblica .pb-autosave { order:2; }
+  .pannello-pubblica .azioni-secondarie { order:3; flex-direction:row; flex-wrap:wrap; }
+  .pannello-pubblica .riga-azioni { order:4; }
+  .pannello-pubblica .riga-azioni .pulsante { flex:none; }
+  .pannello-pubblica .pulsante-primario.pulsante-largo { order:5; width:auto; }
+  .pannello-pubblica .avvisa-iscritti { order:6; }
+  .pannello-pubblica .condividi-admin { order:3; }
+  .pannello-pubblica .condividi-admin[open] { order:7; flex-basis:100%; }
+  .pannello-pubblica .programma-modulo { order:8; flex-basis:100%; }
+}

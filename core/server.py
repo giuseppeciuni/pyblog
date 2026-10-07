@@ -787,11 +787,64 @@ def lab_of_options(art, la):
     return "".join(options)
 
 
-def editor_page(art, csrf, starts_from=None):
+def subject_tabs(art, la):
+    """
+    The tabs over the editor: the articles on the same subject - the theory,
+    its practical version, its labs - with the state of each, and the links
+    that add the ones still missing. The author moves between the theory
+    and its lab without going back to the list.
+    """
+    state_words = {"published": T("admin_stato_pubblicato", la),
+                   "scheduled": T("admin_stato_programmato", la),
+                   "draft": T("admin_stato_bozza", la)}
+    labels = {"": T("admin_scheda_teoria", la), "practical": T("admin_scheda_pratica", la),
+              "lab": T("admin_scheda_lab", la)}
+    everything = load_articles()
+    kind = art.get("kind", "") or ""
+    root_slug = art.get("slug", "")
+    if kind in ("lab", "practical"):
+        root_slug = art.get("lab_of", "")
+    group = [other for other in everything
+             if root_slug != "" and other.get("slug") == root_slug]
+    group = group + [other for other in everything
+                     if root_slug != "" and other.get("lab_of") == root_slug
+                     and other.get("kind") in ("lab", "practical")
+                     and other.get("slug") != root_slug]
+    if not any(other.get("slug") == art.get("slug") for other in group) or not art.get("slug"):
+        # The article on screen, when it is new or stands alone.
+        group.append(art)
+    group.sort(key=lambda other: ("", "practical", "lab").index(other.get("kind") or ""))
+
+    tabs = []
+    for other in group:
+        name = labels[other.get("kind") or ""]
+        if not other.get("slug"):
+            state = T("admin_scheda_nuovo", la)
+        else:
+            state = state_words.get(other.get("status", "draft"), state_words["draft"])
+        text = f'<span class="scheda-nome">{name}</span><span class="scheda-stato">{esc(state)}</span>'
+        if other is art or (other.get("slug") and other.get("slug") == art.get("slug")):
+            tabs.append(f'    <span class="scheda-tema" aria-current="page">{text}</span>')
+        else:
+            tabs.append(f'    <a class="scheda-tema" href="/edit?slug={esc(other["slug"])}" '
+                        f'title="{esc(other.get("title", ""))}">{text}</a>')
+    # What can still be added to a subject whose theory is saved.
+    if root_slug != "" and any(other.get("slug") == root_slug for other in everything):
+        if not any(other.get("kind") == "practical" for other in group):
+            tabs.append(f'    <a class="scheda-tema scheda-aggiungi" '
+                        f'href="/edit?lab_of={esc(root_slug)}&amp;kind=practical">'
+                        f'{T("admin_scheda_aggiungi_pratica", la)}</a>')
+        tabs.append(f'    <a class="scheda-tema scheda-aggiungi" id="link-crea-lab" '
+                    f'href="/edit?lab_of={esc(root_slug)}">{T("admin_scheda_aggiungi_lab", la)}</a>')
+    return "\n".join(tabs)
+
+
+def editor_page(art, csrf, starts_from=None, new_kind="lab"):
     """
     The page with the WYSIWYG editor (it uses Quill, loaded from a CDN).
-    starts_from is the article a new lab is being created for: the new
-    article opens as a lab already tied to it, with its tags.
+    starts_from is the article a new lab (or practical version, new_kind)
+    is being created for: the new article opens already tied to it, with
+    its tags.
     """
     la = admin_language()
 
@@ -808,19 +861,14 @@ def editor_page(art, csrf, starts_from=None):
         art = {}
         page_title = T("admin_nuovo_articolo_titolo", la)
         if starts_from is not None:
-            art = {"kind": "lab", "lab_of": starts_from.get("slug", ""),
+            art = {"kind": new_kind, "lab_of": starts_from.get("slug", ""),
                    "tags": starts_from.get("tags", "")}
-            page_title = T("admin_lab_nuovo_di", la).replace(
-                "{title}", starts_from.get("title", ""))
+            title_key = "admin_lab_nuovo_di"
+            if new_kind == "practical":
+                title_key = "admin_pratica_nuova_di"
+            page_title = T(title_key, la).replace("{title}", starts_from.get("title", ""))
         menu_item = "new"
         delete_button = ""
-
-    # A saved article that is not itself a lab or a practical version can
-    # get its lab from here.
-    create_lab_link = ""
-    if art.get("slug") and art.get("kind", "") == "":
-        create_lab_link = (f'<a class="pulsante pulsante-piccolo" id="link-crea-lab" '
-                           f'href="/edit?lab_of={esc(art["slug"])}">{T("admin_crea_lab", la)}</a>')
 
     # The buttons follow the state of the article: a draft can be saved or
     # published, a published article updated or taken back. Anything else
@@ -873,7 +921,11 @@ def editor_page(art, csrf, starts_from=None):
         hint_programma=T("admin_programma_hint", la),
         label_programma_conferma=T("admin_programma_conferma", la),
         url_online=esc(url_online),
-        link_crea_lab=create_lab_link,
+        label_schede_tema=esc(T("admin_schede_tema", la)),
+        schede_tema=subject_tabs(art, la),
+        label_dettagli=T("admin_dettagli", la),
+        label_chiudi=T("admin_chiudi", la),
+        label_lab_progetto=T("admin_lab_progetto", la),
         label_condividi=T("admin_condividi", la),
         hint_condividi=T("admin_condividi_hint", la),
         label_vedi_online=T("admin_vedi_online", la),
@@ -2218,7 +2270,10 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             starts_from = None
             if art is None and query.get("lab_of", [""])[0] != "":
                 starts_from = load_article(query["lab_of"][0])
-            self._send(editor_page(art, csrf, starts_from))
+            new_kind = "lab"
+            if query.get("kind", [""])[0] == "practical":
+                new_kind = "practical"
+            self._send(editor_page(art, csrf, starts_from, new_kind))
         elif route == "/change-password":
             self._send(change_password_page(csrf))
         elif route == "/preview":

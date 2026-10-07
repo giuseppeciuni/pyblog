@@ -350,13 +350,22 @@ il posto al pannello di pubblicazione.
 
 ### 4.1 I campi
 
-Accanto al testo, sotto i pulsanti per pubblicare, i campi sono raccolti in
-cinque gruppi che si aprono e si chiudono con un clic: **Dettagli**
-(indirizzo, tag, copertina), **Serie e tipo**, **Anteprima e ricerca**
+La pagina ha una sola colonna, con il titolo e il testo. Sopra ci sono le
+**parti del tema** come schede: **Teoria**, **In pratica** e **Lab**,
+ognuna con il suo stato (bozza, pubblicato). Un clic porta da un articolo
+all'altro; **+ Lab** e **+ In pratica** ne creano uno nuovo già legato alla
+teoria, con i suoi tag. I pulsanti per salvare e pubblicare stanno in una
+barra in alto (in basso sul telefono). In un lab, sopra il titolo, c'è il
+riquadro del progetto: indirizzo su GitHub, con cosa è fatto, i comandi
+per eseguirlo.
+
+Tutto il resto si apre dal pulsante **Dettagli**: un pannello (a tutto
+schermo sul telefono) con cinque gruppi che si aprono e si chiudono:
+**Indirizzo, tag e copertina**, **Serie e tipo**, **Anteprima e ricerca**
 (anteprima per i lettori, descrizione, analisi SEO), la **versione
 tradotta** e **Avanzate** (pubblicato in origine, codici esterni, versioni
-precedenti). All'inizio è aperto solo Dettagli; un gruppo chiuso dice in
-una riga cosa contiene, e il browser ricorda quali hai lasciato aperti.
+precedenti). Un gruppo chiuso dice in una riga cosa contiene, e il browser
+ricorda quali hai lasciato aperti. Si chiude con **Chiudi** o con Esc.
 
 - **Titolo.**
 - **Indirizzo (slug):** la parte finale dell'indirizzo della pagina, come

@@ -111,20 +111,15 @@ All notable changes to PyBlog are documented in this file.
   homepage opens with the latest three labs, each with its link to the
   code. "Create the lab of this article", in the editor and in the list of
   articles, opens a new article already set as a lab and tied to that one.
-- **A simpler editor column.** The twenty-odd fields beside the text are
-  gathered into five groups that open and close: Details, Series and kind,
-  Preview and search, the translation, Advanced. Only Details starts open;
-  a closed group says in one line what it holds (the tags, "part 5" of a
-  series, a missing description), and the browser remembers which ones
-  were left open. The buttons that publish and save stay on top.
-- **"Work with me".** A button that closes the menu of every page and an
-  invitation at the end of every article, both leading where the author
-  says: a page of the site, an email address, a profile. Text and label
-  are set in Settings → Pages, in both languages.
-- **"First published on".** An article that came out first on another
-  site carries the address of the original: a line under the title names
-  that site and links to it and, on request, search engines are told that
-  one is the original.
+- **A new editor, built around the theory and its lab.** The page is one
+  column with the title and the text. Tabs above it show the articles on
+  the same subject (Theory, In practice, Lab) with the state of each: a
+  click moves between them, "+ Lab" and "+ In practice" create the missing
+  ones already tied to the theory. Saving and publishing sit in a bar at
+  the top, at the bottom on a phone. A lab has its project (GitHub address,
+  stack, commands) above the title. Everything else is in the Details
+  panel, five groups that open and close and say in one line what they
+  hold; on a phone the panel takes the whole screen.
 - **Copy the link, and sharing from the editor.** Every article ends with
   a button that copies its address. Posting it on LinkedIn, Hacker News,
   Reddit or X is the author's job: on a published article the editor has
