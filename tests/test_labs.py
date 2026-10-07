@@ -263,7 +263,31 @@ def test_editor():
           '<option value="" selected>' in normale
           and '<div id="campi-lab" hidden>' in normale
           and '<div id="campi-riferimento" hidden>' in normale)
+    def gruppo(nome):
+        return pagina.split('id="gruppo-' + nome + '"')[1].split('<details class="gruppo-editor"')[0]
+    check("la colonna e' fatta di cinque gruppi, solo Dettagli aperto",
+          pagina.count('<details class="gruppo-editor"') == 5
+          and '<details class="gruppo-editor" id="gruppo-dettagli" open>' in pagina
+          and pagina.count('<details class="gruppo-editor" id="gruppo-') == 5
+          and pagina.count('class="gruppo-editor" id="gruppo-dettagli" open') == 1
+          and 'id="gruppo-serie" open' not in pagina)
+    check("ogni campo sta nel gruppo che gli compete",
+          'id="slug"' in gruppo("dettagli") and 'id="tags"' in gruppo("dettagli")
+          and 'id="image"' in gruppo("dettagli")
+          and 'id="series"' in gruppo("serie") and 'id="kind"' in gruppo("serie")
+          and 'id="repo_url"' in gruppo("serie")
+          and 'id="description"' in gruppo("anteprima") and 'id="reader_preview"' in gruppo("anteprima")
+          and 'id="translation_authorized"' in gruppo("inglese") and 'id="editor-en"' in gruppo("inglese")
+          and 'id="original_url"' in gruppo("avanzate") and 'id="lista-codice-proprio"' in gruppo("avanzate")
+          and 'id="btn-versioni"' in gruppo("avanzate"))
+    check("i pulsanti per pubblicare restano fuori dai gruppi",
+          pagina.index('id="pannello-pubblica"') < pagina.index('<details class="gruppo-editor"')
+          and 'id="btn-pubblica"' not in "".join(gruppo(n) for n in
+                                                  ("dettagli", "serie", "anteprima", "inglese", "avanzate")))
     script = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
+    check("un gruppo chiuso dice cosa contiene",
+          'id="riepilogo-serie"' in pagina and "function updateGroupSummaries()" in script
+          and "rememberOpenGroups();" in script)
     check("il salvataggio manda i campi del lab",
           "kind: document.getElementById('kind').value" in script
           and "repo_url: document.getElementById('repo_url').value" in script)

@@ -204,6 +204,22 @@ html:has(body.pagina-config) { scroll-padding-bottom:7rem; }
 .editor-sidebar h2:first-child { margin-top:0; }
 /* Card for the important sidebar fields (preview, SEO): a white box
    that sets them apart visually from the rest of the metadata. */
+/* The groups of the editor's column: closed, a title and what they hold. */
+.gruppo-editor { background:#fff; border:1px solid #e4e4e7; border-radius:8px; margin:0.35rem 0; }
+.gruppo-editor > summary { cursor:pointer; list-style:none; padding:0.7rem 2.2rem 0.7rem 0.9rem;
+  min-height:44px; display:flex; flex-direction:column; justify-content:center; position:relative; }
+.gruppo-editor > summary::-webkit-details-marker { display:none; }
+.gruppo-editor > summary::after { content:"+"; position:absolute; right:0.9rem; top:50%;
+  transform:translateY(-50%); font-size:1.2rem; color:#52525b; }
+.gruppo-editor[open] > summary::after { content:"\2212"; }
+.gruppo-editor > summary:focus-visible { outline:3px solid #0066cc; outline-offset:2px; border-radius:8px; }
+.gruppo-titolo { font-weight:700; }
+.gruppo-riepilogo { color:#52525b; font-size:0.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gruppo-riepilogo:empty { display:none; }
+.gruppo-riepilogo.da-fare { color:#8a5a00; }
+.gruppo-editor[open] > summary .gruppo-riepilogo { display:none; }
+.gruppo-corpo { padding:0 0.9rem 0.9rem; display:flex; flex-direction:column; gap:0.3rem; }
+.gruppo-corpo .translation-section { margin-top:0; padding-top:0; border-top:0; }
 .card-campo { background:#fff; border:1px solid #e4e4e7; border-radius:8px; padding:0.9rem; margin:0.8rem 0; }
 .card-campo h2 { margin-top:0 !important; }
 /* Publishing, at the top of the sidebar: the state of the article first,

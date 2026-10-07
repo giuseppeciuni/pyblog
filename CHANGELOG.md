@@ -107,6 +107,12 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **A simpler editor column.** The twenty-odd fields beside the text are
+  gathered into five groups that open and close: Details, Series and kind,
+  Preview and search, the translation, Advanced. Only Details starts open;
+  a closed group says in one line what it holds (the tags, "part 5" of a
+  series, a missing description), and the browser remembers which ones
+  were left open. The buttons that publish and save stay on top.
 - **"Work with me".** A button that closes the menu of every page and an
   invitation at the end of every article, both leading where the author
   says: a page of the site, an email address, a profile. Text and label

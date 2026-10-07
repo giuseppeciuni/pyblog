@@ -155,6 +155,10 @@ JS_TRANSLATION_KEYS = (
     "seo_secondary_keywords", "seo_title_variants", "seo_anchor_texts",
     "seo_suggested_tags", "seo_meta_review", "seo_internal_links", "seo_faq",
     "seo_ai_tips", "seo_apply_tags",
+    # The one-line summaries of the editor's groups
+    "js_riep_senza_tag", "js_riep_copertina", "js_riep_parte", "js_riep_manca_descrizione",
+    "js_riep_descrizione_ok", "js_riep_non_tradotto", "js_riep_bozza_traduzione",
+    "js_riep_traduzione_ok",
     # Translation
     "js_translating", "js_translated_review", "js_check_api_key",
     "js_net_error_translation", "js_write_intro_first", "js_translated_home",
@@ -858,6 +862,10 @@ def editor_page(art, csrf):
         label_ritira=T("admin_ritira", la),
         bottone_elimina=delete_button,
         label_sezione_metadati=T("admin_sezione_metadati", la),
+        label_gruppo_serie=T("admin_gruppo_serie", la),
+        label_gruppo_anteprima=T("admin_gruppo_anteprima", la),
+        label_gruppo_avanzate=T("admin_gruppo_avanzate", la),
+        riepilogo_avanzate=T("admin_gruppo_avanzate_riepilogo", la),
         valore_slug=esc(art.get("slug", "")),
         label_tag=T("admin_tag", la),
         valore_tag=esc(art.get("tags", "")),

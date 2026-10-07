@@ -354,6 +354,14 @@ publishing panel.
 
 ### 4.1 The fields
 
+Beside the text, under the buttons that publish, the fields are gathered
+into five groups that open and close with a click: **Details** (address,
+tags, cover), **Series and kind**, **Preview and search** (reader preview,
+description, SEO analysis), the **translated version** and **Advanced**
+(first published on, external code, earlier versions). Only Details starts
+open; a closed group says in one line what it holds, and the browser
+remembers which ones you left open.
+
 - **Title.**
 - **Address (slug):** the last part of the page's address, as in
   `/posts/how-it-works.html`. Left empty, it comes from the title. If

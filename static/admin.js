@@ -1943,6 +1943,7 @@ function initEditorPage() {
   startAutosave();
   installUnsavedChangesGuard();
   installSaveShortcut();
+  rememberOpenGroups();
 }
 
 // Every field of the form marks the article as changed when it is touched.
@@ -1963,6 +1964,7 @@ function watchEditorFields() {
 // nothing saves it on its own, and the author should not have to guess.
 function markEditorDirty() {
   editorDirty = true;
+  updateGroupSummaries();
   var riga = document.getElementById('autosave-status');
   if (riga && !riga.classList.contains('pb-autosave-error')) {
     riga.textContent = t('js_modifiche_da_salvare');
@@ -4491,6 +4493,70 @@ function removeSubscriber(pulsante) {
 }
 
 // In the editor: whether the subscribers hear about this article.
+// A closed group of the column says what it holds: the tags, the series
+// and the part, whether the description is there, how far the translation
+// is. The texts are rebuilt whenever a field of the column changes.
+function updateGroupSummaries() {
+  function scrivi(id, testo, daFare) {
+    var riga = document.getElementById('riepilogo-' + id);
+    if (!riga) { return; }
+    riga.textContent = testo;
+    riga.classList.toggle('da-fare', daFare === true);
+  }
+  function valore(id) {
+    var campo = document.getElementById(id);
+    return campo ? campo.value.trim() : '';
+  }
+  var dettagli = valore('tags') || t('js_riep_senza_tag');
+  if (valore('image') !== '') { dettagli = dettagli + ' \u00b7 ' + t('js_riep_copertina'); }
+  scrivi('dettagli', dettagli);
+
+  var tipo = document.getElementById('kind');
+  var serie = valore('series');
+  if (serie !== '' && valore('series_number') !== '') {
+    serie = serie + ', ' + t('js_riep_parte') + ' ' + valore('series_number');
+  }
+  var nomeTipo = tipo ? tipo.options[tipo.selectedIndex].text : '';
+  scrivi('serie', serie === '' ? nomeTipo : serie + ' \u00b7 ' + nomeTipo);
+
+  if (valore('description') === '') {
+    scrivi('anteprima', t('js_riep_manca_descrizione'), true);
+  } else {
+    scrivi('anteprima', t('js_riep_descrizione_ok'));
+  }
+
+  var confermata = document.getElementById('translation_confirmed');
+  var autorizzata = document.getElementById('translation_authorized');
+  if (confermata && confermata.checked) {
+    scrivi('inglese', t('js_riep_traduzione_ok'));
+  } else if (autorizzata && autorizzata.checked) {
+    scrivi('inglese', t('js_riep_bozza_traduzione'), true);
+  } else {
+    scrivi('inglese', t('js_riep_non_tradotto'));
+  }
+}
+
+// Which groups are open is remembered in this browser, so the column comes
+// back the way the author left it.
+function rememberOpenGroups() {
+  var gruppi = document.querySelectorAll('.gruppo-editor');
+  for (var i = 0; i < gruppi.length; i++) {
+    var salvato = null;
+    try { salvato = localStorage.getItem('pb-' + gruppi[i].id); } catch (errore) { salvato = null; }
+    if (salvato === '1') { gruppi[i].open = true; }
+    if (salvato === '0') { gruppi[i].open = false; }
+    gruppi[i].addEventListener('toggle', function() {
+      try { localStorage.setItem('pb-' + this.id, this.open ? '1' : '0'); } catch (errore) { /* private window */ }
+    });
+  }
+  var colonna = document.querySelector('.editor-sidebar');
+  if (colonna) {
+    colonna.addEventListener('input', updateGroupSummaries);
+    colonna.addEventListener('change', updateGroupSummaries);
+  }
+  updateGroupSummaries();
+}
+
 // The article a lab or a practical version starts from shows for those two
 // kinds only; the project fields for a lab only.
 function toggleKindFields() {

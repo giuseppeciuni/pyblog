@@ -86,13 +86,11 @@ $spunta_avvisa
       </div>
     </div>
 
-    <div class="versioni-riga">
-      <button type="button" class="pulsante pulsante-piccolo" id="btn-versioni" onclick="openVersions()"
-              aria-describedby="versioni-aiuto"$versioni_nascosto>$label_versioni</button>
-      <p class="hint" id="versioni-aiuto"$versioni_nascosto>$hint_versioni</p>
-    </div>
-
-    <h2>$label_sezione_metadati</h2>
+    <!-- The fields of the article, gathered by what they are for. A closed
+         group says what it holds, so the column reads at a glance. -->
+    <details class="gruppo-editor" id="gruppo-dettagli" open>
+      <summary><span class="gruppo-titolo">$label_sezione_metadati</span><span class="gruppo-riepilogo" id="riepilogo-dettagli"></span></summary>
+      <div class="gruppo-corpo">
     <label for="slug">$label_indirizzo</label>
     <input type="text" id="slug" value="$valore_slug" placeholder="auto" aria-describedby="slug-aiuto">
     <p class="hint" id="slug-aiuto">$hint_indirizzo</p>
@@ -100,6 +98,29 @@ $spunta_avvisa
     <label for="tags">$label_tag</label>
     <input type="text" id="tags" value="$valore_tag" placeholder="AI, Python">
 
+    <label for="image">$label_immagine</label>
+    <p class="hint" style="margin:0 0 0.3rem" id="image-aiuto">$hint_immagine</p>
+    <div class="campo-copertina">
+      <input type="text" id="image" value="$valore_immagine"
+             placeholder="$ph_immagine" aria-describedby="image-aiuto" oninput="updateCoverPreview()">
+      <div class="copertina-azioni">
+        <button type="button" class="pulsante pulsante-piccolo"
+                onclick="document.getElementById('file-cover').click()">$label_carica_copertina</button>
+        <button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo" id="btn-rimuovi-cover" hidden
+                onclick="removeCoverImage()">$label_rimuovi_copertina</button>
+        <span id="cover-status" class="hint"></span>
+      </div>
+      <input type="file" id="file-cover" style="display:none" aria-label="$label_carica_copertina" onchange="uploadCoverImage()"
+             accept="image/png, image/jpeg, image/gif, image/webp, .png, .jpg, .jpeg, .gif, .webp">
+      <img id="cover-preview" class="copertina-anteprima" alt="" hidden>
+    </div>
+
+      </div>
+    </details>
+
+    <details class="gruppo-editor" id="gruppo-serie">
+      <summary><span class="gruppo-titolo">$label_gruppo_serie</span><span class="gruppo-riepilogo" id="riepilogo-serie"></span></summary>
+      <div class="gruppo-corpo">
     <label for="series">$label_serie</label>
     <div class="riga-serie">
       <input type="text" id="series" value="$valore_serie" list="serie-esistenti" aria-describedby="serie-aiuto">
@@ -108,17 +129,6 @@ $spunta_avvisa
     </div>
     <datalist id="serie-esistenti">$serie_esistenti</datalist>
     <p class="hint" id="serie-aiuto">$hint_serie</p>
-
-    <label for="original_url">$label_originale</label>
-    <input type="url" id="original_url" value="$valore_originale" placeholder="https://..."
-           aria-describedby="originale-aiuto">
-    <p class="hint" id="originale-aiuto">$hint_originale</p>
-    <div class="campo-spunta">
-      <input type="checkbox" id="original_canonical" $originale_canonico_checked
-             aria-describedby="originale-canonico-aiuto">
-      <div><label for="original_canonical">$label_originale_canonico</label>
-        <p class="hint" id="originale-canonico-aiuto">$hint_originale_canonico</p></div>
-    </div>
 
     <label for="kind">$label_tipo</label>
     <select id="kind" class="campo-input" aria-describedby="tipo-aiuto" onchange="toggleKindFields()">
@@ -141,23 +151,12 @@ $spunta_avvisa
                 placeholder="git clone https://github.com/...&#10;cd progetto&#10;python3 main.py">$valore_comandi</textarea>
     </div>
 
-    <label for="image">$label_immagine</label>
-    <p class="hint" style="margin:0 0 0.3rem" id="image-aiuto">$hint_immagine</p>
-    <div class="campo-copertina">
-      <input type="text" id="image" value="$valore_immagine"
-             placeholder="$ph_immagine" aria-describedby="image-aiuto" oninput="updateCoverPreview()">
-      <div class="copertina-azioni">
-        <button type="button" class="pulsante pulsante-piccolo"
-                onclick="document.getElementById('file-cover').click()">$label_carica_copertina</button>
-        <button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo" id="btn-rimuovi-cover" hidden
-                onclick="removeCoverImage()">$label_rimuovi_copertina</button>
-        <span id="cover-status" class="hint"></span>
       </div>
-      <input type="file" id="file-cover" style="display:none" aria-label="$label_carica_copertina" onchange="uploadCoverImage()"
-             accept="image/png, image/jpeg, image/gif, image/webp, .png, .jpg, .jpeg, .gif, .webp">
-      <img id="cover-preview" class="copertina-anteprima" alt="" hidden>
-    </div>
+    </details>
 
+    <details class="gruppo-editor" id="gruppo-anteprima">
+      <summary><span class="gruppo-titolo">$label_gruppo_anteprima</span><span class="gruppo-riepilogo" id="riepilogo-anteprima"></span></summary>
+      <div class="gruppo-corpo">
     <div class="card-campo">
       <h2><label for="reader_preview">$label_anteprima_lettori</label></h2>
       <p class="hint" style="margin:0 0 0.3rem" id="reader_preview-aiuto">$hint_anteprima</p>
@@ -188,25 +187,13 @@ $spunta_avvisa
       <div id="seo-results" style="display:none"></div>
     </div>
 
-    <div class="card-campo">
-      <h2>$label_codice_titolo</h2>
-      <p class="hint" style="margin:0 0 0.3rem">$hint_codice</p>
-      <div id="lista-codice-articolo">$codice_articolo_html</div>
-
-      <h3 class="codice-proprio-titolo">$label_codice_proprio</h3>
-      <p class="hint" style="margin:0 0 0.3rem">$hint_codice_proprio</p>
-      <div id="lista-codice-proprio" class="lista-codice">
-$codice_proprio_html
       </div>
-      <button type="button" class="pulsante pulsante-piccolo" onclick="addOwnCode()">$label_codice_proprio_aggiungi</button>
-      <!-- The blank card of the button: inert until cloned, see the Settings. -->
-      <template id="codice-proprio-modello">
-$codice_proprio_modello
-      </template>
-    </div>
+    </details>
 
+    <details class="gruppo-editor" id="gruppo-inglese">
+      <summary><span class="gruppo-titolo">$label_versione_inglese</span><span class="gruppo-riepilogo" id="riepilogo-inglese"></span></summary>
+      <div class="gruppo-corpo">
     <div class="translation-section">
-      <h2>$label_versione_inglese</h2>
       <label class="riga-flag">
         <input type="checkbox" id="translation_authorized" onchange="updateTranslationSection()">
         $label_autorizza
@@ -241,6 +228,49 @@ $codice_proprio_modello
         </label>
       </div>
     </div>
+
+      </div>
+    </details>
+
+    <details class="gruppo-editor" id="gruppo-avanzate">
+      <summary><span class="gruppo-titolo">$label_gruppo_avanzate</span><span class="gruppo-riepilogo" id="riepilogo-avanzate">$riepilogo_avanzate</span></summary>
+      <div class="gruppo-corpo">
+    <label for="original_url">$label_originale</label>
+    <input type="url" id="original_url" value="$valore_originale" placeholder="https://..."
+           aria-describedby="originale-aiuto">
+    <p class="hint" id="originale-aiuto">$hint_originale</p>
+    <div class="campo-spunta">
+      <input type="checkbox" id="original_canonical" $originale_canonico_checked
+             aria-describedby="originale-canonico-aiuto">
+      <div><label for="original_canonical">$label_originale_canonico</label>
+        <p class="hint" id="originale-canonico-aiuto">$hint_originale_canonico</p></div>
+    </div>
+
+    <div class="card-campo">
+      <h2>$label_codice_titolo</h2>
+      <p class="hint" style="margin:0 0 0.3rem">$hint_codice</p>
+      <div id="lista-codice-articolo">$codice_articolo_html</div>
+
+      <h3 class="codice-proprio-titolo">$label_codice_proprio</h3>
+      <p class="hint" style="margin:0 0 0.3rem">$hint_codice_proprio</p>
+      <div id="lista-codice-proprio" class="lista-codice">
+$codice_proprio_html
+      </div>
+      <button type="button" class="pulsante pulsante-piccolo" onclick="addOwnCode()">$label_codice_proprio_aggiungi</button>
+      <!-- The blank card of the button: inert until cloned, see the Settings. -->
+      <template id="codice-proprio-modello">
+$codice_proprio_modello
+      </template>
+    </div>
+
+    <div class="versioni-riga">
+      <button type="button" class="pulsante pulsante-piccolo" id="btn-versioni" onclick="openVersions()"
+              aria-describedby="versioni-aiuto"$versioni_nascosto>$label_versioni</button>
+      <p class="hint" id="versioni-aiuto"$versioni_nascosto>$hint_versioni</p>
+    </div>
+
+      </div>
+    </details>
 
     $bottone_elimina
   </aside>

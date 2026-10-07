@@ -350,6 +350,14 @@ il posto al pannello di pubblicazione.
 
 ### 4.1 I campi
 
+Accanto al testo, sotto i pulsanti per pubblicare, i campi sono raccolti in
+cinque gruppi che si aprono e si chiudono con un clic: **Dettagli**
+(indirizzo, tag, copertina), **Serie e tipo**, **Anteprima e ricerca**
+(anteprima per i lettori, descrizione, analisi SEO), la **versione
+tradotta** e **Avanzate** (pubblicato in origine, codici esterni, versioni
+precedenti). All'inizio è aperto solo Dettagli; un gruppo chiuso dice in
+una riga cosa contiene, e il browser ricorda quali hai lasciato aperti.
+
 - **Titolo.**
 - **Indirizzo (slug):** la parte finale dell'indirizzo della pagina, come
   in `/posts/come-funziona.html`. Vuoto, nasce dal titolo. Se un altro
