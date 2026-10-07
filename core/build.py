@@ -148,6 +148,30 @@ def media_url(url):
     return "/" + url.lstrip("./")
 
 
+def shared_url(url):
+    """
+    The address of a picture for whoever reads it away from the site: a
+    social network building a preview, a search engine. "/media/foto.png"
+    means nothing there, so an address of ours gets the site in front.
+    """
+    url = media_url(url)
+    if url.startswith("/") and not url.startswith("//"):
+        return CONFIG["base_url"].rstrip("/") + url
+    return url
+
+
+def with_site_title(page_title):
+    """
+    The <title> of a page: its own title, a dot and the name of the site.
+    A site that has no name yet gets the page title alone, not a title
+    that ends with a dot.
+    """
+    site_title = esc(CONFIG.get("site_title", "").strip())
+    if site_title == "":
+        return page_title
+    return f"{page_title} &middot; {site_title}"
+
+
 def absolute_image_sources(html_content_value):
     """Apply media_url to the src of every image of a piece of content."""
     def fix(match):
@@ -743,11 +767,12 @@ def social_meta(language="it"):
     else:
         locale = "it_IT"
     lines = []
-    lines.append(f'<meta property="og:site_name" content="{esc(CONFIG["site_title"])}">')
-    lines.append(f'  <meta property="og:locale" content="{locale}">')
+    if CONFIG["site_title"].strip() != "":
+        lines.append(f'<meta property="og:site_name" content="{esc(CONFIG["site_title"])}">')
+    lines.append(f'<meta property="og:locale" content="{locale}">')
     if seo.get("twitter_site"):
-        lines.append(f'  <meta name="twitter:site" content="{esc(seo["twitter_site"])}">')
-    return "\n".join(lines)
+        lines.append(f'<meta name="twitter:site" content="{esc(seo["twitter_site"])}">')
+    return "\n  ".join(lines)
 
 
 def hreflang_links(path_it, path_en):
@@ -791,6 +816,11 @@ def site_header(language="it", nav_extra="", is_home=False):
     other_language = secondary_language()
     if language != main_language():
         other_language = main_language()
+
+    # The page that says who writes is one click away from every page.
+    if biography_published():
+        nav_extra = (f'<a href="{biography_page_url(language)}">{T("chi_sono", language)}</a>'
+                     + ("\n      " + nav_extra.strip() if nav_extra.strip() else ""))
 
     link_titolo = f'<a href="{prefix}/">{esc(CONFIG["site_title"])}</a>'
     if is_home:
@@ -1813,7 +1843,7 @@ def generate_article_page(art, language="it", all_articles=None):
 
     og_image = ""
     if art.get("image"):
-        og_image = (f'  <meta property="og:image" content="{esc(media_url(art["image"]))}">\n'
+        og_image = (f'  <meta property="og:image" content="{esc(shared_url(art["image"]))}">\n'
                     '  <meta name="twitter:card" content="summary_large_image">')
 
     # Meta keywords from the article tags (a light SEO help).
@@ -1878,7 +1908,7 @@ def generate_article_page(art, language="it", all_articles=None):
         "publisher": publisher,
     }
     if art.get("image"):
-        jsonld_data["image"] = media_url(art["image"])
+        jsonld_data["image"] = shared_url(art["image"])
     if art.get("tags"):
         # The tags become the article's keywords.
         keywords = []
@@ -1942,7 +1972,7 @@ def generate_article_page(art, language="it", all_articles=None):
 
     return render_page(
         language,
-        f"{esc(title_value)} &middot; {esc(CONFIG['site_title'])}",
+        with_site_title(f"{esc(title_value)}"),
         contenuto,
         meta_extra=meta_extra,
         head_extra=head_extra,
@@ -2243,7 +2273,7 @@ def newsletter_message_page(language, title, text, action=""):
     contenuto = ('  <main id="content" class="main-content">\n' + principale
                  + '  </main>\n')
     meta_extra = '  <meta name="robots" content="noindex">'
-    return render_page(language, f"{esc(title)} &middot; {esc(CONFIG['site_title'])}",
+    return render_page(language, with_site_title(f"{esc(title)}"),
                        contenuto, meta_extra=meta_extra)
 
 
@@ -2275,7 +2305,7 @@ def generate_biography_page(language="it", articles=None):
     ])
     return render_page(
         language,
-        f"{esc(title_value)} &middot; {esc(CONFIG['site_title'])}",
+        with_site_title(f"{esc(title_value)}"),
         contenuto,
         meta_extra=meta_extra,
     )
@@ -2331,7 +2361,7 @@ def generate_card_page(card, language="it", articles=None):
 
     return render_page(
         language,
-        f"{esc(title_value)} &middot; {esc(CONFIG['site_title'])}",
+        with_site_title(f"{esc(title_value)}"),
         contenuto,
         meta_extra=meta_extra,
     )
@@ -2507,7 +2537,8 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
 
     return render_page(
         language,
-        f"{esc(CONFIG['site_title'])} &middot; {esc(CONFIG['subtitle'])}",
+        " &middot; ".join(esc(part) for part in (CONFIG["site_title"].strip(),
+                                                    CONFIG["subtitle"].strip()) if part != ""),
         contenuto,
         meta_extra=meta_extra,
         head_extra=head_extra,
@@ -2600,7 +2631,7 @@ def generate_archive_page(articles, language="it"):
 
     return render_page(
         language,
-        f"{T('archivio_titolo', language)} &middot; {esc(CONFIG['site_title'])}",
+        with_site_title(f"{T('archivio_titolo', language)}"),
         contenuto,
         meta_extra=meta_extra,
     )
@@ -2641,7 +2672,7 @@ def generate_tag_page(tag_name, tag_articles, language="it", all_articles=None):
 
     return render_page(
         language,
-        f"{T('articoli_con_tag', language)} {esc(tag_name)} &middot; {esc(CONFIG['site_title'])}",
+        with_site_title(f"{T('articoli_con_tag', language)} {esc(tag_name)}"),
         contenuto,
         meta_extra=meta_extra,
     )
@@ -2688,7 +2719,7 @@ def generate_404_page(articles=None):
     )
     return render_page(
         language,
-        f"{T('pagina_non_trovata', language)} &middot; {esc(CONFIG['site_title'])}",
+        with_site_title(f"{T('pagina_non_trovata', language)}"),
         contenuto,
     )
 
@@ -3109,7 +3140,7 @@ def generate_training_rights_page(language="it"):
 
     return render_page(
         language,
-        f"{T('training_titolo', language)} &middot; {esc(CONFIG['site_title'])}",
+        with_site_title(f"{T('training_titolo', language)}"),
         contenuto,
         meta_extra=meta_extra,
     )

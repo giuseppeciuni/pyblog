@@ -6,6 +6,15 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **Social previews show the cover image.** The address of the cover was
+  written in the page as `/media/...`, which means nothing to the network
+  building the preview: it now carries the site's address in front, in the
+  data for search engines too.
+- **A site with no name has clean page titles.** With the name left empty
+  the browser tab read " · subtitle" on the homepage and "Article · " on
+  the others, and the previews carried an empty site name.
+- **"About me" is in the menu.** Once the biography is online its page is
+  one click away from every page, not only from the box on the homepage.
 - **Word import: lines, pictures and captions come out as they were.**
   Three things went wrong in an imported document. A line break inside a
   paragraph (Shift+Enter) was written as a `<br>`, which the editor

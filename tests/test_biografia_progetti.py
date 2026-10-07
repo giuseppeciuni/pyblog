@@ -158,6 +158,45 @@ def test_pagina_biografia():
           "/pagine/biografia.html" not in build.generate_sitemap(ARTICOLI))
 
 
+def test_menu_titoli_anteprime():
+    print("\nmenu, titoli e anteprime social")
+    imposta()
+    CONFIG["base_url"] = "https://esempio.it"
+    CONFIG["site_title"] = "Il mio sito"
+    home = build.generate_homepage(ARTICOLI, "it")
+    check("con la biografia online il menu ha Chi sono",
+          '<a href="/pagine/biografia.html">Chi sono</a>' in home.split("</nav>")[0])
+    check("in inglese porta alla pagina inglese",
+          '<a href="/en/pagine/biografia.html">About me</a>'
+          in build.generate_homepage(ARTICOLI, "en").split("</nav>")[0])
+    CONFIG["biography"]["enabled"] = False
+    check("spenta, il menu non la elenca",
+          "Chi sono" not in build.generate_homepage(ARTICOLI, "it").split("</nav>")[0])
+
+    articolo_copertina = dict(articolo(1), image="media/copertina.png")
+    pagina = build.generate_article_page(articolo_copertina, "it", ARTICOLI)
+    check("l'immagine dell'anteprima social ha l'indirizzo completo",
+          '<meta property="og:image" content="https://esempio.it/media/copertina.png">' in pagina,
+          pagina.split("og:image")[1][:120])
+    check("anche nei dati per i motori di ricerca",
+          '"image": "https://esempio.it/media/copertina.png"' in pagina)
+    esterna = dict(articolo(1), image="https://altrove.org/foto.png")
+    check("un indirizzo gia' completo resta com'e'",
+          'og:image" content="https://altrove.org/foto.png"'
+          in build.generate_article_page(esterna, "it", ARTICOLI))
+    check("il titolo della pagina finisce con il nome del sito",
+          "<title>Articolo 1 &middot; Il mio sito</title>" in pagina)
+
+    CONFIG["site_title"] = ""
+    CONFIG["subtitle"] = "Note tecniche"
+    pagina = build.generate_article_page(articolo_copertina, "it", ARTICOLI)
+    check("senza nome del sito il titolo non finisce con un punto",
+          "<title>Articolo 1</title>" in pagina, pagina.split("<title>")[1][:60])
+    check("e non c'e' un nome vuoto per le anteprime", "og:site_name" not in pagina)
+    check("la home usa il solo sottotitolo",
+          "<title>Note tecniche</title>" in build.generate_homepage(ARTICOLI, "it"))
+
+
 def test_card_omonima():
     print("\ncard con lo stesso nome")
     imposta()
@@ -192,6 +231,7 @@ def main():
         test_posizioni()
         test_progetti()
         test_pagina_biografia()
+        test_menu_titoli_anteprime()
         test_card_omonima()
     finally:
         CONFIG.clear()
