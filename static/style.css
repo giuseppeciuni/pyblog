@@ -317,6 +317,17 @@ header.site { border-bottom:1px solid var(--bordo); }
 .serie-box ol { margin:0.6rem 0 0; padding-left:1.4rem; }
 .serie-box li { margin:0.25rem 0; }
 .serie-box li[aria-current] { font-weight:600; }
+/* A lab: where its code is, what it is built with, the article behind it. */
+.lab-box {
+  border:1px solid var(--bordo); border-left:3px solid var(--link); border-radius:10px;
+  background:var(--card-bg); padding:0.8rem 1rem; margin:0 0 1.6rem; font-size:0.92rem;
+}
+.lab-box p { margin:0.2rem 0; }
+.lab-etichetta { color:var(--secondario); text-transform:uppercase; letter-spacing:0.04em;
+  font-size:0.78rem; font-weight:600; }
+.lab-codice { font-weight:600; }
+.lab-fine { margin:2rem 0 0; }
+.lab-fine ul { margin:0.3rem 0 0; padding-left:1.2rem; }
 .serie-elenco { list-style:none; padding:0; margin:0; counter-reset:parte; }
 .serie-elenco > li { counter-increment:parte; position:relative; padding-left:2.4rem; }
 .serie-elenco > li::before {

@@ -259,6 +259,12 @@ def article_from_data(data, slug):
         # The series the article is a part of, and its place in it.
         "series": str(data.get("series", "") or "").strip(),
         "series_number": series_number(data.get("series_number")),
+        # A lab is the article that puts another one into practice: its
+        # code, where the code lives and what it is written with.
+        "kind": "lab" if data.get("kind") == "lab" else "",
+        "lab_of": str(data.get("lab_of", "") or "").strip(),
+        "repo_url": str(data.get("repo_url", "") or "").strip(),
+        "stack": str(data.get("stack", "") or "").strip(),
         "image": data.get("image", "").strip(),
         "status": status,
         "publish_at": publish_at,

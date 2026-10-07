@@ -109,6 +109,21 @@ $spunta_avvisa
     <datalist id="serie-esistenti">$serie_esistenti</datalist>
     <p class="hint" id="serie-aiuto">$hint_serie</p>
 
+    <div class="campo-spunta">
+      <input type="checkbox" id="kind_lab" $lab_checked aria-describedby="lab-aiuto"
+             onchange="toggleLabFields()">
+      <div><label for="kind_lab">$label_lab</label>
+        <p class="hint" id="lab-aiuto">$hint_lab</p></div>
+    </div>
+    <div id="campi-lab" $lab_hidden>
+      <label for="lab_of">$label_lab_di</label>
+      <select id="lab_of" class="campo-input">$opzioni_lab_di</select>
+      <label for="repo_url">$label_lab_repo</label>
+      <input type="url" id="repo_url" value="$valore_repo" placeholder="https://github.com/...">
+      <label for="stack">$label_lab_stack</label>
+      <input type="text" id="stack" value="$valore_stack" placeholder="Python 3.12, LiteLLM">
+    </div>
+
     <label for="image">$label_immagine</label>
     <p class="hint" style="margin:0 0 0.3rem" id="image-aiuto">$hint_immagine</p>
     <div class="campo-copertina">

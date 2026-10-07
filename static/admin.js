@@ -1947,7 +1947,8 @@ function initEditorPage() {
 
 // Every field of the form marks the article as changed when it is touched.
 function watchEditorFields() {
-  var campi = ['title', 'slug', 'tags', 'series', 'series_number', 'image', 'description',
+  var campi = ['title', 'slug', 'tags', 'series', 'series_number', 'kind_lab', 'lab_of',
+               'repo_url', 'stack', 'image', 'description',
                'reader_preview', 'title_en', 'description_en', 'preview_en',
                'translation_authorized', 'translation_confirmed'];
   for (var i = 0; i < campi.length; i++) {
@@ -2478,6 +2479,10 @@ function articleData(stato) {
     tags: document.getElementById('tags').value,
     series: document.getElementById('series').value,
     series_number: document.getElementById('series_number').value,
+    kind: document.getElementById('kind_lab').checked ? 'lab' : '',
+    lab_of: document.getElementById('lab_of').value,
+    repo_url: document.getElementById('repo_url').value,
+    stack: document.getElementById('stack').value,
     image: document.getElementById('image').value,
     status: stato || statoArticolo,
     // The moment a scheduled article goes out, in UTC; ignored otherwise.
@@ -4385,7 +4390,8 @@ function restoreVersion() {
   var applica = function() {
     var v = versioneMostrata;
     var campi = { title: 'title', description: 'description', preview: 'reader_preview', tags: 'tags',
-                  series: 'series', series_number: 'series_number',
+                  series: 'series', series_number: 'series_number', lab_of: 'lab_of',
+                  repo_url: 'repo_url', stack: 'stack',
                   image: 'image', title_en: 'title_en', description_en: 'description_en', preview_en: 'preview_en' };
     for (var chiave in campi) {
       var campo = document.getElementById(campi[chiave]);
@@ -4395,6 +4401,8 @@ function restoreVersion() {
     quillEn.root.innerHTML = v.content_en || '';
     document.getElementById('translation_authorized').checked = v.translation_authorized === true;
     document.getElementById('translation_confirmed').checked = v.translation_confirmed === true;
+    document.getElementById('kind_lab').checked = v.kind === 'lab';
+    toggleLabFields();
     updateTranslationSection();
     updateCoverPreview();
     updateDescriptionCounter();
@@ -4472,6 +4480,11 @@ function removeSubscriber(pulsante) {
 }
 
 // In the editor: whether the subscribers hear about this article.
+// The fields of a lab show only on an article ticked as one.
+function toggleLabFields() {
+  document.getElementById('campi-lab').hidden = !document.getElementById('kind_lab').checked;
+}
+
 function notifySubscribers() {
   var spunta = document.getElementById('notify_subscribers');
   return spunta ? spunta.checked : true;

@@ -759,6 +759,23 @@ def codemirror_scripts():
     return "\n".join(f'<script src="{url}"></script>' for url in CODEMIRROR_JS)
 
 
+def lab_of_options(art, la):
+    """
+    The articles a lab can refer to, as the options of a select: every
+    article but the labs and the article itself, newest first.
+    """
+    chosen = art.get("lab_of", "")
+    options = [f'<option value="">{esc(T("admin_lab_nessuno", la))}</option>']
+    for other in load_articles():
+        slug = other.get("slug", "")
+        if other.get("kind") == "lab" or slug == "" or slug == art.get("slug"):
+            continue
+        selected = " selected" if slug == chosen else ""
+        options.append(f'<option value="{esc(slug)}"{selected}>'
+                       f'{esc(other.get("title", slug))}</option>')
+    return "".join(options)
+
+
 def editor_page(art, csrf):
     """The page with the WYSIWYG editor (it uses Quill, loaded from a CDN)."""
     la = admin_language()
@@ -851,6 +868,16 @@ def editor_page(art, csrf):
         hint_serie=help_text(T("admin_serie_hint", la)),
         serie_esistenti="".join(f'<option value="{esc(entry["name"])}">'
                                 for entry in collect_series(load_articles()).values()),
+        label_lab=T("admin_lab", la),
+        hint_lab=help_text(T("admin_lab_hint", la)),
+        lab_checked="checked" if art.get("kind") == "lab" else "",
+        lab_hidden="" if art.get("kind") == "lab" else "hidden",
+        label_lab_di=T("admin_lab_di", la),
+        opzioni_lab_di=lab_of_options(art, la),
+        label_lab_repo=T("admin_lab_repo", la),
+        valore_repo=esc(art.get("repo_url", "")),
+        label_lab_stack=T("admin_lab_stack", la),
+        valore_stack=esc(art.get("stack", "")),
         label_immagine=T("admin_immagine_copertina", la),
         hint_immagine=help_text(T("admin_immagine_copertina_hint", la)),
         valore_immagine=esc(art.get("image", "")),

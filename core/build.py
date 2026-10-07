@@ -817,6 +817,10 @@ def site_header(language="it", nav_extra="", is_home=False):
     if language != main_language():
         other_language = main_language()
 
+    # The labs are what a developer comes for: they have their place in the menu.
+    if labs_online(language):
+        nav_extra = (f'<a href="{labs_page_url(language)}">{T("labs", language)}</a>'
+                     + ("\n      " + nav_extra.strip() if nav_extra.strip() else ""))
     # The page that says who writes is one click away from every page.
     if biography_published():
         nav_extra = (f'<a href="{biography_page_url(language)}">{T("chi_sono", language)}</a>'
@@ -1327,6 +1331,115 @@ def generate_author_box(language="it"):
     )
 
 
+def is_lab(art):
+    """Tell whether an article is a lab."""
+    return art.get("kind") == "lab"
+
+
+def labs_page_url(language):
+    """The address of the page that lists the labs."""
+    return language_url_prefix(language) + "/labs.html"
+
+
+# Whether the site has labs online, per language: the menu of every page
+# needs to know, and build() says so once instead of each page asking the disk.
+LABS_ONLINE = {}
+
+
+def note_labs(articles):
+    """Record, for the menu, in which languages at least one lab is online."""
+    for language in (main_language(), secondary_language()):
+        LABS_ONLINE[language] = any(
+            is_lab(art) for art in articles_visible_in_language(articles, language))
+
+
+def labs_online(language):
+    """Tell whether the Labs page exists in a language."""
+    if language not in LABS_ONLINE:
+        note_labs([a for a in load_articles() if a.get("status") == "published"])
+    return LABS_ONLINE.get(language, False)
+
+
+def repository_link(art, language):
+    """The link to the code of a lab, or "" when it has none worth a link."""
+    link = safe_link(art.get("repo_url", ""))
+    if not link.lower().startswith(("http://", "https://")):
+        return ""
+    label = T("lab_codice", language)
+    if "github.com" in link.lower():
+        label = T("lab_codice_github", language)
+    return f'<a class="lab-codice" href="{esc(link)}" rel="noopener">{label} &rarr;</a>'
+
+
+def lab_box(art, all_articles, language="it"):
+    """
+    The box that opens a lab: where the code is, what it is built with and
+    the article it puts into practice. A developer decides in the first
+    seconds whether there is something to run: the link comes first.
+    """
+    if not is_lab(art):
+        return ""
+    rows = [f'          <p class="lab-etichetta">{T("lab", language)}</p>']
+    link = repository_link(art, language)
+    if link != "":
+        rows.append("          <p>" + link + "</p>")
+    stack = str(art.get("stack", "") or "").strip()
+    if stack != "":
+        rows.append(f'          <p>{T("lab_fatto_con", language)}: {esc(stack)}</p>')
+    if all_articles is not None:
+        for other in articles_visible_in_language(all_articles, language):
+            if other.get("slug") == art.get("lab_of") and other.get("slug") != art.get("slug"):
+                rows.append(f'          <p>{T("lab_mette_in_pratica", language)}: '
+                            f'<a href="{article_url(other, language)}">'
+                            f'{esc(title_in_language(other, language))}</a></p>')
+                break
+    return ('        <aside class="lab-box" aria-label="' + T("lab", language) + '">\n'
+            + "\n".join(rows) + "\n        </aside>\n")
+
+
+def labs_of_article(art, all_articles, language="it"):
+    """
+    At the end of an article, the labs that put it into practice: the way
+    from the theory to the code.
+    """
+    if all_articles is None or is_lab(art):
+        return ""
+    rows = []
+    for other in articles_visible_in_language(all_articles, language):
+        if is_lab(other) and other.get("lab_of") == art.get("slug"):
+            row = (f'<a href="{article_url(other, language)}">'
+                   f'{esc(title_in_language(other, language))}</a>')
+            link = repository_link(other, language)
+            if link != "":
+                row = row + " &middot; " + link
+            rows.append("            <li>" + row + "</li>")
+    if len(rows) == 0:
+        return ""
+    return ('        <aside class="lab-box lab-fine">\n'
+            f'          <p class="lab-etichetta">{T("lab_di_questo_articolo", language)}</p>\n'
+            "          <ul>\n" + "\n".join(rows) + "\n          </ul>\n        </aside>\n")
+
+
+def generate_labs_page(articles, language="it"):
+    """The page of the labs: every lab online, newest first, as on the homepage."""
+    prefix = language_url_prefix(language)
+    labs = [art for art in articles_visible_in_language(articles, language) if is_lab(art)]
+    principale = render.render(
+        "public/labs.html",
+        url_home=prefix + "/",
+        label_home=T("home", language),
+        label_labs=T("labs", language),
+        intro=T("labs_intro", language),
+        lista="\n".join(article_row(art, language) for art in labs),
+    )
+    contenuto = two_columns(principale, build_sidebar(language, "other", articles), language)
+    url_canonico = CONFIG["base_url"].rstrip("/") + labs_page_url(language)
+    meta_extra = (f'  <meta name="description" content="{esc(T("labs_intro", language))}">\n'
+                  f'  <link rel="canonical" href="{url_canonico}">')
+    return render_page(language, with_site_title(T("labs", language)), contenuto,
+                       meta_extra=meta_extra)
+
+
 def series_of(art, all_articles, language):
     """
     The series an article is a part of, as it reads in a language: its slug,
@@ -1573,6 +1686,8 @@ def article_row(art, language, lead=False):
         words = words * 2
         css_class = " art-lead"
         label = '          <p class="art-kicker">' + T("ultimo_articolo", language) + "</p>\n"
+    if is_lab(art):
+        label = '          <p class="art-kicker">' + T("lab", language) + "</p>\n"
         read = ('          <span class="art-more" aria-hidden="true">'
                 + T("leggi_articolo", language) + " &rarr;</span>\n")
     return render.render(
@@ -2061,12 +2176,13 @@ def generate_article_page(art, language="it", all_articles=None):
         tempo_lettura=reading_time,
         tags_html=tags_html,
         copertina=block(cover_block),
-        serie=series_box(art, all_articles, language),
+        serie=series_box(art, all_articles, language) + lab_box(art, all_articles, language),
         codice_inizio_testo=start_code,
         toc_telefono=toc_phone,
         contenuto_articolo=content,
         codice_fine_testo=block(custom_code_block("article_end", "article", art)),
-        author_box=generate_author_box(language) + newsletter_after_article(language),
+        author_box=(labs_of_article(art, all_articles, language)
+                    + generate_author_box(language) + newsletter_after_article(language)),
         article_nav=generate_article_nav(art, all_articles, language),
         back_label=back_label,
         related=block(related_block),
@@ -3072,6 +3188,12 @@ def generate_sitemap(articles):
                 lines.append(url_entry(sec_prefix + "/tag/" + tag_slug + ".html"))
                 break
 
+    # The page of the labs, in the languages that have any.
+    for language, prefix_value in ((main_language(), main_prefix),
+                                   (secondary_language(), sec_prefix)):
+        if any(is_lab(art) for art in articles_visible_in_language(articles, language)):
+            lines.append(url_entry(prefix_value + "/labs.html"))
+
     # Series pages (mirroring what build() generates).
     for series_slug, series in collect_series(articles).items():
         if len(series["articles"]) < 2:
@@ -3305,6 +3427,7 @@ def remove_stale_pages(written_pages, lp, ls, sec_folder):
     for root in (OUTPUT_DIR, OUTPUT_DIR / sec_folder):
         folders.append(root / "posts")
         folders.append(root / "tag")
+        folders.append(root / "serie")
         folders.append(root / "pagine")
         # The pagination folder is named after the language ("pagina", "page"):
         # we sweep both names, so that flipping the site language cleans up too.
@@ -3394,6 +3517,7 @@ def _build_unlocked():
     publish_due_articles()
     tutti = load_articles()
     published_articles = [a for a in tutti if a.get("status") == "published"]
+    note_labs(published_articles)
 
     # Pages written by this build, grouped by folder. At the end
     # remove_stale_pages() deletes from those folders whatever is left over
@@ -3445,6 +3569,13 @@ def _build_unlocked():
             html_tag_sec = generate_tag_page(tag_name, tag_articles, ls, published_articles)
             write_page(OUTPUT_DIR / sec_folder / "tag" / f"{tag_slug}.html",
                        html_tag_sec)
+
+    # The page of the labs, where there are any; without, the old one goes.
+    for language, folder in ((lp, OUTPUT_DIR), (ls, OUTPUT_DIR / sec_folder)):
+        if labs_online(language):
+            write_page(folder / "labs.html", generate_labs_page(published_articles, language))
+        elif (folder / "labs.html").exists():
+            (folder / "labs.html").unlink()
 
     # The page of every series with at least two parts online.
     for series_slug, series in collect_series(published_articles).items():

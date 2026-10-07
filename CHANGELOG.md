@@ -102,6 +102,11 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Labs.** An article can be marked as a lab: the practical side of
+  another article, with its code. It opens with a box linking to the
+  project (GitHub) and to the article it puts into practice, which in turn
+  points to the lab at the end of its text. The labs have their own page
+  (`/labs.html`), an entry in the menu and a label in the lists.
 - **Series of articles.** An article can be a part of a series: the editor
   has a "Series" field and a part number. On the site each part opens with
   the name of the series, its place ("part 3 of 7") and the list of all the

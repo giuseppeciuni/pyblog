@@ -366,6 +366,14 @@ il posto al pannello di pubblicazione.
   `/serie/<nome>.html`, con le parti dalla prima all'ultima. Le parti senza
   numero seguono quelle numerate, in ordine di data. Finché la serie ha una
   sola parte online non si vede nulla.
+- **Questo articolo è un lab:** un lab mette in pratica un altro articolo
+  con del codice. Spuntando la casella compaiono tre campi: l'**articolo di
+  riferimento**, l'**indirizzo del progetto** (per esempio il repository su
+  GitHub) e **Fatto con** (linguaggi e librerie). Sul sito il lab si apre
+  con un riquadro che porta al codice e all'articolo di riferimento, negli
+  elenchi ha l'etichetta "Lab", e l'articolo di riferimento lo segnala in
+  fondo al testo. Quando c'è almeno un lab online compaiono la pagina
+  `/labs.html`, che li elenca tutti, e la voce **Labs** nel menu.
 - **Immagine di copertina:** carichi un file o incolli un indirizzo. Appare
   nell'elenco della home, in cima all'articolo e nelle anteprime social.
 - **Anteprima per i lettori:** il testo sotto il titolo negli elenchi; vuoto,

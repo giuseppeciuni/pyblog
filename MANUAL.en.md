@@ -370,6 +370,14 @@ publishing panel.
   `/serie/<name>.html`, with the parts first to last. Parts with no number
   follow the numbered ones, by date. Until a series has two parts online
   nothing shows.
+- **This article is a lab:** a lab puts another article into practice with
+  code. Ticking the box shows three fields: the **article it refers to**,
+  the **project address** (for instance the repository on GitHub) and
+  **Built with** (languages and libraries). On the site the lab opens with
+  a box leading to the code and to the article it refers to, carries the
+  "Lab" label in the lists, and the article it refers to points to it at
+  the end of the text. With at least one lab online the site gets the
+  `/labs.html` page, listing them all, and the **Labs** entry in the menu.
 - **Cover image:** upload a file or paste an address. It shows in the
   homepage list, at the top of the article and in social previews.
 - **Reader preview:** the text under the title in the lists; left empty, the
