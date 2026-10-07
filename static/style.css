@@ -304,6 +304,26 @@ header.site { border-bottom:1px solid var(--bordo); }
   padding:0.7rem 1rem; margin:0 0 1.6rem;
 }
 .toc-telefono summary { cursor:pointer; font-weight:600; font-size:0.92rem; }
+/* The series an article belongs to: its name, the part, the list of parts. */
+.serie-box {
+  border:1px solid var(--bordo); border-left:3px solid var(--link); border-radius:10px;
+  background:var(--card-bg); padding:0.7rem 1rem; margin:0 0 1.6rem; font-size:0.92rem;
+}
+.serie-box p { margin:0; }
+.serie-etichetta { color:var(--secondario); text-transform:uppercase; letter-spacing:0.04em; font-size:0.78rem; }
+.serie-nome { font-weight:600; }
+.serie-box details { margin-top:0.4rem; }
+.serie-box summary { cursor:pointer; color:var(--link); }
+.serie-box ol { margin:0.6rem 0 0; padding-left:1.4rem; }
+.serie-box li { margin:0.25rem 0; }
+.serie-box li[aria-current] { font-weight:600; }
+.serie-elenco { list-style:none; padding:0; margin:0; counter-reset:parte; }
+.serie-elenco > li { counter-increment:parte; position:relative; padding-left:2.4rem; }
+.serie-elenco > li::before {
+  content:counter(parte); position:absolute; left:0; top:1.1rem; width:1.8rem; height:1.8rem;
+  border-radius:50%; border:1px solid var(--bordo); color:var(--secondario);
+  display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:600;
+}
 .toc-telefono .toc-lista { margin-top:0.7rem; }
 @media (min-width: 980px) {
   .toc-telefono { display:none; }

@@ -361,6 +361,15 @@ publishing panel.
   (with "-2" at the end) and tells you: an article never overwrites another.
 - **Tags**, comma separated: they become the `/tag/...` pages and the topics
   bar.
+- **Series** and **Part no.:** if the article is part of a series, write the
+  name of the series (the same on every part; the field suggests the
+  existing ones) and the number of the part. On the site each part opens
+  with a box naming the series, "part 3 of 7" and the list of all the
+  parts; at the bottom it leads to the previous and the next part instead
+  of the neighbours by date. The series has a page of its own,
+  `/serie/<name>.html`, with the parts first to last. Parts with no number
+  follow the numbered ones, by date. Until a series has two parts online
+  nothing shows.
 - **Cover image:** upload a file or paste an address. It shows in the
   homepage list, at the top of the article and in social previews.
 - **Reader preview:** the text under the title in the lists; left empty, the

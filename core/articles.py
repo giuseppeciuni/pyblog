@@ -256,6 +256,9 @@ def article_from_data(data, slug):
         "preview": data.get("preview", "").strip(),
         "content": clean_editor_markup(data.get("content", "")),
         "tags": data.get("tags", "").strip(),
+        # The series the article is a part of, and its place in it.
+        "series": str(data.get("series", "") or "").strip(),
+        "series_number": series_number(data.get("series_number")),
         "image": data.get("image", "").strip(),
         "status": status,
         "publish_at": publish_at,
@@ -645,6 +648,43 @@ def extract_article_tags(art):
         if piece != "":
             result.append(piece)
     return result
+
+
+def series_number(value):
+    """The place of an article in its series: a number from 1 up, or 0 for none."""
+    try:
+        number = int(str(value).strip())
+    except (TypeError, ValueError):
+        return 0
+    if number < 1:
+        return 0
+    return number
+
+
+def collect_series(articles):
+    """
+    Gather the articles into their series: { series slug: {"name": the name
+    as written, "articles": [the parts, first to last]} }.
+
+    The slug is the key, so "Inside the Machine" and "Inside the machine"
+    are one series and not two. A part with a number goes where the number
+    says; the ones without follow, in the order they were published.
+    """
+    found = {}
+    for art in articles:
+        name = str(art.get("series", "") or "").strip()
+        if name == "":
+            continue
+        slug = slugify(name)
+        if slug not in found:
+            found[slug] = {"name": name, "articles": []}
+        found[slug]["articles"].append(art)
+    for entry in found.values():
+        entry["articles"].sort(key=lambda art: (
+            series_number(art.get("series_number")) or 10 ** 6, art.get("date") or ""))
+        # The name is the one written on the first part.
+        entry["name"] = str(entry["articles"][0].get("series", "")).strip()
+    return found
 
 
 def collect_tags(articles):

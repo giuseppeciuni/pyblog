@@ -126,6 +126,13 @@ UI_TRANSLATIONS = {
     "scritto_da": {"it": "Scritto da", "en": "Written by"},
     "nav_piu_recente": {"it": "Più recente", "en": "Newer"},
     "nav_meno_recente": {"it": "Meno recente", "en": "Older"},
+    "serie": {"it": "Serie", "en": "Series"},
+    "serie_parte": {"it": "parte {n} di {tot}", "en": "part {n} of {tot}"},
+    "serie_tutte": {"it": "Tutte le parti", "en": "All the parts"},
+    "serie_precedente": {"it": "Parte precedente", "en": "Previous part"},
+    "serie_successiva": {"it": "Parte successiva", "en": "Next part"},
+    "serie_conteggio": {"it": "parti, dalla prima all'ultima.", "en": "parts, first to last."},
+    "serie_descrizione": {"it": "Tutti gli articoli della serie", "en": "Every article of the series"},
     "salta_contenuto": {"it": "Salta al contenuto", "en": "Skip to content"},
     # Messaggi di stato del JavaScript admin
     "js_translating": {"it": "Traduzione in corso...", "en": "Translating..."},
@@ -446,6 +453,11 @@ UI_TRANSLATIONS = {
     "admin_genera_anteprima": {"it": "Genera con AI", "en": "Generate with AI"},
     "admin_sezione_metadati": {"it": "Dettagli articolo", "en": "Article details"},
     "admin_tag": {"it": "Tag (separati da virgola)", "en": "Tags (comma separated)"},
+    "admin_serie": {"it": "Serie", "en": "Series"},
+    "admin_serie_hint": {
+        "it": "Se l'articolo fa parte di una serie, scrivine il nome (uguale per tutte le parti) e il numero della parte. Sul sito ogni parte mostra la serie, porta alla precedente e alla successiva, e la serie ha una pagina con l'elenco.",
+        "en": "If the article is part of a series, write its name (the same on every part) and the number of the part. On the site each part shows the series, links to the previous and the next one, and the series has a page listing them."},
+    "admin_serie_numero": {"it": "Parte n.", "en": "Part no."},
     "admin_immagine_copertina": {"it": "Immagine di copertina", "en": "Cover image"},
     "admin_immagine_copertina_hint": {
         "it": "(appare nel blocco \u00abUltimo articolo\u00bb in homepage e nelle anteprime social. Carica un file oppure incolla un indirizzo.)",

@@ -580,6 +580,10 @@ select.campo-input { padding-right:2rem; }
   .segmento { flex:1; min-height:40px; }
 }
 
+.riga-serie { display:flex; gap:0.5rem; }
+.riga-serie input[type="text"] { flex:1; min-width:0; }
+.riga-serie input[type="number"] { width:6.5rem; flex:none; }
+
 /* ===========================================================================
    EDITOR IN THE SHELL: on a phone the screen belongs to the article
    =========================================================================== */

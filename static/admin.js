@@ -1947,7 +1947,7 @@ function initEditorPage() {
 
 // Every field of the form marks the article as changed when it is touched.
 function watchEditorFields() {
-  var campi = ['title', 'slug', 'tags', 'image', 'description',
+  var campi = ['title', 'slug', 'tags', 'series', 'series_number', 'image', 'description',
                'reader_preview', 'title_en', 'description_en', 'preview_en',
                'translation_authorized', 'translation_confirmed'];
   for (var i = 0; i < campi.length; i++) {
@@ -2476,6 +2476,8 @@ function articleData(stato) {
     preview: document.getElementById('reader_preview').value,
     content: quill.root.innerHTML,
     tags: document.getElementById('tags').value,
+    series: document.getElementById('series').value,
+    series_number: document.getElementById('series_number').value,
     image: document.getElementById('image').value,
     status: stato || statoArticolo,
     // The moment a scheduled article goes out, in UTC; ignored otherwise.
@@ -4383,6 +4385,7 @@ function restoreVersion() {
   var applica = function() {
     var v = versioneMostrata;
     var campi = { title: 'title', description: 'description', preview: 'reader_preview', tags: 'tags',
+                  series: 'series', series_number: 'series_number',
                   image: 'image', title_en: 'title_en', description_en: 'description_en', preview_en: 'preview_en' };
     for (var chiave in campi) {
       var campo = document.getElementById(campi[chiave]);

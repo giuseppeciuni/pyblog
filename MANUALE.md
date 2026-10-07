@@ -357,6 +357,15 @@ il posto al pannello di pubblicazione.
   "-2" in fondo) e te lo dice: un articolo non ne sovrascrive mai un altro.
 - **Tag**, separati da virgola: diventano le pagine `/tag/...` e la barra
   degli argomenti.
+- **Serie** e **Parte n.:** se l'articolo fa parte di una serie, scrivi il
+  nome della serie (uguale su tutte le parti; il campo propone quelle che
+  esistono) e il numero della parte. Sul sito ogni parte si apre con un
+  riquadro che dice la serie, "parte 3 di 7" e l'elenco di tutte le parti;
+  in fondo porta alla parte precedente e alla successiva invece che agli
+  articoli vicini per data. La serie ha una pagina sua,
+  `/serie/<nome>.html`, con le parti dalla prima all'ultima. Le parti senza
+  numero seguono quelle numerate, in ordine di data. Finché la serie ha una
+  sola parte online non si vede nulla.
 - **Immagine di copertina:** carichi un file o incolli un indirizzo. Appare
   nell'elenco della home, in cima all'articolo e nelle anteprime social.
 - **Anteprima per i lettori:** il testo sotto il titolo negli elenchi; vuoto,

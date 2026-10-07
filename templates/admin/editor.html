@@ -100,6 +100,15 @@ $spunta_avvisa
     <label for="tags">$label_tag</label>
     <input type="text" id="tags" value="$valore_tag" placeholder="AI, Python">
 
+    <label for="series">$label_serie</label>
+    <div class="riga-serie">
+      <input type="text" id="series" value="$valore_serie" list="serie-esistenti" aria-describedby="serie-aiuto">
+      <input type="number" id="series_number" value="$valore_serie_numero" min="1" step="1"
+             aria-label="$label_serie_numero" placeholder="$label_serie_numero">
+    </div>
+    <datalist id="serie-esistenti">$serie_esistenti</datalist>
+    <p class="hint" id="serie-aiuto">$hint_serie</p>
+
     <label for="image">$label_immagine</label>
     <p class="hint" style="margin:0 0 0.3rem" id="image-aiuto">$hint_immagine</p>
     <div class="campo-copertina">

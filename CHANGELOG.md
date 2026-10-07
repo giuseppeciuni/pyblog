@@ -102,6 +102,11 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Series of articles.** An article can be a part of a series: the editor
+  has a "Series" field and a part number. On the site each part opens with
+  the name of the series, its place ("part 3 of 7") and the list of all the
+  parts, and at the bottom leads to the previous and the next part. Every
+  series has a page of its own (`/serie/<name>.html`), in the sitemap too.
 - **A newsletter inside PyBlog.** Readers subscribe from a form in the
   sidebar or at the end of the articles, confirm through an email (double
   opt-in, with a button rather than a bare link, which mail scanners would

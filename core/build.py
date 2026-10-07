@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 
 from core import newsletter, render
 from core.articles import (articles_visible_in_language, card_slug,
-                           collect_tags, excerpt_from_html,
+                           collect_series, collect_tags, excerpt_from_html,
                            extract_article_tags, html_content_is_empty,
                            load_articles, plain_text, publish_due_articles,
                            slugify)
@@ -1327,15 +1327,125 @@ def generate_author_box(language="it"):
     )
 
 
+def series_of(art, all_articles, language):
+    """
+    The series an article is a part of, as it reads in a language: its slug,
+    its name, the parts that have a page in that language (first to last)
+    and the place of the article among them. None for an article on its own,
+    or the only part published so far.
+    """
+    if all_articles is None:
+        return None
+    name = str(art.get("series", "") or "").strip()
+    if name == "":
+        return None
+    slug = slugify(name)
+    entry = collect_series(articles_visible_in_language(all_articles, language)).get(slug)
+    if entry is None or len(entry["articles"]) < 2:
+        return None
+    for position, part in enumerate(entry["articles"]):
+        if part.get("slug") == art.get("slug"):
+            return {"slug": slug, "name": entry["name"], "parts": entry["articles"],
+                    "position": position}
+    return None
+
+
+def series_page_url(slug, language):
+    """The address of the page that lists a series."""
+    return f"{language_url_prefix(language)}/serie/{slug}.html"
+
+
+def series_box(art, all_articles, language="it"):
+    """
+    The box that opens an article of a series: which series, which part,
+    and the list of all the parts. Whoever lands on part seven from a search
+    engine has to see at once that six come before it.
+    """
+    series = series_of(art, all_articles, language)
+    if series is None:
+        return ""
+    post_prefix = language_url_prefix(language) + "/posts/"
+    rows = []
+    for position, part in enumerate(series["parts"]):
+        title = esc(title_in_language(part, language))
+        if position == series["position"]:
+            rows.append(f'            <li aria-current="page">{title}</li>')
+        else:
+            rows.append(f'            <li><a href="{post_prefix}{part["slug"]}.html">{title}</a></li>')
+    place = T("serie_parte", language).replace("{n}", str(series["position"] + 1)) \
+        .replace("{tot}", str(len(series["parts"])))
+    return (
+        f'        <nav class="serie-box" aria-label="{T("serie", language)}">\n'
+        f'          <p><span class="serie-etichetta">{T("serie", language)}</span> '
+        f'<a class="serie-nome" href="{series_page_url(series["slug"], language)}">'
+        f'{esc(series["name"])}</a> &middot; {place}</p>\n'
+        f'          <details>\n            <summary>{T("serie_tutte", language)}</summary>\n'
+        f'            <ol>\n' + "\n".join(rows) + '\n            </ol>\n          </details>\n'
+        '        </nav>\n')
+
+
+def generate_series_page(slug, series, language="it", all_articles=None):
+    """
+    The page of a series: its parts from the first to the last, with the
+    same rows as the homepage. In the secondary language only the translated
+    parts are listed.
+    """
+    if all_articles is None:
+        all_articles = series["articles"]
+    prefix = language_url_prefix(language)
+    visibili = articles_visible_in_language(series["articles"], language)
+    rows = ["<li>\n" + article_row(art, language) + "\n</li>" for art in visibili]
+    principale = render.render(
+        "public/serie.html",
+        url_home=prefix + "/",
+        label_home=T("home", language),
+        label_serie=T("serie", language),
+        nome_serie=esc(series["name"]),
+        conteggio=len(visibili),
+        label_conteggio=T("serie_conteggio", language),
+        lista="\n".join(rows),
+    )
+    contenuto = two_columns(principale, build_sidebar(language, "other", all_articles),
+                            language)
+    url_canonico = CONFIG["base_url"].rstrip("/") + series_page_url(slug, language)
+    meta_extra = (f'  <meta name="description" '
+                  f'content="{T("serie_descrizione", language)} {esc(series["name"])}.">\n'
+                  f'  <link rel="canonical" href="{url_canonico}">')
+    return render_page(
+        language,
+        with_site_title(f'{T("serie", language)}: {esc(series["name"])}'),
+        contenuto,
+        meta_extra=meta_extra,
+    )
+
+
 def generate_article_nav(art, all_articles, language="it"):
     """
-    Generate the "newer / older article" navigation at the bottom of the
-    article. The articles are already sorted newest first: the previous
-    one in the list is the newer, the next one is the older.
+    Generate the navigation at the bottom of the article. A part of a series
+    leads to the part before and the part after; any other article to the
+    newer and the older one. The articles are already sorted newest first:
+    the previous one in the list is the newer, the next one is the older.
     In the secondary language you only navigate between translated articles.
     """
     if all_articles is None:
         return ""
+    series = series_of(art, all_articles, language)
+    if series is not None:
+        post_prefix = language_url_prefix(language) + "/posts/"
+        blocks = []
+        for step, label, css, arrow in ((-1, "serie_precedente", "", "&larr; {}"),
+                                        (1, "serie_successiva", " article-nav-right", "{} &rarr;")):
+            position = series["position"] + step
+            if position < 0 or position >= len(series["parts"]):
+                blocks.append('<span class="article-nav-empty"></span>')
+                continue
+            neighbor = series["parts"][position]
+            blocks.append(
+                f'<a class="article-nav-link{css}" href="{post_prefix}{neighbor["slug"]}.html">'
+                f'<span class="article-nav-label">{arrow.format(T(label, language))}</span>'
+                f'<span class="article-nav-title">{esc(title_in_language(neighbor, language))}</span></a>')
+        return render.render("public/article_nav.html", precedente=blocks[0],
+                             successivo=blocks[1])
     visibili = articles_visible_in_language(all_articles, language)
     posizione = -1
     for index_value in range(len(visibili)):
@@ -1951,6 +2061,7 @@ def generate_article_page(art, language="it", all_articles=None):
         tempo_lettura=reading_time,
         tags_html=tags_html,
         copertina=block(cover_block),
+        serie=series_box(art, all_articles, language),
         codice_inizio_testo=start_code,
         toc_telefono=toc_phone,
         contenuto_articolo=content,
@@ -2961,6 +3072,14 @@ def generate_sitemap(articles):
                 lines.append(url_entry(sec_prefix + "/tag/" + tag_slug + ".html"))
                 break
 
+    # Series pages (mirroring what build() generates).
+    for series_slug, series in collect_series(articles).items():
+        if len(series["articles"]) < 2:
+            continue
+        lines.append(url_entry(main_prefix + "/serie/" + series_slug + ".html"))
+        if len(articles_visible_in_language(series["articles"], secondary_language())) >= 2:
+            lines.append(url_entry(sec_prefix + "/serie/" + series_slug + ".html"))
+
     # The biography page, in both languages like the cards.
     if biography_published():
         lines.append(url_entry(main_prefix + "/pagine/" + biography_slug() + ".html"))
@@ -3326,6 +3445,18 @@ def _build_unlocked():
             html_tag_sec = generate_tag_page(tag_name, tag_articles, ls, published_articles)
             write_page(OUTPUT_DIR / sec_folder / "tag" / f"{tag_slug}.html",
                        html_tag_sec)
+
+    # The page of every series with at least two parts online.
+    for series_slug, series in collect_series(published_articles).items():
+        if len(series["articles"]) < 2:
+            continue
+        (OUTPUT_DIR / "serie").mkdir(parents=True, exist_ok=True)
+        write_page(OUTPUT_DIR / "serie" / f"{series_slug}.html",
+                   generate_series_page(series_slug, series, lp, published_articles))
+        if len(articles_visible_in_language(series["articles"], ls)) >= 2:
+            (OUTPUT_DIR / sec_folder / "serie").mkdir(parents=True, exist_ok=True)
+            write_page(OUTPUT_DIR / sec_folder / "serie" / f"{series_slug}.html",
+                       generate_series_page(series_slug, series, ls, published_articles))
 
     # Pages of the published cards (Biography, Projects, About...). A card
     # switched off, or left empty, or with the whole block switched off, has

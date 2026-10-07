@@ -26,7 +26,7 @@ from core import i18n, newsletter, render
 from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
 from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, SlugTakenError,
-                           article_for_preview, delete_article,
+                           article_for_preview, collect_series, delete_article,
                            due_scheduled_articles, html_content_is_empty,
                            list_versions, load_article, load_articles,
                            load_version, publish_due_articles,
@@ -844,6 +844,13 @@ def editor_page(art, csrf):
         valore_slug=esc(art.get("slug", "")),
         label_tag=T("admin_tag", la),
         valore_tag=esc(art.get("tags", "")),
+        label_serie=T("admin_serie", la),
+        valore_serie=esc(art.get("series", "")),
+        valore_serie_numero=art.get("series_number") or "",
+        label_serie_numero=esc(T("admin_serie_numero", la)),
+        hint_serie=help_text(T("admin_serie_hint", la)),
+        serie_esistenti="".join(f'<option value="{esc(entry["name"])}">'
+                                for entry in collect_series(load_articles()).values()),
         label_immagine=T("admin_immagine_copertina", la),
         hint_immagine=help_text(T("admin_immagine_copertina_hint", la)),
         valore_immagine=esc(art.get("image", "")),
