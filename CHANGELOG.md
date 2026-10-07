@@ -110,6 +110,10 @@ All notable changes to PyBlog are documented in this file.
   site carries the address of the original: a line under the title names
   that site and links to it and, on request, search engines are told that
   one is the original.
+- **Share links.** Every article ends with links that hand it to LinkedIn,
+  Hacker News, Reddit and X, and a button that copies its address. They
+  are plain links, with nothing loaded from those sites; `share_buttons`
+  in `config.json` turns them off.
 - **One subject, three levels.** An article has a kind: the idea, its
   practical version for decision makers, or the lab with the code. The
   last two name the article they start from, and each of the three leads

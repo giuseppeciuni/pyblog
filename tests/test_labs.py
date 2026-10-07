@@ -212,6 +212,34 @@ def test_originale():
           "pubblicato-origine" not in build.generate_article_page(TEORIA, "it", ARTICOLI))
 
 
+def test_condivisione():
+    print("\npulsanti di condivisione")
+    CONFIG["base_url"] = "https://esempio.it"
+    art = articolo(8, title="Costi & modelli")
+    pagina = build.generate_article_page(art, "it", [art])
+    riga = pagina.split('<div class="condividi">')[1].split("</div>")[0]
+    indirizzo = "https%3A%2F%2Fesempio.it%2Fposts%2Farticolo-8.html"
+    check("ci sono LinkedIn, Hacker News, Reddit e X con l'indirizzo della pagina",
+          "linkedin.com/sharing/share-offsite/?url=" + indirizzo in riga
+          and "news.ycombinator.com/submitlink?u=" + indirizzo + "&amp;t=Costi%20%26%20modelli" in riga
+          and "reddit.com/submit?url=" + indirizzo in riga and "twitter.com/intent/tweet" in riga,
+          riga)
+    check("e il pulsante che copia il link",
+          'class="condividi-copia" data-url="https://esempio.it/posts/articolo-8.html" '
+          'data-fatto="Link copiato">Copia il link</button>' in riga)
+    check("stanno dopo il testo", pagina.index("condividi") > pagina.index('class="post-content"'))
+    check("in inglese l'indirizzo e le scritte sono inglesi",
+          "%2Fen%2Fposts%2Farticolo-8.html" in build.generate_article_page(
+              dict(art, title_en="Costs", content_en="<p>x</p>", translation_confirmed=True),
+              "en", [art]).split('<div class="condividi">')[1].split("</div>")[0])
+    CONFIG["share_buttons"] = False
+    check("spenti dalla configurazione non compaiono",
+          'class="condividi"' not in build.generate_article_page(art, "it", [art]))
+    CONFIG["share_buttons"] = True
+    script = (pathlib.Path(__file__).resolve().parent.parent / "static" / "site.js").read_text()
+    check("il sito sa copiare il link", "condividi-copia" in script)
+
+
 def test_editor():
     print("\nl'editor")
     originale = server.load_articles
@@ -251,6 +279,7 @@ def main():
         test_tre_livelli()
         test_inglese()
         test_originale()
+        test_condivisione()
         test_editor()
     finally:
         CONFIG.clear()

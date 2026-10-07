@@ -85,6 +85,15 @@ header.site { border-bottom:1px solid var(--bordo); }
   font-weight:600; text-decoration:none; display:inline-block;
 }
 .site-nav a.nav-lavoro:hover, .invito-pulsante:hover { color:#fff; filter:brightness(0.92); }
+.condividi { display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem 0.9rem;
+  margin:2rem 0 0; font-size:0.9rem; }
+.condividi-etichetta { color:var(--secondario); text-transform:uppercase; letter-spacing:0.04em;
+  font-size:0.78rem; font-weight:600; }
+.condividi a, .condividi button {
+  border:1px solid var(--bordo); border-radius:8px; background:var(--card-bg); color:var(--testo);
+  padding:0.35rem 0.7rem; text-decoration:none; font:inherit; cursor:pointer; min-height:36px;
+}
+.condividi a:hover, .condividi button:hover { border-color:var(--link); color:var(--link); }
 .invito-lavoro {
   border:1px solid var(--bordo); border-radius:10px; background:var(--card-bg);
   padding:1rem 1.2rem; margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:0.8rem 1.2rem;

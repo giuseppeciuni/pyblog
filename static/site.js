@@ -478,6 +478,23 @@ function aggiungiPulsanteCopia(blocco, opzioni) {
   contenitore.appendChild(pulsante);
 }
 
+// "Copy the link" at the end of an article: the address goes to the
+// clipboard and the button says so for a moment.
+document.addEventListener('DOMContentLoaded', function() {
+  var pulsanti = document.querySelectorAll('.condividi-copia');
+  for (var i = 0; i < pulsanti.length; i++) {
+    pulsanti[i].addEventListener('click', function() {
+      var pulsante = this;
+      var scritta = pulsante.textContent;
+      copiaTesto(pulsante.getAttribute('data-url'), function(riuscito) {
+        if (!riuscito) { return; }
+        pulsante.textContent = pulsante.getAttribute('data-fatto');
+        setTimeout(function() { pulsante.textContent = scritta; }, 1500);
+      });
+    });
+  }
+});
+
 // Copies text to the clipboard, with a fallback for browsers without the
 // clipboard API and for pages served over plain HTTP, where it is disabled.
 function copiaTesto(testo, quandoFatto) {

@@ -1114,6 +1114,7 @@ validi quando arrivano campi nuovi.
 | `articles_per_page` | Articoli per pagina della home (predefinito `10`; `0` = tutti in una pagina). |
 | `home_intro_position` | Dove va la presentazione: `"sidebar"` (predefinito) o `"top"`. |
 | `home_excerpt_words` | Parole dell'estratto negli elenchi, per gli articoli senza anteprima (predefinito `40`). |
+| `share_buttons` | `true` (predefinito) mostra a fine articolo i link per condividerlo su LinkedIn, Hacker News, Reddit e X e il pulsante che copia l'indirizzo; `false` li toglie. Sono link semplici: niente viene caricato da quei siti. |
 | `home_featured` | `true` (predefinito): l'ultimo articolo in evidenza in cima. |
 | `article_cover` | `true` (predefinito): la copertina in cima all'articolo. |
 | `home_order` | Non più usato; nei file vecchi viene ignorato. |
