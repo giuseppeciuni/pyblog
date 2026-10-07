@@ -339,8 +339,11 @@ header.site { border-bottom:1px solid var(--bordo); }
 .lab-etichetta { color:var(--secondario); text-transform:uppercase; letter-spacing:0.04em;
   font-size:0.78rem; font-weight:600; }
 .lab-codice { font-weight:600; }
+.lab-box pre { margin:0.4rem 0 0.6rem; }
 .lab-fine { margin:2rem 0 0; }
-.lab-fine ul { margin:0.3rem 0 0; padding-left:1.2rem; }
+.lab-fine > p { font-weight:600; }
+.lab-fine ul { margin:0.4rem 0 0; padding:0; list-style:none; }
+.lab-fine li { margin:0.35rem 0; }
 .serie-elenco { list-style:none; padding:0; margin:0; counter-reset:parte; }
 .serie-elenco > li { counter-increment:parte; position:relative; padding-left:2.4rem; }
 .serie-elenco > li::before {

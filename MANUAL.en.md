@@ -376,14 +376,17 @@ publishing panel.
   engines that one is the original** only if the text here is identical:
   Google will show the other site and not this page. If the article here
   is longer, leave it empty.
-- **This article is a lab:** a lab puts another article into practice with
-  code. Ticking the box shows three fields: the **article it refers to**,
-  the **project address** (for instance the repository on GitHub) and
-  **Built with** (languages and libraries). On the site the lab opens with
-  a box leading to the code and to the article it refers to, carries the
-  "Lab" label in the lists, and the article it refers to points to it at
-  the end of the text. With at least one lab online the site gets the
-  `/labs.html` page, listing them all, and the **Labs** entry in the menu.
+- **Kind of article:** one subject can have three articles. The **Article**
+  is the idea; **In practice** is the version for decision makers (a
+  startup, a CTO); the **Lab** is the part with the code. The last two name
+  the **article they start from**: they open with a box saying so and, at
+  the end of the text, each of the three leads to the other two. In the
+  lists they carry the "In practice" or "Lab" label. A lab also has the
+  **project address** (for instance the repository on GitHub), **Built
+  with** (languages and libraries) and **To run it** (the commands, one per
+  line), shown in the box at the top. With at least one lab online the site
+  gets the `/labs.html` page, listing them all, and the **Labs** entry in
+  the menu.
 - **Cover image:** upload a file or paste an address. It shows in the
   homepage list, at the top of the article and in social previews.
 - **Reader preview:** the text under the title in the lists; left empty, the

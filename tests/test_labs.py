@@ -46,6 +46,7 @@ def articolo(numero, **extra):
 
 TEORIA = articolo(1)
 LAB = articolo(2, kind="lab", lab_of="articolo-1", stack="Python 3.12, <LiteLLM>",
+               run_steps="git clone https://github.com/esempio/lab\npython3 main.py <file>",
                repo_url="https://github.com/esempio/lab", title="Lab uno")
 LAB_SENZA = articolo(3, kind="lab", repo_url="javascript:alert(1)", title="Lab due")
 ARTICOLI = [articolo(4), LAB_SENZA, LAB, TEORIA]
@@ -73,6 +74,10 @@ def test_pagina_lab():
           'Il codice su GitHub' in riquadro, riquadro)
     check("dice con cosa e' fatto, senza far passare codice HTML",
           "Fatto con: Python 3.12, &lt;LiteLLM&gt;" in riquadro)
+    check("mostra i comandi per eseguirlo, un comando per riga",
+          'Per eseguirlo:</p>\n<pre class="ql-syntax" spellcheck="false">'
+          'git clone https://github.com/esempio/lab\npython3 main.py &lt;file&gt;</pre>' in riquadro,
+          riquadro)
     check("porta all'articolo che mette in pratica",
           'Mette in pratica: <a href="/posts/articolo-1.html">Articolo 1</a>' in riquadro)
     check("il riquadro sta prima del testo",
@@ -118,6 +123,69 @@ def test_pagina_labs_e_menu():
           and "labs.html" not in build.generate_sitemap(solo_articoli))
 
 
+def test_tre_livelli():
+    print("\ni tre livelli di un tema")
+    pratica = articolo(7, kind="practical", lab_of="articolo-1", title="Per chi decide")
+    tutti = [pratica] + ARTICOLI
+    build.note_labs(tutti)
+    salvato = article_from_data({"title": "T", "kind": "practical", "lab_of": "articolo-1"}, "t")
+    check("la versione pratica e' un tipo di articolo", salvato["kind"] == "practical")
+
+    pagina = build.generate_article_page(pratica, "it", tutti)
+    apertura = pagina.split('<aside class="lab-box">')[1].split("</aside>")[0]
+    check("la versione pratica si apre dicendo da quale articolo parte",
+          "In pratica" in apertura
+          and 'La versione per chi decide di <a href="/posts/articolo-1.html">Articolo 1</a>'
+          in apertura, apertura)
+    fine = pagina.split('class="lab-box lab-fine"')[1].split("</aside>")[0]
+    check("e in fondo porta all'idea e al lab dello stesso tema",
+          "L'idea</span> <a href=\"/posts/articolo-1.html\">" in fine
+          and "Lab</span> <a href=\"/posts/articolo-2.html\">" in fine
+          and "articolo-7" not in fine, fine)
+    idea = build.generate_article_page(TEORIA, "it", tutti)
+    fine = idea.split('class="lab-box lab-fine"')[1].split("</aside>")[0]
+    check("l'idea porta alla versione pratica e poi al lab, in quest'ordine",
+          fine.index("articolo-7.html") < fine.index("articolo-2.html"))
+    lab = build.generate_article_page(LAB, "it", tutti)
+    fine = lab.split('class="lab-box lab-fine"')[1].split("</aside>")[0]
+    check("il lab porta all'idea e alla versione pratica",
+          "articolo-1.html" in fine and "articolo-7.html" in fine)
+    home = build.generate_homepage(tutti, "it")
+    check("negli elenchi la versione pratica ha la sua etichetta",
+          '<p class="art-kicker">In pratica</p>' in home)
+    check("non finisce nella pagina Labs",
+          "articolo-7.html" not in build.generate_labs_page(tutti, "it")
+          .split('<div class="articles-list">')[1].split("</section>")[0])
+    check("un lab senza articolo di riferimento non ha il riquadro in fondo",
+          "lab-fine" not in build.generate_article_page(LAB_SENZA, "it", tutti))
+
+
+def test_inglese():
+    print("\ni lab in inglese")
+    def tradotto(art, titolo):
+        return dict(art, title_en=titolo, content_en="<p>Text.</p>", translation_confirmed=True)
+    idea = tradotto(TEORIA, "The idea")
+    lab = tradotto(LAB, "Lab one")
+    tutti = [articolo(4), LAB_SENZA, lab, idea]
+    build.note_labs(tutti)
+    pagina = build.generate_article_page(lab, "en", tutti)
+    apertura = pagina.split('<aside class="lab-box">')[1].split("</aside>")[0]
+    check("il riquadro del lab e' in inglese e porta alle pagine inglesi",
+          "The code on GitHub" in apertura and "Built with:" in apertura
+          and 'Puts into practice: <a href="/en/posts/articolo-1.html">The idea</a>' in apertura,
+          apertura)
+    elenco = build.generate_labs_page(tutti, "en")
+    check("la pagina Labs inglese elenca solo i lab tradotti",
+          "/en/posts/articolo-2.html" in elenco and "articolo-3.html" not in elenco
+          and 'rel="canonical" href="' + CONFIG["base_url"].rstrip("/") + '/en/labs.html"' in elenco)
+    check("il menu inglese ha Labs e la sitemap elenca la pagina",
+          '<a href="/en/labs.html">Labs</a>' in build.generate_homepage(tutti, "en").split("</nav>")[0]
+          and "/en/labs.html</loc>" in build.generate_sitemap(tutti))
+    fine = build.generate_article_page(idea, "en", tutti)
+    check("l'idea in inglese porta al lab in inglese",
+          'Lab</span> <a href="/en/posts/articolo-2.html">Lab one</a>' in fine)
+
+
 def test_originale():
     print("\npubblicato in origine")
     altrove = articolo(5, original_url="https://www.startupbusiness.it/rubrica/pezzo/")
@@ -153,8 +221,9 @@ def test_editor():
         normale = server.editor_page(TEORIA, "csrf")
     finally:
         server.load_articles = originale
-    check("la spunta e i campi del lab hanno i valori dell'articolo",
-          'id="kind_lab" checked' in pagina and '<div id="campi-lab" >' in pagina
+    check("il tipo e i campi del lab hanno i valori dell'articolo",
+          '<option value="lab" selected>' in pagina and '<div id="campi-lab" >' in pagina
+          and '<div id="campi-riferimento" >' in pagina
           and 'id="repo_url" value="https://github.com/esempio/lab"' in pagina
           and 'id="stack" value="Python 3.12, &lt;LiteLLM&gt;"' in pagina)
     scelta = pagina.split('<select id="lab_of"')[1].split("</select>")[0]
@@ -163,11 +232,12 @@ def test_editor():
           and "articolo-4" in scelta and "articolo-3" not in scelta
           and 'value="articolo-2"' not in scelta, scelta)
     check("su un articolo normale i campi del lab sono nascosti",
-          'id="kind_lab" ' in normale and 'id="kind_lab" checked' not in normale
-          and '<div id="campi-lab" hidden>' in normale)
+          '<option value="" selected>' in normale
+          and '<div id="campi-lab" hidden>' in normale
+          and '<div id="campi-riferimento" hidden>' in normale)
     script = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
     check("il salvataggio manda i campi del lab",
-          "kind: document.getElementById('kind_lab').checked ? 'lab' : ''" in script
+          "kind: document.getElementById('kind').value" in script
           and "repo_url: document.getElementById('repo_url').value" in script)
 
 
@@ -178,6 +248,8 @@ def main():
         test_dati()
         test_pagina_lab()
         test_pagina_labs_e_menu()
+        test_tre_livelli()
+        test_inglese()
         test_originale()
         test_editor()
     finally:

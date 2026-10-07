@@ -372,14 +372,17 @@ il posto al pannello di pubblicazione.
   **Indica ai motori di ricerca che l'originale è quello** va messa solo
   se qui il testo è identico: Google mostrerà l'altro sito e non questa
   pagina. Se qui l'articolo è più ampio, lasciala vuota.
-- **Questo articolo è un lab:** un lab mette in pratica un altro articolo
-  con del codice. Spuntando la casella compaiono tre campi: l'**articolo di
-  riferimento**, l'**indirizzo del progetto** (per esempio il repository su
-  GitHub) e **Fatto con** (linguaggi e librerie). Sul sito il lab si apre
-  con un riquadro che porta al codice e all'articolo di riferimento, negli
-  elenchi ha l'etichetta "Lab", e l'articolo di riferimento lo segnala in
-  fondo al testo. Quando c'è almeno un lab online compaiono la pagina
-  `/labs.html`, che li elenca tutti, e la voce **Labs** nel menu.
+- **Tipo di articolo:** uno stesso tema può avere tre articoli. L'**Articolo**
+  è l'idea; **In pratica** è la versione per chi decide (una startup, un
+  CTO); il **Lab** è la parte con il codice. Gli ultimi due indicano
+  l'**articolo di riferimento** da cui partono: si aprono con un riquadro
+  che lo dice e, in fondo al testo, ognuno dei tre porta agli altri due.
+  Negli elenchi hanno l'etichetta "In pratica" o "Lab". Un lab ha in più
+  l'**indirizzo del progetto** (per esempio il repository su GitHub),
+  **Fatto con** (linguaggi e librerie) e **Per eseguirlo** (i comandi, uno
+  per riga), che compaiono nel riquadro in cima. Quando c'è almeno un lab
+  online compaiono la pagina `/labs.html`, che li elenca tutti, e la voce
+  **Labs** nel menu.
 - **Immagine di copertina:** carichi un file o incolli un indirizzo. Appare
   nell'elenco della home, in cima all'articolo e nelle anteprime social.
 - **Anteprima per i lettori:** il testo sotto il titolo negli elenchi; vuoto,

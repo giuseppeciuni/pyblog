@@ -259,12 +259,16 @@ def article_from_data(data, slug):
         # The series the article is a part of, and its place in it.
         "series": str(data.get("series", "") or "").strip(),
         "series_number": series_number(data.get("series_number")),
-        # A lab is the article that puts another one into practice: its
-        # code, where the code lives and what it is written with.
-        "kind": "lab" if data.get("kind") == "lab" else "",
+        # One subject can have three articles: the idea, its practical
+        # version for who decides ("practical") and the lab with the code
+        # ("lab"). The last two name the article they start from in lab_of;
+        # a lab also says where its code lives and what it is written with.
+        "kind": data.get("kind") if data.get("kind") in ("lab", "practical") else "",
         "lab_of": str(data.get("lab_of", "") or "").strip(),
         "repo_url": str(data.get("repo_url", "") or "").strip(),
         "stack": str(data.get("stack", "") or "").strip(),
+        # The commands that fetch the project and run it, one per line.
+        "run_steps": str(data.get("run_steps", "") or "").strip(),
         # Where the article came out first, when it was not here, and
         # whether search engines are told that one is the original.
         "original_url": str(data.get("original_url", "") or "").strip(),

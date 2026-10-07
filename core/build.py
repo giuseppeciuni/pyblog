@@ -1449,52 +1449,88 @@ def repository_link(art, language):
     return f'<a class="lab-codice" href="{esc(link)}" rel="noopener">{label} &rarr;</a>'
 
 
+def starting_article(art, all_articles, language):
+    """
+    The article a lab or a practical version starts from, when it has a
+    page in this language; None for a plain article or a missing one.
+    """
+    if art.get("kind") not in ("lab", "practical") or all_articles is None:
+        return None
+    for other in articles_visible_in_language(all_articles, language):
+        if other.get("slug") == art.get("lab_of") and other.get("slug") != art.get("slug"):
+            return other
+    return None
+
+
 def lab_box(art, all_articles, language="it"):
     """
-    The box that opens a lab: where the code is, what it is built with and
-    the article it puts into practice. A developer decides in the first
-    seconds whether there is something to run: the link comes first.
+    The box that opens a lab or a practical version. A lab says where its
+    code is and what it is built with - a developer decides in the first
+    seconds whether there is something to run, so the link comes first -
+    and both say which article they start from.
     """
-    if not is_lab(art):
+    start = starting_article(art, all_articles, language)
+    start_link = ""
+    if start is not None:
+        start_link = (f'<a href="{article_url(start, language)}">'
+                      f'{esc(title_in_language(start, language))}</a>')
+    if art.get("kind") == "practical":
+        rows = [f'          <p class="lab-etichetta">{T("livello_pratica", language)}</p>']
+        if start_link != "":
+            rows.append(f'          <p>{T("pratica_intro", language)} {start_link}</p>')
+    elif is_lab(art):
+        rows = [f'          <p class="lab-etichetta">{T("lab", language)}</p>']
+        link = repository_link(art, language)
+        if link != "":
+            rows.append("          <p>" + link + "</p>")
+        stack = str(art.get("stack", "") or "").strip()
+        if stack != "":
+            rows.append(f'          <p>{T("lab_fatto_con", language)}: {esc(stack)}</p>')
+        steps = str(art.get("run_steps", "") or "").strip()
+        if steps != "":
+            rows.append(f'          <p>{T("lab_per_eseguirlo", language)}:</p>\n'
+                        f'<pre class="ql-syntax" spellcheck="false">{esc(steps)}</pre>')
+        if start_link != "":
+            rows.append(f'          <p>{T("lab_mette_in_pratica", language)}: {start_link}</p>')
+    else:
         return ""
-    rows = [f'          <p class="lab-etichetta">{T("lab", language)}</p>']
-    link = repository_link(art, language)
-    if link != "":
-        rows.append("          <p>" + link + "</p>")
-    stack = str(art.get("stack", "") or "").strip()
-    if stack != "":
-        rows.append(f'          <p>{T("lab_fatto_con", language)}: {esc(stack)}</p>')
-    if all_articles is not None:
-        for other in articles_visible_in_language(all_articles, language):
-            if other.get("slug") == art.get("lab_of") and other.get("slug") != art.get("slug"):
-                rows.append(f'          <p>{T("lab_mette_in_pratica", language)}: '
-                            f'<a href="{article_url(other, language)}">'
-                            f'{esc(title_in_language(other, language))}</a></p>')
-                break
-    return ('        <aside class="lab-box" aria-label="' + T("lab", language) + '">\n'
-            + "\n".join(rows) + "\n        </aside>\n")
+    return ('        <aside class="lab-box">\n' + "\n".join(rows) + "\n        </aside>\n")
 
 
-def labs_of_article(art, all_articles, language="it"):
+def other_levels(art, all_articles, language="it"):
     """
-    At the end of an article, the labs that put it into practice: the way
-    from the theory to the code.
+    At the end of an article, the other articles on the same subject: the
+    idea, its practical version, its labs. Each of the three leads to the
+    other two, so a reader who came for one level finds the others.
     """
-    if all_articles is None or is_lab(art):
+    if all_articles is None:
         return ""
+    root = starting_article(art, all_articles, language)
+    if root is None:
+        if art.get("kind") in ("lab", "practical"):
+            return ""
+        root = art
+    labels = {"": "livello_idea", "practical": "livello_pratica", "lab": "lab"}
+    group = [root] + [other for other in articles_visible_in_language(all_articles, language)
+                      if other.get("kind") in ("lab", "practical")
+                      and other.get("lab_of") == root.get("slug")
+                      and other.get("slug") != root.get("slug")]
+    # The idea first, then the practical version, then the labs.
+    group.sort(key=lambda other: ("", "practical", "lab").index(other.get("kind") or ""))
     rows = []
-    for other in articles_visible_in_language(all_articles, language):
-        if is_lab(other) and other.get("lab_of") == art.get("slug"):
-            row = (f'<a href="{article_url(other, language)}">'
-                   f'{esc(title_in_language(other, language))}</a>')
-            link = repository_link(other, language)
-            if link != "":
-                row = row + " &middot; " + link
-            rows.append("            <li>" + row + "</li>")
+    for other in group:
+        if other.get("slug") == art.get("slug"):
+            continue
+        row = (f'<span class="lab-etichetta">{T(labels[other.get("kind") or ""], language)}</span> '
+               f'<a href="{article_url(other, language)}">'
+               f'{esc(title_in_language(other, language))}</a>')
+        if is_lab(other) and repository_link(other, language) != "":
+            row = row + " &middot; " + repository_link(other, language)
+        rows.append("            <li>" + row + "</li>")
     if len(rows) == 0:
         return ""
     return ('        <aside class="lab-box lab-fine">\n'
-            f'          <p class="lab-etichetta">{T("lab_di_questo_articolo", language)}</p>\n'
+            f'          <p>{T("livelli_titolo", language)}</p>\n'
             "          <ul>\n" + "\n".join(rows) + "\n          </ul>\n        </aside>\n")
 
 
@@ -1766,6 +1802,8 @@ def article_row(art, language, lead=False):
         label = '          <p class="art-kicker">' + T("ultimo_articolo", language) + "</p>\n"
     if is_lab(art):
         label = '          <p class="art-kicker">' + T("lab", language) + "</p>\n"
+    elif art.get("kind") == "practical":
+        label = '          <p class="art-kicker">' + T("livello_pratica", language) + "</p>\n"
         read = ('          <span class="art-more" aria-hidden="true">'
                 + T("leggi_articolo", language) + " &rarr;</span>\n")
     return render.render(
@@ -2265,7 +2303,7 @@ def generate_article_page(art, language="it", all_articles=None):
         toc_telefono=toc_phone,
         contenuto_articolo=content,
         codice_fine_testo=block(custom_code_block("article_end", "article", art)),
-        author_box=(labs_of_article(art, all_articles, language)
+        author_box=(other_levels(art, all_articles, language)
                     + work_invitation(language) + generate_author_box(language) + newsletter_after_article(language)),
         article_nav=generate_article_nav(art, all_articles, language),
         back_label=back_label,

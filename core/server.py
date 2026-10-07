@@ -761,14 +761,14 @@ def codemirror_scripts():
 
 def lab_of_options(art, la):
     """
-    The articles a lab can refer to, as the options of a select: every
-    article but the labs and the article itself, newest first.
+    The articles a lab or a practical version can start from, as the
+    options of a select: every plain article but the one being edited.
     """
     chosen = art.get("lab_of", "")
     options = [f'<option value="">{esc(T("admin_lab_nessuno", la))}</option>']
     for other in load_articles():
         slug = other.get("slug", "")
-        if other.get("kind") == "lab" or slug == "" or slug == art.get("slug"):
+        if other.get("kind") in ("lab", "practical") or slug == "" or slug == art.get("slug"):
             continue
         selected = " selected" if slug == chosen else ""
         options.append(f'<option value="{esc(slug)}"{selected}>'
@@ -874,9 +874,15 @@ def editor_page(art, csrf):
         originale_canonico_checked="checked" if art.get("original_canonical") is True else "",
         label_originale_canonico=T("admin_originale_canonico", la),
         hint_originale_canonico=help_text(T("admin_originale_canonico_hint", la)),
-        label_lab=T("admin_lab", la),
-        hint_lab=help_text(T("admin_lab_hint", la)),
-        lab_checked="checked" if art.get("kind") == "lab" else "",
+        label_tipo=T("admin_tipo", la),
+        hint_tipo=help_text(T("admin_tipo_hint", la)),
+        label_tipo_articolo=T("admin_tipo_articolo", la),
+        label_tipo_pratica=T("admin_tipo_pratica", la),
+        label_tipo_lab=T("admin_tipo_lab", la),
+        sel_tipo_articolo=selected_if(art.get("kind", ""), ""),
+        sel_tipo_pratica=selected_if(art.get("kind", ""), "practical"),
+        sel_tipo_lab=selected_if(art.get("kind", ""), "lab"),
+        riferimento_hidden="" if art.get("kind") in ("lab", "practical") else "hidden",
         lab_hidden="" if art.get("kind") == "lab" else "hidden",
         label_lab_di=T("admin_lab_di", la),
         opzioni_lab_di=lab_of_options(art, la),
@@ -884,6 +890,8 @@ def editor_page(art, csrf):
         valore_repo=esc(art.get("repo_url", "")),
         label_lab_stack=T("admin_lab_stack", la),
         valore_stack=esc(art.get("stack", "")),
+        label_lab_comandi=T("admin_lab_comandi", la),
+        valore_comandi=esc(art.get("run_steps", "")),
         label_immagine=T("admin_immagine_copertina", la),
         hint_immagine=help_text(T("admin_immagine_copertina_hint", la)),
         valore_immagine=esc(art.get("image", "")),
