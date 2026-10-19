@@ -322,6 +322,12 @@ UI_TRANSLATIONS = {
     "stato_n_attivi": {"it": "{n} attivi", "en": "{n} on"},
     "stato_cookie_spento_analytics": {"it": "Spento, ma Google Analytics usa i cookie",
                                       "en": "Off, but Google Analytics uses cookies"},
+    "stato_cookie_analytics_necessario": {
+        "it": "Google Analytics è un codice «Necessario»: parte senza chiedere il consenso",
+        "en": "Google Analytics is a «Necessary» code: it runs without asking for consent"},
+    "stato_cookie_acceso_inutile": {
+        "it": "Acceso, ma nessun codice chiede il consenso: il banner non compare",
+        "en": "On, but no code asks for consent: the banner does not show"},
     "stato_ai_aperto": {"it": "Consentito", "en": "Allowed"},
     "stato_ai_licenza": {"it": "Solo su licenza", "en": "Licence only"},
     "stato_ai_vietato": {"it": "Non consentito", "en": "Not allowed"},

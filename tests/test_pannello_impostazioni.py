@@ -197,6 +197,28 @@ def test_cookie_traduzione_newsletter_ai():
     c["consent"] = {"enabled": True}
     check("banner acceso", state("cookie", c) == ("ok", T("stato_acceso", "it")))
 
+    # The case of ciunix.com: banner on, Google Analytics in a snippet
+    # marked "necessary", nothing else asking for consent.
+    c2 = finished_config()
+    c2["consent"] = {"enabled": True}
+    c2["custom_code"] = [{"id": "a", "enabled": True, "code": GTAG, "consent": "necessary"},
+                         {"id": "v", "enabled": True, "code": "<script src=x></script>",
+                          "consent": "necessary"}]
+    stati = settings_panel.section_states("cookie", c2, "it")
+    check("banner acceso con Google Analytics «Necessario»: due avvisi, il primo su Google Analytics",
+          [t for _, t in stati] == [T("stato_cookie_analytics_necessario", "it"),
+                                    T("stato_cookie_acceso_inutile", "it")], str(stati))
+    check("lo stesso avviso nei Codici esterni, dove si sistema",
+          state("codici", c2) == ("warn", T("stato_cookie_analytics_necessario", "it")))
+    c2["custom_code"][0]["consent"] = "statistics"
+    check("con Google Analytics su «Statistiche» il banner serve ed è a posto",
+          state("cookie", c2) == ("ok", T("stato_acceso", "it")))
+    check("e i Codici esterni tornano a contare",
+          state("codici", c2) == ("ok", T("stato_n_attivi", "it").replace("{n}", "2")))
+    c2["custom_code"] = c2["custom_code"][1:]
+    check("senza niente che chieda il consenso, il banner acceso non compare: si dice",
+          state("cookie", c2) == ("warn", T("stato_cookie_acceso_inutile", "it")))
+
     check("DeepL senza chiave",
           state("traduzione", c) == ("warn", T("stato_manca_chiave", "it").replace("{servizio}", "DeepL")))
     os.environ["PYBLOG_DEEPL_API_KEY"] = "chiave-di-prova"
@@ -283,6 +305,7 @@ def test_pagine():
         check("ogni passo dice di quale sezione parla",
               '<span class="passo-dove">' + T("admin_sez_cookie", "it") + '</span>' in dashboard)
         c["custom_code"] = c["custom_code"][:1]
+        c["custom_code"][0]["consent"] = "statistics"
         c["consent"] = {"enabled": True}
         dashboard = server.admin_page([{"status": "published", "title": "A", "slug": "a",
                                         "date": "2026-01-01", "content": ""}], "TOKEN")

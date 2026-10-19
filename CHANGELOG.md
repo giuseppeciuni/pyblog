@@ -121,7 +121,10 @@ All notable changes to PyBlog are documented in this file.
   translation, External code, Cookie banner, AI permissions, Configuration
   file. Colours say what is done: green cards are in order, orange ones
   need fixing, and inside a section the fields already filled in, the
-  ticked boxes and the external codes switched on are green too.
+  ticked boxes and the external codes switched on are green too. The
+  cookie banner says when it will not show: switched on with nothing
+  asking for consent, or with Google Analytics pasted as a "necessary"
+  code, which runs before anyone agrees.
 - **First steps on the Articles page.** Until the site is ready for
   readers, a box at the top lists what a visitor would notice: no title or
   domain, example texts still on the homepage, Google Analytics counting

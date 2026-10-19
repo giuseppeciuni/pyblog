@@ -18,7 +18,7 @@ import html
 import re
 
 from core import newsletter
-from core.build import projects_settings
+from core.build import projects_settings, snippet_consent
 from core.config import secret_setting
 from core.i18n import T
 
@@ -189,6 +189,32 @@ def analytics_loads(config):
     return loads
 
 
+def consent_categories(config):
+    """
+    The consent categories the code of the whole site asks for: the same rule
+    as the public pages, where the banner only shows when some code waits
+    for it. Code written inside a single article is left out: it asks on
+    that article alone.
+    """
+    used = set()
+    if _text(config.get("analytics_id", "")) != "":
+        used.add("statistics")
+    for snippet in enabled_snippets(config):
+        used.add(snippet_consent(snippet))
+    return [c for c in ("statistics", "marketing") if c in used]
+
+
+def analytics_without_consent(config):
+    """The snippets switched on that load Google Analytics as "necessary"."""
+    found = []
+    for snippet in enabled_snippets(config):
+        code = snippet.get("code", "")
+        if (isinstance(code, str) and "gtag" in code and GA_ID.search(code)
+                and snippet_consent(snippet) == "necessary"):
+            found.append(snippet)
+    return found
+
+
 def umami_is_set(config):
     return (_text(config.get("umami_url", "")) != ""
             and _text(config.get("umami_website_id", "")) != "")
@@ -316,6 +342,10 @@ def _state_analytics(config, la):
 
 
 def _state_code(config, la):
+    # The warning of the cookie banner, again where it is fixed: the
+    # consent of a card of code is chosen here.
+    if _dict(config, "consent").get("enabled", False) is True and analytics_without_consent(config):
+        return [("warn", T("stato_cookie_analytics_necessario", la))]
     count = len(enabled_snippets(config))
     if count == 0:
         return [("off", T("stato_nessuno", la))]
@@ -327,7 +357,16 @@ def _state_code(config, la):
 def _state_consent(config, la):
     consent = _dict(config, "consent")
     if consent.get("enabled", False) is True:
-        return [("ok", T("stato_acceso", la))]
+        problems = []
+        # Google Analytics marked "necessary" runs before anyone agrees,
+        # banner or not: the most common way to get this wrong.
+        if analytics_without_consent(config):
+            problems.append(("warn", T("stato_cookie_analytics_necessario", la)))
+        # With nothing waiting for consent the banner never shows, and the
+        # author who switched it on is left wondering why.
+        if not consent_categories(config):
+            problems.append(("warn", T("stato_cookie_acceso_inutile", la)))
+        return problems or [("ok", T("stato_acceso", la))]
     # Google Analytics sets cookies, and in Europe it needs consent first.
     if analytics_loads(config):
         return [("warn", T("stato_cookie_spento_analytics", la))]

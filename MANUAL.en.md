@@ -864,7 +864,12 @@ From then on:
 - at the bottom of every page **Cookie preferences** opens the banner again;
   withdrawing a consent reloads the page without that code.
 
-The banner shows only when some code needs it. The text can be changed, in
+The banner shows only when some code needs it: the ID in the Google
+Analytics field of Analytics, or an external code marked "Statistics" or
+"Advertising". If you pasted Google Analytics as an external code, choose
+**Statistics** in its card: marked "Necessary" it runs without asking and
+the banner has no reason to show. The Settings panel points out both
+cases. The text can be changed, in
 the other language too (empty = the default one). When you add a new service,
 **Ask everyone for consent again** and save: every visitor will see the
 banner again.

@@ -872,7 +872,12 @@ Da quel momento:
 - in fondo a ogni pagina **Preferenze cookie** riapre il banner; ritirare un
   consenso ricarica la pagina senza quel codice.
 
-Il banner compare solo se qualche codice ne ha bisogno. Il testo si può
+Il banner compare solo se qualche codice ne ha bisogno: l'ID nel campo
+Google Analytics delle Statistiche, o un codice esterno segnato
+"Statistiche" o "Pubblicità". Se hai incollato Google Analytics come
+codice esterno, nella sua scheda scegli **Statistiche**: segnato
+"Necessario" parte senza chiedere niente e il banner non ha motivo di
+comparire. Il pannello delle Impostazioni segnala tutti e due i casi. Il testo si può
 cambiare, anche nell'altra lingua (vuoto = quello predefinito). Quando
 aggiungi un servizio nuovo, **Chiedi di nuovo il consenso a tutti** e salva:
 ogni visitatore rivedrà il banner.
