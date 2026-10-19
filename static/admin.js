@@ -2882,6 +2882,7 @@ function initConfigPage() {
   labelQuillEditors();
   watchConfigChanges();
   indexSettingsSearch();
+  watchFilledFields();
   showConfigSection(false);
   window.addEventListener('hashchange', function() { showConfigSection(true); });
 }
@@ -2922,6 +2923,9 @@ function showConfigSection(spostaFuoco) {
 
   var chiave = trovata ? trovata.getAttribute('data-sezione') : 'elenco';
   document.getElementById('impostazioni').setAttribute('data-sezione', chiave);
+  // A photo uploaded or a translation filled in writes into a field without
+  // the input event: looking again on every visit keeps the colours right.
+  markFilledFields();
   updateSaveBar();
 
   if (trovata !== null) {
@@ -2936,6 +2940,42 @@ function showConfigSection(spostaFuoco) {
     titolo.setAttribute('tabindex', '-1');
     titolo.focus({ preventScroll: true });
   }
+}
+
+/* --- Settings: the fields already filled in --------------------------------- */
+
+// The fields that hold something take a green tint, so a long section
+// shows at a glance what is done and what is still empty. Choices
+// (select) always hold a value and are left alone; ticked boxes are
+// coloured by the CSS on their own. The search box and the raw
+// config.json are tools, not settings.
+var CAMPI_DA_SEGNARE = 'input[type="text"], input[type="url"], input[type="email"], ' +
+                       'input[type="number"], input[type="password"], input:not([type]), textarea';
+
+function markFilled(campo) {
+  if (!campo.matches || !campo.matches(CAMPI_DA_SEGNARE)) { return; }
+  if (campo.closest('#codice-modelli') || campo.id === 'cerca-impostazioni' || campo.id === 'config-raw') {
+    return;
+  }
+  campo.classList.toggle('compilato', campo.value.trim() !== '');
+}
+
+function markFilledFields() {
+  var campi = document.querySelectorAll('#impostazioni .sezione :is(' + CAMPI_DA_SEGNARE + ')');
+  for (var i = 0; i < campi.length; i++) { markFilled(campi[i]); }
+}
+
+function watchFilledFields() {
+  var pagina = document.getElementById('impostazioni');
+  pagina.addEventListener('input', function(evento) { markFilled(evento.target); });
+  pagina.addEventListener('change', function(evento) { markFilled(evento.target); });
+  // Cards of code and projects added on the page bring fields of their own.
+  var liste = ['lista-codice', 'lista-progetti'];
+  for (var i = 0; i < liste.length; i++) {
+    new MutationObserver(markFilledFields)
+      .observe(document.getElementById(liste[i]), { childList: true });
+  }
+  markFilledFields();
 }
 
 /* --- Settings: searching the panel ------------------------------------------ */

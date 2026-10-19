@@ -583,6 +583,12 @@ card: type "smtp" and you get the Newsletter, "giscus" and you get Comments,
 because the search also looks at the names of the fields. The `config.json`
 file opens from the link at the bottom of the panel.
 
+The colours say at a glance what is done: **green** a card in order,
+**orange** one to fix, white a feature that is off. Inside a section the
+fields already filled in are green with a ✓ next to their name, and so are
+the ticked boxes and the cards of external code that are on: what stays
+white is still empty.
+
 Inside a section, the line at the top (**Settings › group**) goes back to
 the panel; on a phone there is the arrow as well. Every field has its help
 underneath.

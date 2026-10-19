@@ -124,6 +124,23 @@ label.campo-etichettato > .etichetta { display:block; font-weight:600; font-size
 .stato-ok { color:#1a6b34; }
 .stato-off { color:#4a525c; font-weight:500; }
 .stato-warn { color:#8a4b00; }
+/* The colour of a card follows its state: green in order, orange to fix,
+   white when off. The words on the card say the same for whoever does not
+   see the colour. */
+.scheda-impostazione.scheda-ok { background:#f4faf6; border-color:#b7dcc3; }
+.scheda-impostazione.scheda-warn { background:#fffaf2; border-color:#f0d9b5; }
+.scheda-impostazione.scheda-ok:hover { background:#ebf6ef; border-color:#8cc49f; }
+.scheda-impostazione.scheda-warn:hover { background:#fff3e2; border-color:#e5bf86; }
+
+/* Inside a section: the fields already filled in, the boxes ticked and the
+   cards of code switched on take a green tint, so what is done stands out
+   from what is still empty. The id keeps it above the plain field style. */
+#impostazioni .compilato:not(:focus) { border-color:#8cc49f; background:#f4faf6; }
+#impostazioni .campo:has(> .compilato) > label::after {
+  content:"✓"; margin-left:0.375rem; color:#1a6b34; font-weight:700; }
+#impostazioni .campo-spunta:has(> input:checked) label { color:#1a6b34; }
+#impostazioni .codice-config:has(.codice-attivo:checked) { border-color:#8cc49f; background:#f4faf6; }
+#impostazioni .codice-config:has(.codice-attivo:checked) .codice-corpo { background:var(--a-superficie); }
 .pannello-avanzate { margin:0; font-size:0.875rem; color:var(--a-testo-2); }
 .sezione-occhiello a { color:var(--a-testo-2); }
 .sezione-avvisi { list-style:none; margin:0; padding:0.75rem 1rem; background:#fffaf2; border:1px solid #f0d9b5;

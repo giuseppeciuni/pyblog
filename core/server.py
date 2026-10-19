@@ -1498,8 +1498,12 @@ def config_sections_list(la, config=None):
         cards = []
         for entry in settings_panel.sections_of(group_id):
             key = entry["id"]
+            # The card takes the colour of its state: green when it is in
+            # order, orange when something is to fix, plain when off.
+            state = settings_panel.section_state(key, config, la)
+            tone = state[0] if state else "off"
             cards.append(
-                f'      <li><a class="scheda-impostazione" href="#{key}" data-sezione="{key}" '
+                f'      <li><a class="scheda-impostazione scheda-{tone}" href="#{key}" data-sezione="{key}" '
                 f'data-cerca="{esc(entry["keywords"])}">'
                 f'<span class="scheda-nome">{T(entry["label"], la)}</span>'
                 f'<span class="scheda-desc">{TL(entry["label"] + "_desc", la)}</span>'

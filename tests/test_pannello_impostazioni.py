@@ -252,6 +252,12 @@ def test_pagine():
               'href="#statistiche"' in pannello
               and 'class="scheda-stato stato-warn"' in pannello
               and T("admin_stato_tono_warn", "it") in pannello)
+        check("la scheda prende il colore del suo stato",
+              'class="scheda-impostazione scheda-warn" href="#statistiche"' in pannello
+              and 'class="scheda-impostazione scheda-ok" href="#sito"' in pannello
+              and 'class="scheda-impostazione scheda-off" href="#biografia"' in pannello)
+        check("il file di configurazione, senza stato, resta fuori dai gruppi colorati",
+              'href="#avanzate"' not in pannello)
         check("il pannello ha un titolo per ogni gruppo",
               all(T(k, "it") in pannello for _, k in settings_panel.GROUPS))
         check("le parole chiave stanno nella scheda, per la ricerca",

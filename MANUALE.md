@@ -586,6 +586,12 @@ nel riquadro: scrivi "smtp" e trovi la Newsletter, "giscus" e trovi i
 Commenti, perché la ricerca guarda anche i nomi dei campi. Il file
 `config.json` si apre dal link in fondo al pannello.
 
+I colori dicono a colpo d'occhio cosa è fatto: **verde** un riquadro a
+posto, **arancio** uno da sistemare, bianco una funzione spenta. Dentro una
+sezione i campi già compilati sono verdi con un ✓ accanto al nome, e lo
+stesso vale per le caselle spuntate e per le schede dei codici esterni
+attivi: quello che resta bianco è ancora vuoto.
+
 Dentro una sezione, la riga in alto (**Impostazioni › gruppo**) riporta al
 pannello; sul telefono c'è anche la freccia. Ogni campo ha l'aiuto sotto.
 
