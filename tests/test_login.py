@@ -188,6 +188,73 @@ def test_attraverso_il_server():
             auth.PASSWORD_FILE = file_vero
 
 
+def test_difese_del_server():
+    """First password, HEAD, CSRF on every route, links in the emails."""
+    print("\ndifese del server")
+    import http.server
+    import json
+    import os
+    import stat
+    import tempfile
+    import threading
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+
+    class NonSeguire(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):
+            return None
+
+    apri = urllib.request.build_opener(NonSeguire).open
+    file_vero = auth.PASSWORD_FILE
+    with tempfile.TemporaryDirectory() as cartella:
+        auth.PASSWORD_FILE = pathlib.Path(cartella) / "password.txt"
+        httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{httpd.server_address[1]}"
+
+        def chiedi(percorso, corpo=None, intestazioni=None, metodo=None):
+            richiesta = urllib.request.Request(base + percorso, data=corpo,
+                                               headers=intestazioni or {}, method=metodo)
+            try:
+                with apri(richiesta, timeout=30) as risposta:
+                    return risposta.status, risposta.read().decode("utf-8")
+            except urllib.error.HTTPError as errore:
+                return errore.code, ""
+
+        prima = urllib.parse.urlencode({"password": "nuova-123", "conferma": "nuova-123"}).encode()
+        try:
+            chiedi("/set-password", prima, {"X-Real-IP": "203.0.113.9"})
+            check("la prima password non si crea da fuori, attraverso nginx",
+                  not auth.PASSWORD_FILE.exists())
+            stato, _ = chiedi("/set-password", prima)
+            check("si crea collegandosi direttamente all'editor",
+                  stato == 303 and auth.PASSWORD_FILE.exists(), str(stato))
+            permessi = stat.S_IMODE(os.stat(auth.PASSWORD_FILE).st_mode)
+            check("il file della password lo legge solo il proprietario",
+                  permessi == 0o600, oct(permessi))
+            check("e non lascia file temporanei",
+                  [f.name for f in pathlib.Path(cartella).iterdir()] == ["password.txt"])
+
+            stato, _ = chiedi("/admin_password.txt", metodo="HEAD")
+            check("HEAD non serve piu' i file della cartella", stato == 501, str(stato))
+
+            token = auth.create_session_token()
+            stato, testo = chiedi("/rotta-nuova", b"{}", {"Cookie": "sessione=" + token})
+            risposta = json.loads(testo or "{}")
+            check("una rotta POST non elencata chiede comunque il token CSRF",
+                  risposta.get("error") == T("err_csrf", admin_language()), testo[:200])
+        finally:
+            httpd.shutdown()
+            httpd.server_close()
+            auth.PASSWORD_FILE = file_vero
+
+    gestore = server.Handler.__new__(server.Handler)
+    gestore.headers = Intestazioni({"Host": "sito-di-un-altro.example"})
+    check("i link delle email non prendono l'indirizzo dall'intestazione Host",
+          "sito-di-un-altro" not in gestore._site_url())
+
+
 def main():
     try:
         test_blocco_per_indirizzo()
@@ -196,6 +263,7 @@ def main():
         test_indirizzi_dimenticati()
         test_indirizzo_dietro_il_proxy()
         test_attraverso_il_server()
+        test_difese_del_server()
     finally:
         auth.LOGIN_STATE.clear()
     print(f"\n{PASSED} passed, {FAILED} failed")

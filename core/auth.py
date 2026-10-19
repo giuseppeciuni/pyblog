@@ -14,7 +14,9 @@ Everything here lives in memory only: restarting the server invalidates every
 session and resets the login rate limiter.
 """
 import hashlib
+import os
 import secrets
+import tempfile
 import threading
 import time
 
@@ -66,7 +68,33 @@ def set_password(password):
     digest = compute_pbkdf2_hash(password, salt)
     # Format: method, salt and digest separated by colons.
     content = "pbkdf2:" + salt + ":" + digest
-    PASSWORD_FILE.write_text(content, encoding="utf-8")
+    write_private_file(PASSWORD_FILE, content)
+
+
+def write_private_file(path_value, content):
+    """
+    Write a file only its owner can read, in one step.
+
+    The digest is not the password, but it is what an offline guessing
+    attack starts from, so it is no business of the other users of the
+    machine: mkstemp creates the file with mode 0600. Writing to a temporary
+    file and renaming it also means a crash cannot leave half a digest
+    behind, which would lock the author out.
+    """
+    descriptor, temporary = tempfile.mkstemp(
+        dir=str(path_value.parent), prefix="." + path_value.name + ".", suffix=".tmp")
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as fp:
+            fp.write(content)
+            fp.flush()
+            os.fsync(fp.fileno())
+        os.replace(temporary, path_value)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
 
 
 def password_is_set():

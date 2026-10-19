@@ -101,9 +101,12 @@ MAX_JSON_BODY = 32 * 1024 * 1024      # 32 MB
 # an article. The cap is checked before the body is read.
 MAX_DOCX_BODY = 30 * 1024 * 1024      # 30 MB
 
-# POST endpoints that change state and therefore require a valid CSRF token.
-# /login and /set-password are absent on purpose: there is no session yet, so
-# there is no token to check, and neither of them can act on existing data.
+# The POST endpoints of the logged-in author. Every one of them is checked
+# against the CSRF token, and so is any route added later: do_POST checks the
+# token before it even looks the route up, so forgetting to list a new
+# endpoint here cannot leave it unprotected. /login, /set-password and the
+# newsletter forms are absent on purpose: there is no session yet, so there is
+# no token to check, and none of them can act on existing data.
 CSRF_PROTECTED_ROUTES = (
     "/save", "/delete", "/save-config", "/save-config-raw", "/toggle-status",
     "/rebuild", "/upload", "/admin-language", "/change-password",
@@ -2007,8 +2010,17 @@ def config_page(csrf):
 # THE HTTP HANDLER
 # ---------------------------------------------------------------------------
 
-class Handler(http.server.SimpleHTTPRequestHandler):
-    """Handle the editor requests and serve the static preview."""
+class Handler(http.server.BaseHTTPRequestHandler):
+    """
+    Handle the editor requests and serve the static preview.
+
+    It derives from the bare BaseHTTPRequestHandler, not from
+    SimpleHTTPRequestHandler: every page is served by our own code, and the
+    file serving of the parent class only stayed reachable through HEAD,
+    which it answered for any file of the working directory -
+    admin_password.txt and config.json included. Without a do_HEAD a HEAD
+    request now gets 501.
+    """
 
     # --- Response helpers ---------------------------------------------------
 
@@ -2135,6 +2147,25 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if proto == "https":
             cookie = cookie + "; Secure"
         return cookie
+
+    def _may_set_first_password(self):
+        """
+        Tell whether this request may create the first password.
+
+        Until a password exists, whoever fills in the form becomes the
+        author. On a computer that is the person installing PyBlog; on a
+        server published through nginx before the password was set, it would
+        be the first visitor to find the page. A request the reverse proxy
+        forwarded therefore has to come from this very machine; one that
+        reaches the editor directly (on a computer, or Docker's port bound to
+        localhost) is let through, as before.
+        """
+        proxied = (self.headers.get("X-Real-IP", "").strip() != ""
+                   or self.headers.get("X-Forwarded-For", "").strip() != "")
+        if not proxied:
+            return True
+        client = self._client_address()
+        return client.startswith("127.") or client in ("::1", "::ffff:127.0.0.1")
 
     def _login_or_setup_page(self):
         """Send the login page, or the password creation page on first run."""
@@ -2406,10 +2437,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     # --- Newsletter -----------------------------------------------------------
 
     def _site_url(self):
-        """The site's address for the links in the emails."""
-        host = self.headers.get("Host", f"localhost:{PORT}")
-        proto = self.headers.get("X-Forwarded-Proto", "http")
-        return public_site_url(f"{proto}://{host}")
+        """
+        The site's address for the links in the emails.
+
+        Without a domain in the Settings it falls back to localhost, never to
+        the Host header: that one is written by whoever sends the request,
+        and a confirmation email would carry their address to the reader.
+        """
+        return public_site_url(f"http://localhost:{PORT}")
 
     def _send_public(self, page, status=200):
         """A public page answered by Python: no admin CSP, never cached."""
@@ -2611,14 +2646,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         # --- ...and a valid CSRF token ---
         # A session cookie alone proves the browser is logged in, not that the
         # request came from one of our pages. Another site can make the browser
-        # send the cookie; only our pages know this token.
-        if route in CSRF_PROTECTED_ROUTES:
-            if not self._csrf_token_ok(route):
-                if route == "/change-password":
-                    self._send(change_password_page(self._csrf(), T("err_csrf", la)))
-                else:
-                    self._send_json({"ok": False, "error": T("err_csrf", la)})
-                return
+        # send the cookie; only our pages know this token. The check covers
+        # every route, listed or not.
+        if not self._csrf_token_ok(route):
+            if route == "/change-password":
+                self._send(change_password_page(self._csrf(), T("err_csrf", la)))
+            else:
+                self._send_json({"ok": False, "error": T("err_csrf", la)})
+            return
 
         # The password change (a form) and the upload (multipart) have their
         # own handlers: neither of them speaks JSON.
@@ -2893,10 +2928,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if password_is_set():
             self._redirect("/login")
             return
+        la = admin_language()
+        if not self._may_set_first_password():
+            self._send(set_password_page(T("err_setup_remote", la)))
+            return
         form = self._read_form()
         password = form.get("password", [""])[0]
         confirmed = form.get("conferma", [""])[0]
-        la = admin_language()
         if password == "" or len(password) < 6:
             self._send(set_password_page(T("err_password_too_short", la)))
             return
