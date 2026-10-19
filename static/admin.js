@@ -3148,6 +3148,46 @@ function translateEditorInto(pulsante, origine, destinazione, idStato) {
     });
 }
 
+// The subtitle, the role and the bio, translated in one go into the fields
+// of the other language. Each is a request of its own, one after the
+// other, so a failure leaves the others as they were.
+function translateSiteTexts(pulsante) {
+  var coppie = [['subtitle', 'subtitle_en'], ['seo_author_role', 'seo_author_role_en'],
+                ['seo_author_bio', 'seo_author_bio_en']];
+  var daFare = coppie.filter(function(c) { return document.getElementById(c[0]).value.trim() !== ''; });
+  if (daFare.length === 0) {
+    pbStatus('sito-en-status', t('js_write_site_texts_first'));
+    return;
+  }
+  pbBusy(pulsante, true);
+  pbStatus('sito-en-status', t('js_translating'));
+  var prossima = function(indice) {
+    if (indice >= daFare.length) {
+      pbBusy(pulsante, false);
+      pbStatus('sito-en-status', t('js_translated_site_texts'));
+      markFilledFields();
+      markConfigDirty();
+      return;
+    }
+    pbPostJson('/translate', { text: document.getElementById(daFare[indice][0]).value.trim() })
+      .then(function(res) {
+        if (res.ok !== true) {
+          pbBusy(pulsante, false);
+          pbStatus('sito-en-status', t('js_error_prefix') + res.error);
+          return;
+        }
+        document.getElementById(daFare[indice][1]).value = res.text.trim();
+        prossima(indice + 1);
+      })
+      .catch(function() {
+        pbBusy(pulsante, false);
+        pbStatus('sito-en-status', '');
+        pbToast(t('js_net_error_translation'), 'danger');
+      });
+  };
+  prossima(0);
+}
+
 /* --- Settings: the biography's photo ------------------------------------- */
 
 function updateBioPhotoPreview() {
@@ -3834,6 +3874,7 @@ function saveConfig(pulsante) {
   var config = {
     site_title: document.getElementById('site_title').value,
     subtitle: document.getElementById('subtitle').value,
+    subtitle_en: document.getElementById('subtitle_en').value.trim(),
     author: document.getElementById('author').value,
     base_url: document.getElementById('base_url').value,
     analytics_id: document.getElementById('analytics_id').value.trim(),
@@ -3850,6 +3891,8 @@ function saveConfig(pulsante) {
       author_image: document.getElementById('seo_author_image').value.trim(),
       author_role: document.getElementById('seo_author_role').value.trim(),
       author_bio: document.getElementById('seo_author_bio').value.trim(),
+      author_role_en: document.getElementById('seo_author_role_en').value.trim(),
+      author_bio_en: document.getElementById('seo_author_bio_en').value.trim(),
       social_profiles: profiliSocial,
       logo: document.getElementById('seo_logo').value.trim(),
       twitter_site: document.getElementById('seo_twitter').value.trim(),

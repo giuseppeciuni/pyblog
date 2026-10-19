@@ -608,6 +608,38 @@ def seo_data():
     return seo
 
 
+def in_language(main_value, other_value, language=None):
+    """
+    The text of a setting written in both languages: the one in the main
+    language at the root of the site, its "_en" twin in the other language.
+    Like home_content_en, the twin is named after English but holds the
+    other language, whichever that is; an empty twin falls back to the main
+    text, so a site never shows a hole where a translation is missing.
+    """
+    main_value = main_value.strip() if isinstance(main_value, str) else ""
+    other_value = other_value.strip() if isinstance(other_value, str) else ""
+    if language is not None and language != main_language() and other_value != "":
+        return other_value
+    return main_value
+
+
+def site_subtitle(language=None):
+    """The subtitle of the site in the language of the page."""
+    return in_language(CONFIG.get("subtitle", ""), CONFIG.get("subtitle_en", ""), language)
+
+
+def author_role(language=None):
+    """The author's role ("CTO and lecturer") in the language of the page."""
+    seo = seo_data()
+    return in_language(seo.get("author_role", ""), seo.get("author_role_en", ""), language)
+
+
+def author_bio(language=None):
+    """The author's short bio in the language of the page."""
+    seo = seo_data()
+    return in_language(seo.get("author_bio", ""), seo.get("author_bio_en", ""), language)
+
+
 def ai_training_config():
     """Return the 'ai_training' block of the configuration (always a dict)."""
     value = CONFIG.get("ai_training", {})

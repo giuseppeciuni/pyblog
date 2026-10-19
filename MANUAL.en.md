@@ -609,6 +609,13 @@ was last saved. If you leave with unsaved changes, the browser asks you.
   They go into the pages' structured data (schema.org) and social meta tags:
   they help Google recognise you as an author and connect your profiles. All
   optional.
+- **Site and author in the other language:** subtitle, job title and short
+  bio for the pages in English (or in Italian, when the site is in English):
+  the header, the homepage description for Google and social networks, the
+  author box, the structured data and the feed. **Translate automatically**
+  fills all three from the main text; left empty, the pages in the other
+  language show the main text. On a site whose introduction is already
+  translated, the panel points out the ones missing.
 - **Logo and icon:** the site's logo and a custom favicon (left empty, PyBlog
   generates one with the title's initial).
 

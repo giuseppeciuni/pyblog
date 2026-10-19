@@ -88,6 +88,29 @@ $testata_sito
     </div>
   </div>
 
+  <!-- The same three texts for the pages in the other language. Empty, those
+       pages show the text in the main language, as before. -->
+  <div class="gruppo">
+    <h2>$label_gr_altra_lingua</h2>
+    <p class="aiuto">$hint_altra_lingua</p>
+    <div class="translation-bar">
+      <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="translateSiteTexts(this)">$icona_ai$label_traduci_italiano</button>
+      <span id="sito-en-status" class="hint" role="status"></span>
+    </div>
+    <div class="campo">
+      <label for="subtitle_en">$label_sottotitolo_en</label>
+      <input class="campo-input" type="text" id="subtitle_en" value="$valore_sottotitolo_en" lang="$codice_altra_lingua">
+    </div>
+    <div class="campo">
+      <label for="seo_author_role_en">$label_ruolo_en</label>
+      <input class="campo-input" type="text" id="seo_author_role_en" value="$valore_ruolo_en" lang="$codice_altra_lingua">
+    </div>
+    <div class="campo">
+      <label for="seo_author_bio_en">$label_bio_en</label>
+      <textarea class="campo-input" id="seo_author_bio_en" rows="3" lang="$codice_altra_lingua">$valore_bio_en</textarea>
+    </div>
+  </div>
+
   <div class="gruppo">
     <h2>$label_gr_immagini</h2>
     <div class="campo">

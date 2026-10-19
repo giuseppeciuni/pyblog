@@ -612,6 +612,13 @@ chiede.
   sito. Finiscono nei dati strutturati delle pagine (schema.org) e nei meta
   tag social: aiutano Google a riconoscerti come autore e a collegare i tuoi
   profili. Tutti facoltativi.
+- **Sito e autore nell'altra lingua:** sottotitolo, ruolo e breve
+  biografia per le pagine in inglese (o in italiano, se il sito è in
+  inglese): la testata, la descrizione della home per Google e per i
+  social, il box dell'autore, i dati strutturati e il feed. **Traduci
+  automaticamente** li riempie tutti e tre dal testo principale; vuoti, le
+  pagine nell'altra lingua mostrano il testo principale. Su un sito che ha
+  già la presentazione tradotta, il pannello segnala quelli che mancano.
 - **Logo e icona:** il logo del sito e una favicon personalizzata (vuota,
   PyBlog ne genera una con l'iniziale del titolo).
 

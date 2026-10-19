@@ -162,6 +162,7 @@ JS_TRANSLATION_KEYS = (
     # Translation
     "js_translating", "js_translated_review", "js_check_api_key",
     "js_net_error_translation", "js_write_intro_first", "js_translated_home",
+    "js_translated_site_texts", "js_write_site_texts_first",
     "js_media_recovered",
     # Settings
     "admin_codice_titolo", "admin_codice_elimina",
@@ -369,6 +370,8 @@ ICON_BACK = '<path d="M15 18l-6-6 6-6"/>'
 ICON_UP = '<path d="M12 19V5M5 12l7-7 7 7"/>'
 ICON_DOWN = '<path d="M12 5v14M19 12l-7 7-7-7"/>'
 ICON_NEXT = '<path d="M9 18l6-6-6-6"/>'
+ICON_AI_SPARKLE = ('<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/>'
+                   '<path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>')
 
 # The sections of the Settings page, in the order of the panel, as (id,
 # i18n key of the name). They are described in core/settings_panel.py.
@@ -1875,6 +1878,16 @@ def config_page(csrf):
         label_seo_autore_bio=T("admin_seo_autore_bio", la),
         hint_seo_autore_bio=T("admin_seo_autore_bio_hint", la),
         valore_seo_autore_bio=esc(seo.get("author_bio", "")),
+        label_gr_altra_lingua=TL("admin_gr_altra_lingua", la),
+        hint_altra_lingua=TL("admin_altra_lingua_hint", la),
+        label_sottotitolo_en=TL("admin_sottotitolo_en", la),
+        valore_sottotitolo_en=esc(config.get("subtitle_en", "")),
+        label_ruolo_en=TL("admin_ruolo_en", la),
+        valore_ruolo_en=esc(seo.get("author_role_en", "")),
+        label_bio_en=TL("admin_bio_en", la),
+        valore_bio_en=esc(seo.get("author_bio_en", "")),
+        codice_altra_lingua="en" if site_language == "it" else "it",
+        icona_ai=icon(ICON_AI_SPARKLE),
         ph_seo_author_bio=ph["seo_author_bio"],
         label_seo_profili=T("admin_seo_profili", la),
         hint_seo_profili=T("admin_seo_profili_hint", la),

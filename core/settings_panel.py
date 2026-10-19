@@ -20,7 +20,7 @@ import re
 from core import newsletter
 from core.build import projects_settings, snippet_consent
 from core.config import secret_setting
-from core.i18n import T
+from core.i18n import LANGUAGE_NAMES, T
 
 # The groups of the panel, in order. The advanced section belongs to none:
 # it is a link at the bottom, for whoever knows what config.json is.
@@ -215,6 +215,24 @@ def analytics_without_consent(config):
     return found
 
 
+def site_is_bilingual(config):
+    """
+    Whether the site already speaks its second language: the homepage
+    introduction has its translation. A cheap sign, read from the
+    configuration alone, that the pages in the other language are in use.
+    """
+    return plain_text(config.get("home_content_en", "")) != ""
+
+
+def texts_only_in_main_language(config):
+    """Whether the subtitle, the role or the bio is written but not translated."""
+    seo = _dict(config, "seo")
+    pairs = [(config.get("subtitle", ""), config.get("subtitle_en", "")),
+             (seo.get("author_role", ""), seo.get("author_role_en", "")),
+             (seo.get("author_bio", ""), seo.get("author_bio_en", ""))]
+    return any(_text(main) != "" and _text(other) == "" for main, other in pairs)
+
+
 def umami_is_set(config):
     return (_text(config.get("umami_url", "")) != ""
             and _text(config.get("umami_website_id", "")) != "")
@@ -234,6 +252,10 @@ def _state_site(config, la):
         problems.append(("warn", T("stato_manca_dominio", la)))
     if _text(config.get("author", "")) == "":
         problems.append(("warn", T("stato_manca_autore", la)))
+    if site_is_bilingual(config) and texts_only_in_main_language(config):
+        main = config.get("language", "it") if config.get("language") in ("it", "en") else "it"
+        problems.append(("warn", T("stato_testi_solo_principale", la)
+                         .replace("{principale}", LANGUAGE_NAMES[main][la])))
     if problems:
         return problems
     domain = re.sub(r"^https?://", "", _text(config.get("base_url", ""))).rstrip("/")

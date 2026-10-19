@@ -107,6 +107,14 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **The subtitle and the author speak the second language too.** The pages
+  in English of an Italian site showed the Italian subtitle in the header,
+  in the description Google and social networks show for the homepage, in
+  the feed, and the Italian role and bio in the author box and in the data
+  for search engines. Site and author now has the three texts for the
+  other language, with a button that translates them in one go; left
+  empty, the main text shows as before. The panel warns when a site with a
+  translated introduction still has them in one language only.
 - **The Settings open on a panel that says how things stand.** The side
   menu used to list twelve sections with nothing but their names, and some
   of the names said little ("Pages", "Advanced", "AI training"). Now

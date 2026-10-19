@@ -48,6 +48,7 @@ def finished_config():
     c["base_url"] = "https://www.ciunix.com"
     c["home_content"] = "<p>Scrivo di AI e sistemi distribuiti.</p>"
     c["home_content_en"] = "<p>I write about AI and distributed systems.</p>"
+    c["subtitle_en"] = "Technical notes on AI, distributed systems and more"
     c["home_cards"] = [{"active": True, "title": "Contatti", "content": "<p>Scrivimi.</p>"}]
     return c
 
@@ -113,6 +114,24 @@ def test_sito_e_home():
     c["home_content"] = "<p><br></p>"
     c["home_content_en"] = ""
     check("una presentazione vuota è spenta, non un errore", state("home", c)[0] == "off")
+
+
+def test_testi_nell_altra_lingua():
+    """A bilingual site with the subtitle or the bio in one language only."""
+    print("\ntesti nell'altra lingua")
+    c = finished_config()
+    c["seo"]["author_role"] = "Programmatore"
+    avviso = ("warn", T("stato_testi_solo_principale", "it").replace("{principale}", "italiano"))
+    check("ruolo scritto solo in italiano su un sito bilingue: avviso",
+          state("sito", c) == avviso, str(state("sito", c)))
+    check("in inglese l'avviso nomina la lingua in inglese",
+          state("sito", c, "en")[1] == T("stato_testi_solo_principale", "en")
+          .replace("{principale}", "Italian"))
+    c["seo"]["author_role_en"] = "Software developer"
+    check("tradotto anche il ruolo, l'avviso sparisce", state("sito", c)[0] == "ok")
+    c["home_content_en"] = ""
+    c["subtitle_en"] = ""
+    check("un sito che non usa la seconda lingua non riceve l'avviso", state("sito", c)[0] == "ok")
 
 
 def test_riquadri():
@@ -318,6 +337,7 @@ def main():
     test_descrizione_delle_sezioni()
     test_sito_finito()
     test_sito_e_home()
+    test_testi_nell_altra_lingua()
     test_riquadri()
     test_biografia_progetti_commenti()
     test_statistiche()

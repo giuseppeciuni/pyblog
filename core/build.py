@@ -28,10 +28,10 @@ from core.articles import (articles_visible_in_language, card_slug,
                            slugify)
 from core.config import (CONFIG, CONFIG_DEFAULT, MEDIA_DIR, OUTPUT_DIR,
                          ai_training_config, archive_file_name,
-                         articles_per_page_count, feed_file_name,
-                         language_url_prefix, main_language,
+                         articles_per_page_count, author_bio, author_role,
+                         feed_file_name, language_url_prefix, main_language,
                          pagination_folder, reload_global_config,
-                         secondary_language, seo_data)
+                         secondary_language, seo_data, site_subtitle)
 from core.i18n import LANGUAGE_NAMES, T
 from core.render import esc, js
 
@@ -734,7 +734,7 @@ def anchored_code_block(page_kind, article=()):
     return "\n".join(part for part in parts if part != "")
 
 
-def person_jsonld():
+def person_jsonld(language=None):
     """
     Build the author's schema.org Person, enriched with the configured
     personal SEO data (url, photo, role, bio, social profiles).
@@ -747,10 +747,10 @@ def person_jsonld():
         person["url"] = seo["author_url"]
     if seo.get("author_image"):
         person["image"] = seo["author_image"]
-    if seo.get("author_role"):
-        person["jobTitle"] = seo["author_role"]
-    if seo.get("author_bio"):
-        person["description"] = seo["author_bio"]
+    if author_role(language):
+        person["jobTitle"] = author_role(language)
+    if author_bio(language):
+        person["description"] = author_bio(language)
     profiles = seo.get("social_profiles", [])
     if isinstance(profiles, list) and len(profiles) > 0:
         person["sameAs"] = profiles
@@ -844,7 +844,7 @@ def site_header(language="it", nav_extra="", is_home=False):
         salta_contenuto=T("salta_contenuto", language),
         url_home=prefix + "/",
         titolo_sito=titolo_sito,
-        sottotitolo=esc(CONFIG["subtitle"]),
+        sottotitolo=esc(site_subtitle(language)),
         label_menu=T("menu", language),
         aria_menu=esc(T("menu_principale", language)),
         label_home=T("home", language),
@@ -1292,8 +1292,8 @@ def generate_author_box(language="it"):
     shown (a half-empty box makes the page worse, not better).
     """
     seo = seo_data()
-    role = seo.get("author_role", "")
-    bio = seo.get("author_bio", "")
+    role = author_role(language)
+    bio = author_bio(language)
     photo = seo.get("author_image", "")
     profiles = seo.get("social_profiles", [])
     if not isinstance(profiles, list):
@@ -1936,11 +1936,11 @@ def profile_box(language):
     added when one is configured.
     """
     seo = seo_data()
-    role = seo.get("author_role", "") or CONFIG.get("subtitle", "")
+    role = author_role(language) or site_subtitle(language)
     lines = ['        <div class="profilo">' + avatar_html("profilo-foto")
              + '<div><p class="profilo-nome">' + esc(CONFIG.get("author", ""))
              + '</p><p class="profilo-ruolo">' + esc(role) + "</p></div></div>"]
-    bio = seo.get("author_bio", "")
+    bio = author_bio(language)
     if bio != "":
         lines.append('        <p class="profilo-bio">' + esc(bio) + "</p>")
     author_url = seo.get("author_url", "")
@@ -2284,7 +2284,7 @@ def generate_article_page(art, language="it", all_articles=None):
         "@type": "Article",
         "headline": title_value,
         "description": description,
-        "author": person_jsonld(),
+        "author": person_jsonld(language),
         "datePublished": art["date"],
         "dateModified": art.get("date_modified", art["date"]),
         "url": page_url,
@@ -2883,19 +2883,19 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": CONFIG["site_title"],
-        "description": CONFIG["subtitle"],
+        "description": site_subtitle(language),
         "url": base + "/",
         "inLanguage": language,
-        "author": person_jsonld(),
+        "author": person_jsonld(language),
     }, ensure_ascii=False)
 
     meta_extra = "\n".join([
-        f'  <meta name="description" content="{esc(CONFIG["subtitle"])}">',
+        f'  <meta name="description" content="{esc(site_subtitle(language))}">',
         f'  <meta name="author" content="{esc(CONFIG["author"])}">',
         f'  <link rel="canonical" href="{url_canonico_home}">',
         "  " + hreflang_home,
         f'  <meta property="og:title" content="{esc(CONFIG["site_title"])}">',
-        f'  <meta property="og:description" content="{esc(CONFIG["subtitle"])}">',
+        f'  <meta property="og:description" content="{esc(site_subtitle(language))}">',
         '  <meta property="og:type" content="website">',
         f'  <meta property="og:url" content="{url_canonico_home}">',
         "  " + social_meta(language),
@@ -2936,7 +2936,7 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
     return render_page(
         language,
         " &middot; ".join(esc(part) for part in (CONFIG["site_title"].strip(),
-                                                    CONFIG["subtitle"].strip()) if part != ""),
+                                                    site_subtitle(language)) if part != ""),
         contenuto,
         meta_extra=meta_extra,
         head_extra=head_extra,
@@ -3175,7 +3175,7 @@ def generate_rss(articles, language=None):
     <title>{esc(CONFIG['site_title'])}</title>
     <atom:link href="{base}/{feed_file_name(language)}" rel="self" type="application/rss+xml"/>
     <link>{base}{prefix}/</link>
-    <description>{esc(CONFIG['subtitle'])}</description>
+    <description>{esc(site_subtitle(language))}</description>
     <language>{language}</language>
     <lastBuildDate>{ora}</lastBuildDate>
 {items}
