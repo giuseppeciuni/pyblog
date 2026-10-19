@@ -119,7 +119,9 @@ All notable changes to PyBlog are documented in this file.
   else. Analytics is now a section of its own, apart from the external
   code, and the unclear names changed: Homepage boxes, Automatic
   translation, External code, Cookie banner, AI permissions, Configuration
-  file.
+  file. Colours say what is done: green cards are in order, orange ones
+  need fixing, and inside a section the fields already filled in, the
+  ticked boxes and the external codes switched on are green too.
 - **First steps on the Articles page.** Until the site is ready for
   readers, a box at the top lists what a visitor would notice: no title or
   domain, example texts still on the homepage, Google Analytics counting
