@@ -6,6 +6,21 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **The editor trusts less what comes from outside.** Five defences relied
+  on nobody reaching the editor except through the author's browser, which
+  stops being true behind nginx:
+  - every POST of the logged-in author now needs the CSRF token, including
+    any route added later and forgotten in the list;
+  - the server no longer answers HEAD requests for any file of its folder,
+    `admin_password.txt` included;
+  - before a password exists, a request forwarded by the reverse proxy
+    cannot create it unless it comes from the server itself (on a computer
+    and with Docker nothing changes);
+  - the password file is readable by its owner only and written in one
+    step;
+  - without a domain in the Settings, the links in the newsletter emails
+    no longer take the address from the `Host` header, which whoever sends
+    the request decides.
 - **Word import: a field left open no longer swallows the rest of the
   document.** A field with a start mark and no end mark (a damaged
   document, some converters) made everything after it disappear from the
