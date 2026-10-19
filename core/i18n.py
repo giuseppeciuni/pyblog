@@ -914,6 +914,8 @@ UI_TRANSLATIONS = {
     "err_no_file_received": {"it": "Nessun file ricevuto.", "en": "No file received."},
     "err_password_too_short": {"it": "La password deve avere almeno 6 caratteri.",
                                "en": "The password must be at least 6 characters long."},
+    "err_setup_remote": {"it": "La prima password si crea da questo computer: python3 pyblog.py password.",
+                         "en": "The first password is created on this computer: python3 pyblog.py password."},
     "err_passwords_dont_match_setup": {"it": "Le due password non coincidono.", "en": "The two passwords do not match."},
     "err_too_many_attempts": {"it": "Troppi tentativi errati. Riprova tra {n} secondi.",
                               "en": "Too many failed attempts. Try again in {n} seconds."},
