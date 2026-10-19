@@ -36,6 +36,7 @@ BUNDLED_MODULES = (
     ("core.auth", "core/auth.py"),
     ("core.docx_import", "core/docx_import.py"),
     ("core.build", "core/build.py"),
+    ("core.settings_panel", "core/settings_panel.py"),
     ("core.server", "core/server.py"),
 )
 

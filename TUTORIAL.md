@@ -306,7 +306,7 @@ per Anthropic, `PYBLOG_OPENAI_API_KEY`, `PYBLOG_DEEPSEEK_API_KEY`,
 PYBLOG_LLM_API_KEY=sk-ant-...
 ```
 
-poi `sudo systemctl restart pyblog`. In **Impostazioni → Traduzione** scegli
+poi `sudo systemctl restart pyblog`. In **Impostazioni → Traduzione automatica** scegli
 il servizio e lascia vuoto il campo della chiave. Consiglio: una chiave
 usata solo per il blog, con un tetto di spesa mensile impostato nella
 console del servizio.

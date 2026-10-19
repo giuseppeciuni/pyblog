@@ -2881,11 +2881,9 @@ function initConfigPage() {
 
   labelQuillEditors();
   watchConfigChanges();
+  indexSettingsSearch();
   showConfigSection(false);
   window.addEventListener('hashchange', function() { showConfigSection(true); });
-  // Turning a tablet round can cross the phone width: the page without a
-  // section shows the list on a phone and the first section on a computer.
-  PB_TELEFONO.addEventListener('change', function() { showConfigSection(false); });
 }
 
 // Quill writes into a div of its own: the name and the help the template
@@ -2906,21 +2904,16 @@ function labelQuillEditors() {
 
 /* --- Settings: one section at a time ------------------------------------- */
 
-var PB_TELEFONO = window.matchMedia('(max-width: 860px)');
-
-// Shows the section named in the address (#sito, #home...). With none, a
-// phone shows the list of sections and a computer the first one, since its
-// side menu already lists them. After a click in the menu (spostaFuoco) the
-// focus moves to the section's title, so a screen reader starts from there.
+// Shows the section named in the address (#sito, #home...). With none, or
+// with #elenco, the panel of all the sections shows, on a computer as on a
+// phone. After a click (spostaFuoco) the focus moves to the title of what
+// is now on screen, so a screen reader starts from there.
 function showConfigSection(spostaFuoco) {
   var richiesta = window.location.hash.replace('#', '');
   var sezioni = document.querySelectorAll('.impostazioni .sezione');
   var trovata = null;
   for (var i = 0; i < sezioni.length; i++) {
     if (sezioni[i].getAttribute('data-sezione') === richiesta) { trovata = sezioni[i]; }
-  }
-  if (trovata === null && richiesta !== 'elenco' && !PB_TELEFONO.matches) {
-    trovata = sezioni[0];
   }
   for (var j = 0; j < sezioni.length; j++) {
     sezioni[j].hidden = sezioni[j] !== trovata;
@@ -2929,14 +2922,6 @@ function showConfigSection(spostaFuoco) {
 
   var chiave = trovata ? trovata.getAttribute('data-sezione') : 'elenco';
   document.getElementById('impostazioni').setAttribute('data-sezione', chiave);
-  var voci = document.querySelectorAll('.voce-sotto[data-sezione]');
-  for (var k = 0; k < voci.length; k++) {
-    if (voci[k].getAttribute('data-sezione') === chiave) {
-      voci[k].setAttribute('aria-current', 'page');
-    } else {
-      voci[k].removeAttribute('aria-current');
-    }
-  }
   updateSaveBar();
 
   if (trovata !== null) {
@@ -2951,6 +2936,76 @@ function showConfigSection(spostaFuoco) {
     titolo.setAttribute('tabindex', '-1');
     titolo.focus({ preventScroll: true });
   }
+}
+
+/* --- Settings: searching the panel ------------------------------------------ */
+
+// Lower case and without accents, so "pubblicità" is found by "pubblicita".
+function normalizeSearch(testo) {
+  return testo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+// Each card is found by its name, its description and its keywords, and
+// also by the words of its section: the titles and the labels of the
+// fields. Someone who types "smtp" or "giscus" finds the right card even
+// though neither word is on it.
+function indexSettingsSearch() {
+  var schede = document.querySelectorAll('.scheda-impostazione');
+  for (var i = 0; i < schede.length; i++) {
+    var sezione = document.getElementById('sezione-' + schede[i].getAttribute('data-sezione'));
+    var parole = [schede[i].textContent, schede[i].getAttribute('data-cerca') || ''];
+    if (sezione) {
+      var nomi = sezione.querySelectorAll('h1, h2, label, .campo-titolo');
+      for (var j = 0; j < nomi.length; j++) { parole.push(nomi[j].textContent); }
+    }
+    schede[i].setAttribute('data-indice', normalizeSearch(parole.join(' ')));
+  }
+}
+
+// Every word typed has to be somewhere in a card's index for it to stay.
+function filterSettings() {
+  var parole = normalizeSearch(document.getElementById('cerca-impostazioni').value)
+    .split(/\s+/).filter(function(p) { return p !== ''; });
+  var visibili = 0;
+  var gruppi = document.querySelectorAll('.pannello-gruppo');
+  for (var g = 0; g < gruppi.length; g++) {
+    var nelGruppo = 0;
+    var schede = gruppi[g].querySelectorAll('.scheda-impostazione');
+    for (var i = 0; i < schede.length; i++) {
+      var indice = schede[i].getAttribute('data-indice') || '';
+      var tiene = parole.every(function(p) { return indice.indexOf(p) !== -1; });
+      schede[i].parentNode.hidden = !tiene;
+      if (tiene) { nelGruppo++; }
+    }
+    gruppi[g].hidden = nelGruppo === 0;
+    visibili += nelGruppo;
+  }
+  document.getElementById('pannello-nessuna').hidden = visibili > 0;
+}
+
+// After a save the states on the cards are old: the page asks the server
+// for the panel again and swaps the cards in, keeping what was typed in
+// the search. A failure leaves the old cards; the next visit is right.
+function refreshSettingsPanel() {
+  fetch('/config', { credentials: 'same-origin' })
+    .then(function(risposta) { return risposta.ok ? risposta.text() : Promise.reject(); })
+    .then(function(testo) {
+      var nuovo = new DOMParser().parseFromString(testo, 'text/html').getElementById('pannello-gruppi');
+      if (!nuovo) { return; }
+      document.getElementById('pannello-gruppi').innerHTML = nuovo.innerHTML;
+      // The warnings at the top of each section are old too.
+      var avvisi = document.querySelectorAll('.sezione-avvisi');
+      for (var i = 0; i < avvisi.length; i++) {
+        var fresco = nuovo.ownerDocument.getElementById(avvisi[i].id);
+        if (fresco) {
+          avvisi[i].innerHTML = fresco.innerHTML;
+          avvisi[i].hidden = fresco.hidden;
+        }
+      }
+      indexSettingsSearch();
+      filterSettings();
+    })
+    .catch(function() { });
 }
 
 /* --- Settings: unsaved changes ------------------------------------------- */
@@ -3834,6 +3889,7 @@ function saveConfig(pulsante) {
         versioneConsensoSalvata = config.consent.version;
         configModificata = false;
         pbToast(t('admin_config_salvata'), 'success');
+        refreshSettingsPanel();
       } else {
         pbToast(t('js_error_prefix') + res.error, 'danger');
       }
@@ -3874,6 +3930,7 @@ function saveRawConfig(pulsante) {
         pbToast(t('admin_config_raw_salvata'), 'success');
         // We update the "original" reference to the newly saved content.
         configRawIniziale = contenuto;
+        refreshSettingsPanel();
       } else {
         pbToast(t('js_error_prefix') + res.error, 'danger');
       }

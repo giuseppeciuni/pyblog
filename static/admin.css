@@ -94,17 +94,44 @@ label.campo-etichettato { display:block; font-weight:400; margin:0; }
 label.campo-etichettato > .etichetta { display:block; font-weight:600; font-size:0.875rem; margin:1rem 0 0.3rem; }
 .editor-wrap label.campo-etichettato { font-weight:400; margin:0; }
 
-/* The list of sections that /config opens on a phone. */
-.sezioni-elenco ul { list-style:none; margin:1rem 0 0; padding:0; background:var(--a-superficie);
-                     border:1px solid var(--a-bordo); border-radius:12px; }
-.sezioni-elenco li + li { border-top:1px solid #eef0f3; }
-.sezioni-voce { display:grid; grid-template-columns:1fr auto; align-items:center; gap:0 0.75rem; padding:0.875rem 1rem;
-                min-height:44px; color:var(--a-testo); text-decoration:none; }
-.sezioni-voce:hover { background:#fafbfc; color:var(--a-testo); }
-.sezioni-voce:focus-visible { outline:3px solid var(--a-accento); outline-offset:-3px; border-radius:12px; }
-.sezioni-voce-nome { font-weight:600; }
-.sezioni-voce-desc { grid-column:1; font-size:0.875rem; color:var(--a-testo-2); }
-.sezioni-voce .icona { grid-column:2; grid-row:1 / span 2; color:var(--a-testo-2); }
+/* The panel /config opens on: the sections grouped, each card with what it
+   is for and how it stands now. Cards side by side on a computer, one under
+   the other on a phone. The panel is wider than a single section: it is a
+   page of choices, not a form. */
+.impostazioni[data-sezione="elenco"] { max-width:var(--a-larghezza-pagina); }
+.pannello { display:flex; flex-direction:column; gap:1.75rem; }
+.pannello-testata { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:1rem; }
+.pannello-cerca { flex:0 1 20rem; }
+#pannello-gruppi { display:flex; flex-direction:column; gap:2rem; }
+.pannello-gruppo { display:flex; flex-direction:column; gap:0.75rem; }
+.pannello-gruppo[hidden], .pannello-schede li[hidden] { display:none; }
+.pannello-gruppo-titolo { margin:0; font-size:0.875rem; font-weight:700; letter-spacing:0.04em;
+                          text-transform:uppercase; color:var(--a-testo-2); }
+.pannello-schede { list-style:none; margin:0; padding:0; display:grid;
+                   grid-template-columns:repeat(auto-fill, minmax(15rem, 1fr)); gap:0.75rem; }
+.pannello-schede li { display:flex; }
+.scheda-impostazione { flex:1; display:grid; grid-template-columns:1fr auto; align-content:start; gap:0.25rem 0.75rem;
+                       padding:1rem 1.125rem; min-height:44px; background:var(--a-superficie);
+                       border:1px solid var(--a-bordo); border-radius:12px; color:var(--a-testo); text-decoration:none; }
+.scheda-impostazione:hover { border-color:var(--a-bordo-campo); background:#fafbfc; color:var(--a-testo); }
+.scheda-impostazione:focus-visible { outline:3px solid var(--a-accento); outline-offset:2px; }
+.scheda-nome { font-weight:600; font-size:1rem; }
+.scheda-desc { grid-column:1; font-size:0.875rem; color:var(--a-testo-2); }
+.scheda-impostazione > .icona { grid-column:2; grid-row:1 / span 3; align-self:center; color:var(--a-testo-2); }
+.scheda-stato { grid-column:1; margin-top:0.375rem; font-size:0.8125rem; font-weight:600;
+                display:inline-flex; align-items:center; gap:0.375rem; }
+.scheda-stato .icona { flex:none; }
+.stato-ok { color:#1a6b34; }
+.stato-off { color:#4a525c; font-weight:500; }
+.stato-warn { color:#8a4b00; }
+.pannello-avanzate { margin:0; font-size:0.875rem; color:var(--a-testo-2); }
+.sezione-occhiello a { color:var(--a-testo-2); }
+.sezione-avvisi { list-style:none; margin:0; padding:0.75rem 1rem; background:#fffaf2; border:1px solid #f0d9b5;
+                  border-radius:12px; display:flex; flex-direction:column; gap:0.375rem; }
+.sezione-avvisi[hidden] { display:none; }
+.sezione-avvisi li { display:flex; align-items:flex-start; gap:0.5rem; font-weight:500; }
+.sezione-avvisi .icona { color:#8a4b00; flex:none; margin-top:0.2rem; }
+.sezione-occhiello a:hover { color:var(--a-accento); }
 
 /* The save bar stays at the bottom of the window. The page keeps room
    under the fields, so a focused field is never hidden behind it. */
@@ -121,6 +148,11 @@ label.campo-etichettato > .etichetta { display:block; font-weight:600; font-size
 html:has(body.pagina-config) { scroll-padding-bottom:7rem; }
 @media (max-width: 860px) {
   .sezione-testata .sezione-indietro { display:inline-flex; }
+  .pannello-cerca { flex:1 1 100%; }
+  .pannello-schede { grid-template-columns:1fr; gap:0; border:1px solid var(--a-bordo); border-radius:12px;
+                     background:var(--a-superficie); overflow:hidden; }
+  .pannello-schede li + li { border-top:1px solid #eef0f3; }
+  .scheda-impostazione { border:0; border-radius:0; }
   .gruppo { padding:1rem; }
   .campi-due { grid-template-columns:1fr; }
   .barra-salva { margin-left:-1rem; margin-right:-1rem; border-radius:0; padding:0.75rem 1rem; }
@@ -564,6 +596,23 @@ select.campo-input { padding-right:2rem; }
 .elenco-ordina label { font-size:0.9375rem; color:var(--a-testo-2); }
 .elenco-articoli { background:var(--a-superficie); border:1px solid var(--a-bordo); border-radius:12px; }
 .elenco-articoli:empty { display:none; }
+/* First steps: what a visitor would notice is unfinished. It sits above the
+   list until nothing is left, then disappears. */
+.primi-passi { background:#fffaf2; border:1px solid #f0d9b5; border-radius:12px; padding:1.25rem 1.25rem 0.5rem; }
+.primi-passi h2 { margin:0; font-size:1.0625rem; font-weight:650; display:flex; align-items:center; gap:0.5rem; }
+.primi-passi-conta { font-size:0.8125rem; font-weight:700; color:#8a4b00; background:#fdf0e1;
+                     border-radius:99px; padding:0.0625rem 0.5rem; }
+.primi-passi .aiuto { margin-top:0.25rem; }
+.primi-passi ul { list-style:none; margin:0.75rem 0 0; padding:0; }
+.primi-passi li { display:grid; grid-template-columns:1fr auto; align-items:center; gap:0.75rem;
+                  padding:0.625rem 0; border-top:1px solid #f0e2cc; }
+.passo-testo { display:flex; align-items:flex-start; gap:0.5rem; }
+.passo-testo .icona { color:#8a4b00; flex:none; margin-top:0.2rem; }
+.passo-dove { font-weight:650; }
+.passo-dove::after { content:" ·"; font-weight:400; }
+.passo-link { display:inline-flex; align-items:center; gap:0.25rem; min-height:44px; padding:0 0.25rem;
+              font-weight:600; white-space:nowrap; text-decoration:none; }
+.passo-link:hover { text-decoration:underline; }
 .elenco-vuoto { margin:0; padding:2rem 1rem; text-align:center; color:var(--a-testo-2); }
 .elenco-vuoto[hidden] { display:none; }
 .riga-articolo { position:relative; display:flex; align-items:center; gap:1rem; padding:0.875rem 1.25rem;

@@ -307,7 +307,7 @@ with a line like this one (the name depends on the service:
 PYBLOG_LLM_API_KEY=sk-ant-...
 ```
 
-then `sudo systemctl restart pyblog`. In **Settings → Translation** choose
+then `sudo systemctl restart pyblog`. In **Settings → Automatic translation** choose
 the service and leave the key field empty. Tip: a key used only for the
 blog, with a monthly spending cap set in the service's console.
 

@@ -107,6 +107,25 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **The Settings open on a panel that says how things stand.** The side
+  menu used to list twelve sections with nothing but their names, and some
+  of the names said little ("Pages", "Advanced", "AI training"). Now
+  Settings opens on a panel of cards in four groups, on a computer as on a
+  phone: each card says what the section is for and how it stands now
+  ("Off", "DeepL: the key is missing", "Google Analytics loaded 2 times").
+  A search finds a section from any word of its fields too ("smtp" finds
+  the newsletter). The sections describe themselves in one place,
+  `core/settings_panel.py`, so a new one is an entry there and nothing
+  else. Analytics is now a section of its own, apart from the external
+  code, and the unclear names changed: Homepage boxes, Automatic
+  translation, External code, Cookie banner, AI permissions, Configuration
+  file.
+- **First steps on the Articles page.** Until the site is ready for
+  readers, a box at the top lists what a visitor would notice: no title or
+  domain, example texts still on the homepage, Google Analytics counting
+  every visit twice, the cookie banner off while Google Analytics sets
+  cookies, nothing published yet. Each line leads to the section that fixes
+  it, and the box goes away when nothing is left.
 - **Labs on the homepage, and a lab created from its article.** The
   homepage opens with the latest three labs, each with its link to the
   code. "Create the lab of this article", in the editor and in the list of

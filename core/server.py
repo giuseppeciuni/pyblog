@@ -22,7 +22,7 @@ import zipfile
 from datetime import datetime, timezone
 
 from core import build as build_module
-from core import i18n, newsletter, render
+from core import i18n, newsletter, render, settings_panel
 from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
 from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, SlugTakenError,
@@ -370,22 +370,10 @@ ICON_UP = '<path d="M12 19V5M5 12l7-7 7 7"/>'
 ICON_DOWN = '<path d="M12 5v14M19 12l-7 7-7-7"/>'
 ICON_NEXT = '<path d="M9 18l6-6-6-6"/>'
 
-# The sections of the Settings page, in the order of the menu: the things
-# set once and looked at often first, the technical ones last.
-CONFIG_SECTIONS = [
-    ("sito", "admin_sez_sito"),
-    ("home", "admin_sez_home"),
-    ("biografia", "admin_sez_biografia"),
-    ("progetti", "admin_sez_progetti"),
-    ("pagine", "admin_sez_pagine"),
-    ("commenti", "admin_sez_commenti"),
-    ("newsletter", "admin_sez_newsletter"),
-    ("traduzione", "admin_sez_traduzione"),
-    ("codici", "admin_sez_codici"),
-    ("cookie", "admin_sez_cookie"),
-    ("ai", "admin_sez_ai"),
-    ("avanzate", "admin_sez_avanzate"),
-]
+# The sections of the Settings page, in the order of the panel, as (id,
+# i18n key of the name). They are described in core/settings_panel.py.
+CONFIG_SECTIONS = [(entry["id"], entry["label"]) for entry in settings_panel.SECTIONS]
+ICON_WARN = ('<path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5h.01"/>')
 ICON_MORE = ('<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/>'
              '<circle cx="19" cy="12" r="1"/>')
 
@@ -418,24 +406,11 @@ def admin_navbar(active_page, language, articles_count=None):
         count_html = ""
         if count != "":
             count_html = f'<span class="voce-conta">{count}</span>'
-        if key == "config" and active_page == "config":
-            # On the Settings page the item opens up into its sections;
-            # admin.js marks the one on screen.
-            menu_html.append(
-                f'    <a class="voce voce-genitore" href="{url}">{icon(path)}'
-                f'<span class="voce-testo">{label}</span></a>')
-            menu_html.append(
-                f'    <div class="voce-sotto-gruppo" role="group" aria-label="{label}">')
-            for section, label_key in CONFIG_SECTIONS:
-                menu_html.append(
-                    f'      <a class="voce voce-sotto" href="{url}#{section}" '
-                    f'data-sezione="{section}"><span class="voce-testo">'
-                    f'{T(label_key, language)}</span></a>')
-            menu_html.append('    </div>')
-        else:
-            menu_html.append(
-                f'    <a class="voce"{current} href="{url}">{icon(path)}'
-                f'<span class="voce-testo">{label}</span>{count_html}</a>')
+        # The Settings item stays one line: its sections are in the panel
+        # it opens, each with what it is for and how it stands.
+        menu_html.append(
+            f'    <a class="voce"{current} href="{url}">{icon(path)}'
+            f'<span class="voce-testo">{label}</span>{count_html}</a>')
         bar_html.append(
             f'  <a class="barra-voce"{current} href="{url}">{icon(path, 22)}'
             f'<span>{short_label}</span></a>')
@@ -607,6 +582,38 @@ def change_password_page(csrf, error_message="", success_message=""):
                             csrf=csrf, navbar=admin_navbar("password", la))
 
 
+def setup_steps_html(articles, la):
+    """
+    The "First steps" box at the top of the dashboard: what a visitor of the
+    site would notice is unfinished, each with a link to where it is fixed.
+    It disappears once there is nothing left.
+    """
+    steps = settings_panel.setup_steps(load_config(), articles, la)
+    if not steps:
+        return ""
+    rows = []
+    for section_id, text in steps:
+        if section_id == "":
+            href, action, where = "/edit", T("admin_scrivi", la), ""
+        else:
+            href, action = "/config#" + section_id, T("admin_sistema", la)
+            # "Off, but Google Analytics uses cookies" needs to say what is off.
+            where = (f'<span class="passo-dove">'
+                     f'{T(settings_panel.section(section_id)["label"], la)}</span> ')
+        rows.append(
+            f'      <li><span class="passo-testo">{icon(ICON_WARN, 18)}'
+            f'<span>{where}{esc(text)}</span></span>'
+            f'<a class="passo-link" href="{href}">{action}'
+            f'<span class="vh">: {esc(text)}</span>{icon(ICON_NEXT, 16)}</a></li>')
+    return (
+        '  <section class="primi-passi" aria-labelledby="primi-passi-titolo">\n'
+        f'    <h2 id="primi-passi-titolo">{T("admin_primi_passi", la)} '
+        f'<span class="primi-passi-conta">{len(steps)}</span></h2>\n'
+        f'    <p class="aiuto">{T("admin_primi_passi_desc", la)}</p>\n'
+        '    <ul>\n' + "\n".join(rows) + '\n    </ul>\n'
+        '  </section>')
+
+
 def admin_page(articles, csrf):
     """
     Administration dashboard: the list of every article with its status,
@@ -756,6 +763,7 @@ def admin_page(articles, csrf):
         ordina_stato=T("admin_ordina_stato", la),
         elenco=listing,
         nessun_corrisponde=T("admin_nessun_corrisponde", la),
+        primi_passi=setup_steps_html(articles, la),
     )
 
     return admin_page_shell(
@@ -1449,34 +1457,85 @@ def help_text(text):
     return text
 
 
-def config_sections_list(la):
-    """The list of the Settings sections, what /config opens on a phone."""
-    rows = []
-    for key, label_key in CONFIG_SECTIONS:
-        rows.append(
-            f'    <li><a class="sezioni-voce" href="#{key}">'
-            f'<span class="sezioni-voce-nome">{T(label_key, la)}</span>'
-            f'<span class="sezioni-voce-desc">{TL(label_key + "_desc", la)}</span>'
-            f'{icon(ICON_NEXT, 20)}</a></li>')
-    return "\n".join(rows)
+def section_state_html(section_id, config, la):
+    """The state line of a card: a tone the CSS colours, and its text."""
+    state = settings_panel.section_state(section_id, config, la)
+    if state is None:
+        return ""
+    tone, text = state
+    warn = ""
+    if tone == "warn":
+        # The colour alone would leave a screen reader with no warning.
+        warn = icon(ICON_WARN, 16) + f'<span class="vh">{T("admin_stato_tono_warn", la)}: </span>'
+    return f'<span class="scheda-stato stato-{tone}">{warn}{esc(text)}</span>'
 
 
-def config_section_header(key, la):
+def section_warnings_html(key, config, la):
+    """
+    What a section has to fix, at the top of the section itself: whoever
+    opens Analytics because the panel warned about it finds the warning
+    again where the fields are. The list is there even when empty, so that
+    admin.js can fill it after a save.
+    """
+    rows = [f'    <li>{icon(ICON_WARN, 18)}{esc(text)}</li>'
+            for tone, text in settings_panel.section_states(key, config, la) if tone == "warn"]
+    hidden = "" if rows else " hidden"
+    return (f'  <ul class="sezione-avvisi" id="avvisi-{key}"{hidden}>\n'
+            + "\n".join(rows) + ("\n" if rows else "") + '  </ul>')
+
+
+def config_sections_list(la, config=None):
+    """
+    The Settings panel, what /config opens on: the sections grouped, each
+    card with what it is for and how it stands now. data-cerca carries the
+    words the search matches besides the visible ones; admin.js adds the
+    labels of the section's fields.
+    """
+    if config is None:
+        config = CONFIG
+    parts = []
+    for group_id, group_key in settings_panel.GROUPS:
+        cards = []
+        for entry in settings_panel.sections_of(group_id):
+            key = entry["id"]
+            cards.append(
+                f'      <li><a class="scheda-impostazione" href="#{key}" data-sezione="{key}" '
+                f'data-cerca="{esc(entry["keywords"])}">'
+                f'<span class="scheda-nome">{T(entry["label"], la)}</span>'
+                f'<span class="scheda-desc">{TL(entry["label"] + "_desc", la)}</span>'
+                f'{section_state_html(key, config, la)}'
+                f'{icon(ICON_NEXT, 20)}</a></li>')
+        parts.append(
+            f'  <div class="pannello-gruppo" role="group" aria-labelledby="gruppo-{group_id}">\n'
+            f'    <h2 class="pannello-gruppo-titolo" id="gruppo-{group_id}">{T(group_key, la)}</h2>\n'
+            f'    <ul class="pannello-schede">\n' + "\n".join(cards) + '\n    </ul>\n'
+            '  </div>')
+    return "\n".join(parts)
+
+
+def config_section_header(key, la, config=None):
     """
     The top of a Settings section: on a phone a link back to the list, then
     the name of the section and one line about what it holds.
     """
     label_key = dict(CONFIG_SECTIONS)[key]
+    # The way back is the first word of the breadcrumb, on every screen;
+    # the phone also gets the arrow it expects in the corner.
+    trail = f'<a href="#elenco">{T("admin_impostazioni", la)}</a>'
+    group_key = settings_panel.group_label(key)
+    if group_key != "":
+        trail = trail + f' <span aria-hidden="true">›</span> {T(group_key, la)}'
     return (
         '  <div class="sezione-testata">\n'
         f'    <a class="pulsante pulsante-icona sezione-indietro" href="#elenco" '
         f'aria-label="{esc(T("admin_torna_impostazioni", la))}">{icon(ICON_BACK, 22)}</a>\n'
         '    <div>\n'
-        f'      <p class="sezione-occhiello">{T("admin_impostazioni", la)}</p>\n'
+        f'      <p class="sezione-occhiello">{trail}</p>\n'
         f'      <h1 class="pagina-titolo" id="titolo-{key}">{T(label_key, la)}</h1>\n'
         f'      <p class="pagina-sottotitolo">{TL(label_key + "_desc", la)}</p>\n'
         '    </div>\n'
-        '  </div>')
+        '  </div>\n'
+        + section_warnings_html(key, config if config is not None else CONFIG, la))
 
 
 def config_page(csrf):
@@ -1659,7 +1718,13 @@ def config_page(csrf):
         label_progetti_vuoto=T("admin_progetti_vuoto", la),
         label_progetto_aggiungi=T("admin_progetto_aggiungi", la),
         progetto_modello=project_card(None, la),
-        elenco_sezioni=config_sections_list(la),
+        elenco_sezioni=config_sections_list(la, config),
+        pannello_sottotitolo=T("admin_pannello_sottotitolo", la),
+        label_cerca_impostazione=T("admin_cerca_impostazione", la),
+        ph_cerca_impostazione=esc(T("admin_cerca_impostazione_ph", la)),
+        nessuna_impostazione=T("admin_nessuna_impostazione", la),
+        avanzate_invito=T("admin_avanzate_invito", la),
+        avanzate_link=T("admin_avanzate_link", la),
         label_gr_sito=T("admin_gr_sito", la),
         label_gr_autore=T("admin_gr_autore", la),
         label_gr_immagini=T("admin_gr_immagini", la),
@@ -1758,6 +1823,7 @@ def config_page(csrf):
         valore_dominio=esc(config.get("base_url", "")),
         ph_base_url=ph["base_url"],
         label_analytics=T("admin_analytics", la),
+        label_ga_id=T("admin_ga_id", la),
         hint_analytics=T("admin_analytics_hint", la),
         valore_analytics=esc(config.get("analytics_id", "")),
         ph_analytics_id=ph["analytics_id"],
@@ -1878,7 +1944,7 @@ def config_page(csrf):
         label_ripristina=T("admin_ripristina", la),
     )
     for key, _ in CONFIG_SECTIONS:
-        context["testata_" + key] = config_section_header(key, la)
+        context["testata_" + key] = config_section_header(key, la, config)
     # The hints used to sit in brackets after the label; under the field
     # they read as a sentence of their own.
     for key in context:

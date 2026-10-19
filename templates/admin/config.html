@@ -1,12 +1,24 @@
 <div class="pagina pagina-stretta impostazioni" id="impostazioni">
 
-<!-- On a phone, /config opens on this list; on a computer the side menu
-     already lists the sections, and the page opens on the first one. -->
-<nav class="sezioni-elenco" id="sezione-elenco" aria-labelledby="sezioni-elenco-titolo">
-  <h1 class="pagina-titolo" id="sezioni-elenco-titolo">$titolo_impostazioni</h1>
-  <ul>
+<!-- /config opens on this panel, on a computer as on a phone: every section
+     with what it is for and how it stands now, and a search. -->
+<nav class="sezioni-elenco pannello" id="sezione-elenco" aria-labelledby="sezioni-elenco-titolo">
+  <div class="pannello-testata">
+    <div>
+      <h1 class="pagina-titolo" id="sezioni-elenco-titolo">$titolo_impostazioni</h1>
+      <p class="pagina-sottotitolo">$pannello_sottotitolo</p>
+    </div>
+    <div class="campo pannello-cerca" role="search">
+      <label for="cerca-impostazioni">$label_cerca_impostazione</label>
+      <input type="search" class="campo-input" id="cerca-impostazioni" placeholder="$ph_cerca_impostazione"
+             autocomplete="off" oninput="filterSettings()" aria-describedby="pannello-nessuna">
+    </div>
+  </div>
+  <div id="pannello-gruppi">
 $elenco_sezioni
-  </ul>
+  </div>
+  <p class="elenco-vuoto" id="pannello-nessuna" role="status" hidden>$nessuna_impostazione</p>
+  <p class="pannello-avanzate">$avanzate_invito <a href="#avanzate">$avanzate_link</a></p>
 </nav>
 
 <section class="sezione" id="sezione-sito" data-sezione="sito" aria-labelledby="titolo-sito" hidden>
@@ -507,16 +519,18 @@ $testata_traduzione
   </div>
 </section>
 
-<section class="sezione" id="sezione-codici" data-sezione="codici" aria-labelledby="titolo-codici" hidden>
-$testata_codici
+<section class="sezione" id="sezione-statistiche" data-sezione="statistiche" aria-labelledby="titolo-statistiche" hidden>
+$testata_statistiche
   <div class="gruppo">
-    <h2>$label_gr_statistiche</h2>
+    <h2>$label_analytics</h2>
     <div class="campo">
-      <label for="analytics_id">$label_analytics</label>
+      <label for="analytics_id">$label_ga_id</label>
       <input class="campo-input" type="text" id="analytics_id" value="$valore_analytics" placeholder="$ph_analytics_id" aria-describedby="analytics_id-aiuto">
       <p class="aiuto" id="analytics_id-aiuto">$hint_analytics</p>
     </div>
-    <p class="campo-titolo">$label_umami</p>
+  </div>
+  <div class="gruppo">
+    <h2>$label_umami</h2>
     <div class="campi-due">
       <div class="campo">
         <label for="umami_url">$label_umami_url</label>
@@ -529,7 +543,10 @@ $testata_codici
     </div>
     <p class="aiuto" id="umami-aiuto">$hint_umami</p>
   </div>
+</section>
 
+<section class="sezione" id="sezione-codici" data-sezione="codici" aria-labelledby="titolo-codici" hidden>
+$testata_codici
   <div class="gruppo">
     <h2>$label_codice_titolo</h2>
     <p class="aiuto">$hint_codice</p>

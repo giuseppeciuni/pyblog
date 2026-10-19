@@ -322,8 +322,8 @@ by `build`.
 
 On the left, always in sight:
 
-- **Articles** (with how many there are), **New article**, **Settings** (on
-  the Settings page it opens into its sections);
+- **Articles** (with how many there are), **New article**, **Settings** (it
+  opens the panel of every section, see [5](#5-the-settings-section-by-section));
 - **Tools:** **Rebuild the site** recreates every public page from articles
   and settings; **Download the backup** gives a `.zip` with articles, images
   and settings;
@@ -339,6 +339,11 @@ publishing panel.
 
 - At the top how many are published and how many drafts, and **New
   article**.
+- **First steps:** while the site has something a visitor would notice (no
+  title or domain, the homepage or the boxes still showing the example text,
+  Google Analytics loaded twice, the cookie banner off with Google Analytics
+  on, no article published), a box at the top lists it, with **Fix** taking
+  you to the right section. Once everything is sorted, the box disappears.
 - The **All / Published / Drafts** filters, **search** by title and the
   **sort** order (newest first, oldest first, title, status).
 - Each row: the status, the title (clickable, opens the editor), the date,
@@ -525,7 +530,7 @@ changes and go away when you delete it; the backup includes them.
 
 ### 4.5 The AI helpers
 
-They use the service chosen in **Settings → Translation** (a key is needed,
+They use the service chosen in **Settings → Automatic translation** (a key is needed,
 see [2.9](#29-secret-keys-in-environment-variables)). The AI buttons all have
 the same icon and the same purple colour.
 
@@ -566,9 +571,20 @@ translation and publish the English page** and save.
 
 ## 5. The Settings, section by section
 
-The Settings are split into sections, one per job; one shows at a time. On a
-computer the sections are in the menu on the left; on a phone the page opens
-on a list, and the arrow at the top goes back to it. Every field has its help
+The Settings open on a **panel**: the sections split into four groups
+(**Your site**, **Readers**, **Analytics and outside services**, **Rules and
+privacy**), each in a card that says what it is for and how it stands now:
+*Off*, *On · subscribers: 12*, *DeepL: the key is missing*. What needs fixing
+has the triangle and the orange colour, and you find it again at the top of
+the section. The panel updates itself after every save.
+
+**Search the settings** finds a section even from a word that is not on its
+card: type "smtp" and you get the Newsletter, "giscus" and you get Comments,
+because the search also looks at the names of the fields. The `config.json`
+file opens from the link at the bottom of the panel.
+
+Inside a section, the line at the top (**Settings › group**) goes back to
+the panel; on a phone there is the arrow as well. Every field has its help
 underneath.
 
 The bar at the bottom says **Unsaved changes** when there is something to
@@ -621,7 +637,7 @@ hides it without deleting it. Above or below the articles the projects are a
 grid of cards; in the sidebar a compact list. A project with no link leads
 nowhere.
 
-### 5.5 Pages
+### 5.5 Homepage boxes
 
 The pages of the **Explore** box in the sidebar: contacts, a gallery,
 notices. Each has a title, a text written with the editor and an address of
@@ -648,26 +664,32 @@ The sign-up form, where it shows, its texts, the automatic sending on
 publication, the SMTP account with the test email and the list of
 subscribers: see [8b](#8b-newsletter).
 
-### 5.7 Translation
+### 5.7 Automatic translation
 
 The service (DeepL, Google Translate, Anthropic Claude, OpenAI, DeepSeek) and
 its key, plus endpoint and model where needed. Without a key translation
 stays off and the site works anyway. The same service also does the editor's
 AI helpers. See [10](#10-two-languages-and-automatic-translation).
 
-### 5.8 Analytics and ads
+### 5.8 Analytics
 
-- **Analytics:** the Google Analytics 4 ID and the two Umami fields (see
-  [9](#9-visit-statistics)).
-- **External code and ads:** with the three-example guide; see
-  [6](#6-external-code-analytics-ads-widgets).
-- **ads.txt:** see [6.6](#66-adstxt).
+The Google Analytics 4 measurement ID and the two Umami fields (see
+[9](#9-visit-statistics)). The card warns when Google Analytics is loaded
+more than once, for instance from the field and from an external code, or
+from two external codes with the same ID: every visit would be counted more
+than once.
 
-### 5.9 Cookies and privacy
+### 5.9 External code
+
+The code of outside services, with the three-example guide (see
+[6](#6-external-code-analytics-ads-widgets)), and **ads.txt** (see
+[6.6](#66-adstxt)).
+
+### 5.10 Cookie banner
 
 The consent banner: see [7](#7-the-cookie-banner).
 
-### 5.10 AI training
+### 5.11 AI permissions
 
 Whether artificial intelligence services may use your writing:
 
@@ -682,7 +704,7 @@ The choice ends up in `robots.txt`, `llms.txt`, `/.well-known/ai.txt`,
 Reservation Protocol, a non-binding convention still evolving) and in the
 public page `/training-rights.html`.
 
-### 5.11 Advanced
+### 5.12 Configuration file
 
 Direct editing of `config.json`. The text is checked before saving: broken
 JSON is refused with the line and column of the error, and the site stays as
@@ -695,9 +717,11 @@ you are doing; the reference is chapter [13](#13-configjson-reference).
 
 An outside service gives you a piece of HTML or JavaScript to put in your
 pages: Google Analytics, AdSense, Tag Manager, a pixel, a chat. There is no
-need to touch the program's files: go to **Settings → Analytics and ads →
-External code and ads**. A guide with three examples shows, for each, the
-code the service gives and what to choose here.
+need to touch the program's files: go to **Settings → External code**. A
+guide with three examples shows, for each, the code the service gives and
+what to choose here. For Google Analytics the ID in **Settings → Analytics**
+is enough: if you put it here as well, every visit is counted twice (the
+Analytics card tells you).
 
 ### 6.1 Adding a piece of code
 
@@ -817,7 +841,7 @@ had ticked it simply stop receiving it.
 ## 7. The cookie banner
 
 In Europe, statistics and advertising that use cookies may start only after
-the visitor's consent. In **Settings → Cookies and privacy** tick **Show the
+the visitor's consent. In **Settings → Cookie banner** tick **Show the
 consent banner to visitors**, give the address of your privacy policy and
 save.
 
@@ -928,7 +952,7 @@ and **Download the list (CSV)**. The `.zip` backup contains them.
 
 For privacy: only the address, the language and the dates are kept; say so
 in your privacy policy, whose link shows under the form if you set it in
-"Cookies and privacy".
+"Cookie banner".
 
 ## 9. Visit statistics
 
@@ -973,7 +997,7 @@ The project contains `umami-docker-compose.yml`.
    **change the password right away** (Settings → Profile).
 5. Settings → Websites → Add website, with the blog's domain: Umami shows the
    **Website ID**, the only thing you need.
-6. In **Settings → Analytics and ads** type Umami's address and the Website
+6. In **Settings → Analytics** type Umami's address and the Website
    ID, and save.
 
 To check: open the blog in a private window and look at Umami's Realtime
@@ -1223,11 +1247,11 @@ The subscribers are not here but in `subscribers.json`.
 Every key can come from an environment variable `PYBLOG_<KEY>`, which takes
 precedence (see [2.9](#29-secret-keys-in-environment-variables)).
 
-### 13.9 AI training (`ai_training`)
+### 13.9 AI permissions (`ai_training`)
 
 | Field | Meaning |
 |---|---|
-| `policy` | `"open"`, `"licensed"` or `"disallow"` (see [5.10](#510-ai-training)). |
+| `policy` | `"open"`, `"licensed"` or `"disallow"` (see [5.11](#511-ai-permissions)). |
 | `contact_email` | The email for licences (only with `"licensed"`). |
 | `license_url` | Your terms; empty, PyBlog's `/training-rights.html` page. |
 | `statement` | A text of your own instead of the default one. |

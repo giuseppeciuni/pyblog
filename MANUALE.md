@@ -319,8 +319,8 @@ Da salvare: `posts/`, `config.json`, `admin_password.txt`,
 
 A sinistra, sempre a vista:
 
-- **Articoli** (con quanti sono), **Nuovo articolo**, **Impostazioni** (sulla
-  pagina delle Impostazioni si apre nelle sue sezioni);
+- **Articoli** (con quanti sono), **Nuovo articolo**, **Impostazioni** (apre
+  il pannello di tutte le sezioni, vedi [5](#5-le-impostazioni-sezione-per-sezione));
 - **Strumenti:** **Rigenera il sito** ricrea tutte le pagine pubbliche da
   articoli e impostazioni; **Scarica il backup** dà un `.zip` con articoli,
   immagini e impostazioni;
@@ -335,6 +335,12 @@ il posto al pannello di pubblicazione.
 ### 3.3 La pagina Articoli
 
 - In alto quanti sono pubblicati e quante bozze, e **Nuovo articolo**.
+- **Primi passi:** finché il sito ha qualcosa che un visitatore noterebbe
+  (manca il titolo o il dominio, la home o i riquadri hanno ancora il testo
+  di esempio, Google Analytics è caricato due volte, il banner dei cookie è
+  spento con Google Analytics acceso, nessun articolo pubblicato), un
+  riquadro in cima lo elenca, con **Sistema** che porta alla sezione giusta.
+  Sistemato tutto, il riquadro sparisce.
 - I filtri **Tutti / Pubblicati / Bozze**, la **ricerca** per titolo e
   l'**ordine** (più recenti, più vecchi, titolo, stato).
 - Ogni riga: lo stato, il titolo (cliccabile, apre l'editor), la data, il
@@ -526,7 +532,7 @@ backup le contiene.
 
 ### 4.5 Gli aiuti di AI
 
-Usano il servizio scelto in **Impostazioni → Traduzione** (serve una
+Usano il servizio scelto in **Impostazioni → Traduzione automatica** (serve una
 chiave, vedi [2.9](#29-chiavi-segrete-con-le-variabili-dambiente)). I
 pulsanti di AI hanno tutti la stessa icona e lo stesso colore viola.
 
@@ -567,10 +573,21 @@ scrivi a mano titolo, descrizione, anteprima e testo, controlli con
 
 ## 5. Le Impostazioni, sezione per sezione
 
-Le Impostazioni sono divise in sezioni, una per cosa da fare; se ne vede una
-alla volta. Sul computer le sezioni sono nel menu a sinistra; sul telefono
-la pagina si apre su un elenco, e la freccia in alto torna all'elenco. Ogni
-campo ha l'aiuto sotto.
+Le Impostazioni si aprono su un **pannello**: le sezioni divise in quattro
+gruppi (**Il tuo sito**, **I lettori**, **Statistiche e servizi esterni**,
+**Regole e privacy**), ognuna in un riquadro che dice a cosa serve e com'è
+adesso: *Spenta*, *Accesa · iscritti: 12*, *DeepL: manca la chiave*. Quello
+che è da sistemare ha il triangolo e il colore arancio, e lo trovi ripetuto
+in cima alla sezione. Il pannello si aggiorna da solo dopo ogni
+salvataggio.
+
+**Cerca un'impostazione** trova una sezione anche da una parola che non è
+nel riquadro: scrivi "smtp" e trovi la Newsletter, "giscus" e trovi i
+Commenti, perché la ricerca guarda anche i nomi dei campi. Il file
+`config.json` si apre dal link in fondo al pannello.
+
+Dentro una sezione, la riga in alto (**Impostazioni › gruppo**) riporta al
+pannello; sul telefono c'è anche la freccia. Ogni campo ha l'aiuto sotto.
 
 La barra in fondo dice **Modifiche non salvate** quando c'è qualcosa da
 salvare. **Salva e aggiorna il sito** salva tutte le sezioni insieme e
@@ -625,7 +642,7 @@ un'immagine facoltativa (ritagliata in 16:9). Le frecce cambiano l'ordine,
 articoli i progetti sono una griglia di schede; nella barra laterale un
 elenco compatto. Un progetto senza link non porta da nessuna parte.
 
-### 5.5 Pagine
+### 5.5 Riquadri della home
 
 Le pagine del riquadro **Esplora** della barra laterale: contatti, una
 galleria, avvisi. Ognuna ha un titolo, un testo scritto con l'editor e un
@@ -652,26 +669,32 @@ Il modulo d'iscrizione, dove compare, i suoi testi, l'invio automatico alla
 pubblicazione, l'account SMTP con l'email di prova e l'elenco degli
 iscritti: vedi [8b](#8b-newsletter).
 
-### 5.7 Traduzione
+### 5.7 Traduzione automatica
 
 Il servizio (DeepL, Google Translate, Anthropic Claude, OpenAI, DeepSeek) e
 la sua chiave, più endpoint e modello dove servono. Senza chiave la
 traduzione resta spenta e il sito funziona lo stesso. Lo stesso servizio fa
 anche gli aiuti di AI dell'editor. Vedi [10](#10-due-lingue-e-traduzione-automatica).
 
-### 5.8 Statistiche e annunci
+### 5.8 Statistiche
 
-- **Statistiche:** l'ID di Google Analytics 4 e i due campi di Umami (vedi
-  [9](#9-statistiche-delle-visite)).
-- **Codici esterni e annunci:** con la guida a tre esempi; vedi
-  [6](#6-codici-esterni-statistiche-annunci-widget).
-- **ads.txt:** vedi [6.6](#66-adstxt).
+L'ID di misurazione di Google Analytics 4 e i due campi di Umami (vedi
+[9](#9-statistiche-delle-visite)). Il riquadro avvisa se Google Analytics è
+caricato più di una volta, per esempio dal campo e da un codice esterno, o
+da due codici esterni con lo stesso ID: ogni visita verrebbe contata più
+volte.
 
-### 5.9 Cookie e privacy
+### 5.9 Codici esterni
+
+I codici di servizi esterni, con la guida a tre esempi (vedi
+[6](#6-codici-esterni-statistiche-annunci-widget)), e **ads.txt** (vedi
+[6.6](#66-adstxt)).
+
+### 5.10 Banner dei cookie
 
 Il banner del consenso: vedi [7](#7-il-banner-dei-cookie).
 
-### 5.10 Addestramento AI
+### 5.11 Permessi alle AI
 
 Se i servizi di intelligenza artificiale possono usare i tuoi testi:
 
@@ -686,7 +709,7 @@ scelta finisce in `robots.txt`, `llms.txt`, `/.well-known/ai.txt`,
 Reservation Protocol, una convenzione non vincolante e ancora in
 evoluzione) e nella pagina pubblica `/training-rights.html`.
 
-### 5.11 Avanzate
+### 5.12 File di configurazione
 
 Modifica diretta di `config.json`. Il testo viene controllato prima del
 salvataggio: un JSON rotto viene rifiutato con la riga e la colonna
@@ -700,9 +723,11 @@ Da usare solo se sai cosa stai facendo; il riferimento è al capitolo
 
 Un servizio esterno ti dà un pezzo di HTML o JavaScript da mettere nelle tue
 pagine: Google Analytics, AdSense, Tag Manager, un pixel, una chat. Non
-serve toccare i file del programma: vai in **Impostazioni → Statistiche e
-annunci → Codici esterni e annunci**. Una guida con tre esempi mostra, per
-ognuno, il codice che dà il servizio e cosa scegliere qui.
+serve toccare i file del programma: vai in **Impostazioni → Codici
+esterni**. Una guida con tre esempi mostra, per ognuno, il codice che dà il
+servizio e cosa scegliere qui. Per Google Analytics basta l'ID in
+**Impostazioni → Statistiche**: se lo metti anche qui, ogni visita viene
+contata due volte (il riquadro delle Statistiche te lo segnala).
 
 ### 6.1 Aggiungere un codice
 
@@ -824,7 +849,7 @@ ricevono più.
 ## 7. Il banner dei cookie
 
 In Europa statistiche e pubblicità che usano cookie possono partire solo
-dopo il consenso del visitatore. In **Impostazioni → Cookie e privacy**
+dopo il consenso del visitatore. In **Impostazioni → Banner dei cookie**
 spunta **Mostra il banner del consenso ai visitatori**, indica l'indirizzo della tua informativa
 privacy e salva.
 
@@ -937,7 +962,7 @@ l'elenco (CSV)**. Il backup `.zip` li contiene.
 
 Per la privacy: tieni solo l'indirizzo, la lingua e le date; dillo
 nell'informativa, il cui link compare sotto il modulo se l'hai indicato in
-"Cookie e privacy".
+"Banner dei cookie".
 
 ## 9. Statistiche delle visite
 
@@ -982,7 +1007,7 @@ Nel progetto c'è `umami-docker-compose.yml`.
    **cambia subito la password** (Settings → Profile).
 5. Settings → Websites → Add website, con il dominio del blog: Umami mostra
    il **Website ID**, l'unico dato che serve.
-6. In **Impostazioni → Statistiche e annunci** scrivi l'indirizzo di Umami e
+6. In **Impostazioni → Statistiche** scrivi l'indirizzo di Umami e
    il Website ID, e salva.
 
 Per verificare: apri il blog in una finestra anonima e guarda la vista
@@ -1233,11 +1258,11 @@ Gli iscritti non stanno qui ma in `subscribers.json`.
 Ogni chiave può venire da una variabile d'ambiente `PYBLOG_<CHIAVE>`, che ha
 la precedenza (vedi [2.9](#29-chiavi-segrete-con-le-variabili-dambiente)).
 
-### 13.9 Addestramento AI (`ai_training`)
+### 13.9 Permessi alle AI (`ai_training`)
 
 | Campo | Significato |
 |---|---|
-| `policy` | `"open"`, `"licensed"` o `"disallow"` (vedi [5.10](#510-addestramento-ai)). |
+| `policy` | `"open"`, `"licensed"` o `"disallow"` (vedi [5.11](#511-permessi-alle-ai)). |
 | `contact_email` | L'email per le licenze (solo con `"licensed"`). |
 | `license_url` | I tuoi termini; vuoto, la pagina `/training-rights.html` di PyBlog. |
 | `statement` | Un testo tuo al posto di quello predefinito. |

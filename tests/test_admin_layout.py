@@ -128,7 +128,7 @@ def pagine_admin():
         "dashboard": (server.admin_page(articoli, "TOKEN"), "/admin"),
         "editor nuovo": (server.editor_page(None, "TOKEN"), "/edit"),
         "editor": (server.editor_page(esistente, "TOKEN"), "/admin"),
-        "impostazioni": (server.config_page("TOKEN"), None),
+        "impostazioni": (server.config_page("TOKEN"), "/config"),
         "cambio password": (server.change_password_page("TOKEN"), "/change-password"),
     }
 
@@ -155,13 +155,11 @@ def test_menu():
             else:
                 check(f"{lingua} / {nome}: segnata solo la voce {attesa}",
                       correnti == [attesa], str(correnti))
-            sotto = pagina.con_classe("voce-sotto")
-            if nome == "impostazioni":
-                attese = ["/config#" + chiave for chiave, _ in server.CONFIG_SECTIONS]
-                check(f"{lingua} / {nome}: le sotto-voci delle sezioni, in ordine",
-                      [e["attrs"].get("href") for e in sotto] == attese)
-            else:
-                check(f"{lingua} / {nome}: niente sotto-voci", len(sotto) == 0)
+            # The sections are in the panel, not in the menu: the menu
+            # stays the same short list on every page.
+            sotto = [e for e in pagina.con_classe("voce")
+                     if "#" in e["attrs"].get("href", "")]
+            check(f"{lingua} / {nome}: niente sotto-voci nel menu", len(sotto) == 0)
     config.CONFIG["admin_language"] = "it"
 
     pagina = analizza(server.login_page(""))
@@ -182,9 +180,13 @@ def test_sezioni_impostazioni():
     titoli = {e["attrs"].get("id") for e in pagina.elementi if e["tag"] == "h1"}
     check("ogni sezione ha il suo titolo, che le dà il nome",
           all(e["attrs"].get("aria-labelledby") in titoli for e in sezioni))
-    elenco = [e["attrs"].get("href") for e in pagina.con_classe("sezioni-voce")]
-    check("l'elenco del telefono porta a ogni sezione",
-          elenco == ["#" + chiave for chiave in attese], str(elenco))
+    schede = [e["attrs"].get("href") for e in pagina.con_classe("scheda-impostazione")]
+    raggruppate = [chiave for chiave in attese if chiave != "avanzate"]
+    check("il pannello ha una scheda per ogni sezione, nell'ordine",
+          schede == ["#" + chiave for chiave in raggruppate], str(schede))
+    avanzate = [e for e in pagina.elementi
+                if e["tag"] == "a" and e["attrs"].get("href") == "#avanzate"]
+    check("il file di configurazione è un link in fondo al pannello", len(avanzate) == 1)
     indietro = pagina.con_classe("sezione-indietro")
     check("ogni sezione ha il ritorno all'elenco, con un nome",
           len(indietro) == len(attese)
