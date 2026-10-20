@@ -24,7 +24,7 @@ import urllib.request
 from datetime import datetime, timezone
 
 from core import build as build_module
-from core import backup, i18n, newsletter, render, settings_panel
+from core import backup, i18n, media_library, newsletter, render, settings_panel
 from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
 from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, SlugTakenError,
@@ -127,6 +127,7 @@ CSRF_PROTECTED_ROUTES = (
     "/translate", "/generate-description", "/generate-preview", "/analyze-seo",
     "/import-docx", "/preview", "/newsletter-prova", "/newsletter-rimuovi",
     "/verifica-indirizzo-admin", "/ripristina", "/ripristina-automatico",
+    "/libreria-elimina",
 )
 
 # The files the administration area serves from static/. Naming them makes
@@ -137,7 +138,7 @@ ADMIN_STATIC_FILES = ("common.css", "admin.css", "admin.js")
 ADMIN_GET_ROUTES = ("/admin", "/config", "/edit", "/change-password",
                     "/preview", "/export", "/scegli-punto", "/versioni",
                     "/versione", "/newsletter-iscritti.csv", "/ripristina",
-                    "/backup-automatico")
+                    "/backup-automatico", "/libreria")
 
 
 # ---------------------------------------------------------------------------
@@ -187,6 +188,8 @@ JS_TRANSLATION_KEYS = (
     "js_scegli_backup", "js_ripristino_titolo", "js_ripristino_corpo", "js_ripristino_conferma",
     "js_ripristino_automatico_corpo", "js_ripristino_in_corso", "js_ripristino_fatto",
     "js_ripristino_ignorati", "js_ripristino_errore_rete",
+    "js_media_copiato", "js_media_elimina_titolo", "js_media_elimina_corpo",
+    "js_media_elimina_usato", "js_media_pulizia_corpo", "js_media_caricamento",
     "js_media_recovered",
     # Settings
     "admin_codice_titolo", "admin_codice_elimina",
@@ -385,6 +388,8 @@ ICON_SETTINGS = ('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0
 ICON_REBUILD = '<path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/>'
 ICON_BACKUP = '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'
 ICON_RESTORE = '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>'
+ICON_MEDIA = ('<rect x="3" y="4" width="18" height="16" rx="2"/>'
+              '<circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5L5 20"/>')
 ICON_BLOG = ('<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>')
 ICON_PASSWORD = ('<rect x="4" y="11" width="16" height="10" rx="2"/>'
                  '<path d="M8 11V7a4 4 0 0 1 8 0v4"/>')
@@ -417,17 +422,21 @@ def admin_navbar(active_page, language, articles_count=None):
     if articles_count is None:
         articles_count = len(load_articles())
 
+    # The last field says whether the item is also in the phone's bar, which
+    # has room for four: the others are in the menu "More" opens.
     voci = [
         ("articles", "/admin", ICON_ARTICLES, T("admin_articoli", language),
-         T("admin_articoli", language), str(articles_count)),
+         T("admin_articoli", language), str(articles_count), True),
         ("new", "/edit", ICON_NEW, T("admin_nuovo_articolo_titolo", language),
-         T("admin_nuovo", language), ""),
+         T("admin_nuovo", language), "", True),
+        ("media", "/libreria", ICON_MEDIA, T("admin_libreria", language),
+         T("admin_libreria", language), "", False),
         ("config", "/config", ICON_SETTINGS, T("admin_impostazioni", language),
-         T("admin_impostazioni", language), ""),
+         T("admin_impostazioni", language), "", True),
     ]
     menu_html = []
     bar_html = []
-    for key, url, path, label, short_label, count in voci:
+    for key, url, path, label, short_label, count, in_bar in voci:
         current = ""
         if key == active_page:
             current = ' aria-current="page"'
@@ -439,9 +448,10 @@ def admin_navbar(active_page, language, articles_count=None):
         menu_html.append(
             f'    <a class="voce"{current} href="{url}">{icon(path)}'
             f'<span class="voce-testo">{label}</span>{count_html}</a>')
-        bar_html.append(
-            f'  <a class="barra-voce"{current} href="{url}">{icon(path, 22)}'
-            f'<span>{short_label}</span></a>')
+        if in_bar:
+            bar_html.append(
+                f'  <a class="barra-voce"{current} href="{url}">{icon(path, 22)}'
+                f'<span>{short_label}</span></a>')
 
     # The language switch names the language you are switching to, in that
     # language: whoever cannot read the current one can still find theirs.
@@ -614,6 +624,97 @@ def change_password_page(csrf, error_message="", success_message=""):
                             csrf=csrf, navbar=admin_navbar("password", la))
 
 
+def file_size_text(size):
+    """A file size for people: KB under a megabyte, MB with one decimal above."""
+    if size < 1024 * 1024:
+        return f"{max(1, round(size / 1024))} KB"
+    return f"{size / (1024 * 1024):.1f} MB"
+
+
+def library_page(csrf):
+    """
+    The media library: every uploaded file with where it is used, to copy
+    its address, upload new ones and clear out the ones nothing uses.
+    """
+    la = admin_language()
+    files = media_library.media_files()
+    uses = media_library.media_uses()
+    cards = []
+    unused_size = 0
+    unused_count = 0
+    for item in files:
+        name = item["name"]
+        where = uses.get(name, [])
+        if not where:
+            unused_size += item["size"]
+            unused_count += 1
+        address = "/media/" + name
+        if item["kind"] == "video":
+            preview = f'<video src="{esc(address)}" preload="metadata" muted></video>'
+        else:
+            preview = f'<img src="{esc(address)}" alt="" loading="lazy">'
+        if where:
+            links = []
+            for use in where:
+                if use["kind"] == "article":
+                    links.append(f'<a href="/edit?slug={esc(use["slug"])}">{esc(use["title"])}</a>')
+                else:
+                    links.append(f'<a href="/config">{T("admin_impostazioni", la)}</a>')
+            usage = f'{T("admin_media_usata_in", la)} ' + ", ".join(links)
+        else:
+            usage = f'<span class="media-non-usata">{T("admin_media_non_usata", la)}</span>'
+        cards.append(
+            f'    <li class="media-scheda" data-nome="{esc(name.lower())}" data-usato="{1 if where else 0}" '
+            f'data-dove="{len(where)}">\n'
+            f'      <div class="media-anteprima">{preview}</div>\n'
+            f'      <div class="media-info">\n'
+            f'        <p class="media-nome">{esc(name)}</p>\n'
+            f'        <p class="media-meta">{file_size_text(item["size"])} · '
+            f'{item["date"].strftime("%d/%m/%Y")}</p>\n'
+            f'        <p class="media-usi">{usage}</p>\n'
+            f'        <div class="media-azioni">'
+            f'<button type="button" class="pulsante pulsante-piccolo" '
+            f'onclick="copyMediaAddress({js_attr(address)})">{T("admin_media_copia", la)}'
+            f'<span class="vh"> {esc(name)}</span></button>'
+            f'<button type="button" class="pulsante pulsante-piccolo pulsante-pericolo" '
+            f'onclick="deleteMedia(this, {js_attr(name)}, {len(where)})">{T("admin_elimina", la)}'
+            f'<span class="vh"> {esc(name)}</span></button></div>\n'
+            f'      </div>\n'
+            f'    </li>')
+    total_size = sum(item["size"] for item in files)
+    summary = (T("admin_media_riepilogo", la).replace("{n}", str(len(files)))
+               .replace("{peso}", file_size_text(total_size) if files else "0 KB"))
+    cleanup = (T("admin_media_pulizia", la).replace("{n}", str(unused_count))
+               .replace("{peso}", file_size_text(unused_size) if unused_count else "0 KB"))
+    contenuto = render.render(
+        "admin/library.html",
+        titolo=T("admin_libreria", la),
+        riepilogo=summary,
+        label_carica=T("admin_media_carica", la),
+        label_mostra=T("admin_mostra_gruppo", la),
+        label_tutti=T("admin_filtro_tutti", la),
+        totale=len(files),
+        label_usati=T("admin_media_usati", la),
+        usati=len(files) - unused_count,
+        label_non_usati=T("admin_media_non_usati", la),
+        non_usati=unused_count,
+        label_cerca=esc(T("admin_media_cerca", la)),
+        label_pulizia=cleanup,
+        pulizia_nascosta="" if unused_count > 0 else " hidden",
+        schede="\n".join(cards),
+        vuota_nascosta="" if not files else " hidden",
+        label_vuota=T("admin_media_vuota", la),
+        label_nessun_risultato=T("admin_nessun_corrisponde", la),
+        hint_cestino=T("admin_media_cestino_hint", la),
+    )
+    return admin_page_shell(T("admin_libreria", la), contenuto, la, csrf=csrf,
+                            navbar=admin_navbar("media", la),
+                            page_data={"page": "library",
+                                       "max_image_mb": MAX_IMAGE_BYTES // (1024 * 1024),
+                                       "max_video_mb": MAX_VIDEO_BYTES // (1024 * 1024),
+                                       "max_image_width": max_image_side()})
+
+
 def restore_page(csrf):
     """
     The page that puts a backup back: from a file, or from one of the
@@ -624,10 +725,7 @@ def restore_page(csrf):
     rows = []
     for item in backup.automatic_backups():
         when = item["date"].strftime("%d/%m/%Y %H:%M:%S")
-        if item["size"] < 1024 * 1024:
-            size = f'{max(1, round(item["size"] / 1024))} KB'
-        else:
-            size = f'{item["size"] / (1024 * 1024):.1f} MB'
+        size = file_size_text(item["size"])
         rows.append(
             f'      <li><span class="backup-quando">{when} · {size}</span>'
             f'<span class="backup-azioni">'
@@ -2567,6 +2665,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                            with_csp=False, sandbox=True)
         elif route == "/ripristina":
             self._send(restore_page(csrf))
+        elif route == "/libreria":
+            self._send(library_page(csrf))
         elif route == "/backup-automatico":
             path_value = backup.automatic_backup_path(query.get("file", [""])[0])
             if path_value is None:
@@ -2844,6 +2944,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             "/newsletter-prova": self._api_newsletter_test,
             "/verifica-indirizzo-admin": self._api_check_admin_address,
             "/ripristina-automatico": self._api_restore_automatic,
+            "/libreria-elimina": self._api_delete_media,
             "/newsletter-rimuovi": self._api_newsletter_remove,
         }
         handler = handlers.get(route)
@@ -2906,6 +3007,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         finally:
             if os.path.exists(temporary):
                 os.unlink(temporary)
+
+    def _api_delete_media(self, data):
+        """Move uploaded files to the trash of the media library."""
+        deleted = media_library.delete_media(data.get("names", []))
+        return {"ok": True, "deleted": deleted}
 
     def _api_restore_automatic(self, data):
         """Put back one of the automatic backups, to undo a restore."""

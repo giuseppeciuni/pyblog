@@ -363,11 +363,14 @@ Da salvare: `posts/`, `config.json`, `admin_password.txt`,
 
 A sinistra, sempre a vista:
 
-- **Articoli** (con quanti sono), **Nuovo articolo**, **Impostazioni** (apre
-  il pannello di tutte le sezioni, vedi [5](#5-le-impostazioni-sezione-per-sezione));
+- **Articoli** (con quanti sono), **Nuovo articolo**, **Media** (la
+  libreria dei file caricati, vedi [3.4](#34-la-libreria-dei-media)),
+  **Impostazioni** (apre il pannello di tutte le sezioni, vedi
+  [5](#5-le-impostazioni-sezione-per-sezione));
 - **Strumenti:** **Rigenera il sito** ricrea tutte le pagine pubbliche da
   articoli e impostazioni; **Scarica il backup** dà un `.zip` con articoli,
-  immagini e impostazioni;
+  immagini e impostazioni; **Ripristina un backup** lo rimette (vedi
+  [2.11](#211-backup-e-ripristino));
 - **Apri il sito** (in una nuova scheda), **Cambia password**, la lingua
   dell'amministrazione (italiano o inglese), **Esci**.
 
@@ -393,6 +396,26 @@ il posto al pannello di pubblicazione.
   **Anteprima in inglese** (se c'è testo tradotto), **Pubblica** o **Ritira
   dalla pubblicazione**, **Elimina** (chiede conferma). Il menu ⋯ si usa
   anche da tastiera: frecce per muoversi, Esc per chiudere.
+
+### 3.4 La libreria dei media
+
+**Media** mostra tutti i file caricati, dal più recente: anteprima, nome,
+peso, data e **dove sono usati** (gli articoli, bozze comprese, e le
+impostazioni, con il link per aprirli). Le versioni precedenti degli
+articoli non contano.
+
+- **Carica file** ne carica uno o più insieme, con gli stessi controlli
+  dell'editor (le foto troppo grandi vengono ridotte).
+- **Copia l'indirizzo** copia `/media/nome-file`, da incollare dove serve:
+  la copertina di un articolo, un link, i campi delle impostazioni.
+- **Elimina** chiede conferma, e se il file è usato dice dove: lì comparirà
+  un'immagine mancante. **Elimina i non usati** fa pulizia in un colpo.
+- Un file eliminato non sparisce subito: resta 30 giorni in
+  `backups/media-eliminati/` sul server, da dove si rimette a mano in
+  `output/media/`.
+
+I filtri **Tutti / Usati / Non usati** e la ricerca per nome funzionano
+insieme.
 
 ---
 

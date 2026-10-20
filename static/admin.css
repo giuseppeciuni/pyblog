@@ -613,6 +613,23 @@ select.campo-input { padding-right:2rem; }
 .elenco-ordina label { font-size:0.9375rem; color:var(--a-testo-2); }
 .elenco-articoli { background:var(--a-superficie); border:1px solid var(--a-bordo); border-radius:12px; }
 .elenco-articoli:empty { display:none; }
+/* The media library: a grid of cards, the preview on top. */
+.libreria-griglia { list-style:none; margin:0; padding:0; display:grid;
+                    grid-template-columns:repeat(auto-fill, minmax(14rem, 1fr)); gap:1rem; }
+.media-scheda { display:flex; flex-direction:column; background:var(--a-superficie);
+                border:1px solid var(--a-bordo); border-radius:12px; overflow:hidden; }
+.media-scheda[hidden] { display:none; }
+.media-anteprima { aspect-ratio:4 / 3; overflow:hidden; background:#eef0f3; display:flex; align-items:center; justify-content:center; }
+.media-anteprima :is(img, video) { min-height:0; }
+.media-anteprima :is(img, video) { width:100%; height:100%; object-fit:contain; }
+.media-info { padding:0.75rem 0.875rem 0.875rem; display:flex; flex-direction:column; gap:0.25rem; flex:1; }
+.media-nome { margin:0; font-weight:600; font-size:0.875rem; overflow-wrap:anywhere; }
+.media-meta { margin:0; font-size:0.8125rem; color:var(--a-testo-2); }
+.media-usi { margin:0; font-size:0.8125rem; color:var(--a-testo-2); flex:1; }
+.media-non-usata { color:#8a4b00; font-weight:600; }
+.media-azioni { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem; }
+#libreria-stato:empty { display:none; }
+
 /* The automatic backups on the restore page. */
 .lista-backup { list-style:none; margin:0; padding:0; }
 .lista-backup li { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.5rem 1rem;

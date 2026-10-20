@@ -1,0 +1,34 @@
+<div class="pagina">
+
+  <div class="pagina-testata">
+    <div>
+      <h1 class="pagina-titolo">$titolo</h1>
+      <p class="pagina-sottotitolo">$riepilogo</p>
+    </div>
+    <div class="azioni">
+      <input type="file" id="libreria-file" hidden multiple accept="image/*,video/mp4,video/webm"
+             onchange="uploadToLibrary(this)">
+      <button type="button" class="pulsante pulsante-primario" id="libreria-carica"
+              onclick="document.getElementById('libreria-file').click()">$label_carica</button>
+    </div>
+  </div>
+
+  <div class="elenco-strumenti">
+    <div class="segmenti" role="group" aria-label="$label_mostra" id="filtro-media">
+      <button type="button" class="segmento" aria-pressed="true" data-filtro="tutti" onclick="filterMedia(this)">$label_tutti<span class="segmento-conta">$totale</span></button>
+      <button type="button" class="segmento" aria-pressed="false" data-filtro="1" onclick="filterMedia(this)">$label_usati<span class="segmento-conta">$usati</span></button>
+      <button type="button" class="segmento" aria-pressed="false" data-filtro="0" onclick="filterMedia(this)">$label_non_usati<span class="segmento-conta">$non_usati</span></button>
+    </div>
+    <label for="cerca-media" class="vh">$label_cerca</label>
+    <input type="search" class="campo-input elenco-cerca" id="cerca-media" placeholder="$label_cerca" oninput="filterMedia()">
+    <button type="button" class="pulsante" onclick="deleteUnusedMedia(this)"$pulizia_nascosta>$label_pulizia</button>
+  </div>
+  <p class="hint" id="libreria-stato" role="status"></p>
+
+  <ul class="libreria-griglia" id="libreria-griglia">
+$schede
+  </ul>
+  <p class="elenco-vuoto" id="libreria-vuota"$vuota_nascosta>$label_vuota</p>
+  <p class="elenco-vuoto" id="libreria-nessun-risultato" hidden>$label_nessun_risultato</p>
+  <p class="aiuto">$hint_cestino</p>
+</div>

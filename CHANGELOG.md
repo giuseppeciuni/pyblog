@@ -138,6 +138,16 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **A media library.** "Media" in the menu shows every uploaded file with
+  its preview and where it is used: the articles (drafts too) and the
+  settings, each a link. Uploaded pictures used to be invisible: nothing
+  showed them, nothing told whether one was still in use, and the only way
+  to delete one was by hand on the server. Files can be uploaded several at
+  once (same checks as the editor), their address copied, and the unused
+  ones cleared out in one go. A deleted file waits 30 days in
+  `backups/media-eliminati/` before it is gone. **nginx:** the
+  single-address example adds `libreria` and `libreria-elimina` to the
+  routes sent to Python.
 - **A backup can be put back from the menu.** "Restore a backup" takes the
   archive of "Download the backup" and puts articles, earlier versions,
   settings, media and subscribers back, then rebuilds the site. It used to

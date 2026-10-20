@@ -365,11 +365,14 @@ by `build`.
 
 On the left, always in sight:
 
-- **Articles** (with how many there are), **New article**, **Settings** (it
-  opens the panel of every section, see [5](#5-the-settings-section-by-section));
+- **Articles** (with how many there are), **New article**, **Media** (the
+  library of uploaded files, see [3.4](#34-the-media-library)), **Settings**
+  (it opens the panel of every section, see
+  [5](#5-the-settings-section-by-section));
 - **Tools:** **Rebuild the site** recreates every public page from articles
   and settings; **Download the backup** gives a `.zip` with articles, images
-  and settings;
+  and settings; **Restore a backup** puts one back (see
+  [2.11](#211-backup-and-restore));
 - **Open the site** (in a new tab), **Change password**, the language of the
   administration (Italiano or English), **Log out**.
 
@@ -395,6 +398,24 @@ publishing panel.
   **Preview**, **Preview in ...** (when there is translated text),
   **Publish** or **Unpublish**, **Delete** (asks for confirmation). The ⋯
   menu works from the keyboard too: arrows to move, Esc to close.
+
+### 3.4 The media library
+
+**Media** shows every uploaded file, newest first: preview, name, size, date
+and **where it is used** (the articles, drafts included, and the settings,
+with the link to open them). Earlier versions of articles do not count.
+
+- **Upload files** uploads one or more at once, with the same checks as the
+  editor (photos that are too large are scaled down).
+- **Copy the address** copies `/media/file-name`, to paste where you need
+  it: the cover of an article, a link, the settings fields.
+- **Delete** asks first, and if the file is used it says where: a missing
+  picture will show there. **Delete the unused ones** clears out in one go.
+- A deleted file does not vanish at once: it stays 30 days in
+  `backups/media-eliminati/` on the server, from where it goes back by hand
+  into `output/media/`.
+
+The **All / In use / Unused** filters and the search by name work together.
 
 ---
 

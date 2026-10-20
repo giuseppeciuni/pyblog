@@ -3188,6 +3188,108 @@ function translateSiteTexts(pulsante) {
   prossima(0);
 }
 
+/* --- The media library ---------------------------------------------------- */
+
+// The filter buttons and the search work together: a card stays when it
+// matches both.
+function filterMedia(pulsante) {
+  if (pulsante) {
+    var bottoni = document.querySelectorAll('#filtro-media .segmento');
+    for (var i = 0; i < bottoni.length; i++) {
+      bottoni[i].setAttribute('aria-pressed', bottoni[i] === pulsante ? 'true' : 'false');
+    }
+  }
+  var scelto = document.querySelector('#filtro-media .segmento[aria-pressed="true"]');
+  var filtro = scelto ? scelto.getAttribute('data-filtro') : 'tutti';
+  var testo = document.getElementById('cerca-media').value.trim().toLowerCase();
+  var schede = document.querySelectorAll('.media-scheda');
+  var visibili = 0;
+  for (var j = 0; j < schede.length; j++) {
+    var tiene = (filtro === 'tutti' || schede[j].getAttribute('data-usato') === filtro)
+      && schede[j].getAttribute('data-nome').indexOf(testo) !== -1;
+    schede[j].hidden = !tiene;
+    if (tiene) { visibili++; }
+  }
+  document.getElementById('libreria-nessun-risultato').hidden = visibili > 0 || schede.length === 0;
+}
+
+function copyMediaAddress(indirizzo) {
+  var fatto = function() { pbToast(t('js_media_copiato'), 'success'); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(indirizzo).then(fatto, function() { window.prompt('', indirizzo); });
+  } else {
+    window.prompt('', indirizzo);
+  }
+}
+
+function sendMediaDeletion(pulsante, nomi) {
+  pbBusy(pulsante, true);
+  pbPostJson('/libreria-elimina', { names: nomi })
+    .then(function(esito) {
+      if (esito.ok !== true) {
+        pbBusy(pulsante, false);
+        pbToast(t('js_error_prefix') + esito.error, 'danger');
+        return;
+      }
+      window.location.reload();
+    })
+    .catch(function() {
+      pbBusy(pulsante, false);
+      pbToast(t('admin_errore_salvataggio'), 'danger');
+    });
+}
+
+function deleteMedia(pulsante, nome, usi) {
+  var corpo = usi > 0 ? t('js_media_elimina_usato').replace('{n}', usi) : t('js_media_elimina_corpo');
+  pbConfirm(t('js_media_elimina_titolo'), nome + '\n\n' + corpo, t('admin_elimina'), 'danger',
+            function() { sendMediaDeletion(pulsante, [nome]); });
+}
+
+function deleteUnusedMedia(pulsante) {
+  var schede = document.querySelectorAll('.media-scheda[data-usato="0"]');
+  var nomi = [];
+  for (var i = 0; i < schede.length; i++) {
+    nomi.push(schede[i].querySelector('.media-nome').textContent);
+  }
+  if (nomi.length === 0) { return; }
+  pbConfirm(t('js_media_elimina_titolo'), t('js_media_pulizia_corpo').replace('{n}', nomi.length),
+            t('admin_elimina'), 'danger', function() { sendMediaDeletion(pulsante, nomi); });
+}
+
+// The files go one after the other, through the same door as the editor:
+// the same checks, and pictures shrunk in the browser first.
+function uploadToLibrary(campo) {
+  var file = Array.prototype.slice.call(campo.files);
+  campo.value = '';
+  var pulsante = document.getElementById('libreria-carica');
+  var caricati = 0;
+  var prossimo = function(indice) {
+    if (indice >= file.length) {
+      pbBusy(pulsante, false);
+      if (caricati > 0) { window.location.reload(); }
+      return;
+    }
+    var scelto = file[indice];
+    var video = scelto.type.indexOf('video/') === 0;
+    if (!fileFitsLimit(scelto, video ? pbPage('max_video_mb', 100) : pbPage('max_image_mb', 10))) {
+      prossimo(indice + 1);
+      return;
+    }
+    pbStatus('libreria-stato', t('js_media_caricamento').replace('{i}', indice + 1).replace('{n}', file.length));
+    var pronto = video ? Promise.resolve(scelto) : resizeImageBeforeUpload(scelto, pbPage('max_image_width', 1600));
+    pronto
+      .then(function(daInviare) { return inviaFile(daInviare, 'libreria-stato'); })
+      .then(function(indirizzo) {
+        if (indirizzo) { caricati++; }
+        prossimo(indice + 1);
+      });
+  };
+  if (file.length > 0) {
+    pbBusy(pulsante, true);
+    prossimo(0);
+  }
+}
+
 /* --- Restoring a backup -------------------------------------------------- */
 
 // The archive goes as it is, not inside a form: with videos it can weigh
