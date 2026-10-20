@@ -460,6 +460,10 @@ All notable changes to PyBlog are documented in this file.
   JavaScript in the external code that targets the old class names; check
   it against `core/legacy_names.py`, which lists every old name and its new
   one.
+- **The public stylesheet's variables are in English** (`--testo` is
+  `--text`, `--bordo` is `--border`, `--sfondo` is `--bg`, `--secondario` is
+  `--text-muted`). Your own CSS in the external code that uses the old
+  names needs the new ones.
 - **The code speaks English too.** Variables, functions and parameters in
   Python and JavaScript, the placeholders inside the translations
   (`{lingua}` is `{other_language}`, `{principale}` is `{main_language}`)

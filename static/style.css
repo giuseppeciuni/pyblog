@@ -7,35 +7,35 @@
    The layout has two columns: the content in a main column and a sidebar
    next to it, which moves under the content on a narrow screen. */
 :root {
-  --testo:var(--pb-text); --secondario:var(--pb-text-muted); --link:var(--pb-accent);
-  --bordo:var(--pb-border); --codice-bg:var(--pb-code-bg); --larghezza:var(--pb-width-text);
-  --larghezza-home:var(--pb-width-wide); --card-bg:var(--pb-surface); --card-hover:var(--pb-surface-alt);
-  --sfondo:var(--pb-bg); --hero-1:var(--pb-hero-1); --hero-2:var(--pb-hero-2); --hero-bordo:var(--pb-hero-border);
-  --evidenza-accento:var(--pb-featured-accent);
+  --text:var(--pb-text); --text-muted:var(--pb-text-muted); --link:var(--pb-accent);
+  --border:var(--pb-border); --code-bg:var(--pb-code-bg); --text-width:var(--pb-width-text);
+  --home-width:var(--pb-width-wide); --card-bg:var(--pb-surface); --card-hover:var(--pb-surface-alt);
+  --bg:var(--pb-bg); --hero-1:var(--pb-hero-1); --hero-2:var(--pb-hero-2); --hero-border:var(--pb-hero-border);
+  --featured-accent:var(--pb-featured-accent);
   /* The frame of the two columns. */
-  --larghezza-pagina:1120px;
-  --larghezza-barra:300px;
-  --spazio-colonne:2.6rem;
+  --page-width:1120px;
+  --sidebar-width:300px;
+  --column-gap:2.6rem;
   /* The space an advertisement or a widget sits in, when it has no look of
      its own yet: a faint tint, so an empty slot does not read as a hole. */
-  --annuncio-bg:var(--pb-surface-alt);
+  --announcement-bg:var(--pb-surface-alt);
 }
 /* In dark mode, the elements with fixed colours must be adapted by hand,
    otherwise they stay dark on dark and become unreadable. */
 html[data-theme="dark"] .home-intro p { color:#cbd5e1; }
 html[data-theme="dark"] .home-intro p strong { color:#f1f5f9; }
-html[data-theme="dark"] .meta { color:var(--secondario); }
+html[data-theme="dark"] .meta { color:var(--text-muted); }
 /* Gradient headings: in dark mode we lighten the gradient for readability. */
 html[data-theme="dark"] .home-intro h1, html[data-theme="dark"] .home-intro h2,
 html[data-theme="dark"] .card-hero-title {
   background:linear-gradient(120deg, #6ba9ff, #b39dff); -webkit-background-clip:text;
   background-clip:text; -webkit-text-fill-color:transparent;
 }
-html[data-theme="dark"] .articles-heading { color:var(--testo); }
-html[data-theme="dark"] .card-page { color:var(--testo); }
+html[data-theme="dark"] .articles-heading { color:var(--text); }
+html[data-theme="dark"] .card-page { color:var(--text); }
 /* Dark-mode contrast fixes.
    The borders of a table and the rule of a blockquote were drawn with
-   --bordo (#2e2e35) on the page background (#101013): a ratio of 1.41:1,
+   --border (#2e2e35) on the page background (#101013): a ratio of 1.41:1,
    a line you have to hunt for rather than see. Both now use #66667a, which
    measures 3.39:1 and clears the 3:1 WCAG asks of a non-text element that
    carries meaning. The quoted text itself moves from the muted grey to the
@@ -45,7 +45,7 @@ html[data-theme="dark"] .article-table th,
 html[data-theme="dark"] .article-table td { border-color:#66667a; }
 html[data-theme="dark"] .article-table th { background:#26262d; }
 html[data-theme="dark"] blockquote {
-  border-left-color:#66667a; color:var(--testo); opacity:0.92; }
+  border-left-color:#66667a; color:var(--text); opacity:0.92; }
 /* The search snippet: the highlighted term keeps its contrast. */
 html[data-theme="dark"] .art-snippet { color:#c4c4cc; }
 html[data-theme="dark"] .art-snippet mark,
@@ -53,8 +53,8 @@ html[data-theme="dark"] .art-title mark { background:#8a6600; color:#fff; }
 
 body {
   font-family:var(--pb-font);
-  font-size:var(--pb-font-size); line-height:var(--pb-line-height); color:var(--testo);
-  margin:0; background:var(--sfondo);
+  font-size:var(--pb-font-size); line-height:var(--pb-line-height); color:var(--text);
+  margin:0; background:var(--bg);
 }
 a { color:var(--link); }
 h1,h2,h3 { line-height:1.25; font-weight:600; }
@@ -63,19 +63,19 @@ h1,h2,h3 { line-height:1.25; font-weight:600; }
    The name of the site on the left, the menu on the right. The name is the
    h1 of the homepage only; on the other pages it is a paragraph, and the
    page's own title is the h1. */
-header.site { border-bottom:1px solid var(--bordo); }
+header.site { border-bottom:1px solid var(--border); }
 .site-header-inner {
-  max-width:var(--larghezza-pagina); margin:0 auto;
+  max-width:var(--page-width); margin:0 auto;
   padding:1.1rem 1.2rem; display:flex; justify-content:space-between;
   align-items:center; flex-wrap:wrap; gap:0.8rem 1.5rem;
 }
 .site-brand { min-width:0; }
 .site-title { font-size:1.4rem; font-weight:700; line-height:1.2; margin:0; letter-spacing:-0.01em; }
-.site-title a { color:var(--testo); text-decoration:none; }
-.site-subtitle { color:var(--secondario); font-size:0.88rem; margin:0.15rem 0 0; }
+.site-title a { color:var(--text); text-decoration:none; }
+.site-subtitle { color:var(--text-muted); font-size:0.88rem; margin:0.15rem 0 0; }
 .site-nav { display:flex; align-items:center; flex-wrap:wrap; gap:0.4rem 1.4rem; }
 .site-nav a {
-  color:var(--testo); text-decoration:none; font-size:0.95rem;
+  color:var(--text); text-decoration:none; font-size:0.95rem;
   font-weight:500; padding:0.3rem 0; border-bottom:2px solid transparent;
 }
 .site-nav a:hover { border-bottom-color:var(--link); color:var(--link); }
@@ -87,19 +87,19 @@ header.site { border-bottom:1px solid var(--bordo); }
 .site-nav a.nav-work:hover, .invite-button:hover { color:#fff; filter:brightness(0.92); }
 .share { margin:2rem 0 0; font-size:0.9rem; }
 .share button {
-  border:1px solid var(--bordo); border-radius:8px; background:var(--card-bg); color:var(--testo);
+  border:1px solid var(--border); border-radius:8px; background:var(--card-bg); color:var(--text);
   padding:0.35rem 0.7rem; text-decoration:none; font:inherit; cursor:pointer; min-height:36px;
 }
 .share button:hover { border-color:var(--link); color:var(--link); }
 .invite-work {
-  border:1px solid var(--bordo); border-radius:10px; background:var(--card-bg);
+  border:1px solid var(--border); border-radius:10px; background:var(--card-bg);
   padding:1rem 1.2rem; margin:2rem 0 0; display:flex; flex-wrap:wrap; gap:0.8rem 1.2rem;
   align-items:center; justify-content:space-between;
 }
 .invite-work p { margin:0; font-weight:600; }
 .theme-toggle { background:none; border:1px solid var(--pb-border-control); border-radius:50%;
   width:var(--pb-control-height); height:var(--pb-control-height);
-  cursor:pointer; font-size:1.1rem; line-height:1; color:var(--testo); display:inline-flex;
+  cursor:pointer; font-size:1.1rem; line-height:1; color:var(--text); display:inline-flex;
   align-items:center; justify-content:center; padding:0; }
 .theme-toggle:hover { border-color:var(--link); color:var(--link); }
 /* Language switcher in the navbar. The selector carries .site-nav so it
@@ -117,7 +117,7 @@ header.site { border-bottom:1px solid var(--bordo); }
   .site-subtitle { display:none; }
   .js .menu-toggle {
     display:inline-flex; align-items:center; gap:0.4rem;
-    font:inherit; font-size:0.92rem; font-weight:600; color:var(--testo);
+    font:inherit; font-size:0.92rem; font-weight:600; color:var(--text);
     background:var(--card-bg); border:1px solid var(--pb-border-control); border-radius:var(--pb-radius-control);
     min-height:var(--pb-control-height); padding:0 0.9rem; cursor:pointer;
   }
@@ -125,7 +125,7 @@ header.site { border-bottom:1px solid var(--bordo); }
   .js .site-nav { display:none; }
   .js .site-nav.open {
     display:flex; flex-direction:column; align-items:flex-start; gap:0.2rem;
-    flex-basis:100%; padding:0.4rem 0 0.2rem; border-top:1px solid var(--bordo);
+    flex-basis:100%; padding:0.4rem 0 0.2rem; border-top:1px solid var(--border);
   }
   .js .site-nav.open a { padding:0.45rem 0; width:100%; }
   .js .site-nav.open .nav-language { width:auto; }
@@ -134,31 +134,31 @@ header.site { border-bottom:1px solid var(--bordo); }
 /* --- Topics bar ------------------------------------------------------------
    The most used tags, right under the header. On a phone it scrolls
    sideways instead of wrapping onto several lines. */
-.bar-topics { border-bottom:1px solid var(--bordo); }
+.bar-topics { border-bottom:1px solid var(--border); }
 .bar-topics-inner {
-  max-width:var(--larghezza-pagina); margin:0 auto; padding:0.6rem 1.2rem;
+  max-width:var(--page-width); margin:0 auto; padding:0.6rem 1.2rem;
   display:flex; gap:0.5rem; overflow-x:auto; scrollbar-width:thin;
 }
 .topic {
   flex:0 0 auto; display:inline-flex; align-items:center; gap:0.35rem;
-  font-size:0.82rem; color:var(--testo); text-decoration:none; white-space:nowrap;
-  border:1px solid var(--bordo); border-radius:999px; padding:0.15rem 0.7rem;
+  font-size:0.82rem; color:var(--text); text-decoration:none; white-space:nowrap;
+  border:1px solid var(--border); border-radius:999px; padding:0.15rem 0.7rem;
   background:var(--card-bg);
 }
 .topic:hover, .topic[aria-current="page"] { border-color:var(--link); color:var(--link); }
-.topic-count { color:var(--secondario); font-size:0.75rem; }
+.topic-count { color:var(--text-muted); font-size:0.75rem; }
 
 /* --- The two columns ------------------------------------------------------- */
 .layout-columns {
-  max-width:var(--larghezza-pagina); margin:0 auto; padding:2rem 1.2rem 3rem;
+  max-width:var(--page-width); margin:0 auto; padding:2rem 1.2rem 3rem;
   display:grid; grid-template-columns:minmax(0, 1fr); gap:2.4rem;
 }
 .column-main { min-width:0; }
 .bar-side { min-width:0; display:flex; flex-direction:column; gap:1.2rem; }
 @media (min-width: 980px) {
   .layout-columns {
-    grid-template-columns:minmax(0, 1fr) var(--larghezza-barra);
-    gap:var(--spazio-colonne);
+    grid-template-columns:minmax(0, 1fr) var(--sidebar-width);
+    gap:var(--column-gap);
   }
 }
 @media (max-width: 640px) {
@@ -176,11 +176,11 @@ header.site { border-bottom:1px solid var(--bordo); }
 .search-box { flex:1 1 14rem; max-width:22rem; }
 /* The search field is the shared .field-input, at full width. */
 .search-box input { width:100%; }
-#search-box-info { color:var(--secondario); font-size:0.85rem; margin:0 0 0.4rem; min-height:1.2em; }
+#search-box-info { color:var(--text-muted); font-size:0.85rem; margin:0 0 0.4rem; min-height:1.2em; }
 .articles-list { display:flex; flex-direction:column; }
 .art-row {
   position:relative; display:grid; grid-template-columns:150px minmax(0, 1fr);
-  gap:1.1rem; align-items:start; padding:1.15rem 0; border-bottom:1px solid var(--bordo);
+  gap:1.1rem; align-items:start; padding:1.15rem 0; border-bottom:1px solid var(--border);
 }
 .art-thumb { min-width:0; }
 /* A declared width, for the same reason as every image inside a grid or a
@@ -192,7 +192,7 @@ header.site { border-bottom:1px solid var(--bordo); }
 }
 .art-tile {
   display:grid; place-items:center; padding:0.5rem; text-align:center;
-  background:var(--card-hover); border:1px solid var(--bordo);
+  background:var(--card-hover); border:1px solid var(--border);
   color:var(--link); font-weight:700; font-size:1.05rem; letter-spacing:-0.01em;
   overflow:hidden; text-overflow:ellipsis; word-break:break-word;
 }
@@ -200,20 +200,20 @@ header.site { border-bottom:1px solid var(--bordo); }
 .art-tags { display:flex; flex-wrap:wrap; gap:0.35rem; margin:0; }
 .art-tag {
   position:relative; z-index:1;
-  font-size:0.74rem; color:var(--secondario); text-decoration:none;
-  border:1px solid var(--bordo); border-radius:999px; padding:0.05rem 0.55rem;
+  font-size:0.74rem; color:var(--text-muted); text-decoration:none;
+  border:1px solid var(--border); border-radius:999px; padding:0.05rem 0.55rem;
   background:var(--card-bg); line-height:1.6;
 }
 .art-tag:hover { color:var(--link); border-color:var(--link); }
 .art-title { font-size:1.15rem; margin:0.1rem 0 0; line-height:1.3; }
-.art-title a { color:var(--testo); text-decoration:none; }
+.art-title a { color:var(--text); text-decoration:none; }
 .art-title a::after { content:""; position:absolute; inset:0; }
 .art-row:hover .art-title a { color:var(--link); }
 .art-title a:focus-visible { outline:none; }
 .art-row:has(.art-title a:focus-visible) { outline:2px solid var(--link); outline-offset:4px; border-radius:6px; }
-.art-meta { color:var(--secondario); font-size:0.82rem; margin:0; }
+.art-meta { color:var(--text-muted); font-size:0.82rem; margin:0; }
 .art-excerpt, .art-snippet {
-  color:var(--secondario); font-size:0.95rem; line-height:1.6; margin:0.15rem 0 0;
+  color:var(--text-muted); font-size:0.95rem; line-height:1.6; margin:0.15rem 0 0;
   display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
 }
 .art-snippet mark, .art-title mark { background:#fff3b0; color:inherit; padding:0 2px; border-radius:2px; }
@@ -221,10 +221,10 @@ header.site { border-bottom:1px solid var(--bordo); }
    and twice the text. */
 .art-lead { grid-template-columns:260px minmax(0, 1fr); gap:1.4rem; padding-top:0.6rem; }
 .art-lead .art-title { font-size:1.55rem; letter-spacing:-0.01em; }
-.art-lead .art-excerpt { color:var(--testo); font-size:1rem; -webkit-line-clamp:5; }
+.art-lead .art-excerpt { color:var(--text); font-size:1rem; -webkit-line-clamp:5; }
 .art-kicker {
   margin:0; font-size:0.7rem; font-weight:700; letter-spacing:0.09em; text-transform:uppercase;
-  color:var(--evidenza-accento);
+  color:var(--featured-accent);
 }
 .art-more { color:var(--link); font-size:0.9rem; font-weight:500; margin-top:0.3rem; }
 @media (max-width: 640px) {
@@ -236,7 +236,7 @@ header.site { border-bottom:1px solid var(--bordo); }
   .art-lead .art-title { font-size:1.3rem; }
   .art-lead .art-excerpt { -webkit-line-clamp:4; }
 }
-.no-articles { color:var(--secondario); }
+.no-articles { color:var(--text-muted); }
 
 /* --- Spaces for advertisements and widgets ---------------------------------
    The custom code placed between the articles, in the sidebar or inside the
@@ -255,12 +255,12 @@ header.site { border-bottom:1px solid var(--bordo); }
 .pagination-numbers { display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap; }
 .pagination a, .pagination-number {
   color:var(--link); text-decoration:none; font-size:0.92rem;
-  padding:0.4rem 0.8rem; border:1px solid var(--bordo); border-radius:8px; min-width:2.4rem;
+  padding:0.4rem 0.8rem; border:1px solid var(--border); border-radius:8px; min-width:2.4rem;
   text-align:center;
 }
 .pagination a:hover { border-color:var(--link); }
-.pagination-number[aria-current="page"] { background:var(--link); border-color:var(--link); color:var(--sfondo); }
-.pagination-jump { color:var(--secondario); padding:0 0.2rem; }
+.pagination-number[aria-current="page"] { background:var(--link); border-color:var(--link); color:var(--bg); }
+.pagination-jump { color:var(--text-muted); padding:0 0.2rem; }
 .pagination-empty { min-width:1px; }
 @media (max-width: 560px) {
   .pagination { justify-content:center; }
@@ -272,12 +272,12 @@ header.site { border-bottom:1px solid var(--bordo); }
    Boxes of the same shape: the author, the cards, the topics, the follow
    links. On a phone they come after the content. */
 .box {
-  background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px;
+  background:var(--card-bg); border:1px solid var(--border); border-radius:12px;
   padding:1rem 1.1rem; font-size:0.92rem;
 }
 .box-title {
   font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
-  color:var(--secondario); margin:0 0 0.7rem;
+  color:var(--text-muted); margin:0 0 0.7rem;
 }
 .profile { display:flex; gap:0.8rem; align-items:center; }
 .profile-photo {
@@ -287,14 +287,14 @@ header.site { border-bottom:1px solid var(--bordo); }
   display:inline-grid; place-items:center; font-weight:700; font-size:1.05rem;
   color:#fff; background:linear-gradient(135deg, var(--pb-accent), var(--pb-accent-2));
 }
-.profile-name { margin:0; font-weight:700; color:var(--testo); }
-.profile-role { margin:0.1rem 0 0; color:var(--secondario); font-size:0.85rem; line-height:1.4; }
+.profile-name { margin:0; font-weight:700; color:var(--text); }
+.profile-role { margin:0.1rem 0 0; color:var(--text-muted); font-size:0.85rem; line-height:1.4; }
 .profile-bio { margin:0.7rem 0 0; line-height:1.55; }
 .profile-link { margin:0.6rem 0 0; }
 .profile-link a, .explore-list-box a, .follow-list-box a { text-decoration:none; font-weight:500; }
 .profile-link a:hover, .explore-list-box a:hover, .follow-list-box a:hover { text-decoration:underline; }
 .explore-list-box, .follow-list-box { list-style:none; margin:0; padding:0; display:grid; gap:0.65rem; }
-.explore-excerpt { display:block; color:var(--secondario); font-size:0.82rem; line-height:1.45; margin-top:0.1rem; }
+.explore-excerpt { display:block; color:var(--text-muted); font-size:0.82rem; line-height:1.45; margin-top:0.1rem; }
 .follow-list-box { gap:0.4rem; }
 .tooltip-cloud { display:flex; flex-wrap:wrap; gap:0.4rem; margin:0; }
 /* The introduction of the homepage, when it lives in the sidebar: the same
@@ -312,45 +312,45 @@ header.site { border-bottom:1px solid var(--bordo); }
    after the article, so the folded copy at the top of the text takes over. */
 .box-toc-index { position:sticky; top:1.2rem; max-height:calc(100vh - 2.4rem); overflow-y:auto; }
 .toc-list-box { list-style:none; margin:0; padding:0; display:grid; gap:0.4rem; }
-.toc-list-box a { color:var(--testo); text-decoration:none; line-height:1.4; display:block;
+.toc-list-box a { color:var(--text); text-decoration:none; line-height:1.4; display:block;
   border-left:2px solid transparent; padding-left:0.6rem; margin-left:-0.6rem; }
 .toc-list-box a:hover { color:var(--link); }
 .toc-list-box a[aria-current] { color:var(--link); border-left-color:var(--link); font-weight:600; }
 .toc-list-box .toc-h3 { padding-left:0.9rem; font-size:0.9em; }
 .toc-phone {
-  border:1px solid var(--bordo); border-radius:10px; background:var(--card-bg);
+  border:1px solid var(--border); border-radius:10px; background:var(--card-bg);
   padding:0.7rem 1rem; margin:0 0 1.6rem;
 }
 .toc-phone summary { cursor:pointer; font-weight:600; font-size:0.92rem; }
 /* The series an article belongs to: its name, the part, the list of parts. */
 .series-box {
-  border:1px solid var(--bordo); border-left:3px solid var(--link); border-radius:10px;
+  border:1px solid var(--border); border-left:3px solid var(--link); border-radius:10px;
   background:var(--card-bg); padding:0.7rem 1rem; margin:0 0 1.6rem; font-size:0.92rem;
 }
 .series-box p { margin:0; }
-.series-label-text { color:var(--secondario); text-transform:uppercase; letter-spacing:0.04em; font-size:0.78rem; }
+.series-label-text { color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; font-size:0.78rem; }
 .series-name { font-weight:600; }
 .series-box details { margin-top:0.4rem; }
 .series-box summary { cursor:pointer; color:var(--link); }
 .series-box ol { margin:0.6rem 0 0; padding-left:1.4rem; }
 .series-box li { margin:0.25rem 0; }
 .series-box li[aria-current] { font-weight:600; }
-.published-source { color:var(--secondario); font-size:0.9rem; margin:-1.2rem 0 1.8rem; }
+.published-source { color:var(--text-muted); font-size:0.9rem; margin:-1.2rem 0 1.8rem; }
 .labs-home { list-style:none; margin:0; padding:0; display:grid; gap:0.8rem;
   grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); }
-.labs-home li { border:1px solid var(--bordo); border-radius:10px; background:var(--card-bg);
+.labs-home li { border:1px solid var(--border); border-radius:10px; background:var(--card-bg);
   padding:0.9rem 1rem; display:flex; flex-direction:column; gap:0.4rem; }
-.lab-home-title { font-weight:600; color:var(--testo); text-decoration:none; line-height:1.35; }
+.lab-home-title { font-weight:600; color:var(--text); text-decoration:none; line-height:1.35; }
 .lab-home-title:hover { color:var(--link); }
-.lab-home-stack { color:var(--secondario); font-size:0.85rem; }
+.lab-home-stack { color:var(--text-muted); font-size:0.85rem; }
 .labs-home-all { margin:0.8rem 0 0; font-size:0.92rem; }
 /* A lab: where its code is, what it is built with, the article behind it. */
 .lab-box {
-  border:1px solid var(--bordo); border-left:3px solid var(--link); border-radius:10px;
+  border:1px solid var(--border); border-left:3px solid var(--link); border-radius:10px;
   background:var(--card-bg); padding:0.8rem 1rem; margin:0 0 1.6rem; font-size:0.92rem;
 }
 .lab-box p { margin:0.2rem 0; }
-.lab-label-text { color:var(--secondario); text-transform:uppercase; letter-spacing:0.04em;
+.lab-label-text { color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;
   font-size:0.78rem; font-weight:600; }
 .lab-code { font-weight:600; }
 .lab-box pre { margin:0.4rem 0 0.6rem; }
@@ -362,7 +362,7 @@ header.site { border-bottom:1px solid var(--bordo); }
 .series-list > li { counter-increment:parte; position:relative; padding-left:2.4rem; }
 .series-list > li::before {
   content:counter(parte); position:absolute; left:0; top:1.1rem; width:1.8rem; height:1.8rem;
-  border-radius:50%; border:1px solid var(--bordo); color:var(--secondario);
+  border-radius:50%; border:1px solid var(--border); color:var(--text-muted);
   display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:600;
 }
 .toc-phone .toc-list-box { margin-top:0.7rem; }
@@ -376,24 +376,24 @@ header.site { border-bottom:1px solid var(--bordo); }
 /* --- Article page ---------------------------------------------------------- */
 article.post { max-width:46rem; margin:0; padding:0; }
 article.post h1 { font-size:2.1rem; margin:0 0 0.5rem; letter-spacing:-0.015em; }
-.meta { color:var(--secondario); font-size:0.9rem; margin-bottom:1.8rem; }
-.tag { font-size:0.8rem; color:var(--secondario); text-decoration:none; }
+.meta { color:var(--text-muted); font-size:0.9rem; margin-bottom:1.8rem; }
+.tag { font-size:0.8rem; color:var(--text-muted); text-decoration:none; }
 .tag:hover { color:var(--link); }
-.breadcrumbs { font-size:0.85rem; color:var(--secondario); margin:0 0 0.5rem; }
+.breadcrumbs { font-size:0.85rem; color:var(--text-muted); margin:0 0 0.5rem; }
 .breadcrumbs a { color:var(--link); text-decoration:none; }
-.text-tag-count { color:var(--secondario); font-size:0.9rem; margin:0.2rem 0 1rem; }
+.text-tag-count { color:var(--text-muted); font-size:0.9rem; margin:0.2rem 0 1rem; }
 .post-back { margin-top:2rem; }
 .post-back a { text-decoration:none; }
 @media (max-width: 640px) {
   article.post h1 { font-size:1.65rem; }
 }
 /* Related articles: the same rows as the homepage. */
-.related-articles { max-width:46rem; margin:3rem 0 0; padding:2rem 0 0; border-top:1px solid var(--bordo); }
+.related-articles { max-width:46rem; margin:3rem 0 0; padding:2rem 0 0; border-top:1px solid var(--border); }
 .related-articles .articles-heading { font-size:1.25rem; margin-bottom:0.3rem; }
 /* Page of a card (Biography, Projects, About). */
 .card-hero { text-align:center; padding:2.2rem 1rem 1.4rem; margin-bottom:2rem;
   background:linear-gradient(135deg, var(--hero-1) 0%, var(--hero-2) 100%);
-  border:1px solid var(--hero-bordo); border-radius:16px; }
+  border:1px solid var(--hero-border); border-radius:16px; }
 .card-hero .breadcrumbs { justify-content:center; }
 .card-hero-title { font-size:2rem; margin:0.3rem 0 0; letter-spacing:-0.02em;
   background:linear-gradient(120deg, #0066cc, #5b3df5); -webkit-background-clip:text;
@@ -404,14 +404,14 @@ article.post h1 { font-size:2.1rem; margin:0 0 0.5rem; letter-spacing:-0.015em; 
 .card-back a { color:var(--link); text-decoration:none; }
 /* "Written by" box at the bottom of the articles. */
 .author-box { display:flex; gap:1.2rem; align-items:flex-start;
-  background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px;
+  background:var(--card-bg); border:1px solid var(--border); border-radius:12px;
   padding:1.3rem 1.5rem; margin:3rem 0 0; }
 .author-box-photo { width:64px; height:64px; min-width:0; border-radius:50%; object-fit:cover; flex-shrink:0; }
 .author-box-name { margin:0 0 0.2rem; font-weight:700; }
-.author-box-name a { color:var(--testo); text-decoration:none; }
+.author-box-name a { color:var(--text); text-decoration:none; }
 .author-box-name a:hover { color:var(--link); }
-.author-box-label { font-weight:400; color:var(--secondario); font-size:0.85rem; }
-.author-box-role { margin:0 0 0.4rem; color:var(--secondario); font-size:0.9rem; }
+.author-box-label { font-weight:400; color:var(--text-muted); font-size:0.85rem; }
+.author-box-role { margin:0 0 0.4rem; color:var(--text-muted); font-size:0.9rem; }
 .author-box-bio { margin:0 0 0.5rem; font-size:0.95rem; line-height:1.55; }
 .author-box-social { margin:0; font-size:0.88rem; }
 .author-box-social a { color:var(--link); text-decoration:none; }
@@ -419,12 +419,12 @@ article.post h1 { font-size:2.1rem; margin:0 0 0.5rem; letter-spacing:-0.015em; 
 /* Navigation between articles (newer / older). */
 .article-nav { display:flex; justify-content:space-between; gap:1rem; margin:1.5rem 0 0; }
 .article-nav-link { flex:1; max-width:48%; text-decoration:none; padding:0.8rem 1rem;
-  border:1px solid var(--bordo); border-radius:10px; background:var(--card-bg); }
+  border:1px solid var(--border); border-radius:10px; background:var(--card-bg); }
 .article-nav-link:hover { border-color:var(--link); }
 .article-nav-right { text-align:right; }
-.article-nav-label { display:block; font-size:0.78rem; color:var(--secondario);
+.article-nav-label { display:block; font-size:0.78rem; color:var(--text-muted);
   text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.25rem; }
-.article-nav-title { display:block; color:var(--testo); font-size:0.92rem;
+.article-nav-title { display:block; color:var(--text); font-size:0.92rem;
   font-weight:600; line-height:1.35; }
 .article-nav-empty { flex:1; max-width:48%; }
 @media (max-width: 640px) {
@@ -436,15 +436,15 @@ article.post h1 { font-size:2.1rem; margin:0 0 0.5rem; letter-spacing:-0.015em; 
 /* Language switcher in the article pages. */
 .language-switcher { display:flex; gap:0.5rem; margin-bottom:1rem; font-size:0.85rem; }
 .language-switcher a, .language-switcher span { padding:0.2rem 0.7rem; border-radius:20px; text-decoration:none; }
-.language-switcher a { color:var(--link); border:1px solid var(--bordo); }
-.language-switcher .language-active { background:var(--link); color:var(--sfondo); }
+.language-switcher a { color:var(--link); border:1px solid var(--border); }
+.language-switcher .language-active { background:var(--link); color:var(--bg); }
 
 /* --- The text of an article ------------------------------------------------- */
-pre { background:var(--codice-bg); padding:1rem 1.2rem; border-radius:6px; overflow-x:auto; font-size:0.85rem; line-height:1.5; }
+pre { background:var(--code-bg); padding:1rem 1.2rem; border-radius:6px; overflow-x:auto; font-size:0.85rem; line-height:1.5; }
 pre.ql-syntax, pre code { font-family:var(--pb-font-mono); tab-size:4; }
-pre.ql-syntax { background:var(--codice-bg); border:1px solid var(--bordo); }
+pre.ql-syntax { background:var(--code-bg); border:1px solid var(--border); }
 code { font-family:var(--pb-font-mono); font-size:0.88em; }
-p code, li code { background:var(--codice-bg); padding:0.1rem 0.35rem; border-radius:4px; }
+p code, li code { background:var(--code-bg); padding:0.1rem 0.35rem; border-radius:4px; }
 img { max-width:100% !important; height:auto; }
 video { max-width:100%; height:auto; display:block; margin:1rem 0; }
 .video-youtube { position:relative; width:100%; padding-bottom:56.25%; margin:1rem 0; height:0; overflow:hidden; }
@@ -464,11 +464,11 @@ video { max-width:100%; height:auto; display:block; margin:1rem 0; }
    but that has no picture above it looks the same. */
 article.post figure { margin:1.6rem 0; }
 article.post figure :is(img, video) { max-width:100%; height:auto; }
-figcaption, p.image-caption { font-size:0.875rem; line-height:1.5; color:var(--secondario); margin-top:0.5rem; }
+figcaption, p.image-caption { font-size:0.875rem; line-height:1.5; color:var(--text-muted); margin-top:0.5rem; }
 /* A centred image is inline: display block is needed to really centre it. */
 p.ql-align-center img, .ql-align-center img { display:inline-block; }
-blockquote { border-left:3px solid var(--bordo); margin-left:0; padding-left:1.2rem; color:var(--secondario); font-style:italic; }
-.comments { max-width:46rem; margin:2.5rem 0 0; padding:2rem 0 0; border-top:1px solid var(--bordo); }
+blockquote { border-left:3px solid var(--border); margin-left:0; padding-left:1.2rem; color:var(--text-muted); font-style:italic; }
+.comments { max-width:46rem; margin:2.5rem 0 0; padding:2rem 0 0; border-top:1px solid var(--border); }
 .comments h2 { font-size:1.2rem; }
 /* Lists in the articles: we restore the bullets and the numbers, which some
    CSS resets remove. Without these rules bulleted lists show with no bullet. */
@@ -517,8 +517,8 @@ article.post s, article.post del { text-decoration:line-through; }
    an article is inside div.raw-html-block - the editor's own blot writes it,
    and so does the Word importer - so the wrapper is always there to scroll. */
 .article-table { border-collapse:collapse; width:100%; max-width:100%; margin:1.5rem 0; font-size:0.92rem; }
-.article-table th, .article-table td { border:1px solid var(--bordo); padding:0.6rem 0.8rem; text-align:left; vertical-align:top; }
-.article-table th { background:var(--codice-bg); font-weight:600; }
+.article-table th, .article-table td { border:1px solid var(--border); padding:0.6rem 0.8rem; text-align:left; vertical-align:top; }
+.article-table th { background:var(--code-bg); font-weight:600; }
 .article-table tr:nth-child(even) td { background:var(--card-hover); }
 .raw-html-block { margin:0; overflow-x:auto; }
 /* A table written by hand in an article, with no wrapper around it, has no
@@ -581,7 +581,7 @@ article.post s, article.post del { text-decoration:line-through; }
 .home-intro {
   margin:0 0 2rem; padding:1.2rem 1.6rem; border-radius:14px;
   background:linear-gradient(135deg, var(--hero-1) 0%, var(--hero-2) 100%);
-  border:1px solid var(--hero-bordo); position:relative; overflow:hidden;
+  border:1px solid var(--hero-border); position:relative; overflow:hidden;
 }
 .home-intro h1, .home-intro h2 {
   font-size:1.5rem; margin:0 0 0.3rem; line-height:1.2; letter-spacing:-0.02em;
@@ -598,17 +598,17 @@ article.post s, article.post del { text-decoration:line-through; }
 .home-intro::after { content:""; display:block; clear:both; }
 /* Author avatar in the introduction. */
 .home-avatar { width:80px; height:80px; border-radius:50%; object-fit:cover;
-  border:3px solid var(--sfondo); box-shadow:0 2px 10px rgba(0,0,0,0.12);
+  border:3px solid var(--bg); box-shadow:0 2px 10px rgba(0,0,0,0.12);
   margin:0 0 0.8rem; display:block; }
 .home-avatar.avatar-initials { display:grid; place-items:center; font-size:1.4rem; }
 
 /* --- Archive page: compact list by year, date aligned left. --- */
-.archive-year h2 { font-size:1.3rem; margin:2rem 0 0.6rem; color:var(--testo);
-  border-bottom:1px solid var(--bordo); padding-bottom:0.3rem; }
+.archive-year h2 { font-size:1.3rem; margin:2rem 0 0.6rem; color:var(--text);
+  border-bottom:1px solid var(--border); padding-bottom:0.3rem; }
 .archive-list { list-style:none; padding:0; margin:0; }
 .archive-list li { margin:0.45rem 0; display:flex; gap:1rem; align-items:baseline; }
-.archive-date { color:var(--secondario); font-size:0.85rem; min-width:9.5rem; flex-shrink:0; }
-.archive-list a { color:var(--testo); text-decoration:none; }
+.archive-date { color:var(--text-muted); font-size:0.85rem; min-width:9.5rem; flex-shrink:0; }
+.archive-list a { color:var(--text); text-decoration:none; }
 .archive-list a:hover { color:var(--link); text-decoration:underline; }
 @media (max-width: 640px) {
   .archive-list li { flex-direction:column; gap:0.1rem; margin:0.8rem 0; }
@@ -616,9 +616,9 @@ article.post s, article.post del { text-decoration:line-through; }
 }
 
 /* --- Footer ---------------------------------------------------------------- */
-footer.site { max-width:var(--larghezza-pagina); margin:2rem auto 0; padding:1.5rem 1.2rem; border-top:1px solid var(--bordo); color:var(--secondario); font-size:0.85rem; text-align:center; }
+footer.site { max-width:var(--page-width); margin:2rem auto 0; padding:1.5rem 1.2rem; border-top:1px solid var(--border); color:var(--text-muted); font-size:0.85rem; text-align:center; }
 .foot-social { margin:0.4rem 0 0; }
-.foot-social a { color:var(--secondario); text-decoration:none; }
+.foot-social a { color:var(--text-muted); text-decoration:none; }
 .foot-social a:hover { color:var(--link); }
 .link-preferences { background:none; border:0; padding:0; font:inherit; color:var(--link);
   text-decoration:underline; cursor:pointer; }
@@ -635,8 +635,8 @@ footer.site { max-width:var(--larghezza-pagina); margin:2rem auto 0; padding:1.5
   position:absolute; top:0.5rem; right:0.5rem;
   font-family:inherit; font-size:0.75rem; line-height:1.4;
   padding:0.2rem 0.6rem; border-radius:6px; cursor:pointer;
-  color:var(--secondario); background:var(--card-bg);
-  border:1px solid var(--bordo);
+  color:var(--text-muted); background:var(--card-bg);
+  border:1px solid var(--border);
   opacity:0; transition:opacity 0.15s;
 }
 /* The button appears on hover on a mouse, and is always visible on a touch
@@ -666,26 +666,26 @@ html[data-theme="dark"] .progress-reading-bar {
 }
 
 /* --- 404 page ------------------------------------------------------------- */
-.main-content { max-width:var(--larghezza-pagina); margin:0 auto; padding:2.5rem 1.2rem 4rem; }
-.page-404 { max-width:var(--larghezza); margin:0 auto; text-align:center; padding:3rem 0 2rem; }
+.main-content { max-width:var(--page-width); margin:0 auto; padding:2.5rem 1.2rem 4rem; }
+.page-404 { max-width:var(--text-width); margin:0 auto; text-align:center; padding:3rem 0 2rem; }
 .failure-404-number { font-size:3.5rem; margin:0; line-height:1;
   background:linear-gradient(120deg, #0066cc, #5b3df5); -webkit-background-clip:text;
   background-clip:text; -webkit-text-fill-color:transparent; }
 html[data-theme="dark"] .failure-404-number {
   background:linear-gradient(120deg, #6ba9ff, #b39dff); -webkit-background-clip:text;
   background-clip:text; -webkit-text-fill-color:transparent; }
-.failure-404-text { font-size:1.15rem; color:var(--secondario); margin:0.6rem 0 2rem; }
+.failure-404-text { font-size:1.15rem; color:var(--text-muted); margin:0.6rem 0 2rem; }
 .failure-404-search-box { display:flex; gap:0.5rem; max-width:28rem; margin:0 auto 2.5rem; }
 .failure-404-search-box input { flex:1; }
 .failure-404-latest { text-align:left; max-width:34rem; margin:0 auto 2rem; }
 .failure-404-latest h2 { font-size:1.1rem; margin:0 0 0.8rem;
-  padding-bottom:0.4rem; border-bottom:1px solid var(--bordo); }
+  padding-bottom:0.4rem; border-bottom:1px solid var(--border); }
 .failure-404-latest ul { list-style:none; padding:0; margin:0; }
 .failure-404-latest li { display:flex; justify-content:space-between; gap:1rem;
   align-items:baseline; margin:0.5rem 0; }
-.failure-404-latest a { color:var(--testo); text-decoration:none; }
+.failure-404-latest a { color:var(--text); text-decoration:none; }
 .failure-404-latest a:hover { color:var(--link); text-decoration:underline; }
-.failure-404-data { color:var(--secondario); font-size:0.82rem; white-space:nowrap; }
+.failure-404-data { color:var(--text-muted); font-size:0.82rem; white-space:nowrap; }
 .failure-404-back a { color:var(--link); text-decoration:none; }
 /* A label that only a screen reader needs. */
 .sr-only {
@@ -758,27 +758,27 @@ body.zoom-open { overflow:hidden; }
 .consent-inner {
   position:relative; pointer-events:auto;
   max-width:46rem; margin:0 auto; padding:1.1rem 1.3rem 1rem;
-  background:var(--card-bg); color:var(--testo);
-  border:1px solid var(--bordo); border-radius:14px;
+  background:var(--card-bg); color:var(--text);
+  border:1px solid var(--border); border-radius:14px;
   box-shadow:0 12px 40px rgba(0,0,0,0.18);
   font-size:0.92rem;
 }
 .consent-title { margin:0 2rem 0.35rem 0; font-weight:700; font-size:1rem; }
-.consent-text { margin:0; line-height:1.55; color:var(--secondario); }
+.consent-text { margin:0; line-height:1.55; color:var(--text-muted); }
 .consent-choices { display:grid; gap:0.55rem; margin:0.9rem 0 0.2rem; }
 .consent-choices[hidden] { display:none; }
 .consent-item { display:flex; gap:0.55rem; align-items:flex-start; line-height:1.45; cursor:pointer; }
 .consent-item input { margin-top:0.25rem; }
-.consent-item span { color:var(--secondario); }
-.consent-item strong { color:var(--testo); }
+.consent-item span { color:var(--text-muted); }
+.consent-item strong { color:var(--text); }
 .consent-buttons { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:0.5rem; margin-top:0.9rem; }
 /* The buttons are the shared .button (common.css). Refusing weighs as
    much as accepting: both are primary, as the consent rules ask. */
 .consent-close {
   position:absolute; top:0.4rem; right:0.4rem;
-  color:var(--secondario); font-size:1.4rem; font-weight:400; line-height:1;
+  color:var(--text-muted); font-size:1.4rem; font-weight:400; line-height:1;
 }
-.consent-close:hover { color:var(--testo); }
+.consent-close:hover { color:var(--text); }
 @media (max-width: 560px) {
   .consent { padding:0 0.5rem calc(0.5rem + env(safe-area-inset-bottom, 0px)); }
   .consent-buttons { justify-content:stretch; }
@@ -791,7 +791,7 @@ body.zoom-open { overflow:hidden; }
 .home-section { margin:0 0 2rem; }
 .home-section-title {
   font-size:0.78rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
-  color:var(--secondario); margin:0 0 0.8rem;
+  color:var(--text-muted); margin:0 0 0.8rem;
 }
 /* After the list of articles the section needs room from the pagination. */
 .articles-section + .home-section { margin-top:2.5rem; }
@@ -805,7 +805,7 @@ body.zoom-open { overflow:hidden; }
 .bio-link a:hover { text-decoration:underline; }
 /* In the main column the biography is a card, like the articles. */
 .home-biography .bio-short {
-  background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px; padding:1.1rem 1.2rem;
+  background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:1.1rem 1.2rem;
 }
 .home-biography .bio-photo { width:96px; height:96px; }
 /* In the sidebar the photo goes on top, the box is narrow. */
@@ -829,23 +829,23 @@ body.zoom-open { overflow:hidden; }
 }
 .project { position:relative; min-width:0; }
 .projects-grid .project {
-  background:var(--card-bg); border:1px solid var(--bordo); border-radius:12px;
+  background:var(--card-bg); border:1px solid var(--border); border-radius:12px;
   padding:1rem 1.1rem; display:flex; flex-direction:column; gap:0.4rem;
   transition:box-shadow 0.15s ease, transform 0.15s ease;
 }
 .projects-grid .project:has(a):hover { box-shadow:0 6px 20px rgba(0,0,0,0.08); transform:translateY(-1px); }
 .project-picture {
   width:100%; aspect-ratio:16 / 9; min-width:0; min-height:0; object-fit:cover; border-radius:8px;
-  background:var(--bordo);
+  background:var(--border);
 }
 .project-name { margin:0; font-size:1.02rem; line-height:1.35; }
-.project-name a { color:var(--testo); text-decoration:none; }
+.project-name a { color:var(--text); text-decoration:none; }
 .project-name a:hover { color:var(--link); }
 /* The name's link covers the whole card. */
 .projects-grid .project-name a::after { content:""; position:absolute; inset:0; border-radius:12px; }
 .project-name a:focus-visible { outline:none; }
 .projects-grid .project:has(a:focus-visible) { outline:3px solid var(--link); outline-offset:2px; }
-.project-description { margin:0; color:var(--secondario); font-size:0.92rem; line-height:1.5; }
+.project-description { margin:0; color:var(--text-muted); font-size:0.92rem; line-height:1.5; }
 /* In the sidebar: a compact list, the image as a small thumbnail. */
 .projects-list-box { list-style:none; margin:0; padding:0; display:grid; gap:0.8rem; }
 .projects-list-box .project { display:grid; grid-template-columns:auto 1fr; column-gap:0.7rem; }
@@ -859,7 +859,7 @@ body.zoom-open { overflow:hidden; }
    The sign-up form, in the sidebar and at the end of the articles, and the
    pages the subscription answers with. */
 .newsletter-form { display:flex; flex-direction:column; gap:0.6rem; }
-.newsletter-text { margin:0; line-height:1.55; color:var(--secondario); }
+.newsletter-text { margin:0; line-height:1.55; color:var(--text-muted); }
 .newsletter-row { display:flex; flex-wrap:wrap; gap:0.5rem; }
 .newsletter-row .field-input { flex:1 1 12rem; min-width:0; }
 .newsletter-privacy { margin:0; font-size:0.8rem; }
@@ -867,11 +867,11 @@ body.zoom-open { overflow:hidden; }
 .newsletter-trap { position:absolute; left:-10000px; width:1px; height:1px; overflow:hidden; }
 .box-newsletter .newsletter-row .button { flex:1 1 auto; }
 .newsletter-article {
-  margin:2.5rem 0 0; padding:1.2rem 1.3rem; border:1px solid var(--bordo); border-radius:12px;
+  margin:2.5rem 0 0; padding:1.2rem 1.3rem; border:1px solid var(--border); border-radius:12px;
   background:var(--card-bg);
 }
 .newsletter-article h2 { margin:0 0 0.4rem; font-size:1.15rem; }
 .newsletter-page { max-width:36rem; margin:3rem auto; padding:0 1.2rem; text-align:center; }
 .newsletter-page h1 { font-size:1.6rem; margin:0 0 0.8rem; }
-.newsletter-page p { line-height:1.6; color:var(--secondario); }
+.newsletter-page p { line-height:1.6; color:var(--text-muted); }
 .newsletter-page form { margin:1.5rem 0; }
