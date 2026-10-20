@@ -2,7 +2,7 @@
 """
 Checks on the media library.
 
-    python3 tests/test_libreria.py
+    python3 tests/test_media_library.py
 
 The library lists the uploaded files and says where each is used, so the
 author can clear out the ones nothing uses without leaving a hole in a page.
@@ -69,83 +69,83 @@ class Library:
         self.folder.cleanup()
 
 
-def test_elenco_e_usi():
+def test_list_and_uses():
     print("\nfile e usi")
     lib = Library()
     try:
-        nomi = sorted(m["name"] for m in media_library.media_files())
+        names = sorted(m["name"] for m in media_library.media_files())
         check("elenca i file caricati, non quelli nascosti",
-              nomi == ["copertina.jpg", "dimenticata.png", "foto.png", "video.mp4"], str(nomi))
-        tipi = {m["name"]: m["kind"] for m in media_library.media_files()}
+              names == ["copertina.jpg", "dimenticata.png", "foto.png", "video.mp4"], str(names))
+        kinds = {m["name"]: m["kind"] for m in media_library.media_files()}
         check("sa cos'è un video e cos'è un'immagine",
-              tipi["video.mp4"] == "video" and tipi["foto.png"] == "image")
-        usi = media_library.media_uses()
+              kinds["video.mp4"] == "video" and kinds["foto.png"] == "image")
+        uses = media_library.media_uses()
         check("trova un'immagine nel testo di un articolo e nelle impostazioni",
-              [u["kind"] for u in usi["foto.png"]] == ["article", "settings"], str(usi.get("foto.png")))
+              [u["kind"] for u in uses["foto.png"]] == ["article", "settings"], str(uses.get("foto.png")))
         check("e la copertina di una bozza, anche scritta con l'indirizzo completo",
-              usi["copertina.jpg"][0]["slug"] == "bozza")
-        check("un file che nessuno usa non compare", "dimenticata.png" not in usi)
+              uses["copertina.jpg"][0]["slug"] == "bozza")
+        check("un file che nessuno usa non compare", "dimenticata.png" not in uses)
     finally:
         lib.close()
 
 
-def test_eliminare():
+def test_deleting():
     print("\neliminare")
     lib = Library()
     try:
-        fatti = media_library.delete_media(["dimenticata.png", "../segreto.txt", "a/b.png",
+        done = media_library.delete_media(["dimenticata.png", "../segreto.txt", "a/b.png",
                                             "non-esiste.png", ".nascosto", 42])
-        check("elimina solo i nomi semplici di file che ci sono", fatti == ["dimenticata.png"], str(fatti))
+        check("elimina solo i nomi semplici di file che ci sono", done == ["dimenticata.png"], str(done))
         check("il file va nel cestino, fuori dalla cartella pubblicata",
               not (media_library.MEDIA_DIR / "dimenticata.png").exists()
               and (media_library.TRASH_DIR / "dimenticata.png").is_file())
         check("una lista che non è una lista non elimina niente",
               media_library.delete_media("foto.png") == [])
-        vecchio = media_library.TRASH_DIR / "vecchio.png"
-        vecchio.write_bytes(PNG)
-        un_tempo = time.time() - (media_library.TRASH_DAYS + 1) * 86400
-        os.utime(vecchio, (un_tempo, un_tempo))
+        old = media_library.TRASH_DIR / "vecchio.png"
+        old.write_bytes(PNG)
+        long_ago = time.time() - (media_library.TRASH_DAYS + 1) * 86400
+        os.utime(old, (long_ago, long_ago))
         media_library.empty_trash()
         check("dopo un mese il cestino si svuota da solo",
-              not vecchio.exists() and (media_library.TRASH_DIR / "dimenticata.png").exists())
+              not old.exists() and (media_library.TRASH_DIR / "dimenticata.png").exists())
     finally:
         lib.close()
 
 
-def test_pagina():
+def test_page():
     print("\nla pagina")
     lib = Library()
     try:
-        pagina = server.library_page("TOKEN")
-        check("una scheda per file", pagina.count('<li class="media-scheda"') == 4)
+        page_html = server.library_page("TOKEN")
+        check("una scheda per file", page_html.count('<li class="media-scheda"') == 4)
         check("ogni uso porta all'articolo o alle impostazioni",
-              '<a href="/edit?slug=primo">Il primo</a>' in pagina and '<a href="/config">' in pagina)
+              '<a href="/edit?slug=primo">Il primo</a>' in page_html and '<a href="/config">' in page_html)
         check("il file non usato è segnato, e contato nella pulizia",
-              'data-nome="dimenticata.png" data-usato="0"' in pagina
-              and "(1, 1 KB)" in pagina, pagina[pagina.find("Elimina i non"):][:80])
-        check("i video si vedono come video", '<video src="/media/video.mp4"' in pagina)
+              'data-nome="dimenticata.png" data-usato="0"' in page_html
+              and "(1, 1 KB)" in page_html, page_html[page_html.find("Elimina i non"):][:80])
+        check("i video si vedono come video", '<video src="/media/video.mp4"' in page_html)
         check("il nome arriva al JavaScript senza virgolette in più",
-              'onclick="deleteMedia(this, &quot;dimenticata.png&quot;, 0)"' in pagina
-              and 'onclick="copyMediaAddress(&quot;/media/foto.png&quot;)"' in pagina,
-              pagina[pagina.find("deleteMedia(this,"):][:60])
+              'onclick="deleteMedia(this, &quot;dimenticata.png&quot;, 0)"' in page_html
+              and 'onclick="copyMediaAddress(&quot;/media/foto.png&quot;)"' in page_html,
+              page_html[page_html.find("deleteMedia(this,"):][:60])
         check("il menu porta alla libreria e la segna",
-              'aria-current="page" href="/media-library"' in pagina)
-        barra = pagina[pagina.index('class="barra-basso"'):]
+              'aria-current="page" href="/media-library"' in page_html)
+        barra = page_html[page_html.index('class="barra-basso"'):]
         check("ma la barra del telefono resta a quattro voci", 'href="/media-library"' not in barra
               and barra.count('class="barra-voce"') == 4)
         media_library.delete_media(["dimenticata.png"])
-        pagina = server.library_page("TOKEN")
+        page_html = server.library_page("TOKEN")
         check("senza file inutilizzati, il pulsante della pulizia si nasconde",
-              'onclick="deleteUnusedMedia(this)" hidden' in pagina)
+              'onclick="deleteUnusedMedia(this)" hidden' in page_html)
         check("l'eliminazione chiede il token CSRF", "/media-library-delete" in server.CSRF_PROTECTED_ROUTES)
     finally:
         lib.close()
 
 
 def main():
-    test_elenco_e_usi()
-    test_eliminare()
-    test_pagina()
+    test_list_and_uses()
+    test_deleting()
+    test_page()
     print(f"\n{PASSED} passed, {FAILED} failed")
     if FAILED > 0:
         sys.exit(1)

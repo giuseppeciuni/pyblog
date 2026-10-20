@@ -2,7 +2,7 @@
 """
 Checks on the history of an article.
 
-    python3 tests/test_cronologia.py
+    python3 tests/test_history.py
 
 Every save keeps the version it replaces, unless nothing changed or the
 last version kept is too recent (autosave writes every minute); a published
@@ -38,79 +38,79 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def dati(slug, testo, stato="draft", originale=None):
+def payload(slug, testo, stato="draft", originale=None):
     d = {"title": "Cronologia " + slug, "slug": slug, "content": f"<p>{testo}</p>",
          "status": stato, "tags": "Prova"}
     d["original_slug"] = slug if originale is None else originale
     return d
 
 
-def test_salvataggi():
+def test_saves():
     print("\ni salvataggi tengono la versione sostituita")
-    slug = save_article(dati("prova-cronologia", "Uno"), new_article=True)
+    slug = save_article(payload("prova-cronologia", "Uno"), new_article=True)
     try:
         check("un articolo nuovo non ha versioni", list_versions(slug) == [])
-        save_article(dati(slug, "Due"))
-        versioni = list_versions(slug)
-        check("salvare un cambiamento tiene la versione di prima", len(versioni) == 1, str(versioni))
-        vecchia = load_version(slug, versioni[0]["id"])
+        save_article(payload(slug, "Due"))
+        versions = list_versions(slug)
+        check("salvare un cambiamento tiene la versione di prima", len(versions) == 1, str(versions))
+        vecchia = load_version(slug, versions[0]["id"])
         check("la versione tenuta ha il testo di prima", vecchia and vecchia["content"] == "<p>Uno</p>")
         check("l'elenco dice titolo, stato e parole",
-              versioni[0]["title"] == "Cronologia prova-cronologia" and versioni[0]["status"] == "draft"
-              and versioni[0]["words"] == 1, str(versioni[0]))
-        save_article(dati(slug, "Tre"))
+              versions[0]["title"] == "Cronologia prova-cronologia" and versions[0]["status"] == "draft"
+              and versions[0]["words"] == 1, str(versions[0]))
+        save_article(payload(slug, "Tre"))
         check("un altro salvataggio a pochi minuti non ne tiene un'altra (l'autosalvataggio)",
               len(list_versions(slug)) == 1)
-        save_article(dati(slug, "Tre"))
+        save_article(payload(slug, "Tre"))
         check("un salvataggio senza cambiamenti non conta", len(list_versions(slug)) == 1)
 
         # The gap and the published versions, with explicit moments.
-        dopo = datetime.now(timezone.utc) + timedelta(minutes=11)
-        keep_version(slug, load_article(slug), dict(load_article(slug), content="<p>Quattro</p>"), now=dopo)
+        after_value = datetime.now(timezone.utc) + timedelta(minutes=11)
+        keep_version(slug, load_article(slug), dict(load_article(slug), content="<p>Quattro</p>"), now=after_value)
         check("dopo dieci minuti si tiene di nuovo", len(list_versions(slug)) == 2)
-        pubblicata = dict(load_article(slug), status="published")
-        keep_version(slug, pubblicata, dict(pubblicata, content="<p>Cinque</p>"), now=dopo + timedelta(seconds=30))
+        published_page = dict(load_article(slug), status="published")
+        keep_version(slug, published_page, dict(published_page, content="<p>Cinque</p>"), now=after_value + timedelta(seconds=30))
         check("una versione pubblicata si tiene sempre", len(list_versions(slug)) == 3)
 
-        base = dopo + timedelta(hours=1)
+        base = after_value + timedelta(hours=1)
         for n in range(60):
             keep_version(slug, dict(load_article(slug), content=f"<p>{n}</p>"),
                          dict(load_article(slug), content=f"<p>{n + 1}</p>"), now=base + timedelta(minutes=11 * n))
         check(f"se ne tengono al massimo {articles.HISTORY_LIMIT}",
               len(list_versions(slug)) == articles.HISTORY_LIMIT, str(len(list_versions(slug))))
-        recenti = list_versions(slug)
-        check("la più recente per prima", recenti[0]["id"] > recenti[-1]["id"])
+        recent = list_versions(slug)
+        check("la più recente per prima", recent[0]["id"] > recent[-1]["id"])
     finally:
         delete_article(slug)
     check("eliminare l'articolo elimina le sue versioni", not history_folder(slug).exists())
 
 
-def test_rinomina():
+def test_rename():
     print("\nun articolo rinominato si porta dietro le versioni")
-    slug = save_article(dati("prova-cronologia-vecchio", "Uno"), new_article=True)
-    save_article(dati(slug, "Due"))
-    nuovo = save_article(dati("prova-cronologia-nuovo", "Tre", originale=slug))
+    slug = save_article(payload("prova-cronologia-vecchio", "Uno"), new_article=True)
+    save_article(payload(slug, "Due"))
+    new = save_article(payload("prova-cronologia-nuovo", "Tre", originale=slug))
     delete_article(slug)  # what the server does after a rename
     try:
         # One version: the rename came within ten minutes of the first save.
-        versioni = list_versions(nuovo)
+        versions = list_versions(new)
         check("le versioni sono sotto il nome nuovo",
-              len(versioni) == 1 and load_version(nuovo, versioni[0]["id"])["content"] == "<p>Uno</p>", str(versioni))
+              len(versions) == 1 and load_version(new, versions[0]["id"])["content"] == "<p>Uno</p>", str(versions))
         check("sotto il nome vecchio non resta niente", not history_folder(slug).exists())
     finally:
-        delete_article(nuovo)
+        delete_article(new)
 
 
-def test_letture_sicure():
+def test_safe_reads():
     print("\nletture sicure")
     check("un id che non è un momento non legge niente", load_version("qualcosa", "../../config") is None)
     check("uno slug non valido non legge niente", list_versions("../posts") == [])
     check("un articolo senza versioni dà un elenco vuoto", list_versions("non-esiste-proprio") == [])
 
 
-def test_interfaccia():
+def test_interface():
     print("\nl'editor e le rotte")
-    slug = save_article(dati("prova-cronologia-editor", "Uno"), new_article=True)
+    slug = save_article(payload("prova-cronologia-editor", "Uno"), new_article=True)
     try:
         check("un articolo salvato ha il pulsante delle versioni",
               'id="btn-versioni" onclick="openVersions()"\n              aria-describedby="versioni-aiuto">'
@@ -126,15 +126,15 @@ def test_interfaccia():
 
 
 def main():
-    c_era = HISTORY_DIR.exists()
+    was_there = HISTORY_DIR.exists()
     try:
-        test_salvataggi()
-        test_rinomina()
-        test_letture_sicure()
-        test_interfaccia()
+        test_saves()
+        test_rename()
+        test_safe_reads()
+        test_interface()
     finally:
         # The folder of the versions is left as it was found.
-        if not c_era and HISTORY_DIR.exists() and not any(HISTORY_DIR.iterdir()):
+        if not was_there and HISTORY_DIR.exists() and not any(HISTORY_DIR.iterdir()):
             shutil.rmtree(HISTORY_DIR)
     print(f"\n{PASSED} passed, {FAILED} failed")
     if FAILED > 0:

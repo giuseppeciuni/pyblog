@@ -22,8 +22,8 @@ thing exists for - the translator that loses the marker too.
 import pathlib
 import sys
 
-RADICE = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(RADICE))
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 
 from core.ai import restore_media, shield_media  # noqa: E402
 
@@ -43,14 +43,14 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-IMMAGINE = '<img src="/media/foto.png" alt="Una foto">'
+PICTURE = '<img src="/media/foto.png" alt="Una foto">'
 VIDEO = '<iframe src="https://www.youtube.com/embed/abc" width="560"></iframe>'
-ARTICOLO = ('<h2>Titolo</h2><p>Prima riga.</p>'
-            '<p class="ql-align-center">' + IMMAGINE + '</p>'
+ARTICLE_FIXTURE = ('<h2>Titolo</h2><p>Prima riga.</p>'
+            '<p class="ql-align-center">' + PICTURE + '</p>'
             '<p>Seconda riga.</p>' + VIDEO + '<p>Ultima riga.</p>')
 
 
-def traduzione_finta(testo):
+def fake_translation(testo):
     """Un traduttore che si comporta bene: cambia il testo, lascia i marcatori."""
     return (testo.replace("Titolo", "Title")
                  .replace("Prima riga.", "First line.")
@@ -58,92 +58,92 @@ def traduzione_finta(testo):
                  .replace("Ultima riga.", "Last line."))
 
 
-def test_il_giro_completo():
+def test_full_round():
     print("\nandata e ritorno, con un traduttore che si comporta bene")
-    protetto, originali = shield_media(ARTICOLO)
-    check("l'immagine non parte", "<img" not in protetto, protetto)
-    check("il video non parte", "<iframe" not in protetto, protetto)
-    check("restano due marcatori", protetto.count("[[PBM") == 2, protetto)
-    check("i tag messi da parte sono due", len(originali) == 2, str(originali))
-    check("il testo intorno c'e' ancora", "Prima riga." in protetto, protetto)
+    protected, originals = shield_media(ARTICLE_FIXTURE)
+    check("l'immagine non parte", "<img" not in protected, protected)
+    check("il video non parte", "<iframe" not in protected, protected)
+    check("restano due marcatori", protected.count("[[PBM") == 2, protected)
+    check("i tag messi da parte sono due", len(originals) == 2, str(originals))
+    check("il testo intorno c'e' ancora", "Prima riga." in protected, protected)
 
-    tornato, spostate = restore_media(traduzione_finta(protetto), originali)
-    check("l'immagine e' tornata", IMMAGINE in tornato, tornato)
-    check("il video e' tornato", VIDEO in tornato, tornato)
-    check("nessun marcatore rimasto in pagina", "PBM" not in tornato, tornato)
+    returned, spostate = restore_media(fake_translation(protected), originals)
+    check("l'immagine e' tornata", PICTURE in returned, returned)
+    check("il video e' tornato", VIDEO in returned, returned)
+    check("nessun marcatore rimasto in pagina", "PBM" not in returned, returned)
     check("niente da rimettere a mano", spostate == 0, str(spostate))
-    check("il testo e' quello tradotto", "First line." in tornato, tornato)
+    check("il testo e' quello tradotto", "First line." in returned, returned)
     check("l'immagine e' rimasta dentro il suo paragrafo",
-          '<p class="ql-align-center">' + IMMAGINE + '</p>' in tornato, tornato)
+          '<p class="ql-align-center">' + PICTURE + '</p>' in returned, returned)
 
 
-def test_il_traduttore_perde_un_marcatore():
+def test_translator_loses_a_marker():
     print("\nil caso per cui esiste tutto questo: il marcatore sparisce")
-    protetto, originali = shield_media(ARTICOLO)
+    protected, originals = shield_media(ARTICLE_FIXTURE)
 
     # Il servizio restituisce il testo senza il primo marcatore.
-    perso = traduzione_finta(protetto).replace("[[PBM0]]", "")
-    tornato, spostate = restore_media(perso, originali)
-    check("l'immagine e' nell'articolo lo stesso", IMMAGINE in tornato, tornato)
-    check("il video e' al suo posto", VIDEO in tornato, tornato)
+    lost = fake_translation(protected).replace("[[PBM0]]", "")
+    returned, spostate = restore_media(lost, originals)
+    check("l'immagine e' nell'articolo lo stesso", PICTURE in returned, returned)
+    check("il video e' al suo posto", VIDEO in returned, returned)
     check("l'editor viene avvisato di una sola", spostate == 1, str(spostate))
     check("l'ordine e' rispettato: prima l'immagine, poi il video",
-          tornato.index(IMMAGINE) < tornato.index(VIDEO), tornato)
+          returned.index(PICTURE) < returned.index(VIDEO), returned)
 
     # E il caso opposto: sparisce il secondo.
-    perso_due = traduzione_finta(protetto).replace("[[PBM1]]", "")
-    tornato_due, spostate_due = restore_media(perso_due, originali)
-    check("perso il secondo, torna comunque", VIDEO in tornato_due, tornato_due)
+    lost_two = fake_translation(protected).replace("[[PBM1]]", "")
+    returned_two, moved_two = restore_media(lost_two, originals)
+    check("perso il secondo, torna comunque", VIDEO in returned_two, returned_two)
     check("e resta dopo l'immagine",
-          tornato_due.index(IMMAGINE) < tornato_due.index(VIDEO), tornato_due)
-    check("avvisata una sola", spostate_due == 1, str(spostate_due))
+          returned_two.index(PICTURE) < returned_two.index(VIDEO), returned_two)
+    check("avvisata una sola", moved_two == 1, str(moved_two))
 
     # Il caso peggiore: il servizio li perde tutti e due.
-    tutti_persi = traduzione_finta(protetto).replace("[[PBM0]]", "").replace("[[PBM1]]", "")
-    tornato_tre, spostate_tre = restore_media(tutti_persi, originali)
+    all_lost = fake_translation(protected).replace("[[PBM0]]", "").replace("[[PBM1]]", "")
+    returned_three, moved_three = restore_media(all_lost, originals)
     check("persi tutti, tornano tutti",
-          IMMAGINE in tornato_tre and VIDEO in tornato_tre, tornato_tre)
+          PICTURE in returned_three and VIDEO in returned_three, returned_three)
     check("e l'ordine fra loro e' quello di partenza",
-          tornato_tre.index(IMMAGINE) < tornato_tre.index(VIDEO), tornato_tre)
-    check("avvisate due", spostate_tre == 2, str(spostate_tre))
+          returned_three.index(PICTURE) < returned_three.index(VIDEO), returned_three)
+    check("avvisate due", moved_three == 2, str(moved_three))
 
 
-def test_il_marcatore_riscritto():
+def test_rewritten_marker():
     print("\nil marcatore riscritto a modo suo dal modello")
-    protetto, originali = shield_media(ARTICOLO)
+    protected, originals = shield_media(ARTICLE_FIXTURE)
     # Un modello linguistico ci mette gli spazi dentro.
-    con_spazi = protetto.replace("[[PBM0]]", "[[ PBM 0 ]]")
-    tornato, spostate = restore_media(con_spazi, originali)
-    check("riconosciuto lo stesso", IMMAGINE in tornato, tornato)
+    with_spaces = protected.replace("[[PBM0]]", "[[ PBM 0 ]]")
+    returned, spostate = restore_media(with_spaces, originals)
+    check("riconosciuto lo stesso", PICTURE in returned, returned)
     check("e non contato come perso", spostate == 0, str(spostate))
 
 
-def test_quello_che_va_tradotto_resta():
+def test_what_must_be_translated_stays():
     print("\ncio' che ha del testo dentro non viene protetto")
     testo = ('<table><tbody><tr><td>comando</td><td>cosa fa</td></tr></tbody></table>'
              '<pre class="ql-syntax">def build():</pre>')
-    protetto, originali = shield_media(testo)
-    check("la tabella parte per essere tradotta", "<table" in protetto, protetto)
-    check("le sue parole partono", "comando" in protetto, protetto)
-    check("niente e' stato messo da parte", len(originali) == 0, str(originali))
+    protected, originals = shield_media(testo)
+    check("la tabella parte per essere tradotta", "<table" in protected, protected)
+    check("le sue parole partono", "comando" in protected, protected)
+    check("niente e' stato messo da parte", len(originals) == 0, str(originals))
 
 
-def test_niente_media_niente_lavoro():
+def test_no_media_no_work():
     print("\nun articolo senza immagini non viene toccato")
     testo = "<h2>Titolo</h2><p>Solo parole.</p>"
-    protetto, originali = shield_media(testo)
-    check("il testo passa intero", protetto == testo, protetto)
-    tornato, spostate = restore_media(protetto, originali)
-    check("e torna intero", tornato == testo, tornato)
+    protected, originals = shield_media(testo)
+    check("il testo passa intero", protected == testo, protected)
+    returned, spostate = restore_media(protected, originals)
+    check("e torna intero", returned == testo, returned)
     check("senza avvisi", spostate == 0, str(spostate))
 
 
 def main():
-    test_il_giro_completo()
-    test_il_traduttore_perde_un_marcatore()
-    test_il_marcatore_riscritto()
-    test_quello_che_va_tradotto_resta()
-    test_niente_media_niente_lavoro()
+    test_full_round()
+    test_translator_loses_a_marker()
+    test_rewritten_marker()
+    test_what_must_be_translated_stays()
+    test_no_media_no_work()
     print(f"\n{PASSED} passed, {FAILED} failed")
     if FAILED > 0:
         sys.exit(1)

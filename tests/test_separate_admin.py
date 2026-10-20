@@ -2,7 +2,7 @@
 """
 Checks on the administration living at an address of its own.
 
-    python3 tests/test_admin_separato.py
+    python3 tests/test_separate_admin.py
 
 The code of outside services on the public pages (analytics, ads, widgets)
 runs on the site's origin. When the administration answers on that same
@@ -61,21 +61,21 @@ def request(base, path, host, method="GET", proxied=True, body=None):
         return error.code, dict(error.headers), ""
 
 
-def test_indirizzi():
+def test_addresses():
     print("\nleggere gli indirizzi")
     check("un indirizzo valido", admin_address({"admin_url": "https://admin.ciunix.com/"})
           == "https://admin.ciunix.com")
     check("vuoto: nessun indirizzo a parte", admin_address({"admin_url": ""}) == "")
-    for sbagliato in ("admin.ciunix.com", "https://admin.ciunix.com/editor", "javascript:alert(1)",
+    for wrong in ("admin.ciunix.com", "https://admin.ciunix.com/editor", "javascript:alert(1)",
                       "https://admin.ciunix.com?x=1"):
-        check(f"scritto male non conta: {sbagliato}", admin_address({"admin_url": sbagliato}) == "")
+        check(f"scritto male non conta: {wrong}", admin_address({"admin_url": wrong}) == "")
     check("l'host come lo scrive il browser",
           url_host("https://Admin.Ciunix.com") == "admin.ciunix.com"
           and url_host("https://admin.ciunix.com:443") == "admin.ciunix.com"
           and url_host("http://localhost:8000") == "localhost:8000")
 
 
-def test_richieste():
+def test_requests():
     print("\nrichieste vere")
     saved = {k: CONFIG.get(k) for k in ("admin_url", "base_url")}
     CONFIG["admin_url"] = "https://admin.ciunix.com"
@@ -84,10 +84,10 @@ def test_richieste():
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{httpd.server_address[1]}"
     try:
-        stato, testata, _ = request(base, "/config?x=1", "www.ciunix.com")
+        stato, header, _ = request(base, "/config?x=1", "www.ciunix.com")
         check("sull'indirizzo pubblico l'admin manda al suo indirizzo, con la stessa pagina",
-              stato == 303 and testata.get("Location") == "https://admin.ciunix.com/config?x=1",
-              f"{stato} {testata.get('Location')}")
+              stato == 303 and header.get("Location") == "https://admin.ciunix.com/config?x=1",
+              f"{stato} {header.get('Location')}")
         stato, _, _ = request(base, "/save", "www.ciunix.com", "POST", body=b"{}")
         check("sull'indirizzo pubblico nessuna richiesta all'admin arriva", stato == 404, str(stato))
         stato, _, _ = request(base, "/login", "www.ciunix.com", "POST", body=b"password=x")
@@ -96,15 +96,15 @@ def test_richieste():
         stato, _, _ = request(base, "/unsubscribe", "www.ciunix.com", "POST", body=b"token=x")
         check("i moduli dei lettori sì", stato != 404, str(stato))
 
-        stato, _, pagina = request(base, "/admin", "admin.ciunix.com")
+        stato, _, page_html = request(base, "/admin", "admin.ciunix.com")
         check("sull'indirizzo dell'admin l'admin risponde (qui con l'accesso)",
-              stato == 200 and "password" in pagina.lower(), str(stato))
-        stato, testata, _ = request(base, "/posts/un-articolo.html", "admin.ciunix.com")
+              stato == 200 and "password" in page_html.lower(), str(stato))
+        stato, header, _ = request(base, "/posts/un-articolo.html", "admin.ciunix.com")
         check("sull'indirizzo dell'admin una pagina del sito va al sito pubblico",
-              stato == 303 and testata.get("Location") == "https://www.ciunix.com/posts/un-articolo.html",
-              f"{stato} {testata.get('Location')}")
-        stato, testata, _ = request(base, "/", "admin.ciunix.com")
-        check("e la radice dell'admin apre l'admin", stato == 303 and testata.get("Location") == "/admin")
+              stato == 303 and header.get("Location") == "https://www.ciunix.com/posts/un-articolo.html",
+              f"{stato} {header.get('Location')}")
+        stato, header, _ = request(base, "/", "admin.ciunix.com")
+        check("e la radice dell'admin apre l'admin", stato == 303 and header.get("Location") == "/admin")
         stato, _, _ = request(base, "/style.css", "admin.ciunix.com")
         check("fogli di stile e immagini restano: servono alle anteprime", stato != 303, str(stato))
 
@@ -114,19 +114,19 @@ def test_richieste():
         check("e anche un proxy che non passa l'host: un errore di nginx non chiude fuori",
               stato == 200)
 
-        stato, testata, corpo = request(base, "/pyblog-ping?n=inventata", "admin.ciunix.com")
+        stato, header, corpo = request(base, "/pyblog-ping?n=inventata", "admin.ciunix.com")
         check("il segnale di vita non riconosce una parola che non ha inventato lui",
               stato == 200 and json.loads(corpo) == {"pyblog": True, "same": False})
 
-        gestore = server.Handler.__new__(server.Handler)
+        handler = server.Handler.__new__(server.Handler)
         CONFIG["admin_language"] = "it"
         check("un indirizzo che porta a questo editor viene riconosciuto",
-              gestore._api_check_admin_address({"url": base}) == {"ok": True, "reaches": True})
+              handler._api_check_admin_address({"url": base}) == {"ok": True, "reaches": True})
         check("un indirizzo che non risponde no",
-              gestore._api_check_admin_address({"url": "http://127.0.0.1:9"})
+              handler._api_check_admin_address({"url": "http://127.0.0.1:9"})
               == {"ok": True, "reaches": False})
         check("un indirizzo scritto male viene rifiutato prima di chiedere",
-              gestore._api_check_admin_address({"url": "http://127.0.0.1:9/x"})["ok"] is False)
+              handler._api_check_admin_address({"url": "http://127.0.0.1:9/x"})["ok"] is False)
         check("dopo il controllo la parola viene dimenticata", len(server.PING_NONCES) == 0)
 
         CONFIG["admin_url"] = ""
@@ -145,11 +145,11 @@ def test_richieste():
                 CONFIG[key] = value
 
 
-def test_impostazioni():
+def test_settings():
     print("\nle impostazioni")
-    pagina = server.config_page("TOKEN")
+    page_html = server.config_page("TOKEN")
     check("il campo c'è, con la sua etichetta",
-          'id="admin_url"' in pagina and 'for="admin_url"' in pagina)
+          'id="admin_url"' in page_html and 'for="admin_url"' in page_html)
     js = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
     check("prima di salvare un indirizzo nuovo, lo fa provare al server",
           "pbPostJson('/check-admin-address'" in js
@@ -158,24 +158,24 @@ def test_impostazioni():
     # Every page of the administration has to reach Python: a route left
     # out of the single-address example answers 404 online.
     import re
-    riga = re.search(r"location ~ \^/\(([^)]*)\)\$", nginx).group(1).replace("\\.", ".").split("|")
-    rotte = {r.lstrip("/") for r in server.ADMIN_GET_ROUTES + server.CSRF_PROTECTED_ROUTES}
-    rotte |= {"login", "logout", "set-password", "pyblog-ping"}
-    mancanti = sorted(rotte - set(riga))
+    line = re.search(r"location ~ \^/\(([^)]*)\)\$", nginx).group(1).replace("\\.", ".").split("|")
+    routes = {r.lstrip("/") for r in server.ADMIN_GET_ROUTES + server.CSRF_PROTECTED_ROUTES}
+    routes |= {"login", "logout", "set-password", "pyblog-ping"}
+    missing = sorted(routes - set(line))
     check("con l'admin sull'indirizzo del sito, nginx porta a Python ogni rotta dell'admin",
-          mancanti == [], str(mancanti))
-    esempio = (pathlib.Path(__file__).resolve().parent.parent / "nginx.separate-admin.conf.example")
-    check("c'è l'esempio di nginx con l'admin a parte", esempio.is_file())
-    if esempio.is_file():
-        testo = esempio.read_text()
+          missing == [], str(missing))
+    example = (pathlib.Path(__file__).resolve().parent.parent / "nginx.separate-admin.conf.example")
+    check("c'è l'esempio di nginx con l'admin a parte", example.is_file())
+    if example.is_file():
+        testo = example.read_text()
         check("l'esempio passa l'host e l'indirizzo del visitatore",
               "proxy_set_header Host $host;" in testo and "X-Real-IP" in testo)
 
 
 def main():
-    test_indirizzi()
-    test_richieste()
-    test_impostazioni()
+    test_addresses()
+    test_requests()
+    test_settings()
     config.CONFIG["admin_language"] = config.CONFIG.get("admin_language", "it")
     print(f"\n{PASSED} passed, {FAILED} failed")
     if FAILED > 0:

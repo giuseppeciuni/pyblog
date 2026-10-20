@@ -19,8 +19,8 @@ import pathlib
 import re
 import sys
 
-RADICE = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(RADICE))
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 
 from core.articles import delete_article, save_article  # noqa: E402
 from core.build import build  # noqa: E402
@@ -30,9 +30,9 @@ PASSED = 0
 FAILED = 0
 
 # Slugs used by this test only, so that the cleanup cannot touch a real article.
-SLUG_UNO = "zzz-prova-sitemap-uno"
-SLUG_DUE = "zzz-prova-sitemap-due"
-SLUG_NUOVO = "zzz-prova-sitemap-uno-rinominato"
+SLUG_ONE = "zzz-prova-sitemap-uno"
+SLUG_TWO = "zzz-prova-sitemap-due"
+NEW_SLUG = "zzz-prova-sitemap-uno-rinominato"
 
 
 def check(description, condition, detail=""):
@@ -47,27 +47,27 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def indirizzi_della_sitemap():
+def sitemap_addresses():
     """The <loc> addresses of the sitemap, in the order they are written."""
     testo = (OUTPUT_DIR / "sitemap.xml").read_text(encoding="utf-8")
     return re.findall(r"<loc>(.*?)</loc>", testo)
 
 
-def percorso_di(indirizzo):
+def path_of(address):
     """The file that should answer an address of the sitemap."""
     base = CONFIG["base_url"].rstrip("/")
-    resto = indirizzo[len(base):].lstrip("/")
+    resto = address[len(base):].lstrip("/")
     if resto == "" or resto.endswith("/"):
         resto = resto + "index.html"
     return OUTPUT_DIR / resto
 
 
-def articolo(titolo, slug, stato="published", tags="Prova"):
+def article(titolo, slug, stato="published", tags="Prova"):
     return {"title": titolo, "slug": slug, "content": "<p>Testo di prova.</p>",
             "status": stato, "tags": tags}
 
 
-def test_la_sitemap_esiste():
+def test_sitemap_exists():
     """A build always writes sitemap.xml, and robots.txt points at it."""
     print("\nla sitemap viene creata a ogni build")
     build()
@@ -76,110 +76,110 @@ def test_la_sitemap_esiste():
     testo = sitemap.read_text(encoding="utf-8")
     check("dichiara il namespace dei sitemap",
           "http://www.sitemaps.org/schemas/sitemap/0.9" in testo)
-    check("contiene almeno la home", len(indirizzi_della_sitemap()) > 0)
+    check("contiene almeno la home", len(sitemap_addresses()) > 0)
     robots = (OUTPUT_DIR / "robots.txt").read_text(encoding="utf-8")
     check("robots.txt indica la sitemap", "Sitemap: " in robots,
           robots.strip())
 
 
-def test_ogni_indirizzo_ha_una_pagina():
+def test_every_address_has_a_page():
     """Every address in the sitemap must be answered by a file."""
     print("\nogni indirizzo della sitemap corrisponde a una pagina")
     base = CONFIG["base_url"].rstrip("/")
-    mancanti = []
-    fuori_dominio = []
-    for indirizzo in indirizzi_della_sitemap():
-        if not indirizzo.startswith(base + "/"):
-            fuori_dominio.append(indirizzo)
+    missing = []
+    off_domain = []
+    for address in sitemap_addresses():
+        if not address.startswith(base + "/"):
+            off_domain.append(address)
             continue
-        if not percorso_di(indirizzo).is_file():
-            mancanti.append(indirizzo)
+        if not path_of(address).is_file():
+            missing.append(address)
     check("nessun indirizzo fuori dal dominio del sito",
-          fuori_dominio == [], ", ".join(fuori_dominio))
-    check("nessun indirizzo senza pagina", mancanti == [],
-          ", ".join(mancanti))
+          off_domain == [], ", ".join(off_domain))
+    check("nessun indirizzo senza pagina", missing == [],
+          ", ".join(missing))
 
 
-def test_nessuna_pagina_orfana():
+def test_no_orphan_page():
     """
     And the other way round: no page in output/ may be missing from the
     sitemap. A page nobody lists is a page left behind by an older build.
     """
     print("\nnessuna pagina orfana in output/")
-    elencate = set()
-    for indirizzo in indirizzi_della_sitemap():
-        elencate.add(percorso_di(indirizzo).resolve())
-    orfane = []
-    for cartella in ("posts", "tag", "pages", "series"):
-        for radice in (OUTPUT_DIR, OUTPUT_DIR / "en"):
-            if not (radice / cartella).is_dir():
+    listed = set()
+    for address in sitemap_addresses():
+        listed.add(path_of(address).resolve())
+    orphans = []
+    for folder in ("posts", "tag", "pages", "series"):
+        for root_dir in (OUTPUT_DIR, OUTPUT_DIR / "en"):
+            if not (root_dir / folder).is_dir():
                 continue
-            for pagina in (radice / cartella).glob("*.html"):
-                if pagina.resolve() not in elencate:
-                    orfane.append(str(pagina.relative_to(OUTPUT_DIR)))
-    check("nessuna pagina fuori dalla sitemap", orfane == [],
-          ", ".join(orfane))
+            for page_html in (root_dir / folder).glob("*.html"):
+                if page_html.resolve() not in listed:
+                    orphans.append(str(page_html.relative_to(OUTPUT_DIR)))
+    check("nessuna pagina fuori dalla sitemap", orphans == [],
+          ", ".join(orphans))
     # The old Italian folders hold only the pages that send readers on.
-    vecchie = []
-    for cartella in ("pagine", "serie"):
-        for radice in (OUTPUT_DIR, OUTPUT_DIR / "en"):
-            for pagina in (radice / cartella).glob("*.html") if (radice / cartella).is_dir() else []:
-                if 'http-equiv="refresh"' not in pagina.read_text(encoding="utf-8"):
-                    vecchie.append(str(pagina.relative_to(OUTPUT_DIR)))
-    check("nelle vecchie cartelle italiane ci sono solo redirect", vecchie == [], ", ".join(vecchie))
+    old_ones = []
+    for folder in ("pagine", "serie"):
+        for root_dir in (OUTPUT_DIR, OUTPUT_DIR / "en"):
+            for page_html in (root_dir / folder).glob("*.html") if (root_dir / folder).is_dir() else []:
+                if 'http-equiv="refresh"' not in page_html.read_text(encoding="utf-8"):
+                    old_ones.append(str(page_html.relative_to(OUTPUT_DIR)))
+    check("nelle vecchie cartelle italiane ci sono solo redirect", old_ones == [], ", ".join(old_ones))
 
 
-def test_il_ciclo_di_vita_di_un_articolo():
+def test_article_lifecycle():
     """Create, rename, delete: the sitemap and output/ follow every step."""
     print("\ncreazione, cambio di slug e cancellazione")
 
     # 1. A new published article appears in the sitemap and on disk.
-    save_article(articolo("Prova sitemap uno", SLUG_UNO))
-    save_article(articolo("Prova sitemap due", SLUG_DUE))
+    save_article(article("Prova sitemap uno", SLUG_ONE))
+    save_article(article("Prova sitemap due", SLUG_TWO))
     build()
-    indirizzi = indirizzi_della_sitemap()
+    addresses = sitemap_addresses()
     check("il nuovo articolo entra nella sitemap",
-          any(SLUG_UNO + ".html" in i for i in indirizzi))
+          any(SLUG_ONE + ".html" in i for i in addresses))
     check("e la sua pagina esiste",
-          (OUTPUT_DIR / "posts" / f"{SLUG_UNO}.html").is_file())
+          (OUTPUT_DIR / "posts" / f"{SLUG_ONE}.html").is_file())
 
     # 2. Changing the slug: the old page must not survive as a duplicate.
     #    This is what the editor does when the slug field changes.
-    dati = articolo("Prova sitemap uno", SLUG_NUOVO)
-    dati["original_slug"] = SLUG_UNO
-    save_article(dati)
-    delete_article(SLUG_UNO)
+    payload = article("Prova sitemap uno", NEW_SLUG)
+    payload["original_slug"] = SLUG_ONE
+    save_article(payload)
+    delete_article(SLUG_ONE)
     build()
-    indirizzi = indirizzi_della_sitemap()
+    addresses = sitemap_addresses()
     check("il nuovo slug e' nella sitemap",
-          any(SLUG_NUOVO + ".html" in i for i in indirizzi))
+          any(NEW_SLUG + ".html" in i for i in addresses))
     check("il vecchio slug non e' piu' nella sitemap",
-          not any(f"/{SLUG_UNO}.html" in i for i in indirizzi))
+          not any(f"/{SLUG_ONE}.html" in i for i in addresses))
     check("e la pagina del vecchio slug e' sparita da output/",
-          not (OUTPUT_DIR / "posts" / f"{SLUG_UNO}.html").exists())
+          not (OUTPUT_DIR / "posts" / f"{SLUG_ONE}.html").exists())
 
     # 3. Unpublishing: a draft has no public page.
-    bozza = articolo("Prova sitemap due", SLUG_DUE, stato="draft")
-    save_article(bozza)
+    draft = article("Prova sitemap due", SLUG_TWO, stato="draft")
+    save_article(draft)
     build()
     check("l'articolo messo in bozza esce dalla sitemap",
-          not any(SLUG_DUE + ".html" in i for i in indirizzi_della_sitemap()))
+          not any(SLUG_TWO + ".html" in i for i in sitemap_addresses()))
     check("e la sua pagina non resta online",
-          not (OUTPUT_DIR / "posts" / f"{SLUG_DUE}.html").exists())
+          not (OUTPUT_DIR / "posts" / f"{SLUG_TWO}.html").exists())
 
     # 4. Deleting: page and sitemap entry both go.
-    delete_article(SLUG_NUOVO)
-    delete_article(SLUG_DUE)
+    delete_article(NEW_SLUG)
+    delete_article(SLUG_TWO)
     build()
     check("l'articolo cancellato esce dalla sitemap",
-          not any(SLUG_NUOVO + ".html" in i for i in indirizzi_della_sitemap()))
+          not any(NEW_SLUG + ".html" in i for i in sitemap_addresses()))
     check("e la sua pagina e' sparita da output/",
-          not (OUTPUT_DIR / "posts" / f"{SLUG_NUOVO}.html").exists())
+          not (OUTPUT_DIR / "posts" / f"{NEW_SLUG}.html").exists())
     check("anche l'indice del tag inutilizzato e' sparito",
           not (OUTPUT_DIR / "tag" / "prova.html").exists())
 
 
-def test_le_pagine_vere_restano():
+def test_real_pages_stay():
     """The sweep must only remove leftovers, never a page still in use."""
     print("\nla pulizia non tocca le pagine buone")
     build()
@@ -194,14 +194,14 @@ def test_le_pagine_vere_restano():
 
 def main():
     try:
-        test_la_sitemap_esiste()
-        test_il_ciclo_di_vita_di_un_articolo()
-        test_ogni_indirizzo_ha_una_pagina()
-        test_nessuna_pagina_orfana()
-        test_le_pagine_vere_restano()
+        test_sitemap_exists()
+        test_article_lifecycle()
+        test_every_address_has_a_page()
+        test_no_orphan_page()
+        test_real_pages_stay()
     finally:
         # Whatever happened, the test articles must not stay behind.
-        for slug in (SLUG_UNO, SLUG_DUE, SLUG_NUOVO):
+        for slug in (SLUG_ONE, SLUG_TWO, NEW_SLUG):
             delete_article(slug)
         build()
 

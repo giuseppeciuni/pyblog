@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 output/
 output_riferimento/
-test_docx/_media_di_prova/
+test_docx/_test_media/
 test_docx/*.docx
 pyblog_standalone.py
 config.json

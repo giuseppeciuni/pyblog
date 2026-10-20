@@ -3,7 +3,7 @@
 Checks on the publishing panel of the editor, and on the preview that saves
 nothing.
 
-    python3 tests/test_editor_pubblica.py
+    python3 tests/test_editor_publish.py
 
 The editor had "Save and generate HTML" and "Save and close", with the state
 of the article in a dropdown further down: nothing next to the buttons said
@@ -21,8 +21,8 @@ import threading
 import urllib.parse
 import urllib.request
 
-RADICE = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(RADICE))
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 
 from core import server  # noqa: E402
 from core.articles import (delete_article, load_article, load_articles,  # noqa: E402
@@ -51,114 +51,114 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def test_pannello_per_stato():
+def test_panel_by_state():
     """Each state offers its own buttons, and only those make sense."""
     print("\nil pannello segue lo stato dell'articolo")
-    bozza = server.editor_page(load_article(SLUG), "TOKEN")
-    check("una bozza si apre come bozza", 'data-stato="draft"' in bozza)
-    for pulsante in ("btn-pubblica", "btn-salva-bozza", "btn-anteprima", "btn-aggiorna"):
-        check(f"la pagina ha {pulsante}", f'id="{pulsante}"' in bozza)
-    check("la tendina dello stato non c'è più", 'id="status"' not in bozza)
-    check('"Salva e chiudi" non c\'è più', "saveAndClose" not in bozza)
+    draft = server.editor_page(load_article(SLUG), "TOKEN")
+    check("una bozza si apre come bozza", 'data-stato="draft"' in draft)
+    for button in ("btn-pubblica", "btn-salva-bozza", "btn-anteprima", "btn-aggiorna"):
+        check(f"la pagina ha {button}", f'id="{button}"' in draft)
+    check("la tendina dello stato non c'è più", 'id="status"' not in draft)
+    check('"Salva e chiudi" non c\'è più', "saveAndClose" not in draft)
     check("Elimina sta in fondo alla barra, dopo la traduzione",
-          bozza.rfind("btn-elimina-articolo") > bozza.rfind("translation-section"))
+          draft.rfind("btn-elimina-articolo") > draft.rfind("translation-section"))
     check("c'è il link per tornare agli articoli",
-          re.search(r'class="[^"]*\btorna-articoli\b[^"]*" href="/admin"', bozza) is not None)
+          re.search(r'class="[^"]*\btorna-articoli\b[^"]*" href="/admin"', draft) is not None)
 
-    nuovo = server.editor_page(None, "TOKEN")
+    new = server.editor_page(None, "TOKEN")
     check("un articolo nuovo è una bozza, senza Elimina",
-          'data-stato="draft"' in nuovo and "btn-elimina-articolo" not in nuovo)
+          'data-stato="draft"' in new and "btn-elimina-articolo" not in new)
 
-    strano = server.editor_page({"slug": SLUG, "title": "x", "status": "boh"}, "TOKEN")
-    check("uno stato sconosciuto si apre come bozza", 'data-stato="draft"' in strano)
+    odd = server.editor_page({"slug": SLUG, "title": "x", "status": "boh"}, "TOKEN")
+    check("uno stato sconosciuto si apre come bozza", 'data-stato="draft"' in odd)
 
-    articolo = load_article(SLUG)
-    articolo["status"] = "published"
-    save_article(articolo)
-    pubblicato = server.editor_page(load_article(SLUG), "TOKEN")
-    check("un articolo pubblicato si apre come pubblicato", 'data-stato="published"' in pubblicato)
-    check("con il link alla sua pagina", f'href="/posts/{SLUG}.html"' in pubblicato)
-    articolo["status"] = "draft"
-    save_article(articolo)
+    article = load_article(SLUG)
+    article["status"] = "published"
+    save_article(article)
+    published = server.editor_page(load_article(SLUG), "TOKEN")
+    check("un articolo pubblicato si apre come pubblicato", 'data-stato="published"' in published)
+    check("con il link alla sua pagina", f'href="/posts/{SLUG}.html"' in published)
+    article["status"] = "draft"
+    save_article(article)
 
 
-def test_stesse_parole_della_dashboard():
+def test_same_words_as_dashboard():
     """The dashboard and the editor call taking an article back the same way."""
     print("\nla dashboard usa le parole dell'editor")
-    articolo = load_article(SLUG)
-    articolo["status"] = "published"
-    save_article(articolo)
+    article = load_article(SLUG)
+    article["status"] = "published"
+    save_article(article)
     dashboard = server.admin_page(load_articles(), "TOKEN")
     editor = server.editor_page(load_article(SLUG), "TOKEN")
-    ritira = T("admin_ritira", admin_language())
-    check(f'la dashboard dice "{ritira}"', ritira in dashboard)
-    check("come l'editor", ritira in editor)
+    withdraw = T("admin_ritira", admin_language())
+    check(f'la dashboard dice "{withdraw}"', withdraw in dashboard)
+    check("come l'editor", withdraw in editor)
     check('"Metti in bozza" non c\'è più', "Metti in bozza" not in dashboard)
-    articolo["status"] = "draft"
-    save_article(articolo)
+    article["status"] = "draft"
+    save_article(article)
 
 
-def test_salvataggio_dice_dove():
+def test_save_says_where():
     """The save tells the editor where the published page lives."""
     print("\nil salvataggio restituisce l'indirizzo della pagina")
-    gestore = server.Handler.__new__(server.Handler)
-    risposta = gestore._api_save(dict(load_article(SLUG), original_slug=SLUG))
-    check("la risposta porta l'indirizzo", risposta.get("url") == f"/posts/{SLUG}.html",
-          json.dumps(risposta))
+    handler = server.Handler.__new__(server.Handler)
+    response = handler._api_save(dict(load_article(SLUG), original_slug=SLUG))
+    check("la risposta porta l'indirizzo", response.get("url") == f"/posts/{SLUG}.html",
+          json.dumps(response))
 
 
-def test_anteprima_non_salva():
+def test_preview_does_not_save():
     """The preview shows the article as the editor holds it, and writes nothing."""
     print("\nl'anteprima non scrive niente")
-    file_articolo = POSTS_DIR / f"{SLUG}.json"
-    prima = file_articolo.read_bytes()
-    elenco_prima = sorted(p.name for p in POSTS_DIR.glob("*.json"))
+    article_file = POSTS_DIR / f"{SLUG}.json"
+    before = article_file.read_bytes()
+    list_before = sorted(p.name for p in POSTS_DIR.glob("*.json"))
 
     httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
-    indirizzo = f"http://127.0.0.1:{httpd.server_address[1]}/preview"
+    address = f"http://127.0.0.1:{httpd.server_address[1]}/preview"
     token = create_session_token()
 
-    def anteprima(dati, lingua="it", csrf=None, cookie=True):
+    def preview(payload, lingua="it", csrf=None, cookie=True):
         if csrf is None:
             csrf = csrf_token_for(token)
         corpo = urllib.parse.urlencode(
-            {"csrf_token": csrf, "language": lingua, "data": json.dumps(dati)}).encode()
+            {"csrf_token": csrf, "language": lingua, "data": json.dumps(payload)}).encode()
         intestazioni = {"Cookie": "sessione=" + token} if cookie else {}
-        richiesta = urllib.request.Request(indirizzo, data=corpo, headers=intestazioni)
-        with urllib.request.urlopen(richiesta, timeout=30) as risposta:
-            return risposta.status, risposta.headers, risposta.read().decode("utf-8")
+        request_value = urllib.request.Request(address, data=corpo, headers=intestazioni)
+        with urllib.request.urlopen(request_value, timeout=30) as response:
+            return response.status, response.headers, response.read().decode("utf-8")
 
-    dati = {"title": "Titolo MAI SALVATO", "slug": SLUG, "original_slug": SLUG,
+    payload = {"title": "Titolo MAI SALVATO", "slug": SLUG, "original_slug": SLUG,
             "content": "<p>Testo MAI SALVATO.</p>", "status": "published",
             "title_en": "Title NEVER SAVED", "content_en": "<p>Text NEVER SAVED.</p>",
             "translation_authorized": True, "translation_confirmed": True}
     try:
-        stato, intestazioni, pagina = anteprima(dati)
+        stato, intestazioni, page_html = preview(payload)
         check("risponde con la pagina come è nell'editor",
-              stato == 200 and "Titolo MAI SALVATO" in pagina and "Testo MAI SALVATO" in pagina,
-              pagina[:200])
+              stato == 200 and "Titolo MAI SALVATO" in page_html and "Testo MAI SALVATO" in page_html,
+              page_html[:200])
         check("senza la CSP dell'amministrazione, come le pagine pubbliche",
               "default-src" not in intestazioni.get("Content-Security-Policy", ""))
         check("ma chiusa nel sandbox: i codici esterni non raggiungono l'editor",
               intestazioni.get("Content-Security-Policy") == server.PREVIEW_SANDBOX
               and "allow-same-origin" not in server.PREVIEW_SANDBOX)
-        check("il file dell'articolo non è cambiato", file_articolo.read_bytes() == prima)
+        check("il file dell'articolo non è cambiato", article_file.read_bytes() == before)
 
-        _, _, pagina = anteprima(dati, "en")
-        check("nell'altra lingua mostra la traduzione", "Title NEVER SAVED" in pagina)
+        _, _, page_html = preview(payload, "en")
+        check("nell'altra lingua mostra la traduzione", "Title NEVER SAVED" in page_html)
 
-        _, _, pagina = anteprima({"title": "Articolo mai salvato", "content": "<p>Ciao.</p>"})
-        check("anche un articolo mai salvato ha la sua anteprima", "Articolo mai salvato" in pagina)
+        _, _, page_html = preview({"title": "Articolo mai salvato", "content": "<p>Ciao.</p>"})
+        check("anche un articolo mai salvato ha la sua anteprima", "Articolo mai salvato" in page_html)
         check("e nessun file è nato o sparito",
-              sorted(p.name for p in POSTS_DIR.glob("*.json")) == elenco_prima)
+              sorted(p.name for p in POSTS_DIR.glob("*.json")) == list_before)
 
-        _, _, risposta = anteprima(dati, csrf="sbagliato")
+        _, _, response = preview(payload, csrf="sbagliato")
         check("senza il token giusto non mostra niente",
-              "MAI SALVATO" not in risposta and '"ok": false' in risposta, risposta[:120])
-        _, _, risposta = anteprima(dati, cookie=False)
+              "MAI SALVATO" not in response and '"ok": false' in response, response[:120])
+        _, _, response = preview(payload, cookie=False)
         check("senza essere entrati non mostra niente",
-              "MAI SALVATO" not in risposta and '"ok": false' in risposta, risposta[:120])
+              "MAI SALVATO" not in response and '"ok": false' in response, response[:120])
     finally:
         httpd.shutdown()
         httpd.server_close()
@@ -168,10 +168,10 @@ def main():
     save_article({"title": "Prova del pannello", "slug": SLUG,
                   "content": "<p>Contenuto di prova.</p>", "status": "draft", "tags": "Test"})
     try:
-        test_pannello_per_stato()
-        test_stesse_parole_della_dashboard()
-        test_salvataggio_dice_dove()
-        test_anteprima_non_salva()
+        test_panel_by_state()
+        test_same_words_as_dashboard()
+        test_save_says_where()
+        test_preview_does_not_save()
     finally:
         delete_article(SLUG)
         build()

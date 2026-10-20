@@ -39,95 +39,95 @@ VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input",
              "link", "meta", "source", "track", "wbr"}
 
 
-class Pagina(html.parser.HTMLParser):
+class ParsedPage(html.parser.HTMLParser):
     """Collects the elements of a page with the labels that wrap them."""
 
     def __init__(self):
         super().__init__()
-        self.elementi = []
-        self.aperti = []
-        self.etichette_per = []
+        self.elements = []
+        self.opened = []
+        self.labels_for = []
 
     def handle_starttag(self, tag, attrs):
         attributi = dict(attrs)
-        dentro_label = any(e["tag"] == "label" for e in self.aperti)
-        elemento = {"tag": tag, "attrs": attributi, "in_label": dentro_label,
+        inside_label = any(e["tag"] == "label" for e in self.opened)
+        element = {"tag": tag, "attrs": attributi, "in_label": inside_label,
                     "antenati": [e["tag"] + "." + e["attrs"].get("class", "")
-                                 for e in self.aperti]}
-        self.elementi.append(elemento)
+                                 for e in self.opened]}
+        self.elements.append(element)
         if tag == "label" and attributi.get("for"):
-            self.etichette_per.append(attributi["for"])
+            self.labels_for.append(attributi["for"])
         if tag not in VOID_TAGS:
-            self.aperti.append(elemento)
+            self.opened.append(element)
 
     def handle_startendtag(self, tag, attrs):
         self.handle_starttag(tag, attrs)
-        if tag not in VOID_TAGS and self.aperti:
-            self.aperti.pop()
+        if tag not in VOID_TAGS and self.opened:
+            self.opened.pop()
 
     def handle_endtag(self, tag):
-        for i in range(len(self.aperti) - 1, -1, -1):
-            if self.aperti[i]["tag"] == tag:
-                del self.aperti[i:]
+        for i in range(len(self.opened) - 1, -1, -1):
+            if self.opened[i]["tag"] == tag:
+                del self.opened[i:]
                 return
 
     def ids(self):
-        return [e["attrs"]["id"] for e in self.elementi if e["attrs"].get("id")]
+        return [e["attrs"]["id"] for e in self.elements if e["attrs"].get("id")]
 
-    def con_classe(self, classe):
-        return [e for e in self.elementi
+    def with_class(self, classe):
+        return [e for e in self.elements
                 if classe in e["attrs"].get("class", "").split()]
 
 
-def analizza(testo):
-    pagina = Pagina()
-    pagina.feed(testo)
-    return pagina
+def parse_page(testo):
+    page_html = ParsedPage()
+    page_html.feed(testo)
+    return page_html
 
 
-def campi_senza_etichetta(pagina):
+def unlabelled_fields(page_html):
     """Every field a person can type into or choose from, without a name."""
-    ids = set(pagina.ids())
-    mancanti = []
-    for e in pagina.elementi:
+    ids = set(page_html.ids())
+    missing = []
+    for e in page_html.elements:
         if e["tag"] not in ("input", "select", "textarea"):
             continue
         a = e["attrs"]
         if a.get("type") == "hidden":
             continue
-        if a.get("id") and a["id"] in pagina.etichette_per:
+        if a.get("id") and a["id"] in page_html.labels_for:
             continue
         if e["in_label"] or a.get("aria-label"):
             continue
         if a.get("aria-labelledby") and a["aria-labelledby"] in ids:
             continue
-        mancanti.append(f'{e["tag"]}#{a.get("id", "")}.{a.get("class", "")}')
-    return mancanti
+        missing.append(f'{e["tag"]}#{a.get("id", "")}.{a.get("class", "")}')
+    return missing
 
 
-def riferimenti_rotti(pagina):
+def broken_references(page_html):
     """Labels, descriptions and controls that point at an id nobody has."""
-    ids = set(pagina.ids())
-    rotti = []
-    for e in pagina.elementi:
+    ids = set(page_html.ids())
+    broken_items = []
+    for e in page_html.elements:
         for nome in ("aria-describedby", "aria-labelledby", "aria-controls"):
-            for valore in e["attrs"].get(nome, "").split():
-                if valore not in ids:
-                    rotti.append(f'{nome}="{valore}"')
-    for valore in pagina.etichette_per:
-        if valore not in ids:
-            rotti.append(f'for="{valore}"')
-    return rotti
+            for value in e["attrs"].get(nome, "").split():
+                if value not in ids:
+                    broken_items.append(f'{nome}="{value}"')
+    for value in page_html.labels_for:
+        if value not in ids:
+            broken_items.append(f'for="{value}"')
+    return broken_items
 
 
-def pagine_admin():
+def admin_pages():
     """The pages with the menu, and the voice the menu should mark on each."""
-    articoli = load_articles()
-    esistente = articoli[0]
+    article_list = load_articles()
+    existing = article_list[0]
     return {
-        "dashboard": (server.admin_page(articoli, "TOKEN"), "/admin"),
+        "dashboard": (server.admin_page(article_list, "TOKEN"), "/admin"),
         "editor nuovo": (server.editor_page(None, "TOKEN"), "/edit"),
-        "editor": (server.editor_page(esistente, "TOKEN"), "/admin"),
+        "editor": (server.editor_page(existing, "TOKEN"), "/admin"),
         "impostazioni": (server.config_page("TOKEN"), "/config"),
         "cambio password": (server.change_password_page("TOKEN"), "/change-password"),
     }
@@ -138,85 +138,85 @@ def test_menu():
     print("\nmenu laterale")
     for lingua in ("it", "en"):
         config.CONFIG["admin_language"] = lingua
-        for nome, (testo, attesa) in pagine_admin().items():
-            pagina = analizza(testo)
-            menu = [e for e in pagina.elementi if e["attrs"].get("id") == "menu-admin"]
-            salta = [e for e in pagina.elementi
+        for nome, (testo, expected) in admin_pages().items():
+            page_html = parse_page(testo)
+            menu = [e for e in page_html.elements if e["attrs"].get("id") == "menu-admin"]
+            skip_link = [e for e in page_html.elements
                      if e["tag"] == "a" and e["attrs"].get("href") == "#contenuto"]
-            principale = [e for e in pagina.elementi
+            principale = [e for e in page_html.elements
                           if e["tag"] == "main" and e["attrs"].get("id") == "contenuto"]
             check(f"{lingua} / {nome}: un menu, il salto al contenuto e il main",
-                  len(menu) == 1 and len(salta) == 1 and len(principale) == 1)
-            correnti = [e["attrs"].get("href") for e in pagina.con_classe("voce")
+                  len(menu) == 1 and len(skip_link) == 1 and len(principale) == 1)
+            correnti = [e["attrs"].get("href") for e in page_html.with_class("voce")
                         if e["attrs"].get("aria-current") == "page"]
-            if attesa is None:
+            if expected is None:
                 check(f"{lingua} / {nome}: nessuna voce segnata dal server (lo fa admin.js)",
                       correnti == [], str(correnti))
             else:
-                check(f"{lingua} / {nome}: segnata solo la voce {attesa}",
-                      correnti == [attesa], str(correnti))
+                check(f"{lingua} / {nome}: segnata solo la voce {expected}",
+                      correnti == [expected], str(correnti))
             # The sections are in the panel, not in the menu: the menu
             # stays the same short list on every page.
-            sotto = [e for e in pagina.con_classe("voce")
+            below = [e for e in page_html.with_class("voce")
                      if "#" in e["attrs"].get("href", "")]
-            check(f"{lingua} / {nome}: niente sotto-voci nel menu", len(sotto) == 0)
+            check(f"{lingua} / {nome}: niente sotto-voci nel menu", len(below) == 0)
     config.CONFIG["admin_language"] = "it"
 
-    pagina = analizza(server.login_page(""))
+    page_html = parse_page(server.login_page(""))
     check("il login non ha il menu",
-          not any(e["attrs"].get("id") == "menu-admin" for e in pagina.elementi))
+          not any(e["attrs"].get("id") == "menu-admin" for e in page_html.elements))
 
 
-def test_sezioni_impostazioni():
+def test_settings_sections():
     """The Settings answer to every name the menu and the list link to."""
     print("\nsezioni delle impostazioni")
-    pagina = analizza(server.config_page("TOKEN"))
-    sezioni = [e for e in pagina.elementi if e["tag"] == "section"]
-    chiavi = [e["attrs"].get("data-sezione") for e in sezioni]
-    attese = [chiave for chiave, _ in server.CONFIG_SECTIONS]
-    check(f"{len(attese)} sezioni, nell'ordine del menu", chiavi == attese, str(chiavi))
+    page_html = parse_page(server.config_page("TOKEN"))
+    sections = [e for e in page_html.elements if e["tag"] == "section"]
+    keys = [e["attrs"].get("data-sezione") for e in sections]
+    expected_items = [key for key, _ in server.CONFIG_SECTIONS]
+    check(f"{len(expected_items)} sezioni, nell'ordine del menu", keys == expected_items, str(keys))
     check("tutte nascoste finché admin.js non sceglie quale mostrare",
-          all("hidden" in e["attrs"] for e in sezioni))
-    titoli = {e["attrs"].get("id") for e in pagina.elementi if e["tag"] == "h1"}
+          all("hidden" in e["attrs"] for e in sections))
+    titoli = {e["attrs"].get("id") for e in page_html.elements if e["tag"] == "h1"}
     check("ogni sezione ha il suo titolo, che le dà il nome",
-          all(e["attrs"].get("aria-labelledby") in titoli for e in sezioni))
-    schede = [e["attrs"].get("href") for e in pagina.con_classe("scheda-impostazione")]
-    raggruppate = [chiave for chiave in attese if chiave != "avanzate"]
+          all(e["attrs"].get("aria-labelledby") in titoli for e in sections))
+    schede = [e["attrs"].get("href") for e in page_html.with_class("scheda-impostazione")]
+    grouped = [key for key in expected_items if key != "avanzate"]
     check("il pannello ha una scheda per ogni sezione, nell'ordine",
-          schede == ["#" + chiave for chiave in raggruppate], str(schede))
-    avanzate = [e for e in pagina.elementi
+          schede == ["#" + key for key in grouped], str(schede))
+    advanced = [e for e in page_html.elements
                 if e["tag"] == "a" and e["attrs"].get("href") == "#avanzate"]
-    check("il file di configurazione è un link in fondo al pannello", len(avanzate) == 1)
-    indietro = pagina.con_classe("sezione-indietro")
+    check("il file di configurazione è un link in fondo al pannello", len(advanced) == 1)
+    back = page_html.with_class("sezione-indietro")
     check("ogni sezione ha il ritorno all'elenco, con un nome",
-          len(indietro) == len(attese)
-          and all(e["attrs"].get("aria-label") for e in indietro))
+          len(back) == len(expected_items)
+          and all(e["attrs"].get("aria-label") for e in back))
     check("gli aiuti sotto i campi sono frasi, non parentesi",
           '<p class="aiuto" id="base_url-aiuto">(' not in server.config_page("TOKEN"))
 
 
-def test_etichette():
+def test_labels():
     """Every field has a name, and every reference points somewhere."""
     print("\netichette dei campi")
     for lingua in ("it", "en"):
         config.CONFIG["admin_language"] = lingua
-        pagine = {nome: testo for nome, (testo, _) in pagine_admin().items()}
-        pagine["login"] = server.login_page("")
-        for nome, testo in pagine.items():
-            pagina = analizza(testo)
-            mancanti = campi_senza_etichetta(pagina)
+        pages = {nome: testo for nome, (testo, _) in admin_pages().items()}
+        pages["login"] = server.login_page("")
+        for nome, testo in pages.items():
+            page_html = parse_page(testo)
+            missing = unlabelled_fields(page_html)
             check(f"{lingua} / {nome}: ogni campo ha un'etichetta",
-                  len(mancanti) == 0, "; ".join(mancanti[:5]))
-            rotti = riferimenti_rotti(pagina)
+                  len(missing) == 0, "; ".join(missing[:5]))
+            broken_items = broken_references(page_html)
             check(f"{lingua} / {nome}: nessun riferimento a un id che non c'è",
-                  len(rotti) == 0, "; ".join(rotti[:5]))
-            ids = pagina.ids()
-            doppi = sorted({i for i in ids if ids.count(i) > 1})
-            check(f"{lingua} / {nome}: nessun id ripetuto", len(doppi) == 0, str(doppi))
+                  len(broken_items) == 0, "; ".join(broken_items[:5]))
+            ids = page_html.ids()
+            duplicates = sorted({i for i in ids if ids.count(i) > 1})
+            check(f"{lingua} / {nome}: nessun id ripetuto", len(duplicates) == 0, str(duplicates))
     config.CONFIG["admin_language"] = "it"
 
 
-def test_testo_aiuto():
+def test_help_text():
     """A hint in brackets becomes a sentence; anything else stays as it is."""
     print("\ntesti d'aiuto")
     check("toglie le parentesi e mette la maiuscola",
@@ -229,9 +229,9 @@ def test_testo_aiuto():
 
 def main():
     test_menu()
-    test_sezioni_impostazioni()
-    test_etichette()
-    test_testo_aiuto()
+    test_settings_sections()
+    test_labels()
+    test_help_text()
     print(f"\n{PASSED} passed, {FAILED} failed")
     if FAILED > 0:
         sys.exit(1)

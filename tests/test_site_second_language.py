@@ -2,7 +2,7 @@
 """
 Checks on the subtitle, the author's role and the bio in the second language.
 
-    python3 tests/test_sito_altra_lingua.py
+    python3 tests/test_site_second_language.py
 
 The pages in the second language used to show the subtitle and the author's
 data in the main language: an English reader of an Italian site found
@@ -62,7 +62,7 @@ def test_in_language():
     check("un valore che non è testo non rompe niente", in_language(None, 3, "en") == "")
 
 
-def test_pagine_inglesi():
+def test_english_pages():
     print("\nle pagine nell'altra lingua")
     set_up(EN_SUB, "Software developer", "I write about AI.")
     check("sottotitolo e autore seguono la lingua",
@@ -75,13 +75,13 @@ def test_pagine_inglesi():
     check("il box dell'autore in fondo agli articoli inglesi",
           "Software developer" in box and "I write about AI." in box
           and "Programmatore" not in box, box[:200])
-    profilo = build.profile_box("en")
+    profile = build.profile_box("en")
     check("il riquadro dell'autore nella barra laterale",
-          "Software developer" in profilo and "I write about AI." in profilo)
-    persona = build.person_jsonld("en")
+          "Software developer" in profile and "I write about AI." in profile)
+    person = build.person_jsonld("en")
     check("i dati per Google sull'autore",
-          persona.get("jobTitle") == "Software developer"
-          and persona.get("description") == "I write about AI.", str(persona))
+          person.get("jobTitle") == "Software developer"
+          and person.get("description") == "I write about AI.", str(person))
     check("e in italiano restano italiani",
           build.person_jsonld("it").get("jobTitle") == "Programmatore")
     home = build.generate_homepage([], "en")
@@ -90,14 +90,14 @@ def test_pagine_inglesi():
     check("la descrizione della home inglese per Google e per i social",
           descrizione is not None and descrizione.group(1) == EN_SUB
           and social is not None and social.group(1) == EN_SUB)
-    dati = re.search(r'<script type="application/ld\+json">(.*?)</script>', home, re.S)
+    payload = re.search(r'<script type="application/ld\+json">(.*?)</script>', home, re.S)
     check("e quella dei dati strutturati del sito",
-          dati is not None and json.loads(dati.group(1)).get("description") == EN_SUB)
+          payload is not None and json.loads(payload.group(1)).get("description") == EN_SUB)
     check("il feed inglese si presenta in inglese",
           f"<description>{EN_SUB}</description>" in build.generate_rss([], "en"))
 
 
-def test_gemelli_vuoti():
+def test_empty_twins():
     print("\nsenza traduzione")
     set_up("", "", "")
     check("con i gemelli vuoti le pagine inglesi mostrano l'italiano, come prima",
@@ -105,7 +105,7 @@ def test_gemelli_vuoti():
           and "Programmatore" in build.generate_author_box("en"))
 
 
-def test_inglese_principale():
+def test_english_main():
     """A site written in English: the twins hold the Italian."""
     print("\nsito in inglese")
     set_up("Note tecniche su AI", "Programmatore", "Scrivo di AI.", main="en")
@@ -118,24 +118,24 @@ def test_inglese_principale():
           and author_role("it") == "Programmatore")
 
 
-def test_impostazioni():
+def test_settings():
     print("\nle impostazioni")
     set_up(EN_SUB, "Software developer", "I write about AI.")
     # The Settings page reads config.json; here it reads the one in memory.
-    vero = server.load_config
+    real = server.load_config
     server.load_config = lambda: copy.deepcopy(CONFIG)
     try:
-        pagina = server.config_page("TOKEN")
+        page_html = server.config_page("TOKEN")
     finally:
-        server.load_config = vero
-    for campo in ("subtitle_en", "seo_author_role_en", "seo_author_bio_en"):
-        check(f"il campo {campo} c'è, con la sua etichetta",
-              f'id="{campo}"' in pagina and f'for="{campo}"' in pagina)
+        server.load_config = real
+    for field in ("subtitle_en", "seo_author_role_en", "seo_author_bio_en"):
+        check(f"il campo {field} c'è, con la sua etichetta",
+              f'id="{field}"' in page_html and f'for="{field}"' in page_html)
     check("i campi dicono al browser in che lingua sono scritti",
-          'id="subtitle_en" value="' + EN_SUB + '" lang="en"' in pagina)
-    check("il pulsante traduce tutti e tre", 'onclick="translateSiteTexts(this)"' in pagina)
+          'id="subtitle_en" value="' + EN_SUB + '" lang="en"' in page_html)
+    check("il pulsante traduce tutti e tre", 'onclick="translateSiteTexts(this)"' in page_html)
     check("le etichette nominano la lingua, non \"_en\"",
-          "Sottotitolo in inglese" in pagina and "{lingua}" not in pagina)
+          "Sottotitolo in inglese" in page_html and "{lingua}" not in page_html)
     js = pathlib.Path(__file__).resolve().parent.parent.joinpath("static", "admin.js").read_text()
     check("il salvataggio manda i tre campi",
           "subtitle_en: document.getElementById('subtitle_en')" in js
@@ -147,10 +147,10 @@ def main():
     saved = copy.deepcopy({k: CONFIG.get(k) for k in ("language", "subtitle", "subtitle_en", "seo")})
     try:
         test_in_language()
-        test_pagine_inglesi()
-        test_gemelli_vuoti()
-        test_inglese_principale()
-        test_impostazioni()
+        test_english_pages()
+        test_empty_twins()
+        test_english_main()
+        test_settings()
     finally:
         for key, value in saved.items():
             if value is None:

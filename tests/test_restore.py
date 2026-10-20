@@ -2,7 +2,7 @@
 """
 Checks on putting a backup back.
 
-    python3 tests/test_ripristino.py
+    python3 tests/test_restore.py
 
 Restoring from the administration turns an uploaded archive into files on
 the server, so most of these checks are archives built to deceive it: names
@@ -101,7 +101,7 @@ def refused(path_value):
     return None
 
 
-def test_ripristino_completo():
+def test_full_restore():
     print("\nun backup vero")
     site = Site()
     try:
@@ -126,11 +126,11 @@ def test_ripristino_completo():
               summary["articles"] == 1 and summary["versions"] == 1 and summary["media"] == 2
               and summary["config"] and summary["subscribers"] and summary["ignored"] == [], str(summary))
         with zipfile.ZipFile(saved) as zip_file:
-            nomi = zip_file.namelist()
+            names = zip_file.namelist()
         check("prima, lo stato di prima è stato salvato tra i backup automatici",
-              "posts/vecchio.json" in nomi and "media/vecchia.png" in nomi and "config.json" in nomi)
-        avanzi = [p.name for p in root.iterdir() if p.name.startswith(".")]
-        check("non restano cartelle di lavoro", avanzi == [], str(avanzi))
+              "posts/vecchio.json" in names and "media/vecchia.png" in names and "config.json" in names)
+        leftovers = [p.name for p in root.iterdir() if p.name.startswith(".")]
+        check("non restano cartelle di lavoro", leftovers == [], str(leftovers))
         # Undo: the automatic backup puts the old state back.
         backup.restore_backup(backup.read_backup(saved))
         check("il backup automatico rimette tutto com'era",
@@ -140,7 +140,7 @@ def test_ripristino_completo():
         site.close()
 
 
-def test_backup_parziale():
+def test_partial_backup():
     print("\nun backup senza media")
     site = Site()
     try:
@@ -153,7 +153,7 @@ def test_backup_parziale():
         site.close()
 
 
-def test_archivi_ingannevoli():
+def test_deceptive_archives():
     print("\narchivi costruiti per ingannare")
     site = Site()
     try:
@@ -183,70 +183,70 @@ def test_archivi_ingannevoli():
         check("e niente è stato scritto fuori dal sito",
               not (site.root.parent / "fuori.json").exists()
               and not (site.root / "escape.png").exists())
-        grande = archive({"posts/a.json": "{" + " " * (backup.MAX_JSON + 10) + "}"})
-        check("un file oltre il suo limite ferma tutto", refused(grande) == "err_backup_file_too_large")
+        large = archive({"posts/a.json": "{" + " " * (backup.MAX_JSON + 10) + "}"})
+        check("un file oltre il suo limite ferma tutto", refused(large) == "err_backup_file_too_large")
     finally:
         site.close()
 
 
-def test_automatici():
+def test_automatic_backups():
     print("\nbackup automatici")
     site = Site()
     try:
-        nomi = []
+        names = []
         for i in range(backup.KEEP_AUTOMATIC + 2):
             path_value = backup.save_automatic_backup()
             # Same second: rename so each one is distinct, oldest first.
-            nuovo = path_value.with_name(f"pyblog-auto-2026010{i}-120000.zip")
-            path_value.rename(nuovo)
-            nomi.append(nuovo.name)
+            new = path_value.with_name(f"pyblog-auto-2026010{i}-120000.zip")
+            path_value.rename(new)
+            names.append(new.name)
         backup.save_automatic_backup()
-        rimasti = [b["name"] for b in backup.automatic_backups()]
+        remaining = [b["name"] for b in backup.automatic_backups()]
         check(f"ne restano {backup.KEEP_AUTOMATIC}, i più recenti",
-              len(rimasti) == backup.KEEP_AUTOMATIC and nomi[0] not in rimasti, str(rimasti))
+              len(remaining) == backup.KEEP_AUTOMATIC and names[0] not in remaining, str(remaining))
         check("un nome inventato non apre niente",
               backup.automatic_backup_path("../config.json") is None
               and backup.automatic_backup_path("pyblog-automatico-x.zip") is None)
-        check("un nome vero sì", backup.automatic_backup_path(rimasti[0]) is not None)
-        vecchio = backup.BACKUPS_DIR / "pyblog-automatico-20250101-120000.zip"
-        vecchio.write_bytes(b"PK")
+        check("un nome vero sì", backup.automatic_backup_path(remaining[0]) is not None)
+        old = backup.BACKUPS_DIR / "pyblog-automatico-20250101-120000.zip"
+        old.write_bytes(b"PK")
         check("anche un backup con il vecchio nome italiano viene riconosciuto",
-              backup.automatic_backup_path(vecchio.name) is not None)
+              backup.automatic_backup_path(old.name) is not None)
     finally:
         site.close()
 
 
-def test_pagina_e_menu():
+def test_page_and_menu():
     print("\npagina e menu")
-    pagina = server.restore_page("TOKEN")
+    page_html = server.restore_page("TOKEN")
     check("la pagina ha il campo del file con la sua etichetta",
-          'id="file-ripristino"' in pagina and 'for="file-ripristino"' in pagina)
-    check("il menu porta alla pagina, e la segna", 'href="/restore"' in pagina
-          and 'aria-current="page" href="/restore"' in pagina)
+          'id="file-ripristino"' in page_html and 'for="file-ripristino"' in page_html)
+    check("il menu porta alla pagina, e la segna", 'href="/restore"' in page_html
+          and 'aria-current="page" href="/restore"' in page_html)
     site = Site()
     try:
         nome = backup.save_automatic_backup().name
-        pagina = server.restore_page("TOKEN")
+        page_html = server.restore_page("TOKEN")
         check("«Rimetti questo» passa il nome giusto al JavaScript",
-              f'onclick="restoreAutomatic(this, &quot;{nome}&quot;)"' in pagina)
+              f'onclick="restoreAutomatic(this, &quot;{nome}&quot;)"' in page_html)
     finally:
         site.close()
     check("il ripristino chiede il token CSRF", "/restore" in server.CSRF_PROTECTED_ROUTES
           and "/restore-automatic" in server.CSRF_PROTECTED_ROUTES)
     check("il backup scaricato e quello automatico sono lo stesso archivio",
           "backup.write_backup(archive)" in pathlib.Path(server.__file__).read_text())
-    nomi = [m for m, _ in __import__("core.bundle", fromlist=["x"]).BUNDLED_MODULES]
+    names = [m for m, _ in __import__("core.bundle", fromlist=["x"]).BUNDLED_MODULES]
     check("il modulo entra nel file unico, prima del server",
-          nomi.index("core.backup") < nomi.index("core.server"))
+          names.index("core.backup") < names.index("core.server"))
 
 
 def main():
     try:
-        test_ripristino_completo()
-        test_backup_parziale()
-        test_archivi_ingannevoli()
-        test_automatici()
-        test_pagina_e_menu()
+        test_full_restore()
+        test_partial_backup()
+        test_deceptive_archives()
+        test_automatic_backups()
+        test_page_and_menu()
     finally:
         ARCHIVES.cleanup()
     print(f"\n{PASSED} passed, {FAILED} failed")

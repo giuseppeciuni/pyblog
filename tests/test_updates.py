@@ -2,7 +2,7 @@
 """
 Checks on updates.
 
-    python3 tests/test_aggiornamenti.py
+    python3 tests/test_updates.py
 
 An update from the administration replaces the code of a running server,
 so the checks use real git repositories in a temporary folder: one plays
@@ -71,14 +71,14 @@ class Repositories:
         self.folder.cleanup()
 
 
-def test_versioni():
+def test_versions():
     print("\nversioni")
     check("le versioni si confrontano come numeri",
           updates.version_tuple("1.10.0") > updates.version_tuple("1.9.3"))
     check("una versione scritta male non vale niente", updates.version_tuple("1.x") == ())
     testo = 'Docstring\n"""\n\n__version__ = "1.4.2"\n'
     check("la versione si legge da core/__init__.py", updates.VERSION_LINE.search(testo).group(1) == "1.4.2")
-    vero = updates.latest_release
+    real = updates.latest_release
     try:
         updates.latest_release = lambda url=None: "9.0.0"
         stato = updates.release_status()
@@ -86,10 +86,10 @@ def test_versioni():
         updates.latest_release = lambda url=None: None
         check("senza rete lo dice", updates.release_status() == {"kind": "other", "error": "upd_offline"})
     finally:
-        updates.latest_release = vero
+        updates.latest_release = real
 
 
-def test_aggiornare():
+def test_updating():
     print("\naggiornare un checkout git")
     repos = Repositories()
     try:
@@ -99,26 +99,26 @@ def test_aggiornare():
         stato = updates.git_status()
         check("una novità su GitHub si vede, con il suo titolo",
               stato["behind"] == 1 and stato["news"] == ["feat: una novità"] and stato["can_update"])
-        salvati = []
-        esito = updates.update(save_backup=lambda: salvati.append(True))
-        check("l'aggiornamento riesce", esito["ok"] is True, str(esito))
-        check("prima ha salvato il backup", salvati == [True])
+        saved_items = []
+        outcome = updates.update(save_backup=lambda: saved_items.append(True))
+        check("l'aggiornamento riesce", outcome["ok"] is True, str(outcome))
+        check("prima ha salvato il backup", saved_items == [True])
         check("il codice nuovo è al suo posto", (repos.server / "modulo.py").read_text() == "VALORE = 2\n")
 
         repos.commit("modulo.py", "VALORE = (\n", "fix: un errore di sintassi")
-        prima = git(repos.server, "rev-parse", "HEAD")
-        esito = updates.update()
-        check("un codice che non parte non viene installato", esito["ok"] is False
-              and esito["error"] == "upd_fallito", str(esito))
-        check("e il checkout torna dov'era", git(repos.server, "rev-parse", "HEAD") == prima
+        before = git(repos.server, "rev-parse", "HEAD")
+        outcome = updates.update()
+        check("un codice che non parte non viene installato", outcome["ok"] is False
+              and outcome["error"] == "upd_fallito", str(outcome))
+        check("e il checkout torna dov'era", git(repos.server, "rev-parse", "HEAD") == before
               and (repos.server / "modulo.py").read_text() == "VALORE = 2\n")
 
         repos.commit("modulo.py", "VALORE = 3\n", "fix: sistemato")
         (repos.server / "modulo.py").write_text("VALORE = 'a mano'\n")
-        esito = updates.update()
+        outcome = updates.update()
         check("un file modificato a mano ferma l'aggiornamento, senza toccarlo",
-              esito == {"ok": False, "error": "upd_modifiche_locali"}
-              and "a mano" in (repos.server / "modulo.py").read_text(), str(esito))
+              outcome == {"ok": False, "error": "upd_modifiche_locali"}
+              and "a mano" in (repos.server / "modulo.py").read_text(), str(outcome))
         git(repos.server, "checkout", "--quiet", "--", "modulo.py")
         (repos.server / "locale.py").write_text("X = 1\n")
         git(repos.server, "add", "locale.py")
@@ -129,11 +129,11 @@ def test_aggiornare():
         repos.close()
 
 
-def test_controllo():
+def test_check():
     print("\nil controllo e la sua memoria")
     repos = Repositories()
     try:
-        vero = updates.is_git_checkout
+        real = updates.is_git_checkout
         updates.is_git_checkout = lambda: True
         stato = updates.check(force=True, now=1000)
         check("il controllo dice la versione e se è automatico",
@@ -148,44 +148,44 @@ def test_controllo():
         check("spento il controllo automatico, non chiede più niente da solo",
               updates.check(now=1000 + 40 * 3600)["behind"] == 1)
         check("ma «Controlla adesso» chiede sempre", updates.check(force=True)["behind"] == 2)
-        updates.is_git_checkout = vero
+        updates.is_git_checkout = real
     finally:
         repos.close()
 
 
-def test_pagine():
+def test_pages():
     print("\nle pagine")
-    pagina = server.updates_page("TOKEN")
+    page_html = server.updates_page("TOKEN")
     check("il menu porta agli aggiornamenti, con la versione",
-          'aria-current="page" href="/updates"' in pagina
-          and server.T("admin_versione", "it").replace("{v}", updates.__version__) in pagina)
+          'aria-current="page" href="/updates"' in page_html
+          and server.T("admin_versione", "it").replace("{v}", updates.__version__) in page_html)
     check("il controllo automatico si spegne con la sua casella",
-          'id="controllo-automatico"' in pagina and 'for="controllo-automatico"' in pagina)
-    articoli = server.admin_page([], "TOKEN")
+          'id="controllo-automatico"' in page_html and 'for="controllo-automatico"' in page_html)
+    article_list = server.admin_page([], "TOKEN")
     check("la pagina Articoli ha il posto per l'avviso, nascosto finché non serve",
-          'id="avviso-aggiornamento" role="status" hidden' in articoli)
+          'id="avviso-aggiornamento" role="status" hidden' in article_list)
     check("aggiornare chiede il token CSRF", "/update" in server.CSRF_PROTECTED_ROUTES)
-    veri = (updates.update, updates.restart)
-    riavvii = []
+    real_ones = (updates.update, updates.restart)
+    restarts = []
     try:
         updates.update = lambda save_backup=None: {"ok": True, "from": "aaa", "to": "bbb"}
-        updates.restart = lambda delay=1.0: riavvii.append(delay)
-        gestore = server.Handler.__new__(server.Handler)
+        updates.restart = lambda delay=1.0: restarts.append(delay)
+        handler = server.Handler.__new__(server.Handler)
         check("un aggiornamento riuscito riavvia PyBlog",
-              gestore._api_update({}) == {"ok": True, "from": "aaa", "to": "bbb"} and len(riavvii) == 1)
+              handler._api_update({}) == {"ok": True, "from": "aaa", "to": "bbb"} and len(restarts) == 1)
         updates.update = lambda save_backup=None: {"ok": False, "error": "upd_modifiche_locali"}
-        esito = gestore._api_update({})
+        outcome = handler._api_update({})
         check("uno fermato non riavvia, e dice perché",
-              esito["ok"] is False and "a mano" in esito["error"] and len(riavvii) == 1)
+              outcome["ok"] is False and "a mano" in outcome["error"] and len(restarts) == 1)
     finally:
-        updates.update, updates.restart = veri
+        updates.update, updates.restart = real_ones
 
 
 def main():
-    test_versioni()
-    test_aggiornare()
-    test_controllo()
-    test_pagine()
+    test_versions()
+    test_updating()
+    test_check()
+    test_pages()
     print(f"\n{PASSED} passed, {FAILED} failed")
     if FAILED > 0:
         sys.exit(1)

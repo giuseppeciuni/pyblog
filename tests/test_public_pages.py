@@ -16,8 +16,8 @@ import pathlib
 import re
 import sys
 
-RADICE = pathlib.Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(RADICE))
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT_DIR))
 
 from core.articles import load_article, save_article  # noqa: E402
 from core.build import absolute_image_sources, build, media_url  # noqa: E402
@@ -38,16 +38,16 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def leggi(percorso):
-    return (RADICE / percorso).read_text(encoding="utf-8")
+def leggi(path_value):
+    return (ROOT_DIR / path_value).read_text(encoding="utf-8")
 
 
-def classi_di(testo):
+def classes_of(testo):
     """Every class attribute of a fragment, in order."""
     return re.findall(r'class="([a-z0-9 -]+)"', testo)
 
 
-def test_parita_delle_card():
+def test_card_parity():
     """The generator and site.js must build the same article row."""
     print("\nparita' fra le due versioni della riga di un articolo")
     home = leggi("output/index.html")
@@ -59,49 +59,49 @@ def test_parita_delle_card():
         return
     # The first row is the lead one; the rows built by a search are ordinary
     # rows, so the comparison takes an ordinary one.
-    riga = re.search(r'<article class="art-row">.*?</article>', lista.group(1), re.S)
-    check("c'e' almeno una riga normale", riga is not None)
-    if riga is None:
+    line = re.search(r'<article class="art-row">.*?</article>', lista.group(1), re.S)
+    check("c'e' almeno una riga normale", line is not None)
+    if line is None:
         return
-    classi_server = set(classi_di(riga.group(0)))
+    server_classes = set(classes_of(line.group(0)))
 
     js = leggi("static/site.js")
-    funzione = re.search(r"function rowHtml\(.*?\n  \}", js, re.S)
-    check("site.js ha un solo costruttore di righe", funzione is not None)
-    if funzione is None:
+    function = re.search(r"function rowHtml\(.*?\n  \}", js, re.S)
+    check("site.js ha un solo costruttore di righe", function is not None)
+    if function is None:
         return
     tag_builder = re.search(r"function tagsHtml\(.*?\n  \}", js, re.S)
-    sorgente_js = funzione.group(0)
+    js_source = function.group(0)
     if tag_builder is not None:
-        sorgente_js = sorgente_js + tag_builder.group(0)
-    classi_js = set(classi_di(sorgente_js))
+        js_source = js_source + tag_builder.group(0)
+    js_classes = set(classes_of(js_source))
     # These two come from the caller: the opening of the article, or the
     # snippet around the searched term.
-    classi_js.add("art-excerpt")
-    classi_js.add("art-snippet")
+    js_classes.add("art-excerpt")
+    js_classes.add("art-snippet")
     # An article without a cover gets the tile: the server row shows one or
     # the other, site.js knows both.
-    classi_server.discard("art-tile")
-    classi_server.discard("art-thumb-img")
+    server_classes.discard("art-tile")
+    server_classes.discard("art-thumb-img")
     check("site.js sa fare sia la miniatura sia il riquadro",
-          "art-thumb-img" in classi_js and "art-tile" in classi_js)
+          "art-thumb-img" in js_classes and "art-tile" in js_classes)
 
-    mancanti = classi_server - classi_js
+    missing = server_classes - js_classes
     check("site.js costruisce ogni parte che il generatore scrive",
-          len(mancanti) == 0, "mancano in site.js: " + str(sorted(mancanti)))
+          len(missing) == 0, "mancano in site.js: " + str(sorted(missing)))
     check("i tag compaiono anche nei risultati di ricerca",
-          "art-tags" in classi_js and "art-tag" in classi_js, str(sorted(classi_js)))
+          "art-tags" in js_classes and "art-tag" in js_classes, str(sorted(js_classes)))
 
     # Order matters as much as presence: the thumbnail comes before the body,
     # and inside the body the tags come before the title.
-    corpo = funzione.group(0)
+    corpo = function.group(0)
     check("la miniatura viene prima del corpo della riga",
           corpo.index("art-thumb") < corpo.index("art-body"), corpo[:200])
     check("i tag vengono prima del titolo",
           corpo.index("tagsHtml(a)") < corpo.index("art-title"), corpo[:400])
 
 
-def test_indice_di_ricerca():
+def test_search_index():
     """The index must carry everything the browser needs to rebuild a row."""
     print("\nindice di ricerca")
     indice = json.loads(leggi("output/search-index.json"))
@@ -109,45 +109,45 @@ def test_indice_di_ricerca():
     if len(indice) == 0:
         return
     js = leggi("static/site.js")
-    sorgente = ""
+    source = ""
     for nome in ("rowHtml", "tagsHtml", "articleDate", "articleTitle",
                  "articleReading", "articleExcerpt"):
-        trovata = re.search(r"function " + nome + r"\(.*?\n  \}", js, re.S)
-        check(f"site.js ha {nome}", trovata is not None)
-        if trovata is not None:
-            sorgente = sorgente + trovata.group(0)
+        found_one = re.search(r"function " + nome + r"\(.*?\n  \}", js, re.S)
+        check(f"site.js ha {nome}", found_one is not None)
+        if found_one is not None:
+            source = source + found_one.group(0)
     # Every a.<field> the row builder reads must exist in the index.
-    campi_usati = set(re.findall(r"\ba\.([a-z_]+)", sorgente))
-    campi_indice = set(indice[0].keys())
-    mancanti = campi_usati - campi_indice
+    used_fields = set(re.findall(r"\ba\.([a-z_]+)", source))
+    index_fields = set(indice[0].keys())
+    missing = used_fields - index_fields
     check("ogni campo letto dal costruttore e' nell'indice",
-          len(mancanti) == 0, "mancano: " + str(sorted(mancanti)))
+          len(missing) == 0, "mancano: " + str(sorted(missing)))
     check("l'anteprima arriva gia' pronta dal server",
-          all("excerpt" in voce and "reading" in voce for voce in indice))
+          all("excerpt" in item and "reading" in item for item in indice))
 
 
-def test_copertina_nell_articolo():
+def test_cover_in_article():
     """The cover goes under the title and the date, never above them."""
     print("\ncopertina dentro l'articolo")
-    articoli = sorted((RADICE / "output" / "posts").glob("*.html"))
-    con_copertina = []
-    for percorso in articoli:
-        testo = percorso.read_text(encoding="utf-8")
+    article_list = sorted((ROOT_DIR / "output" / "posts").glob("*.html"))
+    with_cover = []
+    for path_value in article_list:
+        testo = path_value.read_text(encoding="utf-8")
         if "articolo-copertina" in testo:
-            con_copertina.append((percorso.name, testo))
-    check("almeno un articolo ha la copertina in pagina", len(con_copertina) > 0,
+            with_cover.append((path_value.name, testo))
+    check("almeno un articolo ha la copertina in pagina", len(with_cover) > 0,
           "nessuno degli articoli di prova ha il campo image valorizzato")
-    for nome, testo in con_copertina:
+    for nome, testo in with_cover:
         corpo = testo[testo.index("<h1>"):testo.index("</article>")]
-        posizioni = {etichetta: corpo.index(etichetta)
+        positions = {etichetta: corpo.index(etichetta)
                      for etichetta in ("<h1>", 'class="meta"', "articolo-copertina")}
         check(f"{nome}: la copertina sta dopo titolo e data",
-              posizioni["<h1>"] < posizioni['class="meta"'] < posizioni["articolo-copertina"],
-              str(posizioni))
+              positions["<h1>"] < positions['class="meta"'] < positions["articolo-copertina"],
+              str(positions))
         check(f"{nome}: la copertina e' ingrandibile", "data-zoom" in testo)
 
 
-def test_zoom_si_chiude_ovunque():
+def test_zoom_closes_everywhere():
     """
     A click anywhere in the overlay must close it, the picture included.
 
@@ -156,11 +156,11 @@ def test_zoom_si_chiude_ovunque():
     """
     print("\nchiusura dell'ingrandimento")
     js = leggi("static/site.js")
-    apertura = re.search(r"function apriZoom\(.*?\n\}", js, re.S)
-    check("la funzione esiste", apertura is not None)
-    if apertura is None:
+    opening = re.search(r"function apriZoom\(.*?\n\}", js, re.S)
+    check("la funzione esiste", opening is not None)
+    if opening is None:
         return
-    corpo = apertura.group(0)
+    corpo = opening.group(0)
     check("un clic sullo sfondo chiude",
           "sfondo.addEventListener('click', chiudiZoom)" in corpo, corpo[-400:])
     check("nessuna eccezione per l'immagine",
@@ -175,7 +175,7 @@ def test_zoom_si_chiude_ovunque():
           regola is not None and "zoom-out" in regola.group(1), str(regola))
 
 
-def test_zoom_solo_negli_articoli():
+def test_zoom_only_in_articles():
     """
     The homepage cover must NOT be clickable to zoom.
 
@@ -184,13 +184,13 @@ def test_zoom_solo_negli_articoli():
     trap, and on a touch screen nothing hints at the difference.
     """
     print("\nlo zoom sta solo dentro gli articoli")
-    for pagina in ("output/index.html", "output/en/index.html",
+    for page_html in ("output/index.html", "output/en/index.html",
                    "output/archivio.html", "output/tag/ai.html"):
-        testo = leggi(pagina)
-        check(f"{pagina}: nessuno zoom", "data-zoom" not in testo)
+        testo = leggi(page_html)
+        check(f"{page_html}: nessuno zoom", "data-zoom" not in testo)
 
 
-def test_indirizzi_delle_immagini():
+def test_image_addresses():
     """
     Una copertina scritta "media/foto.png" funziona sulla homepage italiana e
     da nessun'altra parte: la home inglese sta sotto /en/, quindi il browser
@@ -214,38 +214,38 @@ def test_indirizzi_delle_immagini():
     check("il campo vuoto resta vuoto", media_url("") == "")
 
     contenuto = '<p><img src="media/dentro.png"></p><p><img src="https://cdn.tld/b.png"></p>'
-    sistemato = absolute_image_sources(contenuto)
+    fixed = absolute_image_sources(contenuto)
     check("l'immagine dentro l'articolo viene sistemata",
-          'src="/media/dentro.png"' in sistemato, sistemato)
+          'src="/media/dentro.png"' in fixed, fixed)
     check("e quella esterna no",
-          'src="https://cdn.tld/b.png"' in sistemato, sistemato)
+          'src="https://cdn.tld/b.png"' in fixed, fixed)
 
 
 def main():
     # Give an article a cover so the checks have something to look at, then
     # put it back exactly as it was.
     slug = "come-un-llm-genera-testo"
-    articolo = load_article(slug)
-    if articolo is None:
+    article = load_article(slug)
+    if article is None:
         print("articolo di prova assente: salto")
         return
-    originale = articolo.get("image", "")
+    originale = article.get("image", "")
     if originale == "":
-        articolo["image"] = "/media/copertina-di-prova.png"
-        save_article(articolo)
+        article["image"] = "/media/copertina-di-prova.png"
+        save_article(article)
         build()
     try:
-        test_parita_delle_card()
-        test_indice_di_ricerca()
-        test_copertina_nell_articolo()
-        test_zoom_si_chiude_ovunque()
-        test_zoom_solo_negli_articoli()
-        test_indirizzi_delle_immagini()
+        test_card_parity()
+        test_search_index()
+        test_cover_in_article()
+        test_zoom_closes_everywhere()
+        test_zoom_only_in_articles()
+        test_image_addresses()
     finally:
         if originale == "":
-            articolo = load_article(slug)
-            articolo["image"] = ""
-            save_article(articolo)
+            article = load_article(slug)
+            article["image"] = ""
+            save_article(article)
             build()
 
     print(f"\n{PASSED} passed, {FAILED} failed")

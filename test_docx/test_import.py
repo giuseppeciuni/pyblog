@@ -24,7 +24,7 @@ from core.docx_import import (convert_docx, convert_docx_file,  # noqa: E402
 # Importing a document saves its images through save_uploaded_file, which
 # writes into output/media. A test run must not litter the real site, so we
 # point the media folder at a scratch directory next to the fixtures.
-articles.MEDIA_DIR = HERE / "_media_di_prova"
+articles.MEDIA_DIR = HERE / "_test_media"
 
 PASSED = 0
 FAILED = 0
@@ -50,8 +50,8 @@ def warning_keys(result):
 
 def test_full_document():
     """The document that contains one of everything we claim to support."""
-    print("\ndocumento-completo.docx")
-    result = convert_docx_file(HERE / "documento-completo.docx")
+    print("\nfull-document.docx")
+    result = convert_docx_file(HERE / "full-document.docx")
     check("conversion succeeds", result["ok"], result.get("error_key", ""))
     if not result["ok"]:
         return
@@ -130,8 +130,8 @@ def test_full_document():
 
     # The saved files carry the document's name: every Word file calls its
     # first picture image1.png.
-    check("DrawingML image extracted", '<img src="/media/documento-completo-image1' in content)
-    check("legacy VML image extracted", '<img src="/media/documento-completo-vecchia' in content)
+    check("DrawingML image extracted", '<img src="/media/full-document-image1' in content)
+    check("legacy VML image extracted", '<img src="/media/full-document-vecchia' in content)
     check("images are lazy loaded", content.count('loading="lazy"') == 2)
     check("WMF image is refused", ".wmf" not in content)
     check("a warning reports the refused image",
@@ -151,8 +151,8 @@ def test_full_document():
 
 def test_word_document():
     """A document shaped the way Word writes one, with the parts that used to go wrong."""
-    print("\ndocumento-word.docx")
-    result = convert_docx_file(HERE / "documento-word.docx")
+    print("\nword-document.docx")
+    result = convert_docx_file(HERE / "word-document.docx")
     check("conversion succeeds", result["ok"], result.get("error_key", ""))
     if not result["ok"]:
         return
@@ -211,7 +211,7 @@ def test_word_document():
           'alt="Grafico delle vendite 2025"' in content)
     check("and the size it had on the page", 'width="200"' in content)
     check("the image file carries the document's name",
-          '<img src="/media/documento-word-grafico' in content)
+          '<img src="/media/word-document-grafico' in content)
 
     check("the text of a text box is kept, once",
           content.count("Testo dentro una casella di testo.") == 1)
@@ -235,8 +235,8 @@ def test_word_document():
 
 def test_lines_and_pictures():
     """Line breaks, pictures with their captions, tables used to lay out the page."""
-    print("\ndocumento-righe.docx")
-    result = convert_docx_file(HERE / "documento-righe.docx")
+    print("\ndocument-lines.docx")
+    result = convert_docx_file(HERE / "document-lines.docx")
     check("conversion succeeds", result["ok"], result.get("error_key", ""))
     if not result["ok"]:
         return
@@ -246,7 +246,7 @@ def test_lines_and_pictures():
 
     def picture(description, width="200"):
         """The <img> the importer writes for the picture with this alternative text."""
-        return ('<img src="/media/documento-righe-grafico.png" alt="' + description
+        return ('<img src="/media/document-lines-grafico.png" alt="' + description
                 + '" width="' + width + '" loading="lazy">')
 
     # --- Line breaks: Quill has none inside a block ---
@@ -372,22 +372,22 @@ def test_lines_and_pictures():
 
 def test_cover_picture():
     """A picture above the first Heading 1 does not hide the title."""
-    print("\ncopertina.docx")
-    result = convert_docx_file(HERE / "copertina.docx")
+    print("\ncover.docx")
+    result = convert_docx_file(HERE / "cover.docx")
     check("conversion succeeds", result["ok"], result.get("error_key", ""))
     if not result["ok"]:
         return
     check("the heading under the picture is the title",
           result["title"] == "Titolo sotto la copertina", repr(result["title"]))
     check("the picture opens the article",
-          result["content"].startswith('<p><img src="/media/copertina-image1'))
+          result["content"].startswith('<p><img src="/media/cover-image1'))
     check("the title is not repeated as a heading", "<h2>" not in result["content"])
 
 
 def test_unclosed_field():
     """A field with no end mark must not swallow the rest of the document."""
-    print("\ncampo-non-chiuso.docx")
-    result = convert_docx_file(HERE / "campo-non-chiuso.docx")
+    print("\nunclosed-field.docx")
+    result = convert_docx_file(HERE / "unclosed-field.docx")
     check("conversion succeeds", result["ok"], result.get("error_key", ""))
     if not result["ok"]:
         return
@@ -400,8 +400,8 @@ def test_unclosed_field():
 
 def test_table_of_contents_as_a_field():
     """An older document's table of contents: a bare field across paragraphs."""
-    print("\nsommario-campo.docx")
-    result = convert_docx_file(HERE / "sommario-campo.docx")
+    print("\ntoc-field.docx")
+    result = convert_docx_file(HERE / "toc-field.docx")
     check("conversion succeeds", result["ok"], result.get("error_key", ""))
     if not result["ok"]:
         return
@@ -414,20 +414,20 @@ def test_table_of_contents_as_a_field():
 
 def test_heading_in_the_middle():
     """A Heading 1 after the first paragraph is a section, not the title."""
-    print("\ntitolo-a-meta.docx")
-    result = convert_docx_file(HERE / "titolo-a-meta.docx")
+    print("\ntitle-in-middle.docx")
+    result = convert_docx_file(HERE / "title-in-middle.docx")
     check("conversion succeeds", result["ok"], result.get("error_key", ""))
     if not result["ok"]:
         return
     check("the section heading stays in the text", "<h2>Una sezione</h2>" in result["content"])
-    check("the title falls back to the file name", result["title"] == "titolo-a-meta")
+    check("the title falls back to the file name", result["title"] == "title-in-middle")
     check("and the author is told", "warn_docx_title_from_filename" in warning_keys(result))
 
 
 def test_missing_numbering():
     """Without numbering.xml every list falls back to bullets, with a warning."""
-    print("\nsenza-numerazione.docx")
-    result = convert_docx_file(HERE / "senza-numerazione.docx")
+    print("\nno-numbering.docx")
+    result = convert_docx_file(HERE / "no-numbering.docx")
     check("conversion succeeds", result["ok"], result.get("error_key", ""))
     if not result["ok"]:
         return
@@ -439,8 +439,8 @@ def test_missing_numbering():
 
 def test_missing_styles():
     """Without styles.xml the headings are gone but the text survives."""
-    print("\nsenza-stili.docx")
-    result = convert_docx_file(HERE / "senza-stili.docx")
+    print("\nno-styles.docx")
+    result = convert_docx_file(HERE / "no-styles.docx")
     check("conversion succeeds", result["ok"], result.get("error_key", ""))
     if not result["ok"]:
         return
@@ -452,10 +452,10 @@ def test_missing_styles():
 def test_broken_input():
     """Every kind of bad input produces a clean error, never a traceback."""
     print("\nmalformed input")
-    for name, expected in (("non-e-zip.docx", "err_docx_not_a_zip"),
-                           ("non-e-word.docx", "err_docx_no_document"),
-                           ("xml-rotto.docx", "err_docx_parse"),
-                           ("vuoto.docx", "err_docx_empty")):
+    for name, expected in (("not-zip.docx", "err_docx_not_a_zip"),
+                           ("not-word.docx", "err_docx_no_document"),
+                           ("broken-xml.docx", "err_docx_parse"),
+                           ("empty.docx", "err_docx_empty")):
         result = convert_docx_file(HERE / name)
         check(f"{name} -> {expected}",
               result["ok"] is False and result["error_key"] == expected,

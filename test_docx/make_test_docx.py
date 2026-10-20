@@ -163,18 +163,18 @@ def realistic_table(rows):
                "</w:tblPr>")
     out.append("<w:tblGrid>" + '<w:gridCol w:w="3000"/>' * columns + "</w:tblGrid>")
     for index, cells in enumerate(rows):
-        riga = ["<w:tr><w:trPr><w:cantSplit/></w:trPr>"]
+        line = ["<w:tr><w:trPr><w:cantSplit/></w:trPr>"]
         for cell in cells:
-            riga.append('<w:tc><w:tcPr><w:tcW w:w="3000" w:type="dxa"/>'
+            line.append('<w:tc><w:tcPr><w:tcW w:w="3000" w:type="dxa"/>'
                         "<w:vAlign w:val=\"center\"/></w:tcPr>"
                         + paragraph(run(cell), style="Normal") + "</w:tc>")
-        riga.append("</w:tr>")
-        riga_xml = "".join(riga)
+        line.append("</w:tr>")
+        xml_line = "".join(line)
         # The second row is wrapped in a content control, as Word does.
         if index == 1:
-            riga_xml = ("<w:sdt><w:sdtPr/><w:sdtContent>" + riga_xml
+            xml_line = ("<w:sdt><w:sdtPr/><w:sdtContent>" + xml_line
                         + "</w:sdtContent></w:sdt>")
-        out.append(riga_xml)
+        out.append(xml_line)
     out.append("</w:tbl>")
     return "".join(out)
 
@@ -724,32 +724,32 @@ def build_all():
         # A WMF: a real Word document can embed one, and no browser shows it.
         "word/media/disegno.wmf": b"\xd7\xcd\xc6\x9a" + b"\x00" * 64,
     }
-    write_docx(HERE / "documento-completo.docx", full)
+    write_docx(HERE / "full-document.docx", full)
 
     # The same document with no numbering part: the importer must fall back to
     # bulleted lists instead of failing.
     no_numbering = dict(full)
     del no_numbering["word/numbering.xml"]
-    write_docx(HERE / "senza-numerazione.docx", no_numbering)
+    write_docx(HERE / "no-numbering.docx", no_numbering)
 
     # A document with no styles part at all, as some converters produce.
     no_styles = dict(full)
     del no_styles["word/styles.xml"]
-    write_docx(HERE / "senza-stili.docx", no_styles)
+    write_docx(HERE / "no-styles.docx", no_styles)
 
     # A valid ZIP that is not a Word document.
-    write_docx(HERE / "non-e-word.docx", {"hello.txt": "I am not a document"})
+    write_docx(HERE / "not-word.docx", {"hello.txt": "I am not a document"})
 
     # A file whose XML is broken halfway through.
     broken = dict(full)
     broken["word/document.xml"] = DOCUMENT[:len(DOCUMENT) // 2]
-    write_docx(HERE / "xml-rotto.docx", broken)
+    write_docx(HERE / "broken-xml.docx", broken)
 
     # Not a ZIP at all.
-    (HERE / "non-e-zip.docx").write_bytes(b"Questo e' solo testo, non un archivio.")
+    (HERE / "not-zip.docx").write_bytes(b"Questo e' solo testo, non un archivio.")
 
     # The document shaped the way Word really writes one.
-    write_docx(HERE / "documento-word.docx", {
+    write_docx(HERE / "word-document.docx", {
         "[Content_Types].xml": CONTENT_TYPES,
         "_rels/.rels": ROOT_RELS,
         "word/document.xml": WORD_DOCUMENT,
@@ -761,7 +761,7 @@ def build_all():
     })
 
     # Line breaks, pictures with their captions, tables that lay out the page.
-    write_docx(HERE / "documento-righe.docx", {
+    write_docx(HERE / "document-lines.docx", {
         "[Content_Types].xml": CONTENT_TYPES,
         "_rels/.rels": ROOT_RELS,
         "word/document.xml": LINES_DOCUMENT,
@@ -775,27 +775,27 @@ def build_all():
     # A field with no end mark.
     unclosed = dict(full)
     unclosed["word/document.xml"] = DOCUMENT.replace(BODY, UNCLOSED_FIELD_BODY)
-    write_docx(HERE / "campo-non-chiuso.docx", unclosed)
+    write_docx(HERE / "unclosed-field.docx", unclosed)
 
     # A picture above the Heading 1 that is the title.
     cover = dict(full)
     cover["word/document.xml"] = DOCUMENT.replace(BODY, COVER_BODY)
-    write_docx(HERE / "copertina.docx", cover)
+    write_docx(HERE / "cover.docx", cover)
 
     # The table of contents of an older document, as a bare field.
     bare_toc = dict(full)
     bare_toc["word/document.xml"] = DOCUMENT.replace(BODY, BARE_TOC_BODY)
-    write_docx(HERE / "sommario-campo.docx", bare_toc)
+    write_docx(HERE / "toc-field.docx", bare_toc)
 
     # A Heading 1 that is not at the start: it must stay in the text.
     middle = dict(full)
     middle["word/document.xml"] = DOCUMENT.replace(BODY, MIDDLE_HEADING_BODY)
-    write_docx(HERE / "titolo-a-meta.docx", middle)
+    write_docx(HERE / "title-in-middle.docx", middle)
 
     # A document with no title and no text worth importing.
     empty = dict(full)
     empty["word/document.xml"] = DOCUMENT.replace(BODY, paragraph(run("   ")))
-    write_docx(HERE / "vuoto.docx", empty)
+    write_docx(HERE / "empty.docx", empty)
 
     for path_value in sorted(HERE.glob("*.docx")):
         print(f"  {path_value.name:28s} {path_value.stat().st_size:>7} bytes")

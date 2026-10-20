@@ -2,7 +2,7 @@
 """
 Checks on the Settings panel and on the first steps of the dashboard.
 
-    python3 tests/test_pannello_impostazioni.py
+    python3 tests/test_settings_panel.py
 
 Every section of the Settings says what it is for and how it stands: on,
 off, or something to fix. The states are read from the configuration, so
@@ -58,32 +58,32 @@ def state(section_id, c, la="it"):
     return settings_panel.section_state(section_id, c, la)
 
 
-def test_descrizione_delle_sezioni():
+def test_section_descriptions():
     """Every section has a name, a description and, but the last, a group."""
     print("\nle sezioni")
     ids = [s["id"] for s in settings_panel.SECTIONS]
     check("nessuna sezione ripetuta", len(ids) == len(set(ids)))
     check("CONFIG_SECTIONS nasce dallo stesso elenco",
           [k for k, _ in server.CONFIG_SECTIONS] == ids)
-    gruppi = {g for g, _ in settings_panel.GROUPS}
-    senza = [s["id"] for s in settings_panel.SECTIONS if s["group"] not in gruppi]
-    check("solo il file di configurazione è fuori dai gruppi", senza == ["avanzate"], str(senza))
+    groups = {g for g, _ in settings_panel.GROUPS}
+    without = [s["id"] for s in settings_panel.SECTIONS if s["group"] not in groups]
+    check("solo il file di configurazione è fuori dai gruppi", without == ["avanzate"], str(without))
     for la in ("it", "en"):
-        mancanti = [s["id"] for s in settings_panel.SECTIONS
+        missing = [s["id"] for s in settings_panel.SECTIONS
                     if la not in UI_TRANSLATIONS.get(s["label"], {})
                     or la not in UI_TRANSLATIONS.get(s["label"] + "_desc", {})]
-        check(f"{la}: ogni sezione ha nome e descrizione", mancanti == [], str(mancanti))
-        mancanti = [k for _, k in settings_panel.GROUPS if la not in UI_TRANSLATIONS.get(k, {})]
-        check(f"{la}: ogni gruppo ha un nome", mancanti == [], str(mancanti))
+        check(f"{la}: ogni sezione ha nome e descrizione", missing == [], str(missing))
+        missing = [k for _, k in settings_panel.GROUPS if la not in UI_TRANSLATIONS.get(k, {})]
+        check(f"{la}: ogni gruppo ha un nome", missing == [], str(missing))
     check("ogni sezione con uno stato ha la sua funzione, e nessuna funzione è orfana",
           set(settings_panel.STATE_FUNCTIONS) == set(ids) - {"avanzate"})
-    nomi = [m for m, _ in bundle.BUNDLED_MODULES]
+    names = [m for m, _ in bundle.BUNDLED_MODULES]
     check("il modulo entra nel file unico, prima del server",
-          "core.settings_panel" in nomi
-          and nomi.index("core.settings_panel") < nomi.index("core.server"))
+          "core.settings_panel" in names
+          and names.index("core.settings_panel") < names.index("core.server"))
 
 
-def test_tutto_dall_interfaccia():
+def test_everything_from_the_interface():
     """
     Every setting of config.json can be changed from the Settings: the form
     sends it when saving. A setting added to CONFIG_DEFAULT without a field
@@ -92,43 +92,43 @@ def test_tutto_dall_interfaccia():
     print("\ntutto dall'interfaccia")
     import re
     js = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
-    inizio = js.index("function saveConfig")
-    corpo = js[inizio:js.index("\n}\n", inizio)]
-    principali = set(re.findall(r"^    (\w+):", corpo, re.M))
-    annidate = set(re.findall(r"^      (\w+):", corpo, re.M))
+    start = js.index("function saveConfig")
+    corpo = js[start:js.index("\n}\n", start)]
+    main_ones = set(re.findall(r"^    (\w+):", corpo, re.M))
+    nested = set(re.findall(r"^      (\w+):", corpo, re.M))
     # The language of the admin changes from the menu; home_order is a
     # leftover of the single-column homepage, read by nothing any more.
-    fuori = {"admin_language", "home_order"}
-    mancanti = [k for k in CONFIG_DEFAULT if k not in principali and k not in fuori]
-    check("ogni impostazione principale ha il suo campo", mancanti == [], str(mancanti))
-    mancanti = [k for k in CONFIG_DEFAULT["seo"] if k not in annidate]
-    check("e anche ogni dato dell'autore", mancanti == [], str(mancanti))
-    pagina = server.config_page("TOKEN")
-    for campo in ("max_image_width", "share_buttons", "seo_backlink_site"):
-        check(f"il campo {campo} è nella pagina, con l'etichetta",
-              f'id="{campo}"' in pagina and f'for="{campo}"' in pagina)
+    outside = {"admin_language", "home_order"}
+    missing = [k for k in CONFIG_DEFAULT if k not in main_ones and k not in outside]
+    check("ogni impostazione principale ha il suo campo", missing == [], str(missing))
+    missing = [k for k in CONFIG_DEFAULT["seo"] if k not in nested]
+    check("e anche ogni dato dell'autore", missing == [], str(missing))
+    page_html = server.config_page("TOKEN")
+    for field in ("max_image_width", "share_buttons", "seo_backlink_site"):
+        check(f"il campo {field} è nella pagina, con l'etichetta",
+              f'id="{field}"' in page_html and f'for="{field}"' in page_html)
 
 
-def test_sito_finito():
+def test_finished_site():
     """A finished site has no warnings at all."""
     print("\nun sito finito")
     c = finished_config()
-    avvisi = [(s, t) for s in settings_panel.SECTION_IDS
-              for tono, t in settings_panel.section_states(s, c, "it") if tono == "warn"
+    warnings_found = [(s, t) for s in settings_panel.SECTION_IDS
+              for tone, t in settings_panel.section_states(s, c, "it") if tone == "warn"
               and s != "traduzione"]
-    check("nessun avviso, a parte la chiave di traduzione", avvisi == [], str(avvisi))
+    check("nessun avviso, a parte la chiave di traduzione", warnings_found == [], str(warnings_found))
     check("il sito mostra il dominio", state("sito", c) == ("ok", "www.ciunix.com"))
 
 
-def test_sito_e_home():
+def test_site_and_home():
     print("\nsito e home page")
     c = finished_config()
     c["site_title"] = ""
     c["base_url"] = "https://tuodominio.com"
-    stati = settings_panel.section_states("sito", c, "it")
+    states = settings_panel.section_states("sito", c, "it")
     check("titolo e dominio mancanti sono due avvisi",
-          [t for _, t in stati] == [T("stato_manca_titolo", "it"), T("stato_manca_dominio", "it")],
-          str(stati))
+          [t for _, t in states] == [T("stato_manca_titolo", "it"), T("stato_manca_dominio", "it")],
+          str(states))
     c = finished_config()
     c["home_content_en"] = CONFIG_DEFAULT["home_content_en"]
     check("la presentazione inglese di esempio è un avviso",
@@ -143,14 +143,14 @@ def test_sito_e_home():
     check("una presentazione vuota è spenta, non un errore", state("home", c)[0] == "off")
 
 
-def test_testi_nell_altra_lingua():
+def test_texts_in_other_language():
     """A bilingual site with the subtitle or the bio in one language only."""
     print("\ntesti nell'altra lingua")
     c = finished_config()
     c["seo"]["author_role"] = "Programmatore"
-    avviso = ("warn", T("stato_testi_solo_principale", "it").replace("{principale}", "italiano"))
+    notice = ("warn", T("stato_testi_solo_principale", "it").replace("{principale}", "italiano"))
     check("ruolo scritto solo in italiano su un sito bilingue: avviso",
-          state("sito", c) == avviso, str(state("sito", c)))
+          state("sito", c) == notice, str(state("sito", c)))
     check("in inglese l'avviso nomina la lingua in inglese",
           state("sito", c, "en")[1] == T("stato_testi_solo_principale", "en")
           .replace("{principale}", "Italian"))
@@ -161,7 +161,7 @@ def test_testi_nell_altra_lingua():
     check("un sito che non usa la seconda lingua non riceve l'avviso", state("sito", c)[0] == "ok")
 
 
-def test_indirizzo_amministrazione():
+def test_admin_address():
     """The administration and the code of outside services on one address."""
     print("\nindirizzo dell'amministrazione")
     c = finished_config()
@@ -174,15 +174,15 @@ def test_indirizzo_amministrazione():
     c["analytics_id"] = "G-WFH9MSGK86"
     check("anche con Google Analytics nel campo delle Statistiche", state("sito", c)[0] == "warn")
     c["base_url"] = ""
-    stati = [t for _, t in settings_panel.section_states("sito", c, "it")]
-    check("un sito non ancora online non riceve l'avviso", T("stato_admin_condiviso", "it") not in stati)
+    states = [t for _, t in settings_panel.section_states("sito", c, "it")]
+    check("un sito non ancora online non riceve l'avviso", T("stato_admin_condiviso", "it") not in states)
     c = finished_config()
     c["admin_url"] = "admin.ciunix.com/editor"
     check("un indirizzo scritto male lo dice, e l'admin resta dov'era",
           state("sito", c) == ("warn", T("stato_admin_non_valido", "it")))
 
 
-def test_riquadri():
+def test_boxes():
     print("\nriquadri della home")
     c = finished_config()
     c["home_cards"] = [
@@ -204,7 +204,7 @@ def test_riquadri():
     check("con i riquadri spenti, nessun riquadro", state("pagine", c)[0] == "off")
 
 
-def test_biografia_progetti_commenti():
+def test_biography_projects_comments():
     print("\nbiografia, progetti, commenti")
     c = finished_config()
     check("biografia spenta", state("biografia", c) == ("off", T("stato_spenta", "it")))
@@ -222,7 +222,7 @@ def test_biografia_progetti_commenti():
     check("Giscus configurato", state("commenti", c) == ("ok", "Giscus"))
 
 
-def test_statistiche():
+def test_analytics():
     """The case of ciunix.com: the same Google Analytics in two snippets."""
     print("\nstatistiche")
     c = finished_config()
@@ -254,7 +254,7 @@ def test_statistiche():
     check("codici esterni: uno acceso", state("codici", c) == ("ok", T("stato_uno_attivo", "it")))
 
 
-def test_cookie_traduzione_newsletter_ai():
+def test_cookie_translation_newsletter_ai():
     print("\ncookie, traduzione, newsletter, permessi alle AI")
     c = finished_config()
     check("banner spento senza statistiche: solo spento", state("cookie", c)[0] == "off")
@@ -271,10 +271,10 @@ def test_cookie_traduzione_newsletter_ai():
     c2["custom_code"] = [{"id": "a", "enabled": True, "code": GTAG, "consent": "necessary"},
                          {"id": "v", "enabled": True, "code": "<script src=x></script>",
                           "consent": "necessary"}]
-    stati = settings_panel.section_states("cookie", c2, "it")
+    states = settings_panel.section_states("cookie", c2, "it")
     check("banner acceso con Google Analytics «Necessario»: due avvisi, il primo su Google Analytics",
-          [t for _, t in stati] == [T("stato_cookie_analytics_necessario", "it"),
-                                    T("stato_cookie_acceso_inutile", "it")], str(stati))
+          [t for _, t in states] == [T("stato_cookie_analytics_necessario", "it"),
+                                    T("stato_cookie_acceso_inutile", "it")], str(states))
     check("lo stesso avviso nei Codici esterni, dove si sistema",
           state("codici", c2) == ("warn", T("stato_cookie_analytics_necessario", "it")))
     c2["custom_code"][0]["consent"] = "statistics"
@@ -310,58 +310,58 @@ def test_cookie_traduzione_newsletter_ai():
     check("gli stati parlano anche inglese", state("ai", c, "en") == ("ok", T("stato_ai_vietato", "en")))
 
 
-def test_primi_passi():
+def test_first_steps():
     print("\nprimi passi")
-    pubblicato = [{"status": "published"}]
+    published = [{"status": "published"}]
     c = finished_config()
     check("un sito finito con un articolo pubblicato non ha passi",
-          settings_panel.setup_steps(c, pubblicato, "it") == [])
+          settings_panel.setup_steps(c, published, "it") == [])
     check("senza articoli pubblicati, il primo passo è scriverne uno",
           settings_panel.setup_steps(c, [{"status": "draft"}], "it")
           == [("", T("stato_primo_articolo", "it"))])
     c["base_url"] = ""
     c["translation"]["service"] = "deepl"
     c["newsletter"] = {"enabled": True}
-    passi = settings_panel.setup_steps(c, pubblicato, "it")
+    steps = settings_panel.setup_steps(c, published, "it")
     check("un dominio mancante è un passo; la chiave di traduzione e la newsletter no",
-          passi == [("sito", T("stato_manca_dominio", "it"))], str(passi))
+          steps == [("sito", T("stato_manca_dominio", "it"))], str(steps))
 
 
-def test_pagine():
+def test_pages():
     """The panel and the dashboard, as HTML."""
     print("\nle pagine")
-    vero = server.load_config
+    real = server.load_config
     c = finished_config()
     c["custom_code"] = [{"id": "a", "enabled": True, "code": GTAG},
                         {"id": "b", "enabled": True, "code": GTAG}]
     server.load_config = lambda: copy.deepcopy(c)
     try:
-        pannello = server.config_sections_list("it", c)
+        panel = server.config_sections_list("it", c)
         check("la scheda Statistiche avvisa del doppione, anche a chi non vede il colore",
-              'href="#statistiche"' in pannello
-              and 'class="scheda-stato stato-warn"' in pannello
-              and T("admin_stato_tono_warn", "it") in pannello)
+              'href="#statistiche"' in panel
+              and 'class="scheda-stato stato-warn"' in panel
+              and T("admin_stato_tono_warn", "it") in panel)
         check("la scheda prende il colore del suo stato",
-              'class="scheda-impostazione scheda-warn" href="#statistiche"' in pannello
-              and 'class="scheda-impostazione scheda-ok" href="#sito"' in pannello
-              and 'class="scheda-impostazione scheda-off" href="#biografia"' in pannello)
+              'class="scheda-impostazione scheda-warn" href="#statistiche"' in panel
+              and 'class="scheda-impostazione scheda-ok" href="#sito"' in panel
+              and 'class="scheda-impostazione scheda-off" href="#biografia"' in panel)
         check("il file di configurazione, senza stato, resta fuori dai gruppi colorati",
-              'href="#avanzate"' not in pannello)
+              'href="#avanzate"' not in panel)
         check("il pannello ha un titolo per ogni gruppo",
-              all(T(k, "it") in pannello for _, k in settings_panel.GROUPS))
+              all(T(k, "it") in panel for _, k in settings_panel.GROUPS))
         check("le parole chiave stanno nella scheda, per la ricerca",
-              'data-cerca="analytics google ga4' in pannello)
-        pagina = server.config_page("TOKEN")
+              'data-cerca="analytics google ga4' in panel)
+        page_html = server.config_page("TOKEN")
         check("la testata di una sezione riporta al pannello e dice il gruppo",
               '<a href="#elenco">Impostazioni</a> <span aria-hidden="true">›</span> '
-              + T("admin_imp_gruppo_servizi", "it") in pagina)
+              + T("admin_imp_gruppo_servizi", "it") in page_html)
         check("la sezione Statistiche ripete il suo avviso in alto",
-              '<ul class="sezione-avvisi" id="avvisi-statistiche">' in pagina
-              and T("stato_analytics_doppio", "it").replace("{n}", "2") in pagina)
+              '<ul class="sezione-avvisi" id="avvisi-statistiche">' in page_html
+              and T("stato_analytics_doppio", "it").replace("{n}", "2") in page_html)
         check("una sezione senza avvisi ha la lista vuota e nascosta, pronta per dopo il salvataggio",
-              '<ul class="sezione-avvisi" id="avvisi-progetti" hidden>' in pagina)
+              '<ul class="sezione-avvisi" id="avvisi-progetti" hidden>' in page_html)
         check("la pagina ha la ricerca, con la sua etichetta",
-              'for="cerca-impostazioni"' in pagina and 'id="cerca-impostazioni"' in pagina)
+              'for="cerca-impostazioni"' in page_html and 'id="cerca-impostazioni"' in page_html)
 
         dashboard = server.admin_page([{"status": "published", "title": "A", "slug": "a",
                                         "date": "2026-01-01", "content": ""}], "TOKEN")
@@ -378,22 +378,22 @@ def test_pagine():
                                         "date": "2026-01-01", "content": ""}], "TOKEN")
         check("finito tutto, i primi passi spariscono", 'class="primi-passi"' not in dashboard)
     finally:
-        server.load_config = vero
+        server.load_config = real
 
 
 def main():
-    test_descrizione_delle_sezioni()
-    test_tutto_dall_interfaccia()
-    test_sito_finito()
-    test_sito_e_home()
-    test_testi_nell_altra_lingua()
-    test_indirizzo_amministrazione()
-    test_riquadri()
-    test_biografia_progetti_commenti()
-    test_statistiche()
-    test_cookie_traduzione_newsletter_ai()
-    test_primi_passi()
-    test_pagine()
+    test_section_descriptions()
+    test_everything_from_the_interface()
+    test_finished_site()
+    test_site_and_home()
+    test_texts_in_other_language()
+    test_admin_address()
+    test_boxes()
+    test_biography_projects_comments()
+    test_analytics()
+    test_cookie_translation_newsletter_ai()
+    test_first_steps()
+    test_pages()
     print(f"\n{PASSED} passed, {FAILED} failed")
     if FAILED > 0:
         sys.exit(1)
