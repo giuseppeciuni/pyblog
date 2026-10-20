@@ -3693,25 +3693,65 @@ function setAutomaticCheck(checkbox) {
 
 // The filter buttons and the search work together: a card stays when it
 // matches both.
-function filterMedia(buttonEl) {
+// The library shows its cards a batch at a time: the next batch comes when
+// the end of the list scrolls into view, or with the Show more button. The
+// filters and the search look through every file, and start again from the
+// first batch; the cleanup buttons work on every file too, shown or not.
+var mediaShown = 0;
+
+function filterMedia(buttonEl, keepShown) {
   if (buttonEl) {
     var btns = document.querySelectorAll('#filter-media .segment');
     for (var i = 0; i < btns.length; i++) {
       btns[i].setAttribute('aria-pressed', btns[i] === buttonEl ? 'true' : 'false');
     }
   }
+  var batch = pbPage('media_batch', 48);
+  if (!keepShown) { mediaShown = batch; }
   var chosen = document.querySelector('#filter-media .segment[aria-pressed="true"]');
   var filterValue = chosen ? chosen.getAttribute('data-filter') : 'all';
   var textValue = document.getElementById('search-media').value.trim().toLowerCase();
   var cardSet = document.querySelectorAll('.media-card');
-  var visibleOnes = 0;
+  var matching = 0;
   for (var j = 0; j < cardSet.length; j++) {
     var keeps = (filterValue === 'all' || cardSet[j].getAttribute('data-used') === filterValue)
       && cardSet[j].getAttribute('data-name').indexOf(textValue) !== -1;
-    cardSet[j].hidden = !keeps;
-    if (keeps) { visibleOnes++; }
+    cardSet[j].hidden = !keeps || matching >= mediaShown;
+    if (keeps) { matching++; }
   }
-  document.getElementById('media-library-no-result').hidden = visibleOnes > 0 || cardSet.length === 0;
+  var shown = Math.min(matching, mediaShown);
+  document.getElementById('media-library-no-result').hidden = matching > 0 || cardSet.length === 0;
+  document.getElementById('media-library-more').hidden = shown >= matching;
+  document.getElementById('media-library-count').textContent = matching > batch
+    ? t('js_media_shown_of').replace('{shown}', shown).replace('{total}', matching) : '';
+}
+
+function showMoreMedia() {
+  mediaShown += pbPage('media_batch', 48);
+  filterMedia(null, true);
+}
+
+// Infinite scroll: when the Show more button comes near the screen, the next
+// batch shows by itself. Without IntersectionObserver the button still works.
+function initLibraryPage() {
+  filterMedia();
+  var more = document.getElementById('media-library-more');
+  if (!more || !window.IntersectionObserver) { return; }
+  // The observer speaks only when the button enters or leaves the screen:
+  // on a tall screen it can still be in sight after a batch, so the next
+  // one is asked for until it is not.
+  var nearScreen = function() {
+    return !more.hidden && more.getBoundingClientRect().top < window.innerHeight + 400;
+  };
+  new IntersectionObserver(function(entries) {
+    if (!entries[0].isIntersecting) { return; }
+    var step = function() {
+      if (!nearScreen()) { return; }
+      showMoreMedia();
+      window.requestAnimationFrame(step);
+    };
+    step();
+  }, { rootMargin: '400px 0px' }).observe(more);
 }
 
 function copyMediaAddress(address) {
@@ -4846,6 +4886,8 @@ document.addEventListener('DOMContentLoaded', function() {
     showUpdateNotice();
   } else if (page === 'updates') {
     checkUpdates(false);
+  } else if (page === 'library') {
+    initLibraryPage();
   }
 });
 
@@ -4925,9 +4967,9 @@ function openPointPicker(sourceValue) {
   choiceValue.innerHTML = '';
   var notice = document.getElementById('sp-notice');
   notice.textContent = '';
-  var nellEditor = pbPage('page', '') === 'editor';
+  var inEditor = pbPage('page', '') === 'editor';
   var options = [];
-  if (nellEditor) {
+  if (inEditor) {
     var slug = pbPage('slug', '');
     if (slug === '') {
       notice.textContent = t('js_sp_save_first_one');
@@ -4953,7 +4995,7 @@ function openPointPicker(sourceValue) {
   var pageScope = pointCard.querySelector('.code-scope');
   var preferArticle = savedPage === 'article' ||
     (savedPage === '' && pageScope !== null && ['articles', 'optin'].indexOf(pageScope.value) !== -1);
-  if (!nellEditor && preferArticle && choiceValue.options.length > 1) { choiceValue.selectedIndex = 1; }
+  if (!inEditor && preferArticle && choiceValue.options.length > 1) { choiceValue.selectedIndex = 1; }
   var where = pointCard.querySelector('.code-anchor-point-where').value || 'after';
   document.querySelector('input[name="sp-where"][value="' + where + '"]').checked = true;
   document.getElementById('sp-confirm').disabled = true;

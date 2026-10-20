@@ -664,6 +664,8 @@ select.field-input { padding-right:2rem; }
 .media-card { display:flex; flex-direction:column; background:var(--a-surface);
                 border:1px solid var(--a-border); border-radius:12px; overflow:hidden; }
 .media-card[hidden] { display:none; }
+.media-more { display:flex; flex-direction:column; align-items:center; gap:0.5rem; margin:1.25rem 0 0.5rem; }
+.media-more .hint:empty { display:none; }
 .media-preview { aspect-ratio:4 / 3; overflow:hidden; background:#eef0f3; display:flex; align-items:center; justify-content:center; }
 .media-preview :is(img, video) { min-height:0; }
 .media-preview :is(img, video) { width:100%; height:100%; object-fit:contain; }

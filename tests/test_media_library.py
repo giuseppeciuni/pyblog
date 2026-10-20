@@ -124,6 +124,17 @@ def test_page():
               'data-name="dimenticata.png" data-used="0"' in page_html
               and "(1, 1 KB)" in page_html, page_html[page_html.find("Elimina i non"):][:80])
         check("i video si vedono come video", '<video src="/media/video.mp4"' in page_html)
+        saved_batch = server.MEDIA_BATCH
+        server.MEDIA_BATCH = 3
+        try:
+            paged = server.library_page("TOKEN")
+        finally:
+            server.MEDIA_BATCH = saved_batch
+        check("una libreria grande mostra un blocco alla volta: le schede dopo il primo partono nascoste",
+              paged.count('<li class="media-card"') == 4 and paged.count('data-where="0" hidden>')
+              + paged.count('data-where="1" hidden>') + paged.count('data-where="2" hidden>') == 1)
+        check("con il pulsante per gli altri e la misura del blocco per lo script",
+              'id="media-library-more"' in paged and '"media_batch": 3' in paged)
         check("il nome arriva al JavaScript senza virgolette in più",
               'onclick="deleteMedia(this, &quot;dimenticata.png&quot;, 0)"' in page_html
               and 'onclick="copyMediaAddress(&quot;/media/foto.png&quot;)"' in page_html,

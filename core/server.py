@@ -198,7 +198,7 @@ JS_TRANSLATION_KEYS = (
     "js_restoring_ignored", "js_restoring_failure_network",
     "js_media_copied", "js_media_delete_title", "js_media_delete_body",
     "js_media_delete_used", "js_media_cleanup_body", "js_media_uploading",
-    "js_media_merge_title", "js_media_merge_body", "js_media_merge_confirm",
+    "js_media_merge_title", "js_media_merge_body", "js_media_merge_confirm", "js_media_shown_of",
     "upd_checking", "upd_installation", "upd_restarting", "upd_restarted", "upd_confirm_title",
     "upd_confirm_body", "admin_update_now", "upd_offline",
     "js_media_picker_title", "js_media_picker_search", "js_media_picker_empty",
@@ -728,6 +728,12 @@ def media_library_items():
     return {"ok": True, "items": items}
 
 
+# How many cards of the media library show at first, and at each step down:
+# the rest come as the page is scrolled, so a library of hundreds of files
+# is not one endless page. admin.js reads the same number from the page.
+MEDIA_BATCH = 48
+
+
 def library_page(csrf):
     """
     The media library: every uploaded file with where it is used, to copy
@@ -749,7 +755,7 @@ def library_page(csrf):
     cards = []
     unused_size = 0
     unused_count = 0
-    for item in files:
+    for position, item in enumerate(files):
         name = item["name"]
         where = uses.get(name, [])
         if not where:
@@ -773,9 +779,10 @@ def library_page(csrf):
         if name in copy_of:
             usage += (f'<br><span class="media-copy">'
                       f'{esc(T("admin_media_copy_of", lang).replace("{name}", copy_of[name]))}</span>')
+        later = " hidden" if position >= MEDIA_BATCH else ""
         cards.append(
             f'    <li class="media-card" data-name="{esc(name.lower())}" data-used="{1 if where else 0}" '
-            f'data-where="{len(where)}">\n'
+            f'data-where="{len(where)}"{later}>\n'
             f'      <div class="media-preview">{preview}</div>\n'
             f'      <div class="media-info">\n'
             f'        <p class="media-name">{esc(name)}</p>\n'
@@ -814,6 +821,7 @@ def library_page(csrf):
         label_merge=(T("admin_media_merge", lang).replace("{n}", str(len(copy_of)))
                      .replace("{size}", file_size_text(copies_size) if copy_of else "0 KB")),
         merge_hidden_f="" if copy_of else " hidden",
+        label_more=T("admin_media_more", lang),
         copies=len(copy_of),
         cards="\n".join(cards),
         empty_f_hidden_f="" if not files else " hidden",
@@ -823,7 +831,7 @@ def library_page(csrf):
     )
     return admin_page_shell(T("admin_media_library", lang), content_html, lang, csrf=csrf,
                             navbar=admin_navbar("media", lang),
-                            page_data={"page": "library",
+                            page_data={"page": "library", "media_batch": MEDIA_BATCH,
                                        "max_image_mb": MAX_IMAGE_BYTES // (1024 * 1024),
                                        "max_video_mb": MAX_VIDEO_BYTES // (1024 * 1024),
                                        "max_image_width": max_image_side()})

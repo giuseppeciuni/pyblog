@@ -253,6 +253,8 @@ UI_TRANSLATIONS = {
     "admin_media_used_f_in": {"it": "Usato in:", "en": "Used in:"},
     "admin_media_not_used_f": {"it": "Non usato da nessuna parte", "en": "Not used anywhere"},
     "admin_media_copy_of": {"it": "Copia di {name}", "en": "Copy of {name}"},
+    "admin_media_more": {"it": "Mostra altri", "en": "Show more"},
+    "js_media_shown_of": {"it": "Mostrati {shown} di {total}", "en": "Showing {shown} of {total}"},
     "admin_media_merge": {"it": "Unisci i doppioni ({n}, {size})", "en": "Merge the duplicates ({n}, {size})"},
     "js_media_merge_title": {"it": "Unire i doppioni?", "en": "Merge the duplicates?"},
     "js_media_merge_body": {

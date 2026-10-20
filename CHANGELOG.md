@@ -144,6 +144,9 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **The Media page shows 48 files at a time.** The next ones come as you
+  scroll to the end (or with **Show more**); the search, the Used/Unused
+  filters and the cleanup buttons still work on every file.
 - **The author's photo is uploaded from the Settings.** "Site and author"
   had only a field for the address of a photo. Now it has **Upload a photo**
   and a preview, like the biography's photo. Both are cropped square around

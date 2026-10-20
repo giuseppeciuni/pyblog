@@ -29,6 +29,10 @@
   <ul class="media-library-grid" id="media-library-grid">
 $cards
   </ul>
+  <div class="media-more">
+    <p class="hint" id="media-library-count" aria-live="polite"></p>
+    <button type="button" class="button" id="media-library-more" hidden onclick="showMoreMedia()">$label_more</button>
+  </div>
   <p class="list-empty" id="media-library-empty"$empty_f_hidden_f>$label_empty_f</p>
   <p class="list-empty" id="media-library-no-result" hidden>$label_no_one_outcome</p>
   <p class="help">$hint_trash</p>
