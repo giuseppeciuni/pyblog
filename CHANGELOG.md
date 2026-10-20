@@ -144,6 +144,11 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **The author's photo is uploaded from the Settings.** "Site and author"
+  had only a field for the address of a photo. Now it has **Upload a photo**
+  and a preview, like the biography's photo. Both are cropped square around
+  the centre and brought to 600×600 pixels in the browser before they
+  travel: the site shows them in circles, and Google wants at least 112.
 - **Alternative text and captions for pictures.** Clicking a picture in the
   editor shows "Alternative text and caption" (a double click opens it): the
   alternative text describes the picture to Google Images and to screen

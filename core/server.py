@@ -2175,6 +2175,7 @@ def config_page(csrf):
         value_seo_author_url=esc(seo.get("author_url", "")),
         ph_seo_author_url=ph["seo_author_url"],
         label_seo_author_picture=T("admin_seo_author_picture", lang),
+        hint_author_photo=T("admin_author_photo_hint", lang),
         value_seo_author_picture=esc(seo.get("author_image", "")),
         ph_seo_author_image=ph["seo_author_image"],
         label_seo_author_role=T("admin_seo_author_role", lang),

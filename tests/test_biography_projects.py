@@ -254,6 +254,13 @@ def test_admin_settings():
     check("la nota della lista vuota è nascosta quando ci sono progetti",
           'id="projects-empty-note" hidden' in page_html)
     check("il testo della biografia arriva all'editor", "Sono Maria" in page_html)
+    check("la foto dell'autore si carica da qui, non solo con un indirizzo",
+          'id="file-author-photo"' in page_html and "uploadPhoto('author')" in page_html
+          and 'type="text" id="seo_author_image"' in page_html)
+    script = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
+    check("e viene ritagliata quadrata, 600 pixel, come quella della biografia",
+          "function squarePortrait(file)" in script and "var PORTRAIT_SIDE = 600;" in script
+          and "uploadPhoto('bio')" in page_html)
 
 
 def main():

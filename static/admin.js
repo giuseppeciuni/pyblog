@@ -681,10 +681,10 @@ function resizeImageBeforeUpload(file, maxSide) {
       // not worth re-encoding it.
       if (side <= maxSide * 1.25) { resolveIt(file); return; }
 
-      var scala = maxSide / side;
+      var scale = maxSide / side;
       var canvas = document.createElement('canvas');
-      canvas.width = Math.round(width * scala);
-      canvas.height = Math.round(height * scala);
+      canvas.width = Math.round(width * scale);
+      canvas.height = Math.round(height * scale);
       var context = canvas.getContext('2d');
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
@@ -3252,7 +3252,8 @@ function initConfigPage() {
   quillBioEn.update(Quill.sources.SILENT);
   attachImageOverlay(quillBioEn);
   handlePastedImages(quillBioEn, null);
-  updateBioPhotoPreview();
+  updatePhotoPreview('bio');
+  updatePhotoPreview('author');
   var projectList = document.querySelectorAll('#list-box-projects .project-config');
   for (var pr = 0; pr < projectList.length; pr++) { updateProjectPreview(projectList[pr]); }
 
@@ -3874,10 +3875,24 @@ function showRestoreResult(buttonEl, outcome) {
 
 /* --- Settings: the biography's photo ------------------------------------- */
 
-function updateBioPhotoPreview() {
-  var address = document.getElementById('bio_photo').value.trim();
-  var previewEl = document.getElementById('bio-photo-preview');
-  document.getElementById('bio-photo-remove').hidden = address === '';
+// The two photos of the Settings: the author's and the biography's own.
+var PHOTO_FIELDS = {
+  author: { field: 'seo_author_image', preview: 'author-photo-preview', remove: 'author-photo-remove',
+            file: 'file-author-photo', state: 'author-photo-status' },
+  bio: { field: 'bio_photo', preview: 'bio-photo-preview', remove: 'bio-photo-remove',
+         file: 'file-bio-photo', state: 'bio-photo-status' }
+};
+
+// The size a portrait is stored at: the site shows it in circles of up to
+// 96 pixels, so 600 is sharp on any screen and enough for Google, which
+// wants at least 112 for the author's photo.
+var PORTRAIT_SIDE = 600;
+
+function updatePhotoPreview(which) {
+  var ids = PHOTO_FIELDS[which];
+  var address = document.getElementById(ids.field).value.trim();
+  var previewEl = document.getElementById(ids.preview);
+  document.getElementById(ids.remove).hidden = address === '';
   if (address === '') {
     previewEl.removeAttribute('src');
     previewEl.hidden = true;
@@ -3887,24 +3902,71 @@ function updateBioPhotoPreview() {
   previewEl.hidden = false;
 }
 
-function uploadBioPhoto() {
-  uploadChosenFile('file-bio-photo', pbPage('max_image_mb', 10), 'bio-photo-status',
-                   t('js_uploading_image'))
+// A portrait is cut square around its centre and brought to PORTRAIT_SIDE
+// in the browser, before it travels: the site shows it in a circle, and a
+// photo straight from a phone weighs megabytes for a 96-pixel circle.
+function squarePortrait(file) {
+  var types = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+  if (!types[file.type]) { return Promise.resolve(file); }
+  return new Promise(function(resolveIt) {
+    var address = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function() {
+      URL.revokeObjectURL(address);
+      var crop = Math.min(img.naturalWidth, img.naturalHeight);
+      var side = Math.min(crop, PORTRAIT_SIDE);
+      if (img.naturalWidth === img.naturalHeight && crop <= PORTRAIT_SIDE) { resolveIt(file); return; }
+      var canvas = document.createElement('canvas');
+      canvas.width = side;
+      canvas.height = side;
+      var context = canvas.getContext('2d');
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(img, (img.naturalWidth - crop) / 2, (img.naturalHeight - crop) / 2, crop, crop,
+                        0, 0, side, side);
+      canvas.toBlob(function(blob) {
+        // A browser that cannot write this type answers with a PNG, or not
+        // at all: the name follows what really came out.
+        if (!blob) { resolveIt(file); return; }
+        var extension = types[blob.type] || 'png';
+        var name = file.name.replace(/\.[^.]*$/, '') + '.' + extension;
+        resolveIt(new File([blob], name, { type: blob.type }));
+      }, file.type, 0.88);
+    };
+    img.onerror = function() {
+      URL.revokeObjectURL(address);
+      resolveIt(file);
+    };
+    img.src = address;
+  });
+}
+
+function uploadPhoto(which) {
+  var ids = PHOTO_FIELDS[which];
+  var fileField = document.getElementById(ids.file);
+  if (!fileField || fileField.files.length === 0) { return; }
+  var chosen = fileField.files[0];
+  fileField.value = '';
+  if (!fileFitsLimit(chosen, pbPage('max_image_mb', 10))) { return; }
+  pbStatus(ids.state, t('js_uploading_image'));
+  squarePortrait(chosen)
+    .then(function(file) { return sendFile(file, ids.state); })
     .then(function(url) {
       if (url === null) { return; }
-      document.getElementById('bio_photo').value = url;
-      updateBioPhotoPreview();
+      document.getElementById(ids.field).value = url;
+      updatePhotoPreview(which);
       markConfigDirty();
-      pbStatus('bio-photo-status', t('js_image_uploaded'));
+      pbStatus(ids.state, t('js_image_uploaded'));
     });
 }
 
 // Clears the photo; the file stays in the media folder, as for the covers.
-function removeBioPhoto() {
-  document.getElementById('bio_photo').value = '';
-  updateBioPhotoPreview();
+function removePhoto(which) {
+  var ids = PHOTO_FIELDS[which];
+  document.getElementById(ids.field).value = '';
+  updatePhotoPreview(which);
   markConfigDirty();
-  pbStatus('bio-photo-status', '');
+  pbStatus(ids.state, '');
 }
 
 /* --- Settings: the projects ---------------------------------------------- */

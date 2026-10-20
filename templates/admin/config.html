@@ -75,7 +75,21 @@ $section_header_site
     </div>
     <div class="field">
       <label for="seo_author_image">$label_seo_author_picture</label>
-      <input class="field-input" type="url" id="seo_author_image" value="$value_seo_author_picture" placeholder="$ph_seo_author_image">
+      <div class="field-photo">
+        <img class="photo-preview" id="author-photo-preview" alt="" hidden>
+        <div class="field">
+          <input class="field-input" type="text" id="seo_author_image" value="$value_seo_author_picture" placeholder="$ph_seo_author_image"
+                 aria-describedby="seo_author_image-help" oninput="updatePhotoPreview('author')">
+          <p class="help" id="seo_author_image-help">$hint_author_photo</p>
+          <div class="actions">
+            <button type="button" class="button" onclick="document.getElementById('file-author-photo').click()">$label_upload_photo</button>
+            <button type="button" class="button button-text" id="author-photo-remove" onclick="removePhoto('author')" hidden>$label_remove</button>
+            <span id="author-photo-status" class="hint" role="status"></span>
+          </div>
+          <input type="file" id="file-author-photo" aria-label="$label_upload_photo" hidden onchange="uploadPhoto('author')"
+                 accept="image/png, image/jpeg, image/gif, image/webp, .png, .jpg, .jpeg, .gif, .webp">
+        </div>
+      </div>
     </div>
     <div class="field">
       <label for="seo_author_url">$label_seo_author_url</label>
@@ -251,14 +265,14 @@ $section_header_biography
     <div class="field-photo">
       <img class="photo-preview" id="bio-photo-preview" alt="" hidden>
       <div class="field">
-        <input class="field-input" type="text" id="bio_photo" value="$value_bio_photo" aria-describedby="bio_photo-help" oninput="updateBioPhotoPreview()">
+        <input class="field-input" type="text" id="bio_photo" value="$value_bio_photo" aria-describedby="bio_photo-help" oninput="updatePhotoPreview('bio')">
         <p class="help" id="bio_photo-help">$hint_bio_photo</p>
         <div class="actions">
           <button type="button" class="button" onclick="document.getElementById('file-bio-photo').click()">$label_upload_photo</button>
-          <button type="button" class="button button-text" id="bio-photo-remove" onclick="removeBioPhoto()" hidden>$label_remove</button>
+          <button type="button" class="button button-text" id="bio-photo-remove" onclick="removePhoto('bio')" hidden>$label_remove</button>
           <span id="bio-photo-status" class="hint" role="status"></span>
         </div>
-        <input type="file" id="file-bio-photo" aria-label="$label_upload_photo" hidden onchange="uploadBioPhoto()"
+        <input type="file" id="file-bio-photo" aria-label="$label_upload_photo" hidden onchange="uploadPhoto('bio')"
                accept="image/png, image/jpeg, image/gif, image/webp, .png, .jpg, .jpeg, .gif, .webp">
       </div>
     </div>
