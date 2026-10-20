@@ -304,6 +304,29 @@ console del servizio. Per verificare che arrivi: apri un articolo e lancia
 
 ### 2.10 Aggiornare PyBlog
 
+**Dal menu:** **Strumenti → Aggiornamenti** mostra la versione installata
+e, se ci sono, le novità (i titoli delle modifiche in arrivo). Quando
+PyBlog è installato con git, come in questo capitolo, **Aggiorna ora**:
+
+1. salva un backup automatico del sito (lo ritrovi in **Ripristina un
+   backup**);
+2. scarica il codice nuovo (`git pull --ff-only`);
+3. prova a far partire il codice nuovo in un processo a parte: se non
+   parte, torna da solo alla versione di prima;
+4. riavvia PyBlog al suo posto (stesso processo, systemd e Docker non se
+   ne accorgono) e rigenera il sito. Poi si accede di nuovo.
+
+Non aggiorna se nella cartella ci sono file modificati a mano o commit
+fatti sul server: lì si aggiorna dal terminale, così niente va perso.
+
+PyBlog controlla da solo se ci sono novità al massimo due volte al giorno,
+quando apri l'amministrazione, e lo dice nella pagina Articoli. Il controllo
+contatta GitHub; si spegne nella stessa pagina. Con Docker o con la
+versione a file unico la pagina confronta la versione con quella su
+GitHub e spiega come aggiornare.
+
+**Dal terminale:**
+
 ```bash
 cd /opt/pyblog
 sudo -u pyblog git pull
@@ -370,7 +393,8 @@ A sinistra, sempre a vista:
 - **Strumenti:** **Rigenera il sito** ricrea tutte le pagine pubbliche da
   articoli e impostazioni; **Scarica il backup** dà un `.zip` con articoli,
   immagini e impostazioni; **Ripristina un backup** lo rimette (vedi
-  [2.11](#211-backup-e-ripristino));
+  [2.11](#211-backup-e-ripristino)); **Aggiornamenti** dice la versione e
+  installa quella nuova (vedi [2.10](#210-aggiornare-pyblog));
 - **Apri il sito** (in una nuova scheda), **Cambia password**, la lingua
   dell'amministrazione (italiano o inglese), **Esci**.
 

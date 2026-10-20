@@ -14,3 +14,7 @@ external Python dependency, explicit code over clever code.
   build     generation of the static site
   server    the HTTP handler of the administration area
 """
+
+# The version of PyBlog. The Updates page compares it with the one on
+# GitHub's main branch when the installation is not a git checkout.
+__version__ = "1.0.0"

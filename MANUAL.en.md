@@ -305,6 +305,30 @@ AI** in the SEO analysis box.
 
 ### 2.10 Updating PyBlog
 
+**From the menu:** **Tools → Updates** shows the installed version and,
+when there are any, what is new (the titles of the changes on their way).
+When PyBlog is installed with git, as in this chapter, **Update now**:
+
+1. saves an automatic backup of the site (you find it in **Restore a
+   backup**);
+2. downloads the new code (`git pull --ff-only`);
+3. tries the new code in a separate process: if it does not start, it goes
+   back to the previous version by itself;
+4. restarts PyBlog in place (same process, systemd and Docker do not
+   notice) and rebuilds the site. Then you log in again.
+
+It does not update when files in the folder were edited by hand or commits
+were made on the server: there you update from the terminal, so nothing is
+lost.
+
+PyBlog checks for news by itself twice a day at most, when you open the
+administration, and says so on the Articles page. The check contacts
+GitHub; it can be switched off on the same page. With Docker or the
+single-file version the page compares the version with the one on GitHub
+and explains how to update.
+
+**From the terminal:**
+
 ```bash
 cd /opt/pyblog
 sudo -u pyblog git pull
@@ -372,7 +396,8 @@ On the left, always in sight:
 - **Tools:** **Rebuild the site** recreates every public page from articles
   and settings; **Download the backup** gives a `.zip` with articles, images
   and settings; **Restore a backup** puts one back (see
-  [2.11](#211-backup-and-restore));
+  [2.11](#211-backup-and-restore)); **Updates** tells the version and
+  installs the new one (see [2.10](#210-updating-pyblog));
 - **Open the site** (in a new tab), **Change password**, the language of the
   administration (Italiano or English), **Log out**.
 

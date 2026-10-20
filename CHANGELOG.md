@@ -138,6 +138,18 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Updates from the administration, and a version number.** PyBlog now
+  has a version (1.0.0, in `core/__init__.py`), and Tools → Updates says
+  whether a new one is out: on a git installation, the titles of the
+  changes waiting on GitHub; otherwise the version on GitHub's main branch,
+  with the instructions. On a git installation that nobody edited by hand,
+  "Update now" saves a backup, pulls, tries the new code in a separate
+  process (going back by itself if it does not start), and restarts in
+  place. The check runs at most twice a day, only while the administration
+  is open, and can be switched off; the Articles page shows a notice when
+  an update is waiting. **nginx:** the single-address example adds
+  `aggiornamenti`, `aggiornamenti-stato`, `aggiorna` and
+  `aggiornamenti-auto` to the routes sent to Python.
 - **A media library.** "Media" in the menu shows every uploaded file with
   its preview and where it is used: the articles (drafts too) and the
   settings, each a link. Uploaded pictures used to be invisible: nothing

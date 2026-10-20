@@ -1,0 +1,33 @@
+<div class="pagina pagina-stretta pagina-piccola">
+  <div class="pagina-testata">
+    <div>
+      <h1 class="pagina-titolo">$titolo</h1>
+      <p class="pagina-sottotitolo">$versione_installata</p>
+    </div>
+  </div>
+
+  <div class="gruppo">
+    <h2>$label_stato</h2>
+    <p class="aggiornamenti-stato" id="aggiornamenti-stato" role="status">$label_controllo</p>
+    <ul class="aggiornamenti-novita" id="aggiornamenti-novita" hidden></ul>
+    <p class="aiuto" id="aggiornamenti-istruzioni" hidden>$istruzioni</p>
+    <div class="azioni">
+      <button type="button" class="pulsante pulsante-primario" id="aggiorna-ora" hidden
+              onclick="installUpdate(this)">$label_aggiorna</button>
+      <button type="button" class="pulsante" onclick="checkUpdates(true)">$label_controlla</button>
+    </div>
+    <p class="aiuto" id="aggiorna-aiuto" hidden>$hint_aggiorna</p>
+  </div>
+
+  <div class="gruppo">
+    <h2>$label_automatico</h2>
+    <div class="campo-spunta">
+      <input type="checkbox" id="controllo-automatico" aria-describedby="controllo-automatico-aiuto"
+             onchange="setAutomaticCheck(this)" $checked_automatico>
+      <div>
+        <label for="controllo-automatico">$label_controllo_automatico</label>
+        <p class="aiuto" id="controllo-automatico-aiuto">$hint_controllo_automatico</p>
+      </div>
+    </div>
+  </div>
+</div>

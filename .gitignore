@@ -11,3 +11,4 @@ config.broken.json
 subscribers.json
 backups/
 .ripristino-*/
+.aggiornamenti.json

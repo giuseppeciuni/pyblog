@@ -3188,6 +3188,94 @@ function translateSiteTexts(pulsante) {
   prossima(0);
 }
 
+/* --- Updates ------------------------------------------------------------- */
+
+// The dashboard says so when an update is waiting. The server asks GitHub
+// at most twice a day, so opening the dashboard costs nothing most times.
+function showUpdateNotice() {
+  var avviso = document.getElementById('avviso-aggiornamento');
+  if (!avviso) { return; }
+  fetch('/aggiornamenti-stato', { credentials: 'same-origin', cache: 'no-store' })
+    .then(function(risposta) { return risposta.json(); })
+    .then(function(stato) {
+      if (stato.available === true) {
+        document.getElementById('avviso-aggiornamento-testo').textContent = stato.message;
+        avviso.hidden = false;
+      }
+    })
+    .catch(function() { });
+}
+
+function checkUpdates(forza) {
+  var riga = document.getElementById('aggiornamenti-stato');
+  riga.textContent = t('upd_controllo');
+  fetch('/aggiornamenti-stato' + (forza ? '?forza=1' : ''), { credentials: 'same-origin', cache: 'no-store' })
+    .then(function(risposta) { return risposta.json(); })
+    .then(function(stato) {
+      riga.textContent = stato.message;
+      var elenco = document.getElementById('aggiornamenti-novita');
+      elenco.innerHTML = '';
+      (stato.news || []).forEach(function(riga) {
+        var voce = document.createElement('li');
+        voce.textContent = riga;
+        elenco.appendChild(voce);
+      });
+      elenco.hidden = !stato.news || stato.news.length === 0;
+      document.getElementById('aggiorna-ora').hidden = stato.can_update !== true;
+      document.getElementById('aggiorna-aiuto').hidden = stato.can_update !== true;
+      document.getElementById('aggiornamenti-istruzioni').hidden = stato.instructions !== true;
+    })
+    .catch(function() { riga.textContent = ''; });
+}
+
+function installUpdate(pulsante) {
+  pbConfirm(t('upd_conferma_titolo'), t('upd_conferma_corpo'), t('admin_aggiorna_ora'), 'primary', function() {
+    var riga = document.getElementById('aggiornamenti-stato');
+    pbBusy(pulsante, true);
+    riga.textContent = t('upd_installazione');
+    pbPostJson('/aggiorna', {})
+      .then(function(esito) {
+        if (esito.ok !== true) {
+          pbBusy(pulsante, false);
+          riga.textContent = esito.error;
+          return;
+        }
+        riga.textContent = t('upd_riavvio');
+        waitForRestart();
+      })
+      .catch(function() {
+        pbBusy(pulsante, false);
+        riga.textContent = t('upd_offline');
+      });
+  });
+}
+
+// The old process answers for another moment, then the new one starts:
+// wait a little, then knock until it opens. Sessions live in memory, so
+// the new process asks for the password again.
+function waitForRestart() {
+  var tentativi = 0;
+  var bussa = function() {
+    tentativi++;
+    fetch('/pyblog-ping', { cache: 'no-store' })
+      .then(function(risposta) {
+        if (!risposta.ok) { return Promise.reject(); }
+        document.getElementById('aggiornamenti-stato').textContent = t('upd_riavviato');
+        setTimeout(function() { window.location.href = '/login'; }, 1500);
+      })
+      .catch(function() {
+        if (tentativi < 60) { setTimeout(bussa, 1500); }
+      });
+  };
+  setTimeout(bussa, 4000);
+}
+
+function setAutomaticCheck(casella) {
+  pbPostJson('/aggiornamenti-auto', { on: casella.checked })
+    .then(function(esito) { casella.checked = esito.auto === true; })
+    .catch(function() { casella.checked = !casella.checked; });
+}
+
 /* --- The media library ---------------------------------------------------- */
 
 // The filter buttons and the search work together: a card stays when it
@@ -4257,6 +4345,10 @@ document.addEventListener('DOMContentLoaded', function() {
     initEditorPage();
   } else if (pagina === 'config') {
     initConfigPage();
+  } else if (pagina === 'dashboard') {
+    showUpdateNotice();
+  } else if (pagina === 'updates') {
+    checkUpdates(false);
   }
 });
 

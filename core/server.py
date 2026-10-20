@@ -24,7 +24,8 @@ import urllib.request
 from datetime import datetime, timezone
 
 from core import build as build_module
-from core import backup, i18n, media_library, newsletter, render, settings_panel
+from core import (__version__, backup, i18n, media_library, newsletter, render,
+                  settings_panel, updates)
 from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
 from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, SlugTakenError,
@@ -127,7 +128,7 @@ CSRF_PROTECTED_ROUTES = (
     "/translate", "/generate-description", "/generate-preview", "/analyze-seo",
     "/import-docx", "/preview", "/newsletter-prova", "/newsletter-rimuovi",
     "/verifica-indirizzo-admin", "/ripristina", "/ripristina-automatico",
-    "/libreria-elimina",
+    "/libreria-elimina", "/aggiorna", "/aggiornamenti-auto",
 )
 
 # The files the administration area serves from static/. Naming them makes
@@ -138,7 +139,8 @@ ADMIN_STATIC_FILES = ("common.css", "admin.css", "admin.js")
 ADMIN_GET_ROUTES = ("/admin", "/config", "/edit", "/change-password",
                     "/preview", "/export", "/scegli-punto", "/versioni",
                     "/versione", "/newsletter-iscritti.csv", "/ripristina",
-                    "/backup-automatico", "/libreria")
+                    "/backup-automatico", "/libreria", "/aggiornamenti",
+                    "/aggiornamenti-stato")
 
 
 # ---------------------------------------------------------------------------
@@ -190,6 +192,8 @@ JS_TRANSLATION_KEYS = (
     "js_ripristino_ignorati", "js_ripristino_errore_rete",
     "js_media_copiato", "js_media_elimina_titolo", "js_media_elimina_corpo",
     "js_media_elimina_usato", "js_media_pulizia_corpo", "js_media_caricamento",
+    "upd_controllo", "upd_installazione", "upd_riavvio", "upd_riavviato", "upd_conferma_titolo",
+    "upd_conferma_corpo", "admin_aggiorna_ora", "upd_offline",
     "js_media_recovered",
     # Settings
     "admin_codice_titolo", "admin_codice_elimina",
@@ -388,6 +392,7 @@ ICON_SETTINGS = ('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0
 ICON_REBUILD = '<path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/>'
 ICON_BACKUP = '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'
 ICON_RESTORE = '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>'
+ICON_UPDATE = '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/><path d="M12 8v5l3 2"/>'
 ICON_MEDIA = ('<rect x="3" y="4" width="18" height="16" rx="2"/>'
               '<circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5L5 20"/>')
 ICON_BLOG = ('<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>')
@@ -484,6 +489,10 @@ def admin_navbar(active_page, language, articles_count=None):
         label_ripristino=T("admin_ripristina_backup", language),
         desc_ripristino=T("admin_ripristina_backup_desc", language),
         corrente_ripristino=' aria-current="page"' if active_page == "restore" else "",
+        icona_aggiornamenti=icon(ICON_UPDATE),
+        label_aggiornamenti=T("admin_aggiornamenti", language),
+        desc_aggiornamenti=T("admin_versione", language).replace("{v}", __version__),
+        corrente_aggiornamenti=' aria-current="page"' if active_page == "updates" else "",
         icona_blog=icon(ICON_BLOG),
         label_vedi_blog=T("admin_vedi_blog", language),
         label_nuova_scheda=T("admin_nuova_scheda", language),
@@ -622,6 +631,70 @@ def change_password_page(csrf, error_message="", success_message=""):
     )
     return admin_page_shell(T("admin_cambia_password", la), contenuto, la,
                             csrf=csrf, navbar=admin_navbar("password", la))
+
+
+def updates_state(force=False):
+    """
+    The state of updates for the browser, with the sentences already
+    written: what the page shows, and whether the dashboard should say
+    something.
+    """
+    la = admin_language()
+    try:
+        result = updates.check(force=force)
+    except Exception:
+        result = {"error": "upd_offline", "version": __version__,
+                  "auto": updates.automatic_check_enabled()}
+    message = ""
+    available = False
+    if result.get("error"):
+        message = T(result["error"], la)
+    elif result.get("kind") == "git":
+        if result.get("behind", 0) > 0:
+            available = True
+            message = T("upd_novita", la).replace("{n}", str(result["behind"]))
+            if result.get("dirty"):
+                message = message + " " + T("upd_modifiche_locali", la)
+            elif result.get("ahead"):
+                message = message + " " + T("upd_avanti", la)
+        else:
+            message = T("upd_aggiornato", la)
+    elif result.get("kind") == "other":
+        if result.get("behind"):
+            available = True
+            message = (T("upd_versione", la).replace("{v}", result.get("latest", ""))
+                       .replace("{c}", __version__))
+        else:
+            message = T("upd_aggiornato", la)
+    else:
+        message = T("upd_mai_controllato", la)
+    return {"ok": True, "message": message, "available": available,
+            "can_update": result.get("can_update") is True,
+            "news": result.get("news", []) if result.get("kind") == "git" else [],
+            "instructions": result.get("kind") == "other" and available,
+            "auto": result.get("auto", True), "version": __version__}
+
+
+def updates_page(csrf):
+    """The Updates page: the version, what is new, and the update button."""
+    la = admin_language()
+    contenuto = render.render(
+        "admin/updates.html",
+        titolo=T("admin_aggiornamenti", la),
+        versione_installata=T("admin_versione_installata", la).replace("{v}", __version__),
+        label_stato=T("admin_aggiornamenti_stato", la),
+        label_controllo=T("upd_controllo", la),
+        istruzioni=T("upd_istruzioni", la).replace("{url}", updates.CHANGELOG_URL),
+        label_aggiorna=T("admin_aggiorna_ora", la),
+        label_controlla=T("admin_controlla_ora", la),
+        hint_aggiorna=T("admin_aggiorna_hint", la),
+        label_automatico=T("admin_controllo_automatico_titolo", la),
+        label_controllo_automatico=T("admin_controllo_automatico", la),
+        hint_controllo_automatico=T("admin_controllo_automatico_hint", la),
+        checked_automatico=checked_if(updates.automatic_check_enabled()),
+    )
+    return admin_page_shell(T("admin_aggiornamenti", la), contenuto, la, csrf=csrf,
+                            navbar=admin_navbar("updates", la), page_data={"page": "updates"})
 
 
 def file_size_text(size):
@@ -936,6 +1009,7 @@ def admin_page(articles, csrf):
         elenco=listing,
         nessun_corrisponde=T("admin_nessun_corrisponde", la),
         primi_passi=setup_steps_html(articles, la),
+        label_vedi_aggiornamento=T("admin_vedi_aggiornamento", la),
     )
 
     return admin_page_shell(
@@ -2667,6 +2741,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(restore_page(csrf))
         elif route == "/libreria":
             self._send(library_page(csrf))
+        elif route == "/aggiornamenti":
+            self._send(updates_page(csrf))
+        elif route == "/aggiornamenti-stato":
+            self._send_json(updates_state(query.get("forza", [""])[0] == "1"))
         elif route == "/backup-automatico":
             path_value = backup.automatic_backup_path(query.get("file", [""])[0])
             if path_value is None:
@@ -2945,6 +3023,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             "/verifica-indirizzo-admin": self._api_check_admin_address,
             "/ripristina-automatico": self._api_restore_automatic,
             "/libreria-elimina": self._api_delete_media,
+            "/aggiorna": self._api_update,
+            "/aggiornamenti-auto": self._api_automatic_check,
             "/newsletter-rimuovi": self._api_newsletter_remove,
         }
         handler = handlers.get(route)
@@ -3007,6 +3087,25 @@ class Handler(http.server.BaseHTTPRequestHandler):
         finally:
             if os.path.exists(temporary):
                 os.unlink(temporary)
+
+    def _api_update(self, data):
+        """
+        Install the update and restart. The site's backup is saved first,
+        among the automatic ones of the restore page.
+        """
+        la = admin_language()
+        result = updates.update(save_backup=backup.save_automatic_backup)
+        if result.get("ok") is not True:
+            message = T(result.get("error", "upd_fallito"), la)
+            if result.get("detail"):
+                message = message + " " + result["detail"]
+            return {"ok": False, "error": message}
+        updates.restart()
+        return {"ok": True, "from": result["from"], "to": result["to"]}
+
+    def _api_automatic_check(self, data):
+        updates.set_automatic_check(data.get("on") is True)
+        return {"ok": True, "auto": updates.automatic_check_enabled()}
 
     def _api_delete_media(self, data):
         """Move uploaded files to the trash of the media library."""
