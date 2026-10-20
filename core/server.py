@@ -13,11 +13,13 @@ CSRF token bound to that session, and a size limit on the request body.
 import http.server
 import json
 import mimetypes
+import pathlib
 import secrets
 import tempfile
 import threading
 import time
 import urllib.parse
+import urllib.request
 import zipfile
 from datetime import datetime, timezone
 
@@ -42,8 +44,9 @@ from core.auth import (create_session_token, csrf_token_for,
 from core.build import (BUILD_LOCK, build, compute_reading_time, format_date,
                         generate_article_page)
 from core.config import (CONFIG, CONFIG_FILE, MEDIA_DIR, OUTPUT_DIR, PORT,
-                         POSTS_DIR, admin_language, load_config, main_language,
-                         reload_global_config, save_config, secondary_language)
+                         POSTS_DIR, admin_address, admin_language, load_config,
+                         main_language, reload_global_config, save_config,
+                         secondary_language, url_host)
 from core.i18n import LANGUAGE_NAMES, T
 from core.render import esc, js, js_attr
 
@@ -77,6 +80,15 @@ CODEMIRROR_JS = (
 # injected into an article could no longer call out to a server of its own.
 # 'unsafe-inline' is still needed for the onclick attributes and the small
 # JSON block that carries PB_I18N; the host allowlist is what does the work.
+# The words the server is waiting to hear back from /pyblog-ping, while it
+# checks a new address for the administration.
+PING_NONCES = set()
+PING_LOCK = threading.Lock()
+
+# The policy of a public page shown by the editor: scripts, forms and
+# popups work, but the page gets an origin of its own (no allow-same-origin).
+PREVIEW_SANDBOX = "sandbox allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+
 ADMIN_CSP = (
     "default-src 'self'; "
     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net "
@@ -112,6 +124,7 @@ CSRF_PROTECTED_ROUTES = (
     "/rebuild", "/upload", "/admin-language", "/change-password",
     "/translate", "/generate-description", "/generate-preview", "/analyze-seo",
     "/import-docx", "/preview", "/newsletter-prova", "/newsletter-rimuovi",
+    "/verifica-indirizzo-admin",
 )
 
 # The files the administration area serves from static/. Naming them makes
@@ -166,6 +179,8 @@ JS_TRANSLATION_KEYS = (
     "js_translating", "js_translated_review", "js_check_api_key",
     "js_net_error_translation", "js_write_intro_first", "js_translated_home",
     "js_translated_site_texts", "js_write_site_texts_first",
+    "js_admin_url_non_valido", "js_admin_url_irraggiungibile",
+    "js_admin_url_conferma_titolo", "js_admin_url_conferma_corpo", "js_admin_url_conferma",
     "js_media_recovered",
     # Settings
     "admin_codice_titolo", "admin_codice_elimina",
@@ -1831,6 +1846,9 @@ def config_page(csrf):
         label_dominio=T("admin_dominio_sito", la),
         hint_dominio=T("admin_dominio_hint", la),
         valore_dominio=esc(config.get("base_url", "")),
+        label_indirizzo_admin=T("admin_indirizzo_admin", la),
+        hint_indirizzo_admin=T("admin_indirizzo_admin_hint", la),
+        valore_indirizzo_admin=esc(str(config.get("admin_url", "") or "")),
         ph_base_url=ph["base_url"],
         label_analytics=T("admin_analytics", la),
         label_ga_id=T("admin_ga_id", la),
@@ -1985,6 +2003,8 @@ def config_page(csrf):
     page_data = {
         "page": "config",
         "preview_kind": "home",
+        # The admin address as saved: changing it is checked before saving.
+        "admin_url": admin_address(config),
         "max_image_mb": MAX_IMAGE_BYTES // (1024 * 1024),
         "max_video_mb": MAX_VIDEO_BYTES // (1024 * 1024),
         # The browser applies the same cap before sending, which is how a
@@ -2065,11 +2085,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
         """
         self.send_header("Cache-Control", "no-store")
 
-    def _send(self, content, tipo="text/html", with_csp=True):
+    def _send(self, content, tipo="text/html", with_csp=True, sandbox=False):
         self.send_response(200)
         self.send_header("Content-Type", f"{tipo}; charset=utf-8")
         self._no_store()
         self._security_headers(with_csp)
+        if sandbox:
+            # A public page shown by the editor runs the code of outside
+            # services, which the preview is there to show. The sandbox gives
+            # the page an origin of its own: the code runs, but it cannot read
+            # the session cookie or ask the editor for its settings.
+            self.send_header("Content-Security-Policy", PREVIEW_SANDBOX)
         self.end_headers()
         self.wfile.write(content.encode("utf-8"))
 
@@ -2136,6 +2162,32 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return forwarded.split(",")[-1].strip()
         return peer
 
+    def _proxied(self):
+        """Whether the request came through the reverse proxy."""
+        return (self.headers.get("X-Real-IP", "").strip() != ""
+                or self.headers.get("X-Forwarded-For", "").strip() != "")
+
+    def _side(self):
+        """
+        Which address the request came to, when the administration has an
+        address of its own: "admin", "public", or "any" when the split does
+        not apply - no admin address set, a request that reached the editor
+        directly (on a computer, through an SSH tunnel), or a proxy that does
+        not pass the Host on. Those keep working as they always did, so a
+        mistake in the setup never locks the author out.
+        """
+        admin = admin_address()
+        if admin == "" or not self._proxied():
+            return "any"
+        host = self.headers.get("Host", "").strip().lower()
+        for default_port in (":80", ":443"):
+            if host.endswith(default_port):
+                host = host[:-len(default_port)]
+        name = host.split("]")[0] + "]" if host.startswith("[") else host.split(":")[0]
+        if name in ("", "localhost", "127.0.0.1", "[::1]"):
+            return "any"
+        return "admin" if host == url_host(admin) else "public"
+
     def _user_is_authenticated(self):
         """Tell whether the current request comes from a logged-in user."""
         return session_is_valid(self._read_cookie_token())
@@ -2170,9 +2222,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         reaches the editor directly (on a computer, or Docker's port bound to
         localhost) is let through, as before.
         """
-        proxied = (self.headers.get("X-Real-IP", "").strip() != ""
-                   or self.headers.get("X-Forwarded-For", "").strip() != "")
-        if not proxied:
+        if not self._proxied():
             return True
         client = self._client_address()
         return client.startswith("127.") or client in ("::1", "::ffff:127.0.0.1")
@@ -2328,6 +2378,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
         route = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
 
+        # --- The administration on an address of its own ---
+        # On the public address the administration is not there: an old
+        # bookmark is sent on to the new address, so nothing of the editor
+        # is ever served next to the code of outside services. On the admin
+        # address, the pages of the public site are sent to the public one.
+        side = self._side()
+        if side == "public" and (route in ("/login", "/logout") or route in ADMIN_GET_ROUTES):
+            self._redirect(admin_address() + self.path)
+            return
+        if route == "/pyblog-ping":
+            self._send_ping(query.get("n", [""])[0])
+            return
+
         # --- The stylesheets and script of the admin area ---
         # These are served BEFORE the authentication check, and deliberately.
         # The login page and the first-run password page link to them, and
@@ -2375,7 +2438,39 @@ class Handler(http.server.BaseHTTPRequestHandler):
             else:
                 self.send_error(404, "No favicon.")
             return
+        if side == "admin" and pathlib.PurePosixPath(route).suffix in ("", ".html", ".htm"):
+            # A page of the public site carries the code of outside services:
+            # on the admin address it would run next to the editor. Stylesheets,
+            # scripts and images are files, not pages, and stay here: the
+            # editor's previews and the uploads need them.
+            if route == "/":
+                self._redirect("/admin")
+                return
+            public = public_site_url("")
+            if public == "":
+                self.send_error(404, "The public site has no address in the Settings.")
+                return
+            self._redirect(public + self.path)
+            return
         self._serve_output(route)
+
+    def _send_ping(self, nonce):
+        """
+        A sign of life. Before saving an address of its own for the
+        administration, the server asks that address for this page with a
+        word only it knows (see _api_check_admin_address): the word coming
+        back means the address already leads to this very editor, so the
+        author is not sent to an address that leads nowhere, or elsewhere.
+        """
+        with PING_LOCK:
+            known = nonce != "" and nonce in PING_NONCES
+        payload = json.dumps({"pyblog": True, "questo": known}).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self._no_store()
+        self.end_headers()
+        self.wfile.write(payload)
 
     def _handle_admin_get(self, route, query):
         """Serve an administration page. The caller checked authentication."""
@@ -2416,7 +2511,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 # The preview is a public page: it must not carry the admin
                 # CSP, which would block the CDNs the public pages use.
                 self._send(generate_article_page(art, preview_language),
-                           with_csp=False)
+                           with_csp=False, sandbox=True)
         elif route == "/export":
             # Downloads a ZIP backup with all the articles and the configuration.
             self._handle_export()
@@ -2633,6 +2728,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # into the next request.
         self._pending_form = None
 
+        # --- On the public address only the readers' forms answer ---
+        if self._side() == "public" and route not in ("/iscriviti", "/conferma", "/disiscrivi"):
+            self.send_error(404)
+            return
+
         # --- Authentication routes (reachable without being logged in) ---
         # They carry no CSRF token because there is no session yet, and
         # neither of them can change existing content.
@@ -2698,6 +2798,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             "/save-config-raw": self._api_save_config_raw,
             "/rebuild": self._api_rebuild,
             "/newsletter-prova": self._api_newsletter_test,
+            "/verifica-indirizzo-admin": self._api_check_admin_address,
             "/newsletter-rimuovi": self._api_newsletter_remove,
         }
         handler = handlers.get(route)
@@ -2708,6 +2809,35 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(handler(data))
         except Exception as error:
             self._send_json({"ok": False, "error": str(error)})
+
+    def _api_check_admin_address(self, data):
+        """
+        Check that a new address for the administration leads here.
+
+        The browser cannot ask another address itself (the admin's policy
+        allows connections to its own address only), so the server does:
+        it asks the address for /pyblog-ping with a word it just made up,
+        and only this process can recognise it. The certificate is checked
+        too, as a browser would.
+        """
+        address = str(data.get("url", "")).strip().rstrip("/")
+        if admin_address({"admin_url": address}) == "":
+            return {"ok": False, "error": T("js_admin_url_non_valido", admin_language())}
+        nonce = secrets.token_urlsafe(16)
+        with PING_LOCK:
+            PING_NONCES.add(nonce)
+        try:
+            request = urllib.request.Request(address + "/pyblog-ping?n=" + nonce,
+                                             headers={"User-Agent": "PyBlog"})
+            with urllib.request.urlopen(request, timeout=8) as response:
+                answer = json.loads(response.read(2048).decode("utf-8"))
+            same = isinstance(answer, dict) and answer.get("questo") is True
+        except Exception:
+            same = False
+        finally:
+            with PING_LOCK:
+                PING_NONCES.discard(nonce)
+        return {"ok": True, "raggiunge": same}
 
     def _csrf_token_ok(self, route):
         """
@@ -2930,7 +3060,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if language not in ("it", "en"):
             language = main_language()
         self._send(generate_article_page(article_for_preview(data), language),
-                   with_csp=False)
+                   with_csp=False, sandbox=True)
 
     def _handle_set_password(self):
         """First run: create the administration password."""

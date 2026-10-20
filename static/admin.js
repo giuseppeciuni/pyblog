@@ -3837,7 +3837,54 @@ function renewConsent() {
   pbToast(t('js_consenso_rinnovato'), 'success');
 }
 
+// The admin address as last saved, and the one to go to after a save that
+// moved the administration.
+var adminUrlSalvato = null;
+var adminDaRaggiungere = '';
+
+// A new address for the administration is checked before anything is
+// saved: the server makes sure the address leads to this very editor,
+// otherwise the author would be sent to a page that does not exist. Then
+// the author confirms the move.
+function checkAdminAddress(pulsante, indirizzo) {
+  var continua = function() {
+    pulsante.dataset.adminVerificato = '1';
+    saveConfig(pulsante);
+  };
+  if (indirizzo === '' || indirizzo === window.location.origin) {
+    continua();
+    return;
+  }
+  if (!/^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?$/.test(indirizzo)) {
+    pbToast(t('js_admin_url_non_valido'), 'danger');
+    return;
+  }
+  pbBusy(pulsante, true);
+  pbPostJson('/verifica-indirizzo-admin', { url: indirizzo })
+    .then(function(dati) {
+      pbBusy(pulsante, false);
+      if (!dati || dati.ok !== true || dati.raggiunge !== true) { return Promise.reject(); }
+      pbConfirm(t('js_admin_url_conferma_titolo'),
+                t('js_admin_url_conferma_corpo').replace('{indirizzo}', indirizzo),
+                t('js_admin_url_conferma'), 'primary', function() {
+        adminDaRaggiungere = indirizzo;
+        continua();
+      });
+    })
+    .catch(function() {
+      pbBusy(pulsante, false);
+      pbToast(t('js_admin_url_irraggiungibile').replace('{indirizzo}', indirizzo), 'danger');
+    });
+}
+
 function saveConfig(pulsante) {
+  if (adminUrlSalvato === null) { adminUrlSalvato = pbPage('admin_url', ''); }
+  var indirizzoAdmin = document.getElementById('admin_url').value.trim().replace(/\/+$/, '');
+  if (indirizzoAdmin !== adminUrlSalvato && !pulsante.dataset.adminVerificato) {
+    checkAdminAddress(pulsante, indirizzoAdmin);
+    return;
+  }
+  delete pulsante.dataset.adminVerificato;
   // We collect the data of the homepage cards.
   var cardElementi = document.querySelectorAll('.card-config');
   var cardDati = [];
@@ -3882,6 +3929,7 @@ function saveConfig(pulsante) {
     subtitle_en: document.getElementById('subtitle_en').value.trim(),
     author: document.getElementById('author').value,
     base_url: document.getElementById('base_url').value,
+    admin_url: indirizzoAdmin,
     analytics_id: document.getElementById('analytics_id').value.trim(),
     umami_url: document.getElementById('umami_url').value.trim(),
     umami_website_id: document.getElementById('umami_website_id').value.trim(),
@@ -3980,6 +4028,12 @@ function saveConfig(pulsante) {
         versioneConsensoSalvata = config.consent.version;
         configModificata = false;
         pbToast(t('admin_config_salvata'), 'success');
+        adminUrlSalvato = config.admin_url;
+        if (adminDaRaggiungere !== '') {
+          // The administration now answers only there.
+          window.location.href = adminDaRaggiungere + '/login';
+          return;
+        }
         refreshSettingsPanel();
       } else {
         pbToast(t('js_error_prefix') + res.error, 'danger');

@@ -46,6 +46,7 @@ def finished_config():
     c = copy.deepcopy(CONFIG_DEFAULT)
     c["site_title"] = "Inside the Machine"
     c["base_url"] = "https://www.ciunix.com"
+    c["admin_url"] = "https://admin.ciunix.com"
     c["home_content"] = "<p>Scrivo di AI e sistemi distribuiti.</p>"
     c["home_content_en"] = "<p>I write about AI and distributed systems.</p>"
     c["subtitle_en"] = "Technical notes on AI, distributed systems and more"
@@ -158,6 +159,27 @@ def test_testi_nell_altra_lingua():
     c["home_content_en"] = ""
     c["subtitle_en"] = ""
     check("un sito che non usa la seconda lingua non riceve l'avviso", state("sito", c)[0] == "ok")
+
+
+def test_indirizzo_amministrazione():
+    """The administration and the code of outside services on one address."""
+    print("\nindirizzo dell'amministrazione")
+    c = finished_config()
+    c["admin_url"] = ""
+    check("senza codici esterni, l'admin sull'indirizzo del sito va bene", state("sito", c)[0] == "ok")
+    c["custom_code"] = [{"id": "a", "enabled": True, "code": GTAG}]
+    check("con un codice esterno attivo, l'avviso",
+          state("sito", c) == ("warn", T("stato_admin_condiviso", "it")))
+    c["custom_code"] = []
+    c["analytics_id"] = "G-WFH9MSGK86"
+    check("anche con Google Analytics nel campo delle Statistiche", state("sito", c)[0] == "warn")
+    c["base_url"] = ""
+    stati = [t for _, t in settings_panel.section_states("sito", c, "it")]
+    check("un sito non ancora online non riceve l'avviso", T("stato_admin_condiviso", "it") not in stati)
+    c = finished_config()
+    c["admin_url"] = "admin.ciunix.com/editor"
+    check("un indirizzo scritto male lo dice, e l'admin resta dov'era",
+          state("sito", c) == ("warn", T("stato_admin_non_valido", "it")))
 
 
 def test_riquadri():
@@ -365,6 +387,7 @@ def main():
     test_sito_finito()
     test_sito_e_home()
     test_testi_nell_altra_lingua()
+    test_indirizzo_amministrazione()
     test_riquadri()
     test_biografia_progetti_commenti()
     test_statistiche()

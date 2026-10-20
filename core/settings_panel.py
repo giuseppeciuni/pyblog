@@ -19,7 +19,7 @@ import re
 
 from core import newsletter
 from core.build import projects_settings, snippet_consent
-from core.config import secret_setting
+from core.config import admin_address, secret_setting
 from core.i18n import LANGUAGE_NAMES, T
 
 # The groups of the panel, in order. The advanced section belongs to none:
@@ -235,6 +235,12 @@ def texts_only_in_main_language(config):
     return any(_text(main) != "" and _text(other) == "" for main, other in pairs)
 
 
+def outside_code(config):
+    """Whether the public pages load code from outside services."""
+    return bool(enabled_snippets(config) or _text(config.get("analytics_id", "")) != ""
+                or umami_is_set(config))
+
+
 def umami_is_set(config):
     return (_text(config.get("umami_url", "")) != ""
             and _text(config.get("umami_website_id", "")) != "")
@@ -254,6 +260,12 @@ def _state_site(config, la):
         problems.append(("warn", T("stato_manca_dominio", la)))
     if _text(config.get("author", "")) == "":
         problems.append(("warn", T("stato_manca_autore", la)))
+    if _text(str(config.get("admin_url", "") or "")) != "" and admin_address(config) == "":
+        problems.append(("warn", T("stato_admin_non_valido", la)))
+    elif admin_address(config) == "" and domain_is_set(config) and outside_code(config):
+        # Code of outside services on the site's own address can read what
+        # the logged-in author sees there, settings and keys included.
+        problems.append(("warn", T("stato_admin_condiviso", la)))
     if site_is_bilingual(config) and texts_only_in_main_language(config):
         main = config.get("language", "it") if config.get("language") in ("it", "en") else "it"
         problems.append(("warn", T("stato_testi_solo_principale", la)

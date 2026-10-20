@@ -291,6 +291,10 @@ UI_TRANSLATIONS = {
     "stato_manca_autore": {"it": "Manca il nome dell'autore", "en": "The author's name is missing"},
     "stato_testi_solo_principale": {"it": "Sottotitolo, ruolo o biografia solo in {principale}",
                                     "en": "Subtitle, role or bio only in {principale}"},
+    "stato_admin_condiviso": {"it": "L'amministrazione è sullo stesso indirizzo dei codici esterni",
+                              "en": "The administration shares its address with outside code"},
+    "stato_admin_non_valido": {"it": "L'indirizzo dell'amministrazione non è valido: resta quello del sito",
+                               "en": "The address of the administration is not valid: it stays on the site's"},
     "stato_presentazione_esempio": {"it": "La presentazione ha ancora il testo di esempio",
                                     "en": "The introduction still has the example text"},
     "stato_presentazione_vuota": {"it": "Nessuna presentazione", "en": "No introduction"},
@@ -343,6 +347,21 @@ UI_TRANSLATIONS = {
     "admin_torna_impostazioni": {"it": "Torna all'elenco delle impostazioni", "en": "Back to the list of settings"},
     "admin_gr_sito": {"it": "Il sito", "en": "The site"},
     "admin_gr_autore": {"it": "Chi scrive", "en": "Who writes"},
+    "admin_indirizzo_admin": {"it": "Indirizzo dell'amministrazione (facoltativo)",
+                              "en": "Address of the administration (optional)"},
+    "admin_indirizzo_admin_hint": {
+        "it": "Es. https://admin.tuodominio.it. Con un indirizzo tutto suo, l'amministrazione non si apre più dal sito pubblico, e i codici esterni del sito (statistiche, pubblicità, widget) non possono raggiungerla. Prima fai arrivare quell'indirizzo a PyBlog con nginx e il certificato (manuale, capitolo 2.7): il salvataggio controlla che risponda. Vuoto: l'amministrazione resta sull'indirizzo del sito.",
+        "en": "E.g. https://admin.yourdomain.com. On an address of its own, the administration no longer opens from the public site, and the code of outside services on the site (analytics, ads, widgets) cannot reach it. First make that address reach PyBlog with nginx and the certificate (manual, chapter 2.7): saving checks that it answers. Empty: the administration stays on the site's address."},
+    "js_admin_url_non_valido": {"it": "L'indirizzo dell'amministrazione deve essere come https://admin.tuodominio.it, senza niente dopo.",
+                                "en": "The address of the administration must look like https://admin.yourdomain.com, with nothing after it."},
+    "js_admin_url_irraggiungibile": {
+        "it": "{indirizzo} non risponde come PyBlog: configura prima nginx e il certificato per quell'indirizzo (manuale, 2.7). Le impostazioni non sono state salvate.",
+        "en": "{indirizzo} does not answer as PyBlog: set up nginx and the certificate for that address first (manual, 2.7). The settings were not saved."},
+    "js_admin_url_conferma_titolo": {"it": "L'amministrazione cambia indirizzo", "en": "The administration moves"},
+    "js_admin_url_conferma_corpo": {
+        "it": "Dopo il salvataggio l'amministrazione si apre solo su {indirizzo}, e il sito pubblico non la mostra più. Ti porto lì: dovrai accedere di nuovo con la tua password.",
+        "en": "After saving, the administration opens only at {indirizzo}, and the public site no longer shows it. You will be taken there and asked for your password again."},
+    "js_admin_url_conferma": {"it": "Salva e vai al nuovo indirizzo", "en": "Save and go to the new address"},
     "admin_gr_altra_lingua": {"it": "Sito e autore in {lingua}", "en": "Site and author in {lingua}"},
     "admin_altra_lingua_hint": {
         "it": "Il sottotitolo, il ruolo e la breve biografia per le pagine in {lingua}: la testata, la descrizione della home per Google e i social, il box dell'autore. Lasciati vuoti, quelle pagine mostrano il testo in {principale}.",

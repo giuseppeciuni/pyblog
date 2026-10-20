@@ -229,6 +229,40 @@ block:
 `location ~ ^/(...)$` line changes too: copy it into your nginx file,
 otherwise the new feature answers 404 online. The CHANGELOG points it out.
 
+#### The administration at an address of its own (recommended)
+
+The code of outside services on the public pages (analytics, ads, widgets)
+runs on the site's address. If the administration answers on the same
+address, that code can read what you see while logged in, API keys
+included. On two addresses, say `www.yourdomain.com` and
+`admin.yourdomain.com`, the browser keeps them apart. The Settings panel
+reminds you while the site has outside code and the administration shares
+its address.
+
+`nginx.separate-admin.conf.example` is the ready configuration, in four
+steps:
+
+1. **DNS:** an A (and AAAA) record for `admin.yourdomain.com`, to the server.
+2. **nginx:** copy the file in place of the single-address one and reload
+   nginx. The public block serves only the pages and the newsletter forms;
+   the administration block sends everything to PyBlog, with no list of
+   routes to keep up to date.
+3. **Certificate:** `sudo certbot --nginx -d yourdomain.com -d
+   www.yourdomain.com -d admin.yourdomain.com`.
+4. **Settings → Site and author → Address of the administration:** type
+   `https://admin.yourdomain.com` and save. Before saving, PyBlog checks that
+   the address really leads to it; then it takes you there and you log in
+   again.
+
+From then on the public address no longer shows the administration (old
+bookmarks are sent on to the new address), and the administration's address
+does not show the site's pages. The article preview stays in the editor, but
+isolated: the outside code shows and cannot reach the administration.
+
+If something goes wrong, the editor always answers on the server itself:
+`ssh -L 8000:127.0.0.1:8000 your-server` and open
+`http://localhost:8000/admin`. Or remove `admin_url` from `config.json`.
+
 ### 2.8 HTTPS
 
 ```bash
@@ -602,8 +636,10 @@ was last saved. If you leave with unsaved changes, the browser asks you.
 
 - **The site:** title, subtitle, **domain** (`https://yourdomain.com`, no
   trailing slash: the sitemap, canonical addresses and social previews come
-  from here) and **main site language** (the one you write in: it sits at the
-  root of the site, the translation goes in a subfolder).
+  from here), **main site language** (the one you write in: it sits at the
+  root of the site, the translation goes in a subfolder) and, optional, the
+  **address of the administration** when it has one of its own (see
+  [2.7](#27-nginx)).
 - **Who writes:** name, job title, short bio, photo, personal page, public
   profiles (one per line: GitHub, LinkedIn, X...) and the site's X account.
   They go into the pages' structured data (schema.org) and social meta tags:

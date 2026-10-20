@@ -227,6 +227,41 @@ dell'amministrazione cambia anche la riga `location ~ ^/(...)$`: va copiata
 nel tuo file di nginx, altrimenti la funzione nuova risponde 404 online.
 Il CHANGELOG lo segnala.
 
+#### L'amministrazione su un indirizzo a parte (consigliato)
+
+I codici dei servizi esterni nelle pagine pubbliche (statistiche,
+pubblicità, widget) girano sull'indirizzo del sito. Se l'amministrazione
+risponde allo stesso indirizzo, quei codici possono leggere quello che vedi
+tu da collegato, chiavi API comprese. Su due indirizzi, per esempio
+`www.tuodominio.it` e `admin.tuodominio.it`, il browser li tiene separati.
+Il pannello delle Impostazioni te lo ricorda finché il sito ha codici
+esterni e l'amministrazione è sul suo indirizzo.
+
+`nginx.separate-admin.conf.example` è la configurazione pronta, in quattro
+passi:
+
+1. **DNS:** un record A (e AAAA) per `admin.tuodominio.it`, verso il server.
+2. **nginx:** copia il file al posto di quello a indirizzo unico e ricarica
+   nginx. Il blocco del sito pubblico serve solo le pagine e i moduli
+   della newsletter; quello dell'amministrazione porta tutto a PyBlog, senza
+   un elenco di rotte da tenere aggiornato.
+3. **Certificato:** `sudo certbot --nginx -d tuodominio.it -d
+   www.tuodominio.it -d admin.tuodominio.it`.
+4. **Impostazioni → Sito e autore → Indirizzo dell'amministrazione:**
+   scrivi `https://admin.tuodominio.it` e salva. Prima di salvare PyBlog
+   controlla che l'indirizzo porti davvero a lui; poi ti porta lì e accedi
+   di nuovo.
+
+Da quel momento l'indirizzo pubblico non mostra più l'amministrazione (i
+vecchi segnalibri vengono rimandati al nuovo indirizzo), e quello
+dell'amministrazione non mostra le pagine del sito. L'anteprima degli
+articoli resta nell'editor, ma isolata: i codici esterni si vedono e non
+raggiungono l'amministrazione.
+
+Se qualcosa va storto, l'editor risponde sempre sul server stesso:
+`ssh -L 8000:127.0.0.1:8000 tuo-server` e apri
+`http://localhost:8000/admin`. Oppure togli `admin_url` da `config.json`.
+
 ### 2.8 HTTPS
 
 ```bash
@@ -605,8 +640,10 @@ chiede.
 
 - **Il sito:** titolo, sottotitolo, **dominio** (`https://tuodominio.it`,
   senza barra finale: da qui nascono sitemap, indirizzi canonici e
-  anteprime social) e **lingua principale** (quella in cui scrivi: sta alla
-  radice del sito, la traduzione va in una sottocartella).
+  anteprime social), **lingua principale** (quella in cui scrivi: sta alla
+  radice del sito, la traduzione va in una sottocartella) e, facoltativo,
+  l'**indirizzo dell'amministrazione** quando ne ha uno suo (vedi
+  [2.7](#27-nginx)).
 - **Chi scrive:** nome, ruolo, breve biografia, foto, pagina personale,
   profili pubblici (uno per riga: GitHub, LinkedIn, X...) e account X del
   sito. Finiscono nei dati strutturati delle pagine (schema.org) e nei meta

@@ -39,6 +39,12 @@ $testata_sito
       <p class="aiuto" id="base_url-aiuto">$hint_dominio</p>
     </div>
     <div class="campo">
+      <label for="admin_url">$label_indirizzo_admin</label>
+      <input class="campo-input" type="url" id="admin_url" value="$valore_indirizzo_admin"
+             placeholder="https://admin.tuodominio.it" aria-describedby="admin_url-aiuto">
+      <p class="aiuto" id="admin_url-aiuto">$hint_indirizzo_admin</p>
+    </div>
+    <div class="campo">
       <label for="language">$label_lingua_principale</label>
       <select class="campo-input" id="language" aria-describedby="language-aiuto">
         <option value="it" $sel_lingua_it>Italiano</option>

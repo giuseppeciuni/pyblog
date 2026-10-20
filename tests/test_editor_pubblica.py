@@ -139,7 +139,10 @@ def test_anteprima_non_salva():
               stato == 200 and "Titolo MAI SALVATO" in pagina and "Testo MAI SALVATO" in pagina,
               pagina[:200])
         check("senza la CSP dell'amministrazione, come le pagine pubbliche",
-              intestazioni.get("Content-Security-Policy") is None)
+              "default-src" not in intestazioni.get("Content-Security-Policy", ""))
+        check("ma chiusa nel sandbox: i codici esterni non raggiungono l'editor",
+              intestazioni.get("Content-Security-Policy") == server.PREVIEW_SANDBOX
+              and "allow-same-origin" not in server.PREVIEW_SANDBOX)
         check("il file dell'articolo non è cambiato", file_articolo.read_bytes() == prima)
 
         _, _, pagina = anteprima(dati, "en")

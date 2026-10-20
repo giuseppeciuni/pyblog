@@ -6,6 +6,22 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **The administration can live at an address of its own.** The code of
+  outside services on the public pages (analytics, ads, chat widgets) ran
+  on the same origin as the editor, and could read what the logged-in
+  author sees, settings and API keys included. With "Address of the
+  administration" set (e.g. `https://admin.mysite.com`), the editor answers
+  only there and the public address only serves the site; old bookmarks
+  are sent on. Saving checks first that the new address leads to this very
+  editor, so the author is never sent to an address that goes nowhere, and
+  a direct connection on the server always gets in.
+  `nginx.separate-admin.conf.example` has the two server blocks. The
+  Settings panel warns while the site has outside code and the editor
+  shares its address. **nginx:** the single-address example adds
+  `verifica-indirizzo-admin` and `pyblog-ping` to the routes sent to Python.
+- **The article preview is isolated.** It is shown with the code of outside
+  services, as readers will see it; it now runs in a sandbox of its own, so
+  that code cannot reach the editor's session.
 - **The editor trusts less what comes from outside.** Five defences relied
   on nobody reaching the editor except through the author's browser, which
   stops being true behind nginx:

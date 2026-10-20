@@ -1,0 +1,118 @@
+# nginx configuration for PyBlog with the administration at an address of
+# its own: the public site at mysite.com, the editor at admin.mysite.com.
+#
+# Why: the code of outside services on the public pages (analytics, ads,
+# chat widgets) runs on the site's origin. When the editor answers on that
+# same origin, such code can read what the logged-in author sees, settings
+# and API keys included. On two addresses the browser keeps them apart.
+#
+# Steps:
+#   1. DNS: an A (and AAAA) record for admin.mysite.com, to this server.
+#   2. Copy this file to /etc/nginx/sites-available/blog (in place of the
+#      single-address example), enable it with a symlink, reload nginx.
+#   3. sudo certbot --nginx -d mysite.com -d www.mysite.com -d admin.mysite.com
+#   4. Open https://admin.mysite.com/config, Site and author, and write
+#      https://admin.mysite.com in "Address of the administration". Saving
+#      checks that the address answers, then takes you there.
+#
+# Until step 4 the editor keeps answering on both addresses, so the order of
+# the steps cannot lock you out. If something goes wrong anyway, the editor
+# always answers on the server itself: ssh -L 8000:127.0.0.1:8000 your-server
+# and open http://localhost:8000/admin.
+
+# Slows down password guessing on the login page: at most 1 request
+# per second per IP, with a small burst allowance.
+limit_req_zone $binary_remote_addr zone=pyblog_login:10m rate=1r/s;
+# The newsletter's forms: a few requests a minute per address are plenty.
+limit_req_zone $binary_remote_addr zone=pyblog_newsletter:10m rate=6r/m;
+
+# --- The public site: static files, plus the readers' forms ---
+server {
+    listen 80;
+    server_name mysite.com www.mysite.com;
+
+    root /path/to/pyblog/output;
+    index index.html;
+
+    access_log /var/log/nginx/blog-access.log;
+    error_log  /var/log/nginx/blog-error.log;
+
+    # Old bookmarks of the editor go to its new address. Nothing of the
+    # editor is served here.
+    location ~ ^/(admin|config|edit|login)$ {
+        return 301 https://admin.mysite.com$request_uri;
+    }
+
+    # The newsletter's public forms: subscribing, confirming, leaving.
+    location ~ ^/(iscriviti|conferma|disiscrivi)$ {
+        limit_req zone=pyblog_newsletter burst=5 nodelay;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    # A missing page shows the site's own 404 page.
+    error_page 404 /404.html;
+
+    location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg|woff2)$ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location = /rss.xml {
+        default_type application/rss+xml;
+    }
+
+    location = /llms.txt {
+        default_type text/plain;
+    }
+
+    # Uploaded media. nginx handles Range requests, needed to seek videos.
+    location /media/ {
+        add_header Cache-Control "public, max-age=2592000";
+    }
+}
+
+# --- The administration: every request goes to PyBlog ---
+# No list of routes to keep in step with the editor: a new page of the
+# administration works here without touching nginx.
+server {
+    listen 80;
+    server_name admin.mysite.com;
+
+    access_log /var/log/nginx/blog-admin-access.log;
+    error_log  /var/log/nginx/blog-admin-error.log;
+
+    # Uploaded videos reach 100 MB, the same cap PyBlog applies.
+    client_max_body_size 100m;
+
+    # The login gets the rate limit on top.
+    location = /login {
+        limit_req zone=pyblog_login burst=5 nodelay;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        # PyBlog tells the two addresses apart by this header: without it
+        # the separation does not apply (and the editor stays reachable).
+        proxy_set_header Host $host;
+        # The visitor's real address, for the lock on wrong passwords.
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # PyBlog uses this to add the Secure flag to the session cookie.
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # The AI analysis and translations can take up to a minute.
+        proxy_read_timeout 120s;
+    }
+}

@@ -8,7 +8,9 @@ did "from core.config import CONFIG" always sees the current values.
 """
 import json
 import os
+import re
 import tempfile
+import urllib.parse
 from pathlib import Path
 
 
@@ -35,6 +37,12 @@ CONFIG_DEFAULT = {
     "subtitle": "Note tecniche su AI, sistemi distribuiti e dintorni",
     "author": "Giuseppe Ciuni",
     "base_url": "https://tuodominio.com",
+    # The address of the administration when it lives on its own, e.g.
+    # "https://admin.tuodominio.com". Empty: the administration answers on
+    # the site's own address, as it always did. On its own address, the
+    # code of outside services on the public pages (analytics, ads,
+    # widgets) runs on another origin and cannot reach it.
+    "admin_url": "",
     # Google Analytics 4 measurement ID (e.g. "G-XXXXXXXXXX").
     # Empty means no analytics script on the public pages.
     "analytics_id": "",
@@ -606,6 +614,42 @@ def seo_data():
     if not isinstance(seo, dict):
         return {}
     return seo
+
+
+# An address the administration can live at: a scheme and a host, an
+# optional port, nothing after it.
+ADMIN_ADDRESS = re.compile(r"https?://[A-Za-z0-9.-]+(:\d{1,5})?")
+
+
+def admin_address(config=None):
+    """
+    The address of the administration when it has one of its own, without
+    the final slash ("https://admin.ciunix.com"), or "" when it shares the
+    site's address. A value that is not a bare address counts as none: a
+    typo must never shut the author out of their own editor.
+    """
+    if config is None:
+        config = CONFIG
+    value = str(config.get("admin_url", "") or "").strip().rstrip("/")
+    if ADMIN_ADDRESS.fullmatch(value) is None:
+        return ""
+    return value
+
+
+def url_host(address):
+    """
+    The host of an address as a browser writes it in the Host header: lower
+    case, with the port only when it is not the default one of the scheme.
+    """
+    try:
+        parts = urllib.parse.urlsplit(address.strip())
+        port = parts.port
+    except ValueError:
+        return ""
+    host = (parts.hostname or "").lower()
+    if port is not None and (parts.scheme, port) not in (("http", 80), ("https", 443)):
+        host = f"{host}:{port}"
+    return host
 
 
 def in_language(main_value, other_value, language=None):
