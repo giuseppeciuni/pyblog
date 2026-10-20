@@ -219,6 +219,14 @@ def test_pagina_e_menu():
           'id="file-ripristino"' in pagina and 'for="file-ripristino"' in pagina)
     check("il menu porta alla pagina, e la segna", 'href="/ripristina"' in pagina
           and 'aria-current="page" href="/ripristina"' in pagina)
+    site = Site()
+    try:
+        nome = backup.save_automatic_backup().name
+        pagina = server.restore_page("TOKEN")
+        check("«Rimetti questo» passa il nome giusto al JavaScript",
+              f'onclick="restoreAutomatic(this, &quot;{nome}&quot;)"' in pagina)
+    finally:
+        site.close()
     check("il ripristino chiede il token CSRF", "/ripristina" in server.CSRF_PROTECTED_ROUTES
           and "/ripristina-automatico" in server.CSRF_PROTECTED_ROUTES)
     check("il backup scaricato e quello automatico sono lo stesso archivio",

@@ -634,7 +634,7 @@ def restore_page(csrf):
             f'<a class="pulsante pulsante-piccolo" href="/backup-automatico?file={esc(item["name"])}">'
             f'{T("admin_scarica", la)}</a>'
             f'<button type="button" class="pulsante pulsante-piccolo" '
-            f'onclick="restoreAutomatic(this, \'{js_attr(item["name"])}\')">'
+            f'onclick="restoreAutomatic(this, {js_attr(item["name"])})">'
             f'{T("admin_ripristina_questo", la)}</button></span></li>')
     if rows:
         listing = '    <ul class="lista-backup">\n' + "\n".join(rows) + "\n    </ul>"
