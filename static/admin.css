@@ -382,6 +382,19 @@ html:has(body.page-config) { scroll-padding-bottom:7rem; }
    the publishing strip (admin.js keeps its height in --editor-toolbar-top). */
 #editor .ql-editor { min-height:420px; }
 #editor-en .ql-editor { min-height:300px; }
+/* The text of an article keeps the spacing it has on the page. Quill sets
+   every margin to zero, so in the editor paragraphs and headings sat glued
+   together while the published page put space between them: an author who
+   added empty lines to separate them found the space doubled once
+   published. These are the margins browsers give the page's text. */
+:is(#editor, #editor-en) .ql-editor :is(p, ul, ol, pre, blockquote) { margin:1em 0; }
+:is(#editor, #editor-en) .ql-editor h1 { margin:0.67em 0; }
+:is(#editor, #editor-en) .ql-editor h2 { margin:0.83em 0; }
+:is(#editor, #editor-en) .ql-editor h3 { margin:1em 0; }
+:is(#editor, #editor-en) .ql-editor h4 { margin:1.33em 0; }
+:is(#editor, #editor-en) .ql-editor :is(h5, h6) { margin:1.67em 0; }
+:is(#editor, #editor-en) .ql-editor blockquote { margin-left:0; }
+:is(#editor, #editor-en) .ql-editor p.image-caption { margin-top:-0.5em; }
 #editor.ql-container, #editor-en.ql-container { height:auto; }
 #editor .ql-editor, #editor-en .ql-editor { height:auto; overflow-y:visible; }
 .editor-main .ql-toolbar.ql-snow { position:sticky; top:var(--editor-toolbar-top, 0px); z-index:15; background:#fff; }

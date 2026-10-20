@@ -366,6 +366,8 @@ def test_editor():
     check("cliccando un'immagine, il pulsante della didascalia compare sull'immagine",
           "function showImageDetailsOnPicture(editor, clickY)" in script
           and ".image-details-on-picture {" in css)
+    check("nell'editor paragrafi e titoli hanno gli stessi spazi della pagina",
+          ":is(#editor, #editor-en) .ql-editor :is(p, ul, ol, pre, blockquote) { margin:1em 0; }" in css)
     check("il riquadro di un'immagine non esce dall'editor",
           "function clipToEditor()" in script and "overlay.style.clipPath" in script)
     check("un gruppo chiuso dice cosa contiene",
