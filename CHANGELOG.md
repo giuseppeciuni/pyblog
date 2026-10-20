@@ -144,6 +144,16 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Lighter pictures for every screen.** When a picture is uploaded, the
+  browser also makes WebP versions of it at 480, 960 and 1600 pixels
+  (never wider than the picture), kept in `media/_sizes/`. The pages offer
+  them with `srcset`: a phone downloads a few kilobytes instead of the whole
+  picture, and the Media page shows the small version on its cards. The
+  original stays the `src`, for feeds and social previews. Pictures already
+  on the site get them from **Make the lighter versions** in the Media page,
+  which then rebuilds the site; pictures of a Word import get them in the
+  background. A browser that cannot write WebP simply makes none. The
+  versions are not in the backups: they can always be made again.
 - **The Media page shows 48 files at a time.** The next ones come as you
   scroll to the end (or with **Show more**); the search, the Used/Unused
   filters and the cleanup buttons still work on every file.

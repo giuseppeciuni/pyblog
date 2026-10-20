@@ -199,6 +199,7 @@ JS_TRANSLATION_KEYS = (
     "js_media_copied", "js_media_delete_title", "js_media_delete_body",
     "js_media_delete_used", "js_media_cleanup_body", "js_media_uploading",
     "js_media_merge_title", "js_media_merge_body", "js_media_merge_confirm", "js_media_shown_of",
+    "js_media_making_sizes",
     "upd_checking", "upd_installation", "upd_restarting", "upd_restarted", "upd_confirm_title",
     "upd_confirm_body", "admin_update_now", "upd_offline",
     "js_media_picker_title", "js_media_picker_search", "js_media_picker_empty",
@@ -723,7 +724,8 @@ def media_library_items():
     """
     uses = media_library.media_uses()
     items = [{"name": item["name"], "url": "/media/" + item["name"], "kind": item["kind"],
-              "size": file_size_text(item["size"]), "used": len(uses.get(item["name"], []))}
+              "size": file_size_text(item["size"]), "used": len(uses.get(item["name"], [])),
+              "resizable": item["resizable"], "sized": len(item["sized"]) > 0}
              for item in media_library.media_files()]
     return {"ok": True, "items": items}
 
@@ -755,6 +757,7 @@ def library_page(csrf):
     cards = []
     unused_size = 0
     unused_count = 0
+    missing_sizes = 0
     for position, item in enumerate(files):
         name = item["name"]
         where = uses.get(name, [])
@@ -764,8 +767,16 @@ def library_page(csrf):
         address = "/media/" + name
         if item["kind"] == "video":
             preview = f'<video src="{esc(address)}" preload="metadata" muted></video>'
+        elif item["sized"]:
+            # The smallest lighter version is plenty for a card, and a page
+            # of cards no longer downloads every picture at full size.
+            small = f'/media/{media_library.SIZES_FOLDER}/{name}/{item["sized"][0]}.webp'
+            preview = f'<img src="{esc(small)}" alt="" loading="lazy">'
         else:
             preview = f'<img src="{esc(address)}" alt="" loading="lazy">'
+        sized_flag = ("1" if item["sized"] else "0") if item["resizable"] else ""
+        if sized_flag == "0":
+            missing_sizes += 1
         if where:
             links = []
             for use in where:
@@ -782,7 +793,7 @@ def library_page(csrf):
         later = " hidden" if position >= MEDIA_BATCH else ""
         cards.append(
             f'    <li class="media-card" data-name="{esc(name.lower())}" data-used="{1 if where else 0}" '
-            f'data-where="{len(where)}"{later}>\n'
+            f'data-where="{len(where)}" data-sized="{sized_flag}"{later}>\n'
             f'      <div class="media-preview">{preview}</div>\n'
             f'      <div class="media-info">\n'
             f'        <p class="media-name">{esc(name)}</p>\n'
@@ -822,6 +833,9 @@ def library_page(csrf):
                      .replace("{size}", file_size_text(copies_size) if copy_of else "0 KB")),
         merge_hidden_f="" if copy_of else " hidden",
         label_more=T("admin_media_more", lang),
+        label_make_sizes=T("admin_media_make_sizes", lang).replace("{n}", str(missing_sizes)),
+        tip_make_sizes=esc(T("admin_media_make_sizes_tip", lang)),
+        make_sizes_hidden_f="" if missing_sizes else " hidden",
         copies=len(copy_of),
         cards="\n".join(cards),
         empty_f_hidden_f="" if not files else " hidden",
@@ -3604,6 +3618,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return
             if file_name == "":
                 self._send_json({"ok": False, "error": T("err_no_file_received", lang)})
+                return
+
+            # A lighter version of a picture already uploaded: the browser
+            # made it, the picture it belongs to is named in the address.
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            if "size_of" in query:
+                try:
+                    width = int(query.get("width", ["0"])[0])
+                except ValueError:
+                    width = 0
+                saved = media_library.save_size(query["size_of"][0], width, file_data)
+                self._send_json({"ok": saved} if saved else
+                                {"ok": False, "error": T("err_invalid_format", lang)})
                 return
 
             check = validate_upload(file_name, file_data)

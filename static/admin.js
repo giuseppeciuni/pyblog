@@ -727,7 +727,104 @@ function uploadChosenFile(fileFieldId, limitMb, stateId, startMessage) {
 
   pbStatus(stateId, startMessage);
   return resizeImageBeforeUpload(chosen, pbPage('max_image_width', 1600))
-    .then(function(file) { return sendFile(file, stateId); });
+    .then(function(file) { return sendFile(file, stateId); })
+    .then(function(url) {
+      // The lighter versions are made while the author goes on writing.
+      if (url) { makeImageSizes(url); }
+      return url;
+    });
+}
+
+/* --- Lighter versions of the pictures -------------------------------------- */
+
+// Every uploaded picture also gets WebP versions at these widths (never
+// wider than the picture itself). Python alone cannot re-encode a JPEG or a
+// PNG, the browser can: it makes them and sends them next to the picture,
+// and the pages offer them in srcset.
+var IMAGE_SIZE_WIDTHS = [480, 960, 1600];
+
+function makeImageSizes(url) {
+  var match = /^\/media\/([A-Za-z0-9][A-Za-z0-9._-]*\.(?:jpe?g|png|webp))$/i.exec(url || '');
+  if (!match) { return Promise.resolve(false); }
+  var name = match[1];
+  return new Promise(function(resolveIt) {
+    var img = new Image();
+    img.onload = function() {
+      var natural = img.naturalWidth;
+      if (!natural) { resolveIt(false); return; }
+      var widths = IMAGE_SIZE_WIDTHS.filter(function(w) { return w < natural; });
+      if (natural <= IMAGE_SIZE_WIDTHS[IMAGE_SIZE_WIDTHS.length - 1]) { widths.push(natural); }
+      var next = function(i) {
+        if (i >= widths.length) { resolveIt(true); return; }
+        var canvas = document.createElement('canvas');
+        canvas.width = widths[i];
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * widths[i] / natural));
+        var context = canvas.getContext('2d');
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+        context.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function(blob) {
+          // A browser that cannot write WebP answers with a PNG: no versions
+          // then, the picture itself keeps working.
+          if (!blob || blob.type !== 'image/webp') { resolveIt(false); return; }
+          var formValues = new FormData();
+          formValues.append('video', new File([blob], widths[i] + '.webp', { type: 'image/webp' }));
+          pbFetch('/upload?size_of=' + encodeURIComponent(name) + '&width=' + widths[i],
+                  { method: 'POST', body: formValues })
+            .then(function(reply) { return reply.json(); })
+            .then(function(outcome) {
+              if (outcome.ok === true) { next(i + 1); } else { resolveIt(false); }
+            })
+            .catch(function() { resolveIt(false); });
+        }, 'image/webp', 0.82);
+      };
+      next(0);
+    };
+    img.onerror = function() { resolveIt(false); };
+    img.src = url;
+  });
+}
+
+// The pictures of a piece of content that have no lighter versions yet (a
+// Word document saves its pictures on the server, where they cannot be
+// made), one after the other.
+function makeSizesForContent(rootEl) {
+  var wanted = {};
+  var pictures = rootEl.querySelectorAll('img[src^="/media/"]');
+  for (var i = 0; i < pictures.length; i++) { wanted[pictures[i].getAttribute('src')] = true; }
+  if (Object.keys(wanted).length === 0) { return; }
+  fetch('/media-library-items', { credentials: 'same-origin', cache: 'no-store' })
+    .then(function(reply) { return reply.json(); })
+    .then(function(outcome) {
+      var todo = (outcome.items || []).filter(function(item) {
+        return wanted[item.url] && item.resizable && !item.sized;
+      });
+      var next = function(j) {
+        if (j < todo.length) { makeImageSizes(todo[j].url).then(function() { next(j + 1); }); }
+      };
+      next(0);
+    })
+    .catch(function() { /* the pictures work without their versions */ });
+}
+
+// The Media page's button: the versions of every picture that has none.
+function makeMissingImageSizes(buttonEl) {
+  var cards = document.querySelectorAll('.media-card[data-sized="0"]');
+  var nameList = [];
+  for (var i = 0; i < cards.length; i++) { nameList.push(cards[i].querySelector('.media-name').textContent); }
+  if (nameList.length === 0) { return; }
+  pbBusy(buttonEl, true);
+  var next = function(j) {
+    if (j >= nameList.length) {
+      // The pages offer the versions once they are built again.
+      pbPostJson('/rebuild', {}).then(function() { window.location.reload(); },
+                                      function() { window.location.reload(); });
+      return;
+    }
+    pbStatus('media-library-state', t('js_media_making_sizes').replace('{i}', j + 1).replace('{n}', nameList.length));
+    makeImageSizes('/media/' + nameList[j]).then(function() { next(j + 1); });
+  };
+  next(0);
 }
 
 function sendFile(file, stateId) {
@@ -1265,6 +1362,7 @@ function applyImportedDocx(resultValue) {
     titleField.value = resultValue.title;
   }
   quill.root.innerHTML = resultValue.content;
+  makeSizesForContent(quill.root);
   // Writing innerHTML puts the HTML in the page but leaves Quill's own
   // document model stale. update() makes it scan the new DOM now, so the
   // imported tables are recognised as rawHTML blots immediately instead of
@@ -3840,13 +3938,16 @@ function uploadToLibrary(fieldEl) {
       return;
     }
     pbStatus('media-library-state', t('js_media_uploading').replace('{i}', idx + 1).replace('{n}', file.length));
-    var pronto = video ? Promise.resolve(chosen) : resizeImageBeforeUpload(chosen, pbPage('max_image_width', 1600));
-    pronto
+    var ready = video ? Promise.resolve(chosen) : resizeImageBeforeUpload(chosen, pbPage('max_image_width', 1600));
+    ready
       .then(function(toSend) { return sendFile(toSend, 'media-library-state'); })
       .then(function(address) {
-        if (address) { loaded++; }
-        nextItem(idx + 1);
-      });
+        if (!address) { return null; }
+        loaded++;
+        // The page reloads after the last file: the versions are made first.
+        return video ? null : makeImageSizes(address);
+      })
+      .then(function() { nextItem(idx + 1); });
   };
   if (file.length > 0) {
     pbBusy(buttonEl, true);

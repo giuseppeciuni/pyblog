@@ -20,7 +20,7 @@ import urllib.parse
 import threading
 from datetime import datetime, timezone
 
-from core import newsletter, render
+from core import media_library, newsletter, render
 from core.articles import (articles_visible_in_language, card_slug,
                            collect_series, collect_tags, excerpt_from_html,
                            extract_article_tags, html_content_is_empty,
@@ -213,6 +213,54 @@ def captioned_figures(html_content_value):
     return CAPTIONED_MEDIA.sub(figure, html_content_value)
 
 
+# The width a picture takes on the page, for the browser choosing among its
+# lighter versions: the text column (720 pixels, all the screen on a phone)
+# and the thumbnails of the lists (260 pixels, all the screen on a phone).
+SIZES_CONTENT = "(max-width: 760px) 100vw, 720px"
+SIZES_THUMBNAIL = "(max-width: 700px) 100vw, 260px"
+# An uploaded picture's name in its address, relative or with the domain.
+OWN_MEDIA_SOURCE = re.compile(r"^(?:https?://[^/]+)?/media/([A-Za-z0-9][A-Za-z0-9._-]*)$")
+IMAGE_TAG = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
+IMAGE_ATTRIBUTE = re.compile(r'\b(src|srcset|width)="([^"]*)"', re.IGNORECASE)
+
+
+def responsive_attributes(src, sizes):
+    """
+    srcset and sizes for one of our pictures that has lighter versions, or
+    nothing. The src stays the picture itself: it is what a browser that
+    cannot use the WebP versions, a feed reader or a social network takes.
+    """
+    match = OWN_MEDIA_SOURCE.match((src or "").strip())
+    if match is None:
+        return ""
+    widths = media_library.sized_widths(match.group(1))
+    if not widths:
+        return ""
+    srcset = ", ".join(f"/media/{media_library.SIZES_FOLDER}/{match.group(1)}/{w}.webp {w}w" for w in widths)
+    return f' srcset="{srcset}" sizes="{sizes}"'
+
+
+def responsive_images(html_content_value):
+    """
+    Offer the lighter versions of every picture of a piece of content. A
+    picture the author made smaller in the editor (width="300") says so in
+    sizes, and the browser takes a smaller version still.
+    """
+    def offer(match):
+        tag = match.group(0)
+        values = {k.lower(): v for k, v in IMAGE_ATTRIBUTE.findall(tag)}
+        if "srcset" in values:
+            return tag
+        sizes = SIZES_CONTENT
+        if values.get("width", "").isdigit() and int(values["width"]) < 720:
+            sizes = f"(max-width: 760px) 100vw, {int(values['width'])}px"
+        extra = responsive_attributes(values.get("src", ""), sizes)
+        if extra == "":
+            return tag
+        return tag[:4] + extra + tag[4:]
+    return IMAGE_TAG.sub(offer, html_content_value)
+
+
 def add_lazy_loading(html_content_value):
     """
     Add loading="lazy" to every image that does not already have it.
@@ -230,6 +278,7 @@ def add_lazy_loading(html_content_value):
         return ""
     html_content_value = absolute_image_sources(html_content_value)
     html_content_value = captioned_figures(html_content_value)
+    html_content_value = responsive_images(html_content_value)
     return LAZY_IMAGE_PATTERN.sub(r'<img\1 loading="lazy">', html_content_value)
 
 
@@ -1839,8 +1888,8 @@ def article_thumbnail(art):
     """
     image_url = media_url(art.get("image", ""))
     if image_url != "":
-        return ('<img class="art-thumb-img" src="' + esc(image_url)
-                + '" alt="" loading="lazy">')
+        return ('<img class="art-thumb-img" src="' + esc(image_url) + '"'
+                + responsive_attributes(image_url, SIZES_THUMBNAIL) + ' alt="" loading="lazy">')
     return '<span class="art-tile">' + esc(article_tile_label(art)) + "</span>"
 
 
@@ -2251,6 +2300,7 @@ def generate_article_page(art, language="it", all_articles=None):
             cover_block = render.render(
                 "public/article_cover.html",
                 url=esc(cover_url),
+                responsive=responsive_attributes(cover_url, SIZES_CONTENT),
                 alt=esc(title_value),
                 title_zoom=esc(T("zoom_picture", language)),
             )

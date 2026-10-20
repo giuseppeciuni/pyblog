@@ -131,8 +131,9 @@ def test_page():
         finally:
             server.MEDIA_BATCH = saved_batch
         check("una libreria grande mostra un blocco alla volta: le schede dopo il primo partono nascoste",
-              paged.count('<li class="media-card"') == 4 and paged.count('data-where="0" hidden>')
-              + paged.count('data-where="1" hidden>') + paged.count('data-where="2" hidden>') == 1)
+              paged.count('<li class="media-card"') == 4
+              and len([line for line in paged.splitlines()
+                       if '<li class="media-card"' in line and line.endswith(" hidden>")]) == 1)
         check("con il pulsante per gli altri e la misura del blocco per lo script",
               'id="media-library-more"' in paged and '"media_batch": 3' in paged)
         check("il nome arriva al JavaScript senza virgolette in più",
@@ -214,8 +215,46 @@ def test_duplicates():
         folder.cleanup()
 
 
+def test_sizes():
+    print("\nle versioni leggere delle immagini")
+    lib = Library()
+    from core import build
+    try:
+        webp = b"RIFF" + b"\x00" * 4 + b"WEBP" + b"\x00" * 20
+        check("una versione WebP di un'immagine che c'è si salva",
+              media_library.save_size("foto.png", 480, webp)
+              and (media_library.MEDIA_DIR / "_sizes" / "foto.png" / "480.webp").is_file())
+        media_library.save_size("foto.png", 960, webp)
+        check("si rifiuta ciò che non è WebP", not media_library.save_size("foto.png", 480, PNG))
+        check("e le versioni di un file che non c'è, o di un nome che porta altrove",
+              not media_library.save_size("manca.png", 480, webp)
+              and not media_library.save_size("../foto.png", 480, webp)
+              and not media_library.save_size("video.mp4", 480, webp))
+        check("e le larghezze assurde", not media_library.save_size("foto.png", 99999, webp)
+              and not media_library.save_size("foto.png", "480", webp))
+        check("le larghezze si leggono in ordine", media_library.sized_widths("foto.png") == [480, 960])
+        names = [m["name"] for m in media_library.media_files()]
+        check("la cartella delle versioni non compare tra i file", "_sizes" not in names, str(names))
+        content = build.responsive_images('<p><img src="/media/foto.png" width="300"></p>'
+                                          '<p><img src="https://example.com/x.png"></p>')
+        check("la pagina offre le versioni in srcset, con la misura dell'immagine nell'editor",
+              'srcset="/media/_sizes/foto.png/480.webp 480w, /media/_sizes/foto.png/960.webp 960w"' in content
+              and 'sizes="(max-width: 760px) 100vw, 300px"' in content, content)
+        check("un'immagine di un altro sito resta com'è", '<img src="https://example.com/x.png">' in content)
+        check("anche con l'indirizzo completo del sito",
+              "srcset=" in build.responsive_attributes("https://www.ciunix.com/media/foto.png", "720px"))
+        media_library.delete_media(["foto.png"])
+        check("eliminando l'immagine se ne vanno anche le versioni",
+              not (media_library.MEDIA_DIR / "_sizes" / "foto.png").exists())
+    finally:
+        lib.close()
+    check("il caricamento delle versioni passa dalla rotta di sempre, già in nginx",
+          "size_of" in pathlib.Path(server.__file__).read_text())
+
+
 def main():
     test_list_and_uses()
+    test_sizes()
     test_deleting()
     test_page()
     test_duplicates()

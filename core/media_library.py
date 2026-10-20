@@ -37,6 +37,59 @@ MEDIA_REFERENCE = re.compile(r"/media/([A-Za-z0-9._-]+)")
 # A name the library will act on: the names uploads are saved under.
 SAFE_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
+# The lighter versions of a picture: WebP at a few widths, made by the
+# browser when the picture is uploaded (Python alone cannot re-encode a JPEG
+# or a PNG) and kept in media/_sizes/<name>/<width>.webp. The pages offer
+# them in srcset, so a phone downloads a 480-pixel picture, not a
+# 1600-pixel one. The folder name cannot be the name of an upload (those
+# start with a letter or a digit), and it is not in the backups: the
+# versions can always be made again from the picture.
+SIZES_FOLDER = "_sizes"
+MAX_SIZE_WIDTH = 2000
+# The pictures the browser can make lighter versions of.
+RESIZABLE = (".jpg", ".jpeg", ".png", ".webp")
+
+
+def can_have_sizes(name):
+    """Tell whether lighter versions of this file can be made."""
+    return name.lower().endswith(RESIZABLE)
+
+
+def sizes_folder(name):
+    """The folder of the lighter versions of a picture."""
+    return MEDIA_DIR / SIZES_FOLDER / name
+
+
+def sized_widths(name):
+    """The widths a picture has lighter versions at, smallest first."""
+    if SAFE_NAME.fullmatch(name or "") is None:
+        return []
+    folder = sizes_folder(name)
+    if not folder.is_dir():
+        return []
+    return sorted(int(p.stem) for p in folder.glob("*.webp") if p.stem.isdigit())
+
+
+def save_size(name, width, data):
+    """
+    Keep a lighter version of an uploaded picture. Only a WebP, of a picture
+    that is in the media folder, at a sensible width: anything else is
+    refused, so this door cannot be used to put other files on the site.
+    Return True when it was saved.
+    """
+    if SAFE_NAME.fullmatch(name or "") is None or not can_have_sizes(name):
+        return False
+    if not (MEDIA_DIR / name).is_file():
+        return False
+    if not isinstance(width, int) or width < 16 or width > MAX_SIZE_WIDTH:
+        return False
+    if len(data) < 12 or len(data) > 10 * 1024 * 1024 or data[:4] != b"RIFF" or data[8:12] != b"WEBP":
+        return False
+    folder = sizes_folder(name)
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / f"{width}.webp").write_bytes(data)
+    return True
+
 
 def media_files():
     """Every uploaded file, newest first: name, kind, size and date."""
@@ -49,7 +102,9 @@ def media_files():
         kind, _ = upload_kind(path_value.name)
         stat = path_value.stat()
         found.append({"name": path_value.name, "kind": kind or "other",
-                      "size": stat.st_size, "date": datetime.fromtimestamp(stat.st_mtime)})
+                      "size": stat.st_size, "date": datetime.fromtimestamp(stat.st_mtime),
+                      "resizable": can_have_sizes(path_value.name),
+                      "sized": sized_widths(path_value.name)})
     return sorted(found, key=lambda m: (m["date"], m["name"]), reverse=True)
 
 
@@ -169,6 +224,8 @@ def delete_media(names):
         shutil.move(str(path_value), str(target))
         # The move keeps the upload date; the month in the trash starts now.
         os.utime(target, None)
+        # Its lighter versions go with it: they can be made again.
+        shutil.rmtree(sizes_folder(name), ignore_errors=True)
         deleted.append(name)
     empty_trash()
     return deleted

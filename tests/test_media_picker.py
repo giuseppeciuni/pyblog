@@ -49,7 +49,7 @@ def test_items():
         by_name = {item["name"]: item for item in result["items"]}
         check("each file comes with its address, its kind and its uses",
               by_name["photo.png"] == {"name": "photo.png", "url": "/media/photo.png", "kind": "image",
-                                       "size": "1 KB", "used": 1}
+                                       "size": "1 KB", "used": 1, "resizable": True, "sized": False}
               and by_name["clip.mp4"]["kind"] == "video" and by_name["clip.mp4"]["used"] == 0,
               str(by_name))
     finally:
