@@ -2205,7 +2205,7 @@ def looks_like_docx(binary_data):
 
 def notes_heading_for_site():
     """The heading of the notes section, in the language the articles are written in."""
-    return T("docx_note_titolo", main_language())
+    return T("docx_note_title", main_language())
 
 
 def convert_docx(binary_data, fallback_title="Documento importato", notes_heading=None):

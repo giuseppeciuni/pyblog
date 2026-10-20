@@ -201,7 +201,7 @@ def test_exported_i18n_keys():
     # that exist, which also keeps out the createElement('div') lookalikes.
     used = set()
     for key in re.findall(r"\bt\('([a-z0-9_]+)'\)", source):
-        if key.startswith(("js_", "admin_", "seo_", "err_", "img_", "consenso_")):
+        if key.startswith(("js_", "admin_", "seo_", "err_", "img_", "consent_")):
             used.add(key)
     exported = set(server.JS_TRANSLATION_KEYS)
     exported.add("js_home_intro_placeholder_it")

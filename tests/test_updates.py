@@ -109,7 +109,7 @@ def test_updating():
         before = git(repos.server, "rev-parse", "HEAD")
         outcome = updates.update()
         check("un codice che non parte non viene installato", outcome["ok"] is False
-              and outcome["error"] == "upd_fallito", str(outcome))
+              and outcome["error"] == "upd_failed_upd", str(outcome))
         check("e il checkout torna dov'era", git(repos.server, "rev-parse", "HEAD") == before
               and (repos.server / "modulo.py").read_text() == "VALORE = 2\n")
 
@@ -117,14 +117,14 @@ def test_updating():
         (repos.server / "modulo.py").write_text("VALORE = 'a mano'\n")
         outcome = updates.update()
         check("un file modificato a mano ferma l'aggiornamento, senza toccarlo",
-              outcome == {"ok": False, "error": "upd_modifiche_locali"}
+              outcome == {"ok": False, "error": "upd_changes_made_local_edits"}
               and "a mano" in (repos.server / "modulo.py").read_text(), str(outcome))
         git(repos.server, "checkout", "--quiet", "--", "modulo.py")
         (repos.server / "locale.py").write_text("X = 1\n")
         git(repos.server, "add", "locale.py")
         git(repos.server, "-c", "user.name=T", "-c", "user.email=t@t", "commit", "--quiet", "-m", "locale")
         check("anche un commit fatto sul server lo ferma",
-              updates.update() == {"ok": False, "error": "upd_avanti"})
+              updates.update() == {"ok": False, "error": "upd_ahead"})
     finally:
         repos.close()
 
@@ -158,7 +158,7 @@ def test_pages():
     page_html = server.updates_page("TOKEN")
     check("il menu porta agli aggiornamenti, con la versione",
           'aria-current="page" href="/updates"' in page_html
-          and server.T("admin_versione", "it").replace("{v}", updates.__version__) in page_html)
+          and server.T("admin_version", "it").replace("{v}", updates.__version__) in page_html)
     check("il controllo automatico si spegne con la sua casella",
           'id="controllo-automatico"' in page_html and 'for="controllo-automatico"' in page_html)
     article_list = server.admin_page([], "TOKEN")
@@ -173,7 +173,7 @@ def test_pages():
         handler = server.Handler.__new__(server.Handler)
         check("un aggiornamento riuscito riavvia PyBlog",
               handler._api_update({}) == {"ok": True, "from": "aaa", "to": "bbb"} and len(restarts) == 1)
-        updates.update = lambda save_backup=None: {"ok": False, "error": "upd_modifiche_locali"}
+        updates.update = lambda save_backup=None: {"ok": False, "error": "upd_changes_made_local_edits"}
         outcome = handler._api_update({})
         check("uno fermato non riavvia, e dice perché",
               outcome["ok"] is False and "a mano" in outcome["error"] and len(restarts) == 1)

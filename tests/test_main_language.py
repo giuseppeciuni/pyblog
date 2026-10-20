@@ -143,14 +143,14 @@ def test_editor_labels():
     print("\netichette dell'editor")
     CONFIG["language"] = "it"
     check("sito italiano, admin italiano",
-          server.TL("admin_versione_inglese", "it") == "Versione in inglese")
+          server.TL("admin_version_english", "it") == "Versione in inglese")
     CONFIG["language"] = "en"
     check("sito inglese, admin italiano",
-          server.TL("admin_versione_inglese", "it") == "Versione in italiano")
+          server.TL("admin_version_english", "it") == "Versione in italiano")
     check("sito inglese, admin inglese",
-          server.TL("admin_versione_inglese", "en") == "Italian version")
+          server.TL("admin_version_english", "en") == "Italian version")
     check("il pulsante di traduzione nomina la lingua di partenza",
-          server.TL("admin_traduci_dall_italiano", "it") == "Traduci automaticamente dall'inglese")
+          server.TL("admin_translate_from_the_italian", "it") == "Traduci automaticamente dall'inglese")
     check("anche le stringhe del JavaScript",
           "inglese" in server.js_translations("it")["js_write_intro_first"])
     editor = server.editor_page(dict(ARTICLE_FIXTURE), "TOKEN")

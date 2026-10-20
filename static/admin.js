@@ -100,7 +100,7 @@ function pbToast(messaggio, kind) {
   chiudi.type = 'button';
   chiudi.className = 'btn-close btn-close-white me-2 m-auto';
   chiudi.setAttribute('data-bs-dismiss', 'toast');
-  chiudi.setAttribute('aria-label', t('admin_chiudi'));
+  chiudi.setAttribute('aria-label', t('admin_close'));
   riga.appendChild(corpo);
   riga.appendChild(chiudi);
   toast.appendChild(riga);
@@ -858,7 +858,7 @@ function imageDetailsDialog() {
   var cancel = document.createElement('button');
   cancel.type = 'button';
   cancel.className = 'pulsante';
-  cancel.textContent = t('admin_annulla');
+  cancel.textContent = t('admin_cancel');
   cancel.addEventListener('click', function() { dialog.close(); });
   actions.appendChild(save);
   actions.appendChild(cancel);
@@ -950,7 +950,7 @@ function mediaPickerDialog() {
   var close = document.createElement('button');
   close.type = 'button';
   close.className = 'pulsante pulsante-piccolo';
-  close.textContent = t('admin_chiudi');
+  close.textContent = t('admin_close');
   close.addEventListener('click', function() { dialog.close(); });
   header.appendChild(title);
   header.appendChild(close);
@@ -1732,9 +1732,9 @@ function openTableEditor(istanzaQuill, blocco, tabellaOriginale) {
   var barra = document.createElement('div');
   barra.className = 'table-editor-bar';
   barra.appendChild(tableEditorButton(t('admin_table_add_row'), function() { tableAddRow(copia); }));
-  barra.appendChild(tableEditorButton(t('admin_table_del_row'), function() { tableRemoveRow(copia); }));
+  barra.appendChild(tableEditorButton(t('admin_table_of_the_row'), function() { tableRemoveRow(copia); }));
   barra.appendChild(tableEditorButton(t('admin_table_add_col'), function() { tableAddColumn(copia); }));
-  barra.appendChild(tableEditorButton(t('admin_table_del_col'), function() { tableRemoveColumn(copia); }));
+  barra.appendChild(tableEditorButton(t('admin_table_of_the_col'), function() { tableRemoveColumn(copia); }));
   finestra.appendChild(barra);
 
   // Save and cancel.
@@ -2052,7 +2052,7 @@ function changeStatus(pulsante, slug, nuovoStato) {
 function deleteArticle(slug, titolo) {
   pbConfirm(t('js_delete_title'),
             t('js_delete_body').replace('{title}', titolo),
-            t('admin_elimina'), 'danger',
+            t('admin_delete'), 'danger',
             function() {
     pbPostJson('/delete', { slug: slug })
       .then(function(res) {
@@ -2310,7 +2310,7 @@ function markEditorDirty() {
   updateGroupSummaries();
   var riga = document.getElementById('autosave-status');
   if (riga && !riga.classList.contains('pb-autosave-error')) {
-    riga.textContent = t('js_modifiche_da_salvare');
+    riga.textContent = t('js_changes_made_from_to_save');
   }
 }
 
@@ -2874,7 +2874,7 @@ function updateStatePanel(indirizzo) {
   if (pannello) { pannello.setAttribute('data-stato', statoArticolo); }
   var quando = document.getElementById('programmato-quando');
   if (quando && statoArticolo === 'scheduled') {
-    quando.textContent = t('admin_esce_il').replace('{date}', formatMoment(scheduledMoment()));
+    quando.textContent = t('admin_goes_out_the').replace('{date}', formatMoment(scheduledMoment()));
   }
   toggleScheduleForm(null, false);
   var link = document.getElementById('link-online');
@@ -2909,7 +2909,7 @@ function updateShareLinks() {
 // save with a status: what changes is the status and what the author is told.
 
 function saveDraft(pulsante) {
-  saveWithStatus('draft', pulsante, t('js_bozza_salvata'));
+  saveWithStatus('draft', pulsante, t('js_draft_saved_f'));
 }
 
 /* --- Scheduled publishing -------------------------------------------------- */
@@ -2979,26 +2979,26 @@ function toggleScheduleForm(pulsante, apri) {
 function scheduleArticle(pulsante) {
   var titolo = document.getElementById('title').value.trim();
   if (titolo === '') {
-    pbToast(t('js_titolo_per_pubblicare'), 'warning');
+    pbToast(t('js_title_for_to_publish'), 'warning');
     document.getElementById('title').focus();
     return;
   }
   var momento = scheduledMoment();
   if (momento === '' || new Date(momento).getTime() <= Date.now()) {
-    pbToast(t('js_programma_data'), 'warning');
+    pbToast(t('js_schedule_data'), 'warning');
     document.getElementById('publish_at').focus();
     return;
   }
   var quando = formatMoment(momento);
-  pbConfirm(t('js_programma_titolo'),
-            t('js_programma_corpo').replace('{title}', titolo).replace('{date}', quando),
-            t('admin_programma_conferma'), 'primary', function() {
-    saveWithStatus('scheduled', pulsante, t('js_programmato').replace('{date}', quando));
+  pbConfirm(t('js_schedule_title'),
+            t('js_schedule_body').replace('{title}', titolo).replace('{date}', quando),
+            t('admin_schedule_confirm'), 'primary', function() {
+    saveWithStatus('scheduled', pulsante, t('js_scheduled').replace('{date}', quando));
   });
 }
 
 function saveScheduled(pulsante) {
-  saveWithStatus('scheduled', pulsante, t('js_modifiche_salvate'));
+  saveWithStatus('scheduled', pulsante, t('js_changes_made_saved_pl'));
 }
 
 function publishNow(pulsante) {
@@ -3006,11 +3006,11 @@ function publishNow(pulsante) {
 }
 
 function cancelSchedule(pulsante) {
-  saveWithStatus('draft', pulsante, t('js_programmazione_annullata'));
+  saveWithStatus('draft', pulsante, t('js_scheduling_cancelled'));
 }
 
 function updateArticle(pulsante) {
-  saveWithStatus('published', pulsante, t('js_aggiornato'));
+  saveWithStatus('published', pulsante, t('js_updated'));
 }
 
 // Publishing puts the article on the homepage and in the RSS feed, where a
@@ -3018,21 +3018,21 @@ function updateArticle(pulsante) {
 function publishArticle(pulsante) {
   var titolo = document.getElementById('title').value.trim();
   if (titolo === '') {
-    pbToast(t('js_titolo_per_pubblicare'), 'warning');
+    pbToast(t('js_title_for_to_publish'), 'warning');
     document.getElementById('title').focus();
     return;
   }
-  pbConfirm(t('js_pubblica_titolo'), t('js_pubblica_corpo').replace('{title}', titolo),
-            t('admin_pubblica'), 'primary', function() {
-    saveWithStatus('published', pulsante, t('js_pubblicato'));
+  pbConfirm(t('js_publish_title'), t('js_publish_body').replace('{title}', titolo),
+            t('admin_publish'), 'primary', function() {
+    saveWithStatus('published', pulsante, t('js_published'));
   });
 }
 
 function unpublishArticle(pulsante) {
   var titolo = document.getElementById('title').value.trim();
-  pbConfirm(t('js_ritira_titolo'), t('js_ritira_corpo').replace('{title}', titolo),
-            t('admin_ritira'), 'danger', function() {
-    saveWithStatus('draft', pulsante, t('js_ritirato'));
+  pbConfirm(t('js_withdraw_title'), t('js_withdraw_body').replace('{title}', titolo),
+            t('admin_withdraw'), 'danger', function() {
+    saveWithStatus('draft', pulsante, t('js_withdrawn'));
   });
 }
 
@@ -3054,8 +3054,8 @@ function saveWithStatus(stato, pulsante, messaggio) {
       updateStatePanel(res.url);
       markEditorClean();
       var ora = t('js_autosaved_at');
-      if (stato === 'published') { ora = t('js_aggiornato_alle'); }
-      if (stato === 'scheduled') { ora = t('js_salvato_alle'); }
+      if (stato === 'published') { ora = t('js_updated_at'); }
+      if (stato === 'scheduled') { ora = t('js_saved_at'); }
       setAutosaveIndicator(ora.replace('{time}', currentTime()), false);
       // The address bar still says "new article" after the first save of a
       // new one; correcting it means a reload would reopen the right article.
@@ -3108,7 +3108,7 @@ function deleteItem() {
   var titolo = document.getElementById('title').value;
   pbConfirm(t('js_delete_title'),
             t('js_delete_body').replace('{title}', titolo),
-            t('admin_elimina'), 'danger',
+            t('admin_delete'), 'danger',
             function() {
     // slugOriginale, not the slug the page was opened with: after a rename
     // the old address no longer exists, and deleting it would delete nothing.
@@ -3418,8 +3418,8 @@ function watchConfigChanges() {
   window.addEventListener('beforeunload', function(evento) {
     if (!configModificata) { return undefined; }
     evento.preventDefault();
-    evento.returnValue = t('js_impostazioni_non_salvate');
-    return t('js_impostazioni_non_salvate');
+    evento.returnValue = t('js_settings_page_not_saved_pl');
+    return t('js_settings_page_not_saved_pl');
   });
 }
 
@@ -3440,13 +3440,13 @@ function updateSaveBar() {
   document.getElementById('annulla-modifiche').hidden = !configModificata;
   document.getElementById('salva-nota').hidden = configModificata;
   document.getElementById('save-status').textContent =
-    configModificata ? t('js_modifiche_da_salvare') : '';
+    configModificata ? t('js_changes_made_from_to_save') : '';
 }
 
 // Throws the changes away by loading the page again, as it was saved.
 function discardConfigChanges() {
-  pbConfirm(t('js_annulla_modifiche_titolo'), t('js_annulla_modifiche_corpo'),
-            t('admin_annulla_modifiche'), 'danger', function() {
+  pbConfirm(t('js_cancel_changes_made_title'), t('js_cancel_changes_made_body'),
+            t('admin_cancel_changes_made'), 'danger', function() {
     configModificata = false;
     window.location.reload();
   });
@@ -3550,7 +3550,7 @@ function showUpdateNotice() {
 
 function checkUpdates(forza) {
   var riga = document.getElementById('aggiornamenti-stato');
-  riga.textContent = t('upd_controllo');
+  riga.textContent = t('upd_checking');
   fetch('/updates-status' + (forza ? '?force=1' : ''), { credentials: 'same-origin', cache: 'no-store' })
     .then(function(risposta) { return risposta.json(); })
     .then(function(stato) {
@@ -3571,10 +3571,10 @@ function checkUpdates(forza) {
 }
 
 function installUpdate(pulsante) {
-  pbConfirm(t('upd_conferma_titolo'), t('upd_conferma_corpo'), t('admin_aggiorna_ora'), 'primary', function() {
+  pbConfirm(t('upd_confirm_title'), t('upd_confirm_body'), t('admin_update_now'), 'primary', function() {
     var riga = document.getElementById('aggiornamenti-stato');
     pbBusy(pulsante, true);
-    riga.textContent = t('upd_installazione');
+    riga.textContent = t('upd_installation');
     pbPostJson('/update', {})
       .then(function(esito) {
         if (esito.ok !== true) {
@@ -3582,7 +3582,7 @@ function installUpdate(pulsante) {
           riga.textContent = esito.error;
           return;
         }
-        riga.textContent = t('upd_riavvio');
+        riga.textContent = t('upd_restarting');
         waitForRestart();
       })
       .catch(function() {
@@ -3602,7 +3602,7 @@ function waitForRestart() {
     fetch('/pyblog-ping', { cache: 'no-store' })
       .then(function(risposta) {
         if (!risposta.ok) { return Promise.reject(); }
-        document.getElementById('aggiornamenti-stato').textContent = t('upd_riavviato');
+        document.getElementById('aggiornamenti-stato').textContent = t('upd_restarted');
         setTimeout(function() { window.location.href = '/login'; }, 1500);
       })
       .catch(function() {
@@ -3644,7 +3644,7 @@ function filterMedia(pulsante) {
 }
 
 function copyMediaAddress(indirizzo) {
-  var fatto = function() { pbToast(t('js_media_copiato'), 'success'); };
+  var fatto = function() { pbToast(t('js_media_copied'), 'success'); };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(indirizzo).then(fatto, function() { window.prompt('', indirizzo); });
   } else {
@@ -3665,13 +3665,13 @@ function sendMediaDeletion(pulsante, nomi) {
     })
     .catch(function() {
       pbBusy(pulsante, false);
-      pbToast(t('admin_errore_salvataggio'), 'danger');
+      pbToast(t('admin_failure_saving'), 'danger');
     });
 }
 
 function deleteMedia(pulsante, nome, usi) {
-  var corpo = usi > 0 ? t('js_media_elimina_usato').replace('{n}', usi) : t('js_media_elimina_corpo');
-  pbConfirm(t('js_media_elimina_titolo'), nome + '\n\n' + corpo, t('admin_elimina'), 'danger',
+  var corpo = usi > 0 ? t('js_media_delete_used').replace('{n}', usi) : t('js_media_delete_body');
+  pbConfirm(t('js_media_delete_title'), nome + '\n\n' + corpo, t('admin_delete'), 'danger',
             function() { sendMediaDeletion(pulsante, [nome]); });
 }
 
@@ -3682,8 +3682,8 @@ function deleteUnusedMedia(pulsante) {
     nomi.push(schede[i].querySelector('.media-nome').textContent);
   }
   if (nomi.length === 0) { return; }
-  pbConfirm(t('js_media_elimina_titolo'), t('js_media_pulizia_corpo').replace('{n}', nomi.length),
-            t('admin_elimina'), 'danger', function() { sendMediaDeletion(pulsante, nomi); });
+  pbConfirm(t('js_media_delete_title'), t('js_media_cleanup_body').replace('{n}', nomi.length),
+            t('admin_delete'), 'danger', function() { sendMediaDeletion(pulsante, nomi); });
 }
 
 // The files go one after the other, through the same door as the editor:
@@ -3705,7 +3705,7 @@ function uploadToLibrary(campo) {
       prossimo(indice + 1);
       return;
     }
-    pbStatus('libreria-stato', t('js_media_caricamento').replace('{i}', indice + 1).replace('{n}', file.length));
+    pbStatus('libreria-stato', t('js_media_uploading').replace('{i}', indice + 1).replace('{n}', file.length));
     var pronto = video ? Promise.resolve(scelto) : resizeImageBeforeUpload(scelto, pbPage('max_image_width', 1600));
     pronto
       .then(function(daInviare) { return inviaFile(daInviare, 'libreria-stato'); })
@@ -3727,37 +3727,37 @@ function uploadToLibrary(campo) {
 function restoreBackup(pulsante) {
   var campo = document.getElementById('file-ripristino');
   if (!campo.files || campo.files.length === 0) {
-    pbStatus('ripristino-stato', t('js_scegli_backup'));
+    pbStatus('ripristino-stato', t('js_choose_backup'));
     return;
   }
   var file = campo.files[0];
-  pbConfirm(t('js_ripristino_titolo'), t('js_ripristino_corpo'), t('js_ripristino_conferma'),
+  pbConfirm(t('js_restoring_title'), t('js_restoring_body'), t('js_restoring_confirm'),
             'danger', function() {
     pbBusy(pulsante, true);
-    pbStatus('ripristino-stato', t('js_ripristino_in_corso'));
+    pbStatus('ripristino-stato', t('js_restoring_in_progress'));
     pbFetch('/restore', { method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file })
       .then(function(risposta) { return risposta.json(); })
       .then(function(esito) { showRestoreResult(pulsante, esito); })
       .catch(function() {
         pbBusy(pulsante, false);
         pbStatus('ripristino-stato', '');
-        pbToast(t('js_ripristino_errore_rete'), 'danger');
+        pbToast(t('js_restoring_failure_rete'), 'danger');
       });
   });
 }
 
 // One of the automatic backups, to undo a restore.
 function restoreAutomatic(pulsante, nome) {
-  pbConfirm(t('js_ripristino_titolo'), t('js_ripristino_automatico_corpo'), t('js_ripristino_conferma'),
+  pbConfirm(t('js_restoring_title'), t('js_restoring_automatic_body'), t('js_restoring_confirm'),
             'danger', function() {
     pbBusy(pulsante, true);
-    pbStatus('ripristino-stato', t('js_ripristino_in_corso'));
+    pbStatus('ripristino-stato', t('js_restoring_in_progress'));
     pbPostJson('/restore-automatic', { file: nome })
       .then(function(esito) { showRestoreResult(pulsante, esito); })
       .catch(function() {
         pbBusy(pulsante, false);
         pbStatus('ripristino-stato', '');
-        pbToast(t('js_ripristino_errore_rete'), 'danger');
+        pbToast(t('js_restoring_failure_rete'), 'danger');
       });
   });
 }
@@ -3769,9 +3769,9 @@ function showRestoreResult(pulsante, esito) {
     pbToast(t('js_error_prefix') + (esito && esito.error ? esito.error : ''), 'danger');
     return;
   }
-  var testo = t('js_ripristino_fatto').replace('{a}', esito.articles).replace('{m}', esito.media);
+  var testo = t('js_restoring_made').replace('{a}', esito.articles).replace('{m}', esito.media);
   if (esito.ignored && esito.ignored.length > 0) {
-    testo = testo + ' ' + t('js_ripristino_ignorati').replace('{n}', esito.ignored.length);
+    testo = testo + ' ' + t('js_restoring_ignored').replace('{n}', esito.ignored.length);
   }
   pbStatus('ripristino-stato', testo);
   pbToast(testo, 'success');
@@ -3841,8 +3841,8 @@ function moveProject(pulsante, passo) {
 
 function removeProject(pulsante) {
   var card = pulsante.closest('.progetto-config');
-  var nome = card.querySelector('.progetto-nome').value.trim() || t('admin_progetto_senza_nome');
-  pbConfirm(t('admin_progetto_elimina'), nome, t('admin_progetto_elimina'), 'danger',
+  var nome = card.querySelector('.progetto-nome').value.trim() || t('admin_project_without_name');
+  pbConfirm(t('admin_project_delete'), nome, t('admin_project_delete'), 'danger',
     function() {
       card.remove();
       updateProjectsNote();
@@ -4024,9 +4024,9 @@ function selectedLabel(tendina) {
 }
 
 function consentLabel(valore) {
-  if (valore === 'statistics') { return t('consenso_statistics'); }
-  if (valore === 'marketing') { return t('consenso_marketing'); }
-  return t('consenso_necessary');
+  if (valore === 'statistics') { return t('consent_statistics'); }
+  if (valore === 'marketing') { return t('consent_marketing'); }
+  return t('consent_necessary');
 }
 
 // The line under the name of a folded card, rewritten while the fields
@@ -4034,7 +4034,7 @@ function consentLabel(valore) {
 // which pages, which consent it waits for.
 function updateCardSummary(card) {
   var nome = card.querySelector('.codice-nome').value.trim();
-  if (nome === '') { nome = t('admin_codice_senza_nome'); }
+  if (nome === '') { nome = t('admin_code_without_name'); }
   card.querySelector('.codice-sommario-nome').textContent = nome;
 
   var posizione = card.querySelector('.codice-posizione');
@@ -4052,7 +4052,7 @@ function updateCardSummary(card) {
 
   var attivo = card.querySelector('.codice-attivo').checked;
   var stato = card.querySelector('.codice-sommario-stato');
-  stato.textContent = attivo ? t('admin_codice_attivo') : t('admin_codice_spento');
+  stato.textContent = attivo ? t('admin_code_active') : t('admin_code_off_m');
   stato.classList.toggle('spento', !attivo);
 }
 
@@ -4090,8 +4090,8 @@ function removeCustomCode(pulsante) {
   var card = pulsante.closest('.codice-config');
   if (card === null) { return; }
   var nome = card.querySelector('.codice-nome').value.trim();
-  if (nome === '') { nome = t('admin_codice_titolo'); }
-  pbConfirm(t('admin_codice_elimina'), nome, t('admin_codice_elimina'), 'danger',
+  if (nome === '') { nome = t('admin_code_title'); }
+  pbConfirm(t('admin_code_delete'), nome, t('admin_code_delete'), 'danger',
     function() {
       card.remove();
       updateCustomCodeNote();
@@ -4143,7 +4143,7 @@ function customCodeData(lista, prefisso) {
 // it in the one shape forma checks.
 function adsensePublisherField() {
   return {
-    etichetta: t('js_modello_campo_pub'),
+    etichetta: t('js_template_field_pub'),
     esempio: 'pub-1234567890123456',
     forma: /^pub-\d{10,20}$/,
     normalizza: function(valore) {
@@ -4165,7 +4165,7 @@ function upperCaseId(valore) {
 function codeTemplates() {
   return {
     ga4: {
-      campi: [{ etichetta: t('js_modello_campo_ga4'), esempio: 'G-ABC123DEF4',
+      campi: [{ etichetta: t('js_template_field_ga4'), esempio: 'G-ABC123DEF4',
                 forma: /^G-[A-Z0-9]{4,15}$/, normalizza: upperCaseId }],
       schede: function(valori, nome) {
         return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'statistics', codice:
@@ -4184,7 +4184,7 @@ function codeTemplates() {
     // <body>. It waits for the statistics consent: the tags it loads are
     // not known here, and the safe side is not to load them uninvited.
     gtm: {
-      campi: [{ etichetta: t('js_modello_campo_gtm'), esempio: 'GTM-ABC1234',
+      campi: [{ etichetta: t('js_template_field_gtm'), esempio: 'GTM-ABC1234',
                 forma: /^GTM-[A-Z0-9]{4,12}$/, normalizza: upperCaseId }],
       schede: function(valori, nome) {
         return [
@@ -4217,7 +4217,7 @@ function codeTemplates() {
     // for it. AdSense ignores its loader when the page already has one.
     adsense_unita: {
       campi: [adsensePublisherField(),
-              { etichetta: t('js_modello_campo_slot'), esempio: '1234567890', forma: /^\d{6,12}$/ }],
+              { etichetta: t('js_template_field_slot'), esempio: '1234567890', forma: /^\d{6,12}$/ }],
       adsTxt: true,
       schede: function(valori, nome) {
         return [{ nome: nome, posizione: 'sidebar', ambito: 'all', consenso: 'marketing', codice:
@@ -4235,7 +4235,7 @@ function codeTemplates() {
       }
     },
     google_ads: {
-      campi: [{ etichetta: t('js_modello_campo_aw'), esempio: 'AW-123456789',
+      campi: [{ etichetta: t('js_template_field_aw'), esempio: 'AW-123456789',
                 forma: /^AW-\d{6,12}$/,
                 normalizza: function(valore) {
                   valore = valore.toUpperCase();
@@ -4256,7 +4256,7 @@ function codeTemplates() {
       }
     },
     meta_pixel: {
-      campi: [{ etichetta: t('js_modello_campo_pixel'), esempio: '1234567890123456',
+      campi: [{ etichetta: t('js_template_field_pixel'), esempio: '1234567890123456',
                 forma: /^\d{10,20}$/ }],
       schede: function(valori, nome) {
         return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'marketing', codice:
@@ -4280,7 +4280,7 @@ function codeTemplates() {
       }
     },
     clarity: {
-      campi: [{ etichetta: t('js_modello_campo_clarity'), esempio: 'abcd1234ef',
+      campi: [{ etichetta: t('js_template_field_clarity'), esempio: 'abcd1234ef',
                 forma: /^[a-z0-9]{6,14}$/,
                 normalizza: function(valore) { return valore.toLowerCase(); } }],
       schede: function(valori, nome) {
@@ -4379,7 +4379,7 @@ function createCodeFromTemplate() {
 
   // Two Google Analytics on the same page count every visit twice.
   if (scelta === 'ga4' && document.getElementById('analytics_id').value.trim() !== '') {
-    pbToast(t('js_modello_ga4_doppio'), 'warning');
+    pbToast(t('js_template_ga4_double'), 'warning');
     return;
   }
 
@@ -4391,7 +4391,7 @@ function createCodeFromTemplate() {
     var valore = campo.value.replace(/\s+/g, '');
     if (definizione.normalizza) { valore = definizione.normalizza(valore); }
     if (!definizione.forma.test(valore)) {
-      pbToast(t('js_modello_non_valido').replace('{campo}', definizione.etichetta)
+      pbToast(t('js_template_not_valid').replace('{campo}', definizione.etichetta)
                                         .replace('{esempio}', definizione.esempio), 'warning');
       campo.focus();
       return;
@@ -4405,9 +4405,9 @@ function createCodeFromTemplate() {
     var card = addCustomCodeCard(schede[s]);
     if (prima === null) { prima = card; }
   }
-  var messaggio = t('js_modello_creato');
+  var messaggio = t('js_template_created');
   if (modello.adsTxt && addAdsTxtLine('google.com, ' + valori[0] + ', DIRECT, f08c47fec0942fa0')) {
-    messaggio = messaggio + '\n' + t('js_modello_ads_txt');
+    messaggio = messaggio + '\n' + t('js_template_ads_txt');
   }
   closeCodeTemplates();
   prima.scrollIntoView({ block: 'center' });
@@ -4425,7 +4425,7 @@ var versioneConsenso = 1;
 function renewConsent() {
   versioneConsenso = versioneConsensoSalvata + 1;
   markConfigDirty();
-  pbToast(t('js_consenso_rinnovato'), 'success');
+  pbToast(t('js_consent_renewed'), 'success');
 }
 
 // The admin address as last saved, and the one to go to after a save that
@@ -4447,7 +4447,7 @@ function checkAdminAddress(pulsante, indirizzo) {
     return;
   }
   if (!/^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?$/.test(indirizzo)) {
-    pbToast(t('js_admin_url_non_valido'), 'danger');
+    pbToast(t('js_admin_url_not_valid'), 'danger');
     return;
   }
   pbBusy(pulsante, true);
@@ -4455,16 +4455,16 @@ function checkAdminAddress(pulsante, indirizzo) {
     .then(function(dati) {
       pbBusy(pulsante, false);
       if (!dati || dati.ok !== true || dati.reaches !== true) { return Promise.reject(); }
-      pbConfirm(t('js_admin_url_conferma_titolo'),
-                t('js_admin_url_conferma_corpo').replace('{indirizzo}', indirizzo),
-                t('js_admin_url_conferma'), 'primary', function() {
+      pbConfirm(t('js_admin_url_confirm_title'),
+                t('js_admin_url_confirm_body').replace('{indirizzo}', indirizzo),
+                t('js_admin_url_confirm'), 'primary', function() {
         adminDaRaggiungere = indirizzo;
         continua();
       });
     })
     .catch(function() {
       pbBusy(pulsante, false);
-      pbToast(t('js_admin_url_irraggiungibile').replace('{indirizzo}', indirizzo), 'danger');
+      pbToast(t('js_admin_url_unreachable').replace('{indirizzo}', indirizzo), 'danger');
     });
 }
 
@@ -4611,14 +4611,14 @@ function saveConfig(pulsante) {
   };
 
   pbBusy(pulsante, true);
-  pbStatus('save-status', t('admin_salvataggio'));
+  pbStatus('save-status', t('admin_saving'));
   pbPostJson('/save-config', config)
     .then(function(res) {
       pbBusy(pulsante, false);
       if (res.ok === true) {
         versioneConsensoSalvata = config.consent.version;
         configModificata = false;
-        pbToast(t('admin_config_salvata'), 'success');
+        pbToast(t('admin_config_saved_f'), 'success');
         adminUrlSalvato = config.admin_url;
         if (adminDaRaggiungere !== '') {
           // The administration now answers only there.
@@ -4634,7 +4634,7 @@ function saveConfig(pulsante) {
     .catch(function() {
       pbBusy(pulsante, false);
       updateSaveBar();
-      pbToast(t('admin_errore_salvataggio'), 'danger');
+      pbToast(t('admin_failure_saving'), 'danger');
     });
 }
 
@@ -4657,13 +4657,13 @@ function saveRawConfig(pulsante) {
   }
 
   pbBusy(pulsante, true);
-  pbStatus('config-raw-status', t('admin_salvataggio'));
+  pbStatus('config-raw-status', t('admin_saving'));
   pbPostJson('/save-config-raw', { content: contenuto })
     .then(function(res) {
       pbBusy(pulsante, false);
       pbStatus('config-raw-status', '');
       if (res.ok === true) {
-        pbToast(t('admin_config_raw_salvata'), 'success');
+        pbToast(t('admin_config_raw_saved_f'), 'success');
         // We update the "original" reference to the newly saved content.
         configRawIniziale = contenuto;
         refreshSettingsPanel();
@@ -4674,7 +4674,7 @@ function saveRawConfig(pulsante) {
     .catch(function() {
       pbBusy(pulsante, false);
       pbStatus('config-raw-status', '');
-      pbToast(t('admin_errore_salvataggio'), 'danger');
+      pbToast(t('admin_failure_saving'), 'danger');
     });
 }
 
@@ -4775,17 +4775,17 @@ function openPointPicker(origine) {
   if (nellEditor) {
     var slug = pbPage('slug', '');
     if (slug === '') {
-      avviso.textContent = t('js_sp_salva_prima');
+      avviso.textContent = t('js_sp_save_first_one');
     } else {
-      opzioni.push({ valore: slug, testo: puntoT('js_sp_articolo', { title: document.getElementById('title').value }) });
+      opzioni.push({ valore: slug, testo: puntoT('js_sp_article', { title: document.getElementById('title').value }) });
     }
   } else {
     opzioni.push({ valore: '', testo: t('js_sp_home') });
     var articoli = pbPage('articoli_punto', []);
     for (var i = 0; i < articoli.length; i++) {
-      opzioni.push({ valore: articoli[i].slug, testo: puntoT('js_sp_articolo', { title: articoli[i].title }) });
+      opzioni.push({ valore: articoli[i].slug, testo: puntoT('js_sp_article', { title: articoli[i].title }) });
     }
-    if (articoli.length === 0) { avviso.textContent = t('js_sp_nessun_articolo'); }
+    if (articoli.length === 0) { avviso.textContent = t('js_sp_no_one_article'); }
   }
   for (var j = 0; j < opzioni.length; j++) {
     var o = document.createElement('option');
@@ -4837,17 +4837,17 @@ function pointPickerWindow() {
       '</div>' +
     '</div>';
   document.body.appendChild(finestra);
-  document.getElementById('sp-titolo').textContent = t('js_sp_titolo');
-  document.getElementById('sp-istruzioni').textContent = t('js_sp_istruzioni');
-  finestra.querySelector('label[for="sp-pagina"]').textContent = t('js_sp_pagina');
-  finestra.querySelector('label[for="sp-elenco"]').textContent = t('js_sp_punto');
-  finestra.querySelector('.sp-dove legend').textContent = t('js_sp_dove');
+  document.getElementById('sp-titolo').textContent = t('js_sp_title');
+  document.getElementById('sp-istruzioni').textContent = t('js_sp_instructions');
+  finestra.querySelector('label[for="sp-pagina"]').textContent = t('js_sp_page');
+  finestra.querySelector('label[for="sp-elenco"]').textContent = t('js_sp_point');
+  finestra.querySelector('.sp-dove legend').textContent = t('js_sp_where');
   var etichette = finestra.querySelectorAll('.sp-dove span');
-  etichette[0].textContent = t('js_pd_prima');
-  etichette[1].textContent = t('js_pd_dopo');
-  document.getElementById('sp-annulla').textContent = t('admin_annulla');
-  document.getElementById('sp-conferma').textContent = t('js_sp_metti');
-  document.getElementById('sp-iframe').title = t('js_sp_titolo');
+  etichette[0].textContent = t('js_pd_first_one');
+  etichette[1].textContent = t('js_pd_after');
+  document.getElementById('sp-annulla').textContent = t('admin_cancel');
+  document.getElementById('sp-conferma').textContent = t('js_sp_put');
+  document.getElementById('sp-iframe').title = t('js_sp_title');
 
   document.getElementById('sp-pagina').addEventListener('change', loadPointPage);
   document.getElementById('sp-elenco').addEventListener('change', function() {
@@ -4892,7 +4892,7 @@ function preparePointPage() {
   elenco.innerHTML = '';
   var vuota = document.createElement('option');
   vuota.value = '';
-  vuota.textContent = t('js_sp_scegli');
+  vuota.textContent = t('js_sp_choose');
   elenco.appendChild(vuota);
   for (var i = 0; i < puntoBlocchi.length; i++) {
     var o = document.createElement('option');
@@ -4988,7 +4988,7 @@ function drawPointMark() {
   var segno = doc.createElement('div');
   segno.className = 'pb-sp-segno';
   var nome = puntoScheda ? puntoScheda.querySelector('.codice-nome').value.trim() : '';
-  segno.textContent = puntoT('js_sp_qui', { name: nome || t('admin_codice_senza_nome') });
+  segno.textContent = puntoT('js_sp_here', { name: nome || t('admin_code_without_name') });
   if (pointSide() === 'before') {
     puntoScelto.parentNode.insertBefore(segno, puntoScelto);
   } else {
@@ -5038,53 +5038,53 @@ function describeBlock(el) {
   var c = el.classList;
   var nome = el.tagName.toLowerCase();
   var genitore = el.parentElement;
-  if (nome === 'header') { return t('js_pd_intestazione'); }
-  if (nome === 'footer') { return t('js_pd_piede'); }
-  if (c.contains('barra-argomenti')) { return t('js_pd_argomenti'); }
-  if (c.contains('home-intro')) { return t('js_pd_presentazione'); }
-  if (c.contains('home-biografia')) { return t('js_pd_biografia'); }
-  if (c.contains('home-progetti')) { return t('js_pd_progetti'); }
-  if (c.contains('articles-section')) { return t('js_pd_elenco'); }
-  if (c.contains('articles-head')) { return t('js_pd_testata_elenco'); }
-  if (c.contains('art-row')) { return puntoT('js_pd_articolo_n', { n: pointOrdinal(el) }); }
-  if (c.contains('paginazione')) { return t('js_pd_paginazione'); }
+  if (nome === 'header') { return t('js_pd_masthead'); }
+  if (nome === 'footer') { return t('js_pd_foot'); }
+  if (c.contains('barra-argomenti')) { return t('js_pd_topics'); }
+  if (c.contains('home-intro')) { return t('js_pd_introduction'); }
+  if (c.contains('home-biografia')) { return t('js_pd_biography'); }
+  if (c.contains('home-progetti')) { return t('js_pd_projects'); }
+  if (c.contains('articles-section')) { return t('js_pd_list'); }
+  if (c.contains('articles-head')) { return t('js_pd_masthead_area_list'); }
+  if (c.contains('art-row')) { return puntoT('js_pd_article_n', { n: pointOrdinal(el) }); }
+  if (c.contains('paginazione')) { return t('js_pd_pagination'); }
   if (c.contains('box')) {
     var titolo = el.querySelector('.box-titolo');
     if (titolo && titolo.textContent.trim() !== '') {
-      return puntoT('js_pd_riquadro', { title: titolo.textContent.trim() });
+      return puntoT('js_pd_box', { title: titolo.textContent.trim() });
     }
-    return puntoT('js_pd_riquadro_n', { n: pointOrdinal(el) });
+    return puntoT('js_pd_box_n', { n: pointOrdinal(el) });
   }
-  if (c.contains('language-switcher')) { return t('js_pd_lingue'); }
-  if (c.contains('breadcrumbs')) { return t('js_pd_percorso'); }
-  if (nome === 'h1') { return t('js_pd_titolo'); }
+  if (c.contains('language-switcher')) { return t('js_pd_languages'); }
+  if (c.contains('breadcrumbs')) { return t('js_pd_path'); }
+  if (nome === 'h1') { return t('js_pd_title'); }
   if (c.contains('meta')) { return t('js_pd_meta'); }
-  if (c.contains('articolo-copertina')) { return t('js_pd_copertina'); }
-  if (c.contains('toc-telefono')) { return t('js_pd_indice'); }
-  if (c.contains('post-content')) { return t('js_pd_testo'); }
-  if (c.contains('author-box')) { return t('js_pd_autore'); }
-  if (c.contains('article-nav')) { return t('js_pd_navigazione'); }
-  if (c.contains('post-ritorno')) { return t('js_pd_ritorno'); }
-  if (c.contains('related-articles')) { return t('js_pd_correlati'); }
-  if (c.contains('commenti')) { return t('js_pd_commenti'); }
+  if (c.contains('articolo-copertina')) { return t('js_pd_cover'); }
+  if (c.contains('toc-telefono')) { return t('js_pd_toc_index'); }
+  if (c.contains('post-content')) { return t('js_pd_text'); }
+  if (c.contains('author-box')) { return t('js_pd_author'); }
+  if (c.contains('article-nav')) { return t('js_pd_navigation'); }
+  if (c.contains('post-ritorno')) { return t('js_pd_return'); }
+  if (c.contains('related-articles')) { return t('js_pd_related'); }
+  if (c.contains('commenti')) { return t('js_pd_comments'); }
   if (genitore && genitore.classList.contains('post-content')) {
     var n = pointOrdinal(el);
     if (nome === 'p') {
-      if (el.querySelector('img') && el.textContent.trim() === '') { return puntoT('js_pd_immagine', { n: n }); }
-      return puntoT('js_pd_paragrafo', { n: n });
+      if (el.querySelector('img') && el.textContent.trim() === '') { return puntoT('js_pd_picture', { n: n }); }
+      return puntoT('js_pd_paragraph', { n: n });
     }
     if (/^h[2-6]$/.test(nome)) {
       var testo = el.textContent.trim();
       if (testo.length > 40) { testo = testo.slice(0, 40) + '…'; }
-      return puntoT('js_pd_titoletto', { n: n, text: testo });
+      return puntoT('js_pd_small_heading', { n: n, text: testo });
     }
-    if (nome === 'ul' || nome === 'ol') { return puntoT('js_pd_elenco_testo', { n: n }); }
-    if (nome === 'figure' || nome === 'img') { return puntoT('js_pd_immagine', { n: n }); }
-    if (nome === 'pre') { return puntoT('js_pd_codice', { n: n }); }
-    if (nome === 'blockquote') { return puntoT('js_pd_citazione', { n: n }); }
-    if (nome === 'table') { return puntoT('js_pd_tabella', { n: n }); }
+    if (nome === 'ul' || nome === 'ol') { return puntoT('js_pd_list_text', { n: n }); }
+    if (nome === 'figure' || nome === 'img') { return puntoT('js_pd_picture', { n: n }); }
+    if (nome === 'pre') { return puntoT('js_pd_code', { n: n }); }
+    if (nome === 'blockquote') { return puntoT('js_pd_quote', { n: n }); }
+    if (nome === 'table') { return puntoT('js_pd_table', { n: n }); }
   }
-  return puntoT('js_pd_blocco', { n: pointOrdinal(el), tag: nome });
+  return puntoT('js_pd_lock', { n: pointOrdinal(el), tag: nome });
 }
 
 // "Put it here": the card gets the point, its summary says where, and the
@@ -5092,7 +5092,7 @@ function describeBlock(el) {
 function confirmPoint() {
   if (!puntoScelto || !puntoScheda) { return; }
   var lato = pointSide();
-  var etichetta = t(lato === 'before' ? 'js_pd_prima' : 'js_pd_dopo') + ' · ' + describeBlock(puntoScelto);
+  var etichetta = t(lato === 'before' ? 'js_pd_first_one' : 'js_pd_after') + ' · ' + describeBlock(puntoScelto);
   puntoScheda.querySelector('.codice-ancora').value = pointSelector(puntoScelto);
   puntoScheda.querySelector('.codice-ancora-dove').value = lato;
   puntoScheda.querySelector('.codice-ancora-etichetta').value = etichetta;
@@ -5138,18 +5138,18 @@ function versionsWindow() {
     '</div>' +
     '<div class="fv-piede"><button type="button" class="pulsante pulsante-primario" id="fv-ripristina" disabled></button></div>';
   document.body.appendChild(finestra);
-  document.getElementById('versioni-titolo').textContent = t('admin_versioni');
-  document.getElementById('fv-chiudi').textContent = t('admin_chiudi');
-  document.getElementById('fv-ripristina').textContent = t('js_versione_ripristina');
+  document.getElementById('versioni-titolo').textContent = t('admin_versions');
+  document.getElementById('fv-chiudi').textContent = t('admin_close');
+  document.getElementById('fv-ripristina').textContent = t('js_version_restore');
   document.getElementById('fv-chiudi').addEventListener('click', function() { finestra.close(); });
   document.getElementById('fv-ripristina').addEventListener('click', restoreVersion);
   return finestra;
 }
 
 function versionStatusLabel(stato) {
-  if (stato === 'published') { return t('admin_stato_pubblicato'); }
-  if (stato === 'scheduled') { return t('admin_stato_programmato'); }
-  return t('admin_stato_bozza');
+  if (stato === 'published') { return t('admin_state_published'); }
+  if (stato === 'scheduled') { return t('admin_state_scheduled'); }
+  return t('admin_state_draft');
 }
 
 function openVersions() {
@@ -5166,10 +5166,10 @@ function openVersions() {
     .then(function(res) {
       var versioni = res.versions || [];
       if (versioni.length === 0) {
-        document.getElementById('fv-vuota').textContent = t('js_versioni_vuoto');
+        document.getElementById('fv-vuota').textContent = t('js_versions_empty_m');
         return;
       }
-      document.getElementById('fv-vuota').textContent = t('js_versione_scegli');
+      document.getElementById('fv-vuota').textContent = t('js_version_choose');
       for (var i = 0; i < versioni.length; i++) {
         var v = versioni[i];
         var voce = document.createElement('li');
@@ -5184,7 +5184,7 @@ function openVersions() {
         var dettagli = document.createElement('span');
         dettagli.className = 'fv-voce-dettagli';
         dettagli.textContent = versionStatusLabel(v.status) + ' · ' +
-          t('js_versione_parole').replace('{n}', v.words) + ' · ' + v.title;
+          t('js_version_words').replace('{n}', v.words) + ' · ' + v.title;
         pulsante.appendChild(quando);
         pulsante.appendChild(dettagli);
         pulsante.addEventListener('click', showVersion);
@@ -5193,7 +5193,7 @@ function openVersions() {
       }
       elenco.querySelector('.fv-voce').focus();
     })
-    .catch(function() { document.getElementById('fv-vuota').textContent = t('js_versione_errore'); });
+    .catch(function() { document.getElementById('fv-vuota').textContent = t('js_version_failure'); });
 }
 
 function showVersion(evento) {
@@ -5204,7 +5204,7 @@ function showVersion(evento) {
         { credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
     .then(function(res) {
-      if (!res.ok) { pbToast(t('js_versione_errore'), 'danger'); return; }
+      if (!res.ok) { pbToast(t('js_version_failure'), 'danger'); return; }
       versioneMostrata = res.version;
       versioneMostrata._quando = pulsante.querySelector('.fv-voce-quando').textContent;
       document.getElementById('fv-vuota').textContent = '';
@@ -5216,7 +5216,7 @@ function showVersion(evento) {
       document.getElementById('fv-testo').innerHTML = versioneMostrata.content || '';
       document.getElementById('fv-ripristina').disabled = false;
     })
-    .catch(function() { pbToast(t('js_versione_errore'), 'danger'); });
+    .catch(function() { pbToast(t('js_version_failure'), 'danger'); });
 }
 
 function restoreVersion() {
@@ -5244,14 +5244,14 @@ function restoreVersion() {
     markEditorDirty();
     var finestra = document.getElementById('finestra-versioni');
     if (finestra.open) { finestra.close(); }
-    pbToast(t('js_versione_ripristinata').replace('{date}', v._quando), 'success');
+    pbToast(t('js_version_restored_f').replace('{date}', v._quando), 'success');
     document.getElementById('title').focus();
   };
   if (editorDirty) {
     // A <dialog> sits above everything, the confirmation window included:
     // it closes first, so the question can be seen and answered.
     document.getElementById('finestra-versioni').close();
-    pbConfirm(t('js_versione_ripristina'), t('js_versione_perdi'), t('js_versione_ripristina'), 'primary', applica);
+    pbConfirm(t('js_version_restore'), t('js_version_lose'), t('js_version_restore'), 'primary', applica);
   } else {
     applica();
   }
@@ -5289,25 +5289,25 @@ function sendNewsletterTest(pulsante) {
     .then(function(res) {
       pbBusy(pulsante, false);
       if (res.ok) {
-        pbToast(t('js_nl_prova_ok').replace('{to}', res.to), 'success');
+        pbToast(t('js_nl_test_ok').replace('{to}', res.to), 'success');
       } else {
-        pbToast(t('js_nl_prova_errore').replace('{error}', res.error), 'danger');
+        pbToast(t('js_nl_test_failure').replace('{error}', res.error), 'danger');
       }
     })
     .catch(function() {
       pbBusy(pulsante, false);
-      pbToast(t('js_nl_prova_errore').replace('{error}', ''), 'danger');
+      pbToast(t('js_nl_test_failure').replace('{error}', ''), 'danger');
     });
 }
 
 function removeSubscriber(pulsante) {
   var email = pulsante.getAttribute('data-email');
-  pbConfirm(t('js_nl_rimuovi_titolo'), email, t('admin_nl_rimuovi'), 'danger', function() {
+  pbConfirm(t('js_nl_remove_title'), email, t('admin_nl_remove'), 'danger', function() {
     pbPostJson('/newsletter-remove', { email: email })
       .then(function(res) {
         if (res.ok) {
           pulsante.closest('li').remove();
-          pbToast(t('js_nl_rimosso').replace('{email}', email), 'success');
+          pbToast(t('js_nl_removed').replace('{email}', email), 'success');
         }
       });
   });
@@ -5351,32 +5351,32 @@ function updateGroupSummaries() {
     var campo = document.getElementById(id);
     return campo ? campo.value.trim() : '';
   }
-  var dettagli = valore('tags') || t('js_riep_senza_tag');
-  if (valore('image') !== '') { dettagli = dettagli + ' \u00b7 ' + t('js_riep_copertina'); }
+  var dettagli = valore('tags') || t('js_summary_without_tag');
+  if (valore('image') !== '') { dettagli = dettagli + ' \u00b7 ' + t('js_summary_cover'); }
   scrivi('dettagli', dettagli);
 
   var tipo = document.getElementById('kind');
   var serie = valore('series');
   if (serie !== '' && valore('series_number') !== '') {
-    serie = serie + ', ' + t('js_riep_parte') + ' ' + valore('series_number');
+    serie = serie + ', ' + t('js_summary_part') + ' ' + valore('series_number');
   }
   var nomeTipo = tipo ? tipo.options[tipo.selectedIndex].text : '';
   scrivi('serie', serie === '' ? nomeTipo : serie + ' \u00b7 ' + nomeTipo);
 
   if (valore('description') === '') {
-    scrivi('anteprima', t('js_riep_manca_descrizione'), true);
+    scrivi('anteprima', t('js_summary_missing_one_description'), true);
   } else {
-    scrivi('anteprima', t('js_riep_descrizione_ok'));
+    scrivi('anteprima', t('js_summary_description_ok'));
   }
 
   var confermata = document.getElementById('translation_confirmed');
   var autorizzata = document.getElementById('translation_authorized');
   if (confermata && confermata.checked) {
-    scrivi('inglese', t('js_riep_traduzione_ok'));
+    scrivi('inglese', t('js_summary_translation_of_ok'));
   } else if (autorizzata && autorizzata.checked) {
-    scrivi('inglese', t('js_riep_bozza_traduzione'), true);
+    scrivi('inglese', t('js_summary_draft_translation_of'), true);
   } else {
-    scrivi('inglese', t('js_riep_non_tradotto'));
+    scrivi('inglese', t('js_summary_not_translated_m'));
   }
 }
 

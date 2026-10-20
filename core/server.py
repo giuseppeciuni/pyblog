@@ -166,7 +166,7 @@ JS_TRANSLATION_KEYS = (
     "js_prompt_youtube_link", "js_youtube_not_recognized",
     # Tables
     "admin_table_hint", "admin_table_editor_title", "admin_table_add_row",
-    "admin_table_del_row", "admin_table_add_col", "admin_table_del_col",
+    "admin_table_of_the_row", "admin_table_add_col", "admin_table_of_the_col",
     "admin_table_save", "admin_table_cancel", "js_table_how_many_rows",
     "js_table_how_many_cols", "js_table_header_cell", "js_table_body_cell",
     "js_table_format_not_applicable",
@@ -184,41 +184,41 @@ JS_TRANSLATION_KEYS = (
     "seo_suggested_tags", "seo_meta_review", "seo_internal_links", "seo_faq",
     "seo_ai_tips", "seo_apply_tags",
     # The one-line summaries of the editor's groups
-    "js_riep_senza_tag", "js_riep_copertina", "js_riep_parte", "js_riep_manca_descrizione",
-    "js_riep_descrizione_ok", "js_riep_non_tradotto", "js_riep_bozza_traduzione",
-    "js_riep_traduzione_ok",
+    "js_summary_without_tag", "js_summary_cover", "js_summary_part", "js_summary_missing_one_description",
+    "js_summary_description_ok", "js_summary_not_translated_m", "js_summary_draft_translation_of",
+    "js_summary_translation_of_ok",
     # Translation
     "js_translating", "js_translated_review", "js_check_api_key",
     "js_net_error_translation", "js_write_intro_first", "js_translated_home",
     "js_translated_site_texts", "js_write_site_texts_first",
-    "js_admin_url_non_valido", "js_admin_url_irraggiungibile",
-    "js_admin_url_conferma_titolo", "js_admin_url_conferma_corpo", "js_admin_url_conferma",
-    "js_scegli_backup", "js_ripristino_titolo", "js_ripristino_corpo", "js_ripristino_conferma",
-    "js_ripristino_automatico_corpo", "js_ripristino_in_corso", "js_ripristino_fatto",
-    "js_ripristino_ignorati", "js_ripristino_errore_rete",
-    "js_media_copiato", "js_media_elimina_titolo", "js_media_elimina_corpo",
-    "js_media_elimina_usato", "js_media_pulizia_corpo", "js_media_caricamento",
-    "upd_controllo", "upd_installazione", "upd_riavvio", "upd_riavviato", "upd_conferma_titolo",
-    "upd_conferma_corpo", "admin_aggiorna_ora", "upd_offline",
+    "js_admin_url_not_valid", "js_admin_url_unreachable",
+    "js_admin_url_confirm_title", "js_admin_url_confirm_body", "js_admin_url_confirm",
+    "js_choose_backup", "js_restoring_title", "js_restoring_body", "js_restoring_confirm",
+    "js_restoring_automatic_body", "js_restoring_in_progress", "js_restoring_made",
+    "js_restoring_ignored", "js_restoring_failure_rete",
+    "js_media_copied", "js_media_delete_title", "js_media_delete_body",
+    "js_media_delete_used", "js_media_cleanup_body", "js_media_uploading",
+    "upd_checking", "upd_installation", "upd_restarting", "upd_restarted", "upd_confirm_title",
+    "upd_confirm_body", "admin_update_now", "upd_offline",
     "js_media_picker_title", "js_media_picker_search", "js_media_picker_empty",
     "js_media_picker_loading", "js_media_picker_error",
     "js_image_details_title", "js_image_alt_label", "js_image_alt_hint", "js_image_caption_label",
     "js_image_caption_hint", "js_image_details_apply", "js_image_alt_missing", "js_image_alt_missing_one",
     "js_media_recovered",
     # Settings
-    "admin_codice_titolo", "admin_codice_elimina",
-    "admin_salvataggio", "admin_config_salvata", "admin_errore_salvataggio",
-    "admin_config_raw_salvata", "err_invalid_json_prefix",
+    "admin_code_title", "admin_code_delete",
+    "admin_saving", "admin_config_saved_f", "admin_failure_saving",
+    "admin_config_raw_saved_f", "err_invalid_json_prefix",
     # Custom code: the folded summary of a card, the ready-made templates,
     # the consent banner
-    "admin_codice_attivo", "admin_codice_spento", "admin_codice_senza_nome",
-    "consenso_necessary", "consenso_statistics", "consenso_marketing",
-    "js_modello_campo_ga4", "js_modello_campo_gtm", "js_modello_campo_pub",
-    "js_modello_campo_slot", "js_modello_campo_aw", "js_modello_campo_pixel",
-    "js_modello_campo_clarity", "js_modello_non_valido", "js_modello_creato",
-    "js_modello_ads_txt", "js_modello_ga4_doppio", "js_consenso_rinnovato",
+    "admin_code_active", "admin_code_off_m", "admin_code_without_name",
+    "consent_necessary", "consent_statistics", "consent_marketing",
+    "js_template_field_ga4", "js_template_field_gtm", "js_template_field_pub",
+    "js_template_field_slot", "js_template_field_aw", "js_template_field_pixel",
+    "js_template_field_clarity", "js_template_not_valid", "js_template_created",
+    "js_template_ads_txt", "js_template_ga4_double", "js_consent_renewed",
     # Shared dialogs, saving, autosave and the Word import
-    "admin_chiudi", "admin_annulla", "admin_elimina",
+    "admin_close", "admin_cancel", "admin_delete",
     "js_save_error", "js_unsaved_changes", "js_slug_was_taken",
     "js_autosaving", "js_autosaved_at", "js_autosave_failed",
     "js_autosave_needs_title", "js_delete_title", "js_delete_body",
@@ -228,24 +228,24 @@ JS_TRANSLATION_KEYS = (
     "js_docx_overwrite_confirm", "js_docx_warnings_title",
     "js_docx_wrong_extension", "err_file_too_large",
     # Editor: publishing, the state of the article
-    "admin_pubblica", "admin_ritira", "js_bozza_salvata", "js_pubblicato",
-    "js_aggiornato", "js_ritirato", "js_pubblica_titolo", "js_pubblica_corpo",
-    "js_ritira_titolo", "js_ritira_corpo", "js_titolo_per_pubblicare",
-    "js_modifiche_da_salvare", "admin_annulla_modifiche",
-    "js_annulla_modifiche_titolo", "js_annulla_modifiche_corpo",
-    "js_impostazioni_non_salvate", "admin_progetto_senza_nome",
-    "admin_progetto_elimina", "js_aggiornato_alle",
-    "js_programma_titolo", "js_programma_corpo", "js_programma_data",
-    "js_programmato", "js_programmazione_annullata", "js_modifiche_salvate",
-    "admin_pubblica_ora", "admin_programma_annulla", "admin_esce_il",
-    "admin_programma_conferma", "js_salvato_alle",
-    "admin_versioni", "js_versioni_vuoto", "js_versione_mostra",
-    "js_versione_ripristina", "js_versione_ripristinata", "js_versione_parole",
-    "js_versione_errore", "js_versione_perdi", "admin_stato_bozza",
-    "admin_stato_pubblicato", "admin_stato_programmato", "admin_chiudi",
-    "js_versione_scegli",
-    "js_nl_prova_ok", "js_nl_prova_errore", "js_nl_rimuovi_titolo", "js_nl_rimosso",
-    "admin_nl_rimuovi",
+    "admin_publish", "admin_withdraw", "js_draft_saved_f", "js_published",
+    "js_updated", "js_withdrawn", "js_publish_title", "js_publish_body",
+    "js_withdraw_title", "js_withdraw_body", "js_title_for_to_publish",
+    "js_changes_made_from_to_save", "admin_cancel_changes_made",
+    "js_cancel_changes_made_title", "js_cancel_changes_made_body",
+    "js_settings_page_not_saved_pl", "admin_project_without_name",
+    "admin_project_delete", "js_updated_at",
+    "js_schedule_title", "js_schedule_body", "js_schedule_data",
+    "js_scheduled", "js_scheduling_cancelled", "js_changes_made_saved_pl",
+    "admin_publish_now", "admin_schedule_cancel", "admin_goes_out_the",
+    "admin_schedule_confirm", "js_saved_at",
+    "admin_versions", "js_versions_empty_m", "js_version_show",
+    "js_version_restore", "js_version_restored_f", "js_version_words",
+    "js_version_failure", "js_version_lose", "admin_state_draft",
+    "admin_state_published", "admin_state_scheduled", "admin_close",
+    "js_version_choose",
+    "js_nl_test_ok", "js_nl_test_failure", "js_nl_remove_title", "js_nl_removed",
+    "admin_nl_remove",
 ) + tuple(key for key in i18n.UI_TRANSLATIONS
           # The window that chooses a point on the page, and the names it
           # gives the blocks of the page.
@@ -345,16 +345,16 @@ def optimisation_note(optimisation, language):
     if action == "resized":
         da = "%dx%d" % optimisation["from"]
         a = "%dx%d" % optimisation["to"]
-        return (T("img_ridimensionata", language)
+        return (T("img_resized_f", language)
                 .replace("{da}", da).replace("{a}", a).replace("{n}", str(saved_kb)))
     if action == "stripped" and saved_kb > 0:
-        return T("img_metadati_rimossi", language).replace("{n}", str(saved_kb))
+        return T("img_metadata_removed_pl", language).replace("{n}", str(saved_kb))
 
     reason = optimisation.get("reason", "")
     if reason == "jpeg_not_resizable":
-        return T("img_jpeg_non_ridimensionabile", language)
+        return T("img_jpeg_not_resizable", language)
     if reason == "too_many_pixels":
-        return T("img_troppi_pixel", language)
+        return T("img_too_many_pixel", language)
     return ""
 
 
@@ -440,14 +440,14 @@ def admin_navbar(active_page, language, articles_count=None):
     # The last field says whether the item is also in the phone's bar, which
     # has room for four: the others are in the menu "More" opens.
     voci = [
-        ("articles", "/admin", ICON_ARTICLES, T("admin_articoli", language),
-         T("admin_articoli", language), str(articles_count), True),
-        ("new", "/edit", ICON_NEW, T("admin_nuovo_articolo_titolo", language),
-         T("admin_nuovo", language), "", True),
-        ("media", "/media-library", ICON_MEDIA, T("admin_libreria", language),
-         T("admin_libreria", language), "", False),
-        ("config", "/config", ICON_SETTINGS, T("admin_impostazioni", language),
-         T("admin_impostazioni", language), "", True),
+        ("articles", "/admin", ICON_ARTICLES, T("admin_articles", language),
+         T("admin_articles", language), str(articles_count), True),
+        ("new", "/edit", ICON_NEW, T("admin_new_article_title", language),
+         T("admin_new", language), "", True),
+        ("media", "/media-library", ICON_MEDIA, T("admin_media_library", language),
+         T("admin_media_library", language), "", False),
+        ("config", "/config", ICON_SETTINGS, T("admin_settings_page", language),
+         T("admin_settings_page", language), "", True),
     ]
     menu_html = []
     bar_html = []
@@ -487,36 +487,36 @@ def admin_navbar(active_page, language, articles_count=None):
         titolo_sito=esc(CONFIG["site_title"]),
         voci="\n".join(menu_html),
         voci_barra="\n".join(bar_html),
-        label_strumenti=T("admin_strumenti", language),
+        label_strumenti=T("admin_tools", language),
         icona_rigenera=icon(ICON_REBUILD),
-        label_rigenera=T("admin_rigenera", language),
-        desc_rigenera=T("admin_rigenera_desc", language),
+        label_rigenera=T("admin_rebuild", language),
+        desc_rigenera=T("admin_rebuild_desc", language),
         desc_backup=T("admin_backup_desc", language),
-        desc_vedi_sito=T("admin_vedi_sito_desc", language),
+        desc_vedi_sito=T("admin_see_site_desc", language),
         icona_backup=icon(ICON_BACKUP),
-        label_backup=T("admin_scarica_backup", language),
+        label_backup=T("admin_download_backup", language),
         icona_ripristino=icon(ICON_RESTORE),
-        label_ripristino=T("admin_ripristina_backup", language),
-        desc_ripristino=T("admin_ripristina_backup_desc", language),
+        label_ripristino=T("admin_restore_backup", language),
+        desc_ripristino=T("admin_restore_backup_desc", language),
         corrente_ripristino=' aria-current="page"' if active_page == "restore" else "",
         icona_aggiornamenti=icon(ICON_UPDATE),
-        label_aggiornamenti=T("admin_aggiornamenti", language),
-        desc_aggiornamenti=T("admin_versione", language).replace("{v}", __version__),
+        label_aggiornamenti=T("admin_updates", language),
+        desc_aggiornamenti=T("admin_version", language).replace("{v}", __version__),
         corrente_aggiornamenti=' aria-current="page"' if active_page == "updates" else "",
         icona_blog=icon(ICON_BLOG),
-        label_vedi_blog=T("admin_vedi_blog", language),
-        label_nuova_scheda=T("admin_nuova_scheda", language),
+        label_vedi_blog=T("admin_see_blog", language),
+        label_nuova_scheda=T("admin_new_f_card", language),
         corrente_password=current_password,
         icona_password=icon(ICON_PASSWORD),
-        label_password=T("admin_cambia_password", language),
+        label_password=T("admin_change_password", language),
         prossima_lingua=next_language,
         icona_lingua=icon(ICON_LANGUAGE),
         nome_prossima_lingua=next_language_name,
-        label_lingua=esc(T("admin_lingua_interfaccia", language)),
+        label_lingua=esc(T("admin_language_interface", language)),
         icona_esci=icon(ICON_LOGOUT),
-        label_esci=T("admin_esci", language),
+        label_esci=T("admin_logout", language),
         icona_altro=icon(ICON_MORE, 22),
-        label_altro=T("admin_altro", language),
+        label_altro=T("admin_other", language),
     )
 
 
@@ -530,7 +530,7 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
     skip_link = ""
     if navbar != "":
         skip_link = (f'<a class="salta-contenuto" href="#contenuto">'
-                     f'{T("admin_salta_contenuto", language)}</a>\n')
+                     f'{T("admin_skip_content", language)}</a>\n')
         body_class = (body_class + " con-menu").strip()
     return render.render(
         "admin/base.html",
@@ -540,10 +540,10 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
         bootstrap_js=BOOTSTRAP_JS,
         head_extra=build_module.block(head_extra),
         classe_body=body_class,
-        salta_contenuto=skip_link,
+        skip_content=skip_link,
         navbar=build_module.block(navbar),
-        label_chiudi=T("admin_chiudi", language),
-        label_annulla=T("admin_annulla", language),
+        label_chiudi=T("admin_close", language),
+        label_annulla=T("admin_cancel", language),
         contenuto=contenuto,
         i18n=js(js_translations(language)),
         csrf=js(csrf),
@@ -570,7 +570,7 @@ def notify_checkbox(art, la):
     checked = checked_if(art.get("notify_subscribers", True) is not False)
     return ('      <label class="riga-flag avvisa-iscritti solo-non-pubblicato">'
             f'<input type="checkbox" id="notify_subscribers" {checked}> '
-            f'{T("admin_nl_avvisa", la)}</label>\n')
+            f'{T("admin_nl_notify", la)}</label>\n')
 
 
 def moment_html(moment, la):
@@ -582,7 +582,7 @@ def moment_html(moment, la):
     if moment == "":
         return ""
     fallback = moment.replace("T", " ")[:16] + " UTC"
-    return T("admin_esce_il", la).replace(
+    return T("admin_goes_out_the", la).replace(
         "{date}", f'<time class="ora-locale" datetime="{esc(moment)}">{esc(fallback)}</time>')
 
 
@@ -599,13 +599,13 @@ def login_page(error_message=""):
     la = admin_language()
     contenuto = render.render(
         "admin/login.html",
-        titolo=T("admin_area_riservata", la),
-        invito=T("admin_login_invito", la),
+        titolo=T("admin_area_reserved", la),
+        invito=T("admin_login_invitation", la),
         errore=alert_block(error_message, "danger"),
         label_password=T("admin_password", la),
-        accedi=T("admin_accedi", la),
+        accedi=T("admin_login", la),
     )
-    return admin_page_shell(T("admin_area_riservata", la), contenuto, la)
+    return admin_page_shell(T("admin_area_reserved", la), contenuto, la)
 
 
 def set_password_page(error_message=""):
@@ -613,15 +613,15 @@ def set_password_page(error_message=""):
     la = admin_language()
     contenuto = render.render(
         "admin/set_password.html",
-        titolo=T("admin_crea_password_titolo", la),
-        invito=T("admin_crea_password_invito", la),
+        titolo=T("admin_create_password_title", la),
+        invito=T("admin_create_password_invitation", la),
         errore=alert_block(error_message, "danger"),
-        label_nuova=T("admin_nuova_password", la),
-        label_conferma=T("admin_conferma_password", la),
-        hint_lunghezza=T("admin_password_lunghezza", la),
-        crea_accedi=T("admin_crea_accedi", la),
+        label_nuova=T("admin_new_f_password", la),
+        label_conferma=T("admin_confirm_password", la),
+        hint_lunghezza=T("admin_password_length_of", la),
+        crea_accedi=T("admin_create_login", la),
     )
-    return admin_page_shell(T("admin_crea_password_titolo", la), contenuto, la)
+    return admin_page_shell(T("admin_create_password_title", la), contenuto, la)
 
 
 def change_password_page(csrf, error_message="", success_message=""):
@@ -629,17 +629,17 @@ def change_password_page(csrf, error_message="", success_message=""):
     la = admin_language()
     contenuto = render.render(
         "admin/change_password.html",
-        titolo=T("admin_cambia_password", la),
-        sottotitolo=T("admin_cambia_password_desc", la),
-        hint_lunghezza=T("admin_password_lunghezza", la),
+        titolo=T("admin_change_password", la),
+        sottotitolo=T("admin_change_password_desc", la),
+        hint_lunghezza=T("admin_password_length_of", la),
         errore=alert_block(error_message, "danger"),
         successo=alert_block(success_message, "success"),
         csrf_token=esc(csrf),
-        label_attuale=T("admin_password_attuale", la),
-        label_nuova=T("admin_nuova_password", la),
-        label_conferma=T("admin_conferma_nuova", la),
+        label_attuale=T("admin_password_current", la),
+        label_nuova=T("admin_new_f_password", la),
+        label_conferma=T("admin_confirm_new_f", la),
     )
-    return admin_page_shell(T("admin_cambia_password", la), contenuto, la,
+    return admin_page_shell(T("admin_change_password", la), contenuto, la,
                             csrf=csrf, navbar=admin_navbar("password", la))
 
 
@@ -662,22 +662,22 @@ def updates_state(force=False):
     elif result.get("kind") == "git":
         if result.get("behind", 0) > 0:
             available = True
-            message = T("upd_novita", la).replace("{n}", str(result["behind"]))
+            message = T("upd_news", la).replace("{n}", str(result["behind"]))
             if result.get("dirty"):
-                message = message + " " + T("upd_modifiche_locali", la)
+                message = message + " " + T("upd_changes_made_local_edits", la)
             elif result.get("ahead"):
-                message = message + " " + T("upd_avanti", la)
+                message = message + " " + T("upd_ahead", la)
         else:
-            message = T("upd_aggiornato", la)
+            message = T("upd_updated", la)
     elif result.get("kind") == "other":
         if result.get("behind"):
             available = True
-            message = (T("upd_versione", la).replace("{v}", result.get("latest", ""))
+            message = (T("upd_version", la).replace("{v}", result.get("latest", ""))
                        .replace("{c}", __version__))
         else:
-            message = T("upd_aggiornato", la)
+            message = T("upd_updated", la)
     else:
-        message = T("upd_mai_controllato", la)
+        message = T("upd_never_checked", la)
     return {"ok": True, "message": message, "available": available,
             "can_update": result.get("can_update") is True,
             "news": result.get("news", []) if result.get("kind") == "git" else [],
@@ -690,20 +690,20 @@ def updates_page(csrf):
     la = admin_language()
     contenuto = render.render(
         "admin/updates.html",
-        titolo=T("admin_aggiornamenti", la),
-        versione_installata=T("admin_versione_installata", la).replace("{v}", __version__),
-        label_stato=T("admin_aggiornamenti_stato", la),
-        label_controllo=T("upd_controllo", la),
-        istruzioni=T("upd_istruzioni", la).replace("{url}", updates.CHANGELOG_URL),
-        label_aggiorna=T("admin_aggiorna_ora", la),
-        label_controlla=T("admin_controlla_ora", la),
-        hint_aggiorna=T("admin_aggiorna_hint", la),
-        label_automatico=T("admin_controllo_automatico_titolo", la),
-        label_controllo_automatico=T("admin_controllo_automatico", la),
-        hint_controllo_automatico=T("admin_controllo_automatico_hint", la),
+        titolo=T("admin_updates", la),
+        versione_installata=T("admin_version_installed", la).replace("{v}", __version__),
+        label_stato=T("admin_updates_state", la),
+        label_controllo=T("upd_checking", la),
+        istruzioni=T("upd_instructions", la).replace("{url}", updates.CHANGELOG_URL),
+        label_aggiorna=T("admin_update_now", la),
+        label_controlla=T("admin_check_now_now", la),
+        hint_aggiorna=T("admin_update_hint", la),
+        label_automatico=T("admin_checking_automatic_title", la),
+        label_controllo_automatico=T("admin_checking_automatic", la),
+        hint_controllo_automatico=T("admin_checking_automatic_hint", la),
         checked_automatico=checked_if(updates.automatic_check_enabled()),
     )
-    return admin_page_shell(T("admin_aggiornamenti", la), contenuto, la, csrf=csrf,
+    return admin_page_shell(T("admin_updates", la), contenuto, la, csrf=csrf,
                             navbar=admin_navbar("updates", la), page_data={"page": "updates"})
 
 
@@ -755,10 +755,10 @@ def library_page(csrf):
                 if use["kind"] == "article":
                     links.append(f'<a href="/edit?slug={esc(use["slug"])}">{esc(use["title"])}</a>')
                 else:
-                    links.append(f'<a href="/config">{T("admin_impostazioni", la)}</a>')
-            usage = f'{T("admin_media_usata_in", la)} ' + ", ".join(links)
+                    links.append(f'<a href="/config">{T("admin_settings_page", la)}</a>')
+            usage = f'{T("admin_media_used_f_in", la)} ' + ", ".join(links)
         else:
-            usage = f'<span class="media-non-usata">{T("admin_media_non_usata", la)}</span>'
+            usage = f'<span class="media-non-usata">{T("admin_media_not_used_f", la)}</span>'
         cards.append(
             f'    <li class="media-scheda" data-nome="{esc(name.lower())}" data-usato="{1 if where else 0}" '
             f'data-dove="{len(where)}">\n'
@@ -770,40 +770,40 @@ def library_page(csrf):
             f'        <p class="media-usi">{usage}</p>\n'
             f'        <div class="media-azioni">'
             f'<button type="button" class="pulsante pulsante-piccolo" '
-            f'onclick="copyMediaAddress({js_attr(address)})">{T("admin_media_copia", la)}'
+            f'onclick="copyMediaAddress({js_attr(address)})">{T("admin_media_copy", la)}'
             f'<span class="vh"> {esc(name)}</span></button>'
             f'<button type="button" class="pulsante pulsante-piccolo pulsante-pericolo" '
-            f'onclick="deleteMedia(this, {js_attr(name)}, {len(where)})">{T("admin_elimina", la)}'
+            f'onclick="deleteMedia(this, {js_attr(name)}, {len(where)})">{T("admin_delete", la)}'
             f'<span class="vh"> {esc(name)}</span></button></div>\n'
             f'      </div>\n'
             f'    </li>')
     total_size = sum(item["size"] for item in files)
-    summary = (T("admin_media_riepilogo", la).replace("{n}", str(len(files)))
+    summary = (T("admin_media_overview", la).replace("{n}", str(len(files)))
                .replace("{peso}", file_size_text(total_size) if files else "0 KB"))
-    cleanup = (T("admin_media_pulizia", la).replace("{n}", str(unused_count))
+    cleanup = (T("admin_media_cleanup", la).replace("{n}", str(unused_count))
                .replace("{peso}", file_size_text(unused_size) if unused_count else "0 KB"))
     contenuto = render.render(
         "admin/library.html",
-        titolo=T("admin_libreria", la),
+        titolo=T("admin_media_library", la),
         riepilogo=summary,
-        label_carica=T("admin_media_carica", la),
-        label_mostra=T("admin_mostra_gruppo", la),
-        label_tutti=T("admin_filtro_tutti", la),
+        label_carica=T("admin_media_upload", la),
+        label_mostra=T("admin_show_group", la),
+        label_tutti=T("admin_filter_all", la),
         totale=len(files),
-        label_usati=T("admin_media_usati", la),
+        label_usati=T("admin_media_used_pl", la),
         usati=len(files) - unused_count,
-        label_non_usati=T("admin_media_non_usati", la),
+        label_non_usati=T("admin_media_not_used_pl", la),
         non_usati=unused_count,
-        label_cerca=esc(T("admin_media_cerca", la)),
+        label_cerca=esc(T("admin_media_search", la)),
         label_pulizia=cleanup,
         pulizia_nascosta="" if unused_count > 0 else " hidden",
         schede="\n".join(cards),
         vuota_nascosta="" if not files else " hidden",
-        label_vuota=T("admin_media_vuota", la),
-        label_nessun_risultato=T("admin_nessun_corrisponde", la),
-        hint_cestino=T("admin_media_cestino_hint", la),
+        label_vuota=T("admin_media_empty_f", la),
+        label_nessun_risultato=T("admin_no_one_matches", la),
+        hint_cestino=T("admin_media_trash_hint", la),
     )
-    return admin_page_shell(T("admin_libreria", la), contenuto, la, csrf=csrf,
+    return admin_page_shell(T("admin_media_library", la), contenuto, la, csrf=csrf,
                             navbar=admin_navbar("media", la),
                             page_data={"page": "library",
                                        "max_image_mb": MAX_IMAGE_BYTES // (1024 * 1024),
@@ -826,27 +826,27 @@ def restore_page(csrf):
             f'      <li><span class="backup-quando">{when} · {size}</span>'
             f'<span class="backup-azioni">'
             f'<a class="pulsante pulsante-piccolo" href="/automatic-backup?file={esc(item["name"])}">'
-            f'{T("admin_scarica", la)}</a>'
+            f'{T("admin_download", la)}</a>'
             f'<button type="button" class="pulsante pulsante-piccolo" '
             f'onclick="restoreAutomatic(this, {js_attr(item["name"])})">'
-            f'{T("admin_ripristina_questo", la)}</button></span></li>')
+            f'{T("admin_restore_this", la)}</button></span></li>')
     if rows:
         listing = '    <ul class="lista-backup">\n' + "\n".join(rows) + "\n    </ul>"
     else:
-        listing = f'    <p class="elenco-vuoto">{T("admin_nessun_backup_automatico", la)}</p>'
+        listing = f'    <p class="elenco-vuoto">{T("admin_no_one_backup_automatic", la)}</p>'
     contenuto = render.render(
         "admin/restore.html",
-        titolo=T("admin_ripristina_backup", la),
-        sottotitolo=T("admin_ripristino_sottotitolo", la),
-        label_da_file=T("admin_ripristino_da_file", la),
-        hint_da_file=T("admin_ripristino_da_file_hint", la),
-        label_scegli_file=T("admin_ripristino_scegli", la),
-        label_ripristina=T("admin_ripristina_ora", la),
-        label_automatici=T("admin_backup_automatici", la),
-        hint_automatici=T("admin_backup_automatici_hint", la),
+        titolo=T("admin_restore_backup", la),
+        sottotitolo=T("admin_restoring_subtitle", la),
+        label_da_file=T("admin_restoring_from_file", la),
+        hint_da_file=T("admin_restoring_from_file_hint", la),
+        label_scegli_file=T("admin_restoring_choose", la),
+        label_ripristina=T("admin_restore_now", la),
+        label_automatici=T("admin_backup_automatic_pl", la),
+        hint_automatici=T("admin_backup_automatic_pl_hint", la),
         elenco_automatici=listing,
     )
-    return admin_page_shell(T("admin_ripristina_backup", la), contenuto, la, csrf=csrf,
+    return admin_page_shell(T("admin_restore_backup", la), contenuto, la, csrf=csrf,
                             navbar=admin_navbar("restore", la), page_data={"page": "restore"})
 
 
@@ -862,9 +862,9 @@ def setup_steps_html(articles, la):
     rows = []
     for section_id, text in steps:
         if section_id == "":
-            href, action, where = "/edit", T("admin_scrivi", la), ""
+            href, action, where = "/edit", T("admin_write_it", la), ""
         else:
-            href, action = "/config#" + section_id, T("admin_sistema", la)
+            href, action = "/config#" + section_id, T("admin_fix", la)
             # "Off, but Google Analytics uses cookies" needs to say what is off.
             where = (f'<span class="passo-dove">'
                      f'{T(settings_panel.section(section_id)["label"], la)}</span> ')
@@ -875,9 +875,9 @@ def setup_steps_html(articles, la):
             f'<span class="vh">: {esc(text)}</span>{icon(ICON_NEXT, 16)}</a></li>')
     return (
         '  <section class="primi-passi" aria-labelledby="primi-passi-titolo">\n'
-        f'    <h2 id="primi-passi-titolo">{T("admin_primi_passi", la)} '
+        f'    <h2 id="primi-passi-titolo">{T("admin_first_steps_of_steps", la)} '
         f'<span class="primi-passi-conta">{len(steps)}</span></h2>\n'
-        f'    <p class="aiuto">{T("admin_primi_passi_desc", la)}</p>\n'
+        f'    <p class="aiuto">{T("admin_first_steps_of_steps_desc", la)}</p>\n'
         '    <ul>\n' + "\n".join(rows) + '\n    </ul>\n'
         '  </section>')
 
@@ -909,12 +909,12 @@ def admin_page(articles, csrf):
     for number, art in enumerate(articles):
         if art.get("status") == "published":
             pill_class = "pill-pubblicato"
-            status_label = T("admin_pubblicato", la)
+            status_label = T("admin_published", la)
             # If it is published, the menu puts it back to draft. Same
             # words as the editor's link, from the same key, so the two
             # cannot drift apart again.
             status_action = "draft"
-            status_action_label = T("admin_ritira", la)
+            status_action_label = T("admin_withdraw", la)
             # Sorting happens in the browser, so every row carries the keys
             # it can be sorted by. Drafts sort first, because they are the
             # ones still waiting for work.
@@ -923,28 +923,28 @@ def admin_page(articles, csrf):
             # Scheduled: it goes out by itself. The quick action publishes
             # it at once; the second one, in the menu, takes the schedule back.
             pill_class = "pill-programmato"
-            status_label = T("admin_stato_programmato", la)
+            status_label = T("admin_state_scheduled", la)
             status_action = "published"
-            status_action_label = T("admin_pubblica_ora", la)
+            status_action_label = T("admin_publish_now", la)
             status_order = "s"
         else:
             pill_class = "pill-bozza"
-            status_label = T("admin_bozza", la)
+            status_label = T("admin_draft", la)
             status_action = "published"
-            status_action_label = T("admin_pubblica", la)
+            status_action_label = T("admin_publish", la)
             status_order = "0"
 
         # The translated version, said in words next to the date.
         also_in = ""
         if art.get("translation_confirmed", False):
-            also_in = " &middot; " + T("admin_anche_in", la).replace("{language}", other_name)
+            also_in = " &middot; " + T("admin_also_in", la).replace("{language}", other_name)
 
         # Preview of the translated page: the link appears as soon as some
         # translated content exists (even if not confirmed yet), so that you
         # can check the translation BEFORE confirming it.
         preview_other_link = ""
         if not html_content_is_empty(art.get("content_en", "")):
-            preview_label = T("admin_anteprima_lingua", la).replace("{language}", other_name)
+            preview_label = T("admin_preview_language", la).replace("{language}", other_name)
             preview_other_link = (
                 f'<a role="menuitem" tabindex="-1" '
                 f'href="/preview?slug={esc(art["slug"])}&amp;language={other}" '
@@ -959,14 +959,14 @@ def admin_page(articles, csrf):
             shown_date = moment_html(art.get("publish_at", ""), la)
             cancel_item = (f'<button role="menuitem" tabindex="-1" type="button" '
                            f'onclick="changeStatus(this, {js_attr(art["slug"])}, &quot;draft&quot;)">'
-                           f'{T("admin_programma_annulla", la)}</button>')
+                           f'{T("admin_schedule_cancel", la)}</button>')
 
         # A plain article can get its lab from here: the editor opens on a
         # new article already tied to this one.
         lab_item = ""
         if art.get("kind", "") == "":
             lab_item = (f'<a role="menuitem" tabindex="-1" '
-                        f'href="/edit?lab_of={esc(art["slug"])}">{T("admin_crea_lab", la)}</a>')
+                        f'href="/edit?lab_of={esc(art["slug"])}">{T("admin_create_lab", la)}</a>')
 
         lines.append(render.render(
             "admin/dashboard_row.html",
@@ -986,57 +986,57 @@ def admin_page(articles, csrf):
             titolo=esc(art["title"]),
             titolo_js=js_attr(art["title"]),
             data=shown_date,
-            label_modifica=T("admin_modifica", la),
-            label_altre_azioni=esc(T("admin_altre_azioni", la).replace("{title}", art["title"])),
+            label_modifica=T("admin_edit", la),
+            label_altre_azioni=esc(T("admin_others_f_actions", la).replace("{title}", art["title"])),
             icona_altro=icon(ICON_MORE, 20),
-            label_anteprima=T("admin_anteprima", la),
+            label_anteprima=T("admin_preview", la),
             link_anteprima_lingua=preview_other_link,
             azione_stato_js=js_attr(status_action),
             etichetta_azione_stato=status_action_label,
-            label_elimina=T("admin_elimina", la),
+            label_elimina=T("admin_delete", la),
         ).rstrip("\n"))
 
     if len(lines) > 0:
         listing = "\n".join(lines)
     else:
-        listing = f'<p class="elenco-vuoto">{T("admin_nessun_articolo", la)}</p>'
+        listing = f'<p class="elenco-vuoto">{T("admin_no_one_article", la)}</p>'
 
-    summary = (T("admin_riepilogo_articoli", la)
+    summary = (T("admin_overview_articles", la)
                .replace("{p}", str(published_count))
                .replace("{b}", str(draft_count)))
     if scheduled_count > 0:
-        summary = summary + T("admin_riepilogo_programmati", la).replace(
+        summary = summary + T("admin_overview_scheduled_pl", la).replace(
             "{s}", str(scheduled_count))
 
     contenuto = render.render(
         "admin/dashboard.html",
-        label_articoli=T("admin_articoli", la),
+        label_articoli=T("admin_articles", la),
         riepilogo=summary,
-        nuovo_articolo=T("admin_nuovo_articolo_titolo", la),
-        label_mostra=T("admin_mostra_gruppo", la),
-        label_tutti=T("admin_filtro_tutti", la),
+        nuovo_articolo=T("admin_new_article_title", la),
+        label_mostra=T("admin_show_group", la),
+        label_tutti=T("admin_filter_all", la),
         totale=len(articles),
-        label_pubblicati=T("admin_pubblicati", la),
+        label_pubblicati=T("admin_published_pl", la),
         pubblicati=published_count,
-        label_bozze=T("admin_bozze", la),
+        label_bozze=T("admin_drafts", la),
         bozze=draft_count,
-        label_programmati=T("admin_programmati", la),
+        label_programmati=T("admin_scheduled_pl", la),
         programmati=scheduled_count,
         programmati_nascosto="" if scheduled_count > 0 else " hidden",
-        label_cerca=esc(T("admin_cerca_articoli", la)),
-        label_ordina=T("admin_ordina", la),
-        ordina_recenti=T("admin_ordina_recenti", la),
-        ordina_vecchi=T("admin_ordina_vecchi", la),
-        ordina_titolo=T("admin_ordina_titolo", la),
-        ordina_stato=T("admin_ordina_stato", la),
+        label_cerca=esc(T("admin_search_articles", la)),
+        label_ordina=T("admin_sort", la),
+        ordina_recenti=T("admin_sort_recenti", la),
+        ordina_vecchi=T("admin_sort_old", la),
+        ordina_titolo=T("admin_sort_title", la),
+        ordina_stato=T("admin_sort_state", la),
         elenco=listing,
-        nessun_corrisponde=T("admin_nessun_corrisponde", la),
+        nessun_corrisponde=T("admin_no_one_matches", la),
         primi_passi=setup_steps_html(articles, la),
-        label_vedi_aggiornamento=T("admin_vedi_aggiornamento", la),
+        label_vedi_aggiornamento=T("admin_see_update_notice", la),
     )
 
     return admin_page_shell(
-        T("admin_titolo_pagina", la) + " - " + CONFIG["site_title"],
+        T("admin_title_page", la) + " - " + CONFIG["site_title"],
         contenuto, la, csrf=csrf,
         navbar=admin_navbar("articles", la, len(articles)),
         page_data={"page": "dashboard"})
@@ -1053,7 +1053,7 @@ def lab_of_options(art, la):
     options of a select: every plain article but the one being edited.
     """
     chosen = art.get("lab_of", "")
-    options = [f'<option value="">{esc(T("admin_lab_nessuno", la))}</option>']
+    options = [f'<option value="">{esc(T("admin_lab_nobody", la))}</option>']
     for other in load_articles():
         slug = other.get("slug", "")
         if other.get("kind") in ("lab", "practical") or slug == "" or slug == art.get("slug"):
@@ -1071,11 +1071,11 @@ def subject_tabs(art, la):
     that add the ones still missing. The author moves between the theory
     and its lab without going back to the list.
     """
-    state_words = {"published": T("admin_stato_pubblicato", la),
-                   "scheduled": T("admin_stato_programmato", la),
-                   "draft": T("admin_stato_bozza", la)}
-    labels = {"": T("admin_scheda_teoria", la), "practical": T("admin_scheda_pratica", la),
-              "lab": T("admin_scheda_lab", la)}
+    state_words = {"published": T("admin_state_published", la),
+                   "scheduled": T("admin_state_scheduled", la),
+                   "draft": T("admin_state_draft", la)}
+    labels = {"": T("admin_card_theory", la), "practical": T("admin_card_practice", la),
+              "lab": T("admin_card_lab", la)}
     everything = load_articles()
     kind = art.get("kind", "") or ""
     root_slug = art.get("slug", "")
@@ -1096,7 +1096,7 @@ def subject_tabs(art, la):
     for other in group:
         name = labels[other.get("kind") or ""]
         if not other.get("slug"):
-            state = T("admin_scheda_nuovo", la)
+            state = T("admin_card_new", la)
         else:
             state = state_words.get(other.get("status", "draft"), state_words["draft"])
         text = f'<span class="scheda-nome">{name}</span><span class="scheda-stato">{esc(state)}</span>'
@@ -1110,9 +1110,9 @@ def subject_tabs(art, la):
         if not any(other.get("kind") == "practical" for other in group):
             tabs.append(f'    <a class="scheda-tema scheda-aggiungi" '
                         f'href="/edit?lab_of={esc(root_slug)}&amp;kind=practical">'
-                        f'{T("admin_scheda_aggiungi_pratica", la)}</a>')
+                        f'{T("admin_card_add_practice", la)}</a>')
         tabs.append(f'    <a class="scheda-tema scheda-aggiungi" id="link-crea-lab" '
-                    f'href="/edit?lab_of={esc(root_slug)}">{T("admin_scheda_aggiungi_lab", la)}</a>')
+                    f'href="/edit?lab_of={esc(root_slug)}">{T("admin_card_add_lab", la)}</a>')
     return "\n".join(tabs)
 
 
@@ -1128,21 +1128,21 @@ def editor_page(art, csrf, starts_from=None, new_kind="lab"):
     # If we are editing an existing article, we take its values.
     # If instead this is a new article (art is None), we start from empty fields.
     if art is not None:
-        page_title = T("admin_modifica_articolo_titolo", la)
+        page_title = T("admin_edit_article_title", la)
         menu_item = "articles"
         # Deleting sits at the very bottom of the sidebar, small: it used to
         # be a red button as big as Save, right under it.
         delete_button = (f'<button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo btn-elimina-articolo" '
-                         f'onclick="deleteItem()">{T("admin_elimina_articolo", la)}</button>')
+                         f'onclick="deleteItem()">{T("admin_delete_article", la)}</button>')
     else:
         art = {}
-        page_title = T("admin_nuovo_articolo_titolo", la)
+        page_title = T("admin_new_article_title", la)
         if starts_from is not None:
             art = {"kind": new_kind, "lab_of": starts_from.get("slug", ""),
                    "tags": starts_from.get("tags", "")}
-            title_key = "admin_lab_nuovo_di"
+            title_key = "admin_lab_new_of"
             if new_kind == "practical":
-                title_key = "admin_pratica_nuova_di"
+                title_key = "admin_practice_new_f_of"
             page_title = T(title_key, la).replace("{title}", starts_from.get("title", ""))
         menu_item = "new"
         delete_button = ""
@@ -1161,135 +1161,135 @@ def editor_page(art, csrf, starts_from=None, new_kind="lab"):
     contenuto = render.render(
         "admin/editor.html",
         titolo_pagina_h1=page_title,
-        label_titolo=T("admin_titolo", la),
+        label_titolo=T("admin_title", la),
         valore_titolo=esc(art.get("title", "")),
-        label_contenuto=T("admin_contenuto", la),
+        label_contenuto=T("admin_content", la),
         tip_import_docx=esc(T("tip_import_docx", la)),
-        label_importa_word=T("admin_importa_word", la),
+        label_importa_word=T("admin_import_from_word", la),
         hint_docx=T("admin_docx_hint", la),
         tip_upload_image=esc(T("tip_upload_image", la)),
         label_from_library=T("admin_from_media_library", la),
         label_image_details=T("admin_image_details", la),
         label_image_alt_fix=T("admin_image_alt_fix", la),
-        label_carica_immagine=T("admin_carica_immagine", la),
+        label_carica_immagine=T("admin_upload_picture", la),
         tip_youtube=esc(T("tip_youtube", la)),
-        label_youtube=T("admin_inserisci_youtube", la),
+        label_youtube=T("admin_insert_youtube", la),
         tip_upload_video=esc(T("tip_upload_video", la)),
-        label_carica_video=T("admin_carica_video", la),
+        label_carica_video=T("admin_upload_video", la),
         tip_table=esc(T("tip_table", la)),
-        label_tabella=T("admin_inserisci_tabella", la),
-        label_torna_articoli=T("admin_torna_articoli", la),
-        label_inserisci=T("admin_inserisci", la),
-        label_indirizzo=T("admin_indirizzo_slug", la),
-        hint_indirizzo=T("admin_indirizzo_slug_hint", la),
+        label_tabella=T("admin_insert_table", la),
+        label_torna_articoli=T("admin_back_to_articles", la),
+        label_inserisci=T("admin_insert", la),
+        label_indirizzo=T("admin_address_slug", la),
+        hint_indirizzo=T("admin_address_slug_hint", la),
         stato=status,
-        label_stato_bozza=T("admin_stato_bozza", la),
-        hint_stato_bozza=T("admin_stato_bozza_hint", la),
-        label_stato_pubblicato=T("admin_stato_pubblicato", la),
-        label_stato_programmato=T("admin_stato_programmato", la),
+        label_stato_bozza=T("admin_state_draft", la),
+        hint_stato_bozza=T("admin_state_draft_hint", la),
+        label_stato_pubblicato=T("admin_state_published", la),
+        label_stato_programmato=T("admin_state_scheduled", la),
         spunta_avvisa=notify_checkbox(art, la),
-        label_versioni=T("admin_versioni", la),
-        hint_versioni=T("admin_versioni_hint", la),
+        label_versioni=T("admin_versions", la),
+        hint_versioni=T("admin_versions_hint", la),
         versioni_nascosto="" if art.get("slug", "") else " hidden",
         esce_il=moment_html(publish_at, la),
-        label_salva_modifiche=T("admin_salva_modifiche", la),
-        label_pubblica_ora=T("admin_pubblica_ora", la),
-        label_programma_annulla=T("admin_programma_annulla", la),
-        label_programma=T("admin_programma", la),
-        label_programma_cambia=T("admin_programma_cambia", la),
-        label_programma_quando=T("admin_programma_quando", la),
-        hint_programma=T("admin_programma_hint", la),
-        label_programma_conferma=T("admin_programma_conferma", la),
+        label_salva_modifiche=T("admin_save_changes_made", la),
+        label_pubblica_ora=T("admin_publish_now", la),
+        label_programma_annulla=T("admin_schedule_cancel", la),
+        label_programma=T("admin_schedule", la),
+        label_programma_cambia=T("admin_schedule_change", la),
+        label_programma_quando=T("admin_schedule_when", la),
+        hint_programma=T("admin_schedule_hint", la),
+        label_programma_conferma=T("admin_schedule_confirm", la),
         url_online=esc(url_online),
-        label_schede_tema=esc(T("admin_schede_tema", la)),
+        label_schede_tema=esc(T("admin_cards_theme", la)),
         schede_tema=subject_tabs(art, la),
-        label_dettagli=T("admin_dettagli", la),
-        label_chiudi=T("admin_chiudi", la),
-        label_lab_progetto=T("admin_lab_progetto", la),
-        label_condividi=T("admin_condividi", la),
-        hint_condividi=T("admin_condividi_hint", la),
-        label_vedi_online=T("admin_vedi_online", la),
-        label_pubblica=T("admin_pubblica", la),
-        tip_pubblica=esc(T("tip_pubblica_articolo", la)),
-        label_aggiorna=T("admin_aggiorna_articolo", la),
-        tip_aggiorna=esc(T("tip_aggiorna_articolo", la)),
-        label_salva_bozza=T("admin_salva_bozza", la),
-        tip_salva_bozza=esc(T("tip_salva_bozza", la)),
-        label_anteprima=T("admin_anteprima_pagina", la),
-        tip_anteprima=esc(T("tip_anteprima_pagina", la)),
-        label_ritira=T("admin_ritira", la),
+        label_dettagli=T("admin_details", la),
+        label_chiudi=T("admin_close", la),
+        label_lab_progetto=T("admin_lab_project", la),
+        label_condividi=T("admin_share", la),
+        hint_condividi=T("admin_share_hint", la),
+        label_vedi_online=T("admin_see_online", la),
+        label_pubblica=T("admin_publish", la),
+        tip_pubblica=esc(T("tip_publish_article", la)),
+        label_aggiorna=T("admin_update_article", la),
+        tip_aggiorna=esc(T("tip_update_article", la)),
+        label_salva_bozza=T("admin_save_draft", la),
+        tip_save_draft=esc(T("tip_save_draft", la)),
+        label_anteprima=T("admin_preview_page", la),
+        tip_anteprima=esc(T("tip_preview_page", la)),
+        label_ritira=T("admin_withdraw", la),
         bottone_elimina=delete_button,
-        label_sezione_metadati=T("admin_sezione_metadati", la),
-        label_gruppo_serie=T("admin_gruppo_serie", la),
-        label_gruppo_anteprima=T("admin_gruppo_anteprima", la),
-        label_gruppo_avanzate=T("admin_gruppo_avanzate", la),
-        riepilogo_avanzate=T("admin_gruppo_avanzate_riepilogo", la),
+        label_sezione_metadati=T("admin_section_of_metadata", la),
+        label_gruppo_serie=T("admin_group_series", la),
+        label_gruppo_anteprima=T("admin_group_preview", la),
+        label_gruppo_avanzate=T("admin_group_advanced", la),
+        riepilogo_avanzate=T("admin_group_advanced_overview", la),
         valore_slug=esc(art.get("slug", "")),
         label_tag=T("admin_tag", la),
         valore_tag=esc(art.get("tags", "")),
-        label_serie=T("admin_serie", la),
+        label_serie=T("admin_series", la),
         valore_serie=esc(art.get("series", "")),
         valore_serie_numero=art.get("series_number") or "",
-        label_serie_numero=esc(T("admin_serie_numero", la)),
-        hint_serie=help_text(T("admin_serie_hint", la)),
+        label_serie_numero=esc(T("admin_series_number", la)),
+        hint_serie=help_text(T("admin_series_hint", la)),
         serie_esistenti="".join(f'<option value="{esc(entry["name"])}">'
                                 for entry in collect_series(load_articles()).values()),
-        label_originale=T("admin_originale", la),
+        label_originale=T("admin_original", la),
         valore_originale=esc(art.get("original_url", "")),
-        hint_originale=help_text(T("admin_originale_hint", la)),
+        hint_originale=help_text(T("admin_original_hint", la)),
         originale_canonico_checked="checked" if art.get("original_canonical") is True else "",
-        label_originale_canonico=T("admin_originale_canonico", la),
-        hint_originale_canonico=help_text(T("admin_originale_canonico_hint", la)),
-        label_tipo=T("admin_tipo", la),
-        hint_tipo=help_text(T("admin_tipo_hint", la)),
-        label_tipo_articolo=T("admin_tipo_articolo", la),
-        label_tipo_pratica=T("admin_tipo_pratica", la),
-        label_tipo_lab=T("admin_tipo_lab", la),
+        label_originale_canonico=T("admin_original_canonical", la),
+        hint_originale_canonico=help_text(T("admin_original_canonical_hint", la)),
+        label_tipo=T("admin_kind", la),
+        hint_tipo=help_text(T("admin_kind_hint", la)),
+        label_tipo_articolo=T("admin_kind_article", la),
+        label_tipo_pratica=T("admin_kind_practice", la),
+        label_tipo_lab=T("admin_kind_lab", la),
         sel_tipo_articolo=selected_if(art.get("kind", ""), ""),
         sel_tipo_pratica=selected_if(art.get("kind", ""), "practical"),
         sel_tipo_lab=selected_if(art.get("kind", ""), "lab"),
         riferimento_hidden="" if art.get("kind") in ("lab", "practical") else "hidden",
         lab_hidden="" if art.get("kind") == "lab" else "hidden",
-        label_lab_di=T("admin_lab_di", la),
+        label_lab_di=T("admin_lab_of", la),
         opzioni_lab_di=lab_of_options(art, la),
         label_lab_repo=T("admin_lab_repo", la),
         valore_repo=esc(art.get("repo_url", "")),
         label_lab_stack=T("admin_lab_stack", la),
         valore_stack=esc(art.get("stack", "")),
-        label_lab_comandi=T("admin_lab_comandi", la),
+        label_lab_comandi=T("admin_lab_commands", la),
         valore_comandi=esc(art.get("run_steps", "")),
-        label_immagine=T("admin_immagine_copertina", la),
-        hint_immagine=help_text(T("admin_immagine_copertina_hint", la)),
+        label_immagine=T("admin_picture_cover", la),
+        hint_immagine=help_text(T("admin_picture_cover_hint", la)),
         valore_immagine=esc(art.get("image", "")),
         ph_immagine="https://... /media/...",
-        label_carica_copertina=T("admin_carica_copertina", la),
-        label_rimuovi_copertina=T("admin_rimuovi_copertina", la),
-        label_anteprima_lettori=T("admin_anteprima_lettori", la),
-        hint_anteprima=help_text(T("admin_anteprima_hint", la)),
+        label_carica_copertina=T("admin_upload_cover", la),
+        label_rimuovi_copertina=T("admin_remove_cover", la),
+        label_anteprima_lettori=T("admin_preview_readers", la),
+        hint_anteprima=help_text(T("admin_preview_hint", la)),
         valore_anteprima=esc(art.get("preview", "")),
-        label_genera_anteprima=T("admin_genera_anteprima", la),
-        label_descrizione_seo=T("admin_descrizione_seo", la),
-        hint_descrizione=help_text(T("admin_descrizione_hint", la)),
+        label_genera_anteprima=T("admin_generate_preview", la),
+        label_descrizione_seo=T("admin_description_seo", la),
+        hint_descrizione=help_text(T("admin_description_hint", la)),
         valore_descrizione=esc(art.get("description", "")),
-        label_suggerisci=T("admin_suggerisci_descrizione", la),
-        label_analisi_seo=T("admin_analisi_seo", la),
-        hint_analisi_seo=T("admin_analisi_seo_hint", la),
-        label_analizza=T("admin_analizza_seo", la),
-        label_versione_inglese=TL("admin_versione_inglese", la),
-        label_autorizza=TL("admin_autorizza_traduzione", la),
-        label_traduci=T("admin_traduci_auto", la),
-        label_anteprima_en=TL("admin_anteprima_en", la),
-        hint_anteprima_en=help_text(TL("admin_anteprima_en_hint", la)),
-        label_conferma_traduzione=TL("admin_conferma_traduzione", la),
+        label_suggerisci=T("admin_suggest_description", la),
+        label_analisi_seo=T("admin_analysis_seo", la),
+        hint_analisi_seo=T("admin_analysis_seo_hint", la),
+        label_analizza=T("admin_analyze_seo", la),
+        label_versione_inglese=TL("admin_version_english", la),
+        label_autorizza=TL("admin_authorize_translation_of", la),
+        label_traduci=T("admin_translate_auto", la),
+        label_anteprima_en=TL("admin_preview_en", la),
+        hint_anteprima_en=help_text(TL("admin_preview_en_hint", la)),
+        label_conferma_traduzione=TL("admin_confirm_translation_of", la),
         codice_traduzione=secondary_language().upper(),
-        label_codice_titolo=T("admin_codice_articolo_titolo", la),
-        hint_codice=T("admin_codice_articolo_hint", la),
+        label_codice_titolo=T("admin_code_article_title", la),
+        hint_codice=T("admin_code_article_hint", la),
         codice_articolo_html=article_custom_code_html(art, la),
-        label_codice_proprio=T("admin_codice_proprio_titolo", la),
-        hint_codice_proprio=T("admin_codice_proprio_hint", la),
+        label_codice_proprio=T("admin_code_own_title", la),
+        hint_codice_proprio=T("admin_code_own_hint", la),
         codice_proprio_html=article_own_code_html(art, la),
         codice_proprio_modello=custom_code_blank_card(la, own=True),
-        label_codice_proprio_aggiungi=T("admin_codice_proprio_aggiungi", la),
+        label_codice_proprio_aggiungi=T("admin_code_own_add", la),
     )
 
     # The article content and the translation flags travel as JSON, never as
@@ -1381,27 +1381,27 @@ def with_snippet_ids(snippets):
 # The positions of a snippet, with the key of their label, in the order the
 # dropdown lists them.
 POSITION_LABEL_KEYS = {
-    "head": "admin_codice_pos_head",
-    "body_start": "admin_codice_pos_body_start",
-    "body_end": "admin_codice_pos_body_end",
-    "nav": "admin_codice_pos_nav",
-    "after_header": "admin_codice_pos_after_header",
-    "sidebar": "admin_codice_pos_sidebar",
-    "home_feed": "admin_codice_pos_home_feed",
-    "article_start": "admin_codice_pos_article_start",
-    "article_middle": "admin_codice_pos_article_middle",
-    "article_end": "admin_codice_pos_article_end",
-    "before_footer": "admin_codice_pos_before_footer",
-    "anchor": "admin_codice_pos_anchor",
+    "head": "admin_code_pos_head",
+    "body_start": "admin_code_pos_body_start",
+    "body_end": "admin_code_pos_body_end",
+    "nav": "admin_code_pos_nav",
+    "after_header": "admin_code_pos_after_header",
+    "sidebar": "admin_code_pos_sidebar",
+    "home_feed": "admin_code_pos_home_feed",
+    "article_start": "admin_code_pos_article_start",
+    "article_middle": "admin_code_pos_article_middle",
+    "article_end": "admin_code_pos_article_end",
+    "before_footer": "admin_code_pos_before_footer",
+    "anchor": "admin_code_pos_anchor",
 }
 
 SCOPE_LABEL_KEYS = {
-    "all": "admin_codice_scope_tutto",
-    "home": "admin_codice_scope_home",
-    "articles": "admin_codice_scope_solo_articoli",
-    "home_articles": "admin_codice_scope_articles",
-    "optin": "admin_codice_scope_solo_optin",
-    "home_optin": "admin_codice_scope_optin",
+    "all": "admin_code_scope_everything",
+    "home": "admin_code_scope_home",
+    "articles": "admin_code_scope_only_articles",
+    "home_articles": "admin_code_scope_articles",
+    "optin": "admin_code_scope_only_optin",
+    "home_optin": "admin_code_scope_optin",
 }
 
 
@@ -1412,16 +1412,16 @@ def snippet_summary(snippet, la, own=False):
     read without opening any of them.
     """
     position = snippet.get("position", "head")
-    pieces = [T(POSITION_LABEL_KEYS.get(position, "admin_codice_pos_head"), la)]
+    pieces = [T(POSITION_LABEL_KEYS.get(position, "admin_code_pos_head"), la)]
     if position == "anchor" and str(snippet.get("anchor_label", "")).strip() != "":
         pieces = [str(snippet["anchor_label"]).strip()]
     if not own:
         pieces.append(T(SCOPE_LABEL_KEYS.get(snippet.get("scope", "home"),
-                                             "admin_codice_scope_home"), la))
+                                             "admin_code_scope_home"), la))
     consent = snippet.get("consent", "necessary")
     if consent not in ("necessary", "statistics", "marketing"):
         consent = "necessary"
-    pieces.append(T("consenso_" + consent, la))
+    pieces.append(T("consent_" + consent, la))
     return " · ".join(pieces)
 
 
@@ -1444,26 +1444,26 @@ def custom_code_card(snippet, index_value, la, own=False, open_card=False):
     name = snippet.get("name", "")
     shown_name = name
     if shown_name.strip() == "":
-        shown_name = T("admin_codice_senza_nome", la)
+        shown_name = T("admin_code_without_name", la)
 
     scope_block = ""
     if not own:
         scope_block = render.render(
             "admin/custom_code_scope.html",
-            label_ambito=T("admin_codice_ambito", la),
+            label_ambito=T("admin_code_scope", la),
             sel_tutto=selected_if(scope, "all"),
-            label_scope_tutto=T("admin_codice_scope_tutto", la),
+            label_scope_tutto=T("admin_code_scope_everything", la),
             sel_home=selected_if(scope, "home"),
-            label_scope_home=T("admin_codice_scope_home", la),
+            label_scope_home=T("admin_code_scope_home", la),
             sel_solo_articoli=selected_if(scope, "articles"),
-            label_scope_solo_articoli=T("admin_codice_scope_solo_articoli", la),
+            label_scope_solo_articoli=T("admin_code_scope_only_articles", la),
             sel_articles=selected_if(scope, "home_articles"),
-            label_scope_articles=T("admin_codice_scope_articles", la),
+            label_scope_articles=T("admin_code_scope_articles", la),
             sel_solo_optin=selected_if(scope, "optin"),
-            label_scope_solo_optin=T("admin_codice_scope_solo_optin", la),
+            label_scope_solo_optin=T("admin_code_scope_only_optin", la),
             sel_optin=selected_if(scope, "home_optin"),
-            label_scope_optin=T("admin_codice_scope_optin", la),
-            hint_ambito=T("admin_codice_scope_hint", la),
+            label_scope_optin=T("admin_code_scope_optin", la),
+            hint_ambito=T("admin_code_scope_hint", la),
         )
 
     values = {
@@ -1472,38 +1472,38 @@ def custom_code_card(snippet, index_value, la, own=False, open_card=False):
         "aperto": " open" if open_card else "",
         "nome_mostrato": esc(shown_name),
         "riassunto": esc(snippet_summary(snippet, la, own)),
-        "stato": T("admin_codice_attivo", la) if enabled else T("admin_codice_spento", la),
+        "stato": T("admin_code_active", la) if enabled else T("admin_code_off_m", la),
         "classe_spento": "" if enabled else " spento",
         "checked": checked_if(enabled),
-        "label_attivo": T("admin_codice_attivo", la),
-        "label_elimina": T("admin_codice_elimina", la),
-        "label_nome": T("admin_codice_nome", la),
+        "label_attivo": T("admin_code_active", la),
+        "label_elimina": T("admin_code_delete", la),
+        "label_nome": T("admin_code_name", la),
         "nome": esc(name),
-        "ph_nome": esc(T("admin_codice_nome_ph", la)),
-        "label_posizione": T("admin_codice_posizione", la),
-        "gruppo_tecnico": T("admin_codice_pos_gruppo_tecnico", la),
-        "gruppo_visibile": T("admin_codice_pos_gruppo_visibile", la),
+        "ph_nome": esc(T("admin_code_name_ph", la)),
+        "label_posizione": T("admin_code_position", la),
+        "gruppo_tecnico": T("admin_code_pos_group_technical", la),
+        "gruppo_visibile": T("admin_code_pos_group_visible", la),
         "blocco_ambito": scope_block,
-        "label_consenso": T("admin_codice_consenso", la),
+        "label_consenso": T("admin_code_consent", la),
         "sel_necessary": selected_if(consent, "necessary"),
-        "label_cons_necessary": T("admin_codice_cons_necessary", la),
+        "label_cons_necessary": T("admin_code_consent_choice_necessary", la),
         "sel_statistics": selected_if(consent, "statistics"),
-        "label_cons_statistics": T("admin_codice_cons_statistics", la),
+        "label_cons_statistics": T("admin_code_consent_choice_statistics", la),
         "sel_marketing": selected_if(consent, "marketing"),
-        "label_cons_marketing": T("admin_codice_cons_marketing", la),
+        "label_cons_marketing": T("admin_code_consent_choice_marketing", la),
         # The homepage list is no place for code that belongs to one article.
         "solo_sito": " hidden disabled" if own else "",
-        "hint_posizione": T("admin_codice_pos_hint_proprio" if own else "admin_codice_pos_hint", la),
-        "hint_consenso": T("admin_codice_consenso_hint_proprio" if own else "admin_codice_consenso_hint", la),
-        "label_codice": esc(T("admin_codice_codice", la)),
+        "hint_posizione": T("admin_code_pos_hint_own" if own else "admin_code_pos_hint", la),
+        "hint_consenso": T("admin_code_consent_hint_own" if own else "admin_code_consent_hint", la),
+        "label_codice": esc(T("admin_code_code", la)),
         "codice": esc(snippet.get("code", "")),
         # The point chosen on the page, for the "anchor" position.
         "punto_nascosto": "" if position == "anchor" else " hidden",
-        "label_punto": T("admin_punto", la),
+        "label_punto": T("admin_point", la),
         "punto_testo": esc(str(snippet.get("anchor_label", "")).strip()
-                           or T("admin_punto_nessuno", la)),
-        "label_scegli_punto": T("admin_scegli_punto", la),
-        "hint_punto": T("admin_punto_hint", la),
+                           or T("admin_point_nobody", la)),
+        "label_scegli_punto": T("admin_choose_point", la),
+        "hint_punto": T("admin_point_hint", la),
         "ancora": esc(str(snippet.get("anchor_selector", ""))),
         "ancora_dove": esc(str(snippet.get("anchor_where", "after"))),
         "ancora_etichetta": esc(str(snippet.get("anchor_label", ""))),
@@ -1577,12 +1577,12 @@ def article_custom_code_html(art, la):
         optin = scope in ("optin", "home_optin")
         if optin:
             checked = " checked" if snippet_id in ticked else ""
-            kind = T("admin_codice_articolo_scelto", la)
+            kind = T("admin_code_article_chosen", la)
         else:
             checked = "" if snippet_id in switched_off else " checked"
-            kind = T("admin_codice_articolo_sempre", la)
+            kind = T("admin_code_article_always", la)
         where = esc(T(POSITION_LABEL_KEYS.get(snippet.get("position", "head"),
-                                              "admin_codice_pos_head"), la))
+                                              "admin_code_pos_head"), la))
         rows.append(
             '<label class="riga-flag codice-articolo-riga">'
             f'<input type="checkbox" class="codice-articolo" value="{esc(snippet_id)}"'
@@ -1590,7 +1590,7 @@ def article_custom_code_html(art, la):
             f'<span class="hint">({where}, {esc(kind)})</span></label>')
 
     if len(rows) == 0:
-        return f'<p class="hint">{T("admin_codice_articolo_vuoto", la)}</p>'
+        return f'<p class="hint">{T("admin_code_article_empty_m", la)}</p>'
     return "\n".join(rows)
 
 
@@ -1675,26 +1675,26 @@ def project_card(item, la):
     return render.render(
         "admin/project_card.html",
         checked=checked_if(item.get("visible", True)),
-        label_visibile=T("admin_progetto_visibile", la),
-        label_su=esc(T("admin_sposta_su", la)),
-        label_giu=esc(T("admin_sposta_giu", la)),
+        label_visibile=T("admin_project_visible", la),
+        label_su=esc(T("admin_move_on_top", la)),
+        label_giu=esc(T("admin_move_down", la)),
         icona_su=icon(ICON_UP),
         icona_giu=icon(ICON_DOWN),
-        label_elimina=T("admin_progetto_elimina", la),
-        label_nome=T("admin_progetto_nome", la),
+        label_elimina=T("admin_project_delete", la),
+        label_nome=T("admin_project_name", la),
         nome=esc(item.get("name", "")),
-        label_descrizione=T("admin_progetto_descrizione", la),
+        label_descrizione=T("admin_project_description", la),
         descrizione=esc(item.get("description", "")),
-        hint_descrizione=T("admin_progetto_descrizione_hint", la),
-        label_descrizione_en=TL("admin_progetto_descrizione_en", la),
+        hint_descrizione=T("admin_project_description_hint", la),
+        label_descrizione_en=TL("admin_project_description_en", la),
         descrizione_en=esc(item.get("description_en", "")),
-        label_link=T("admin_progetto_link", la),
+        label_link=T("admin_project_link", la),
         link=esc(item.get("url", "")),
-        hint_link=T("admin_progetto_link_hint", la),
-        label_immagine=T("admin_progetto_immagine", la),
+        hint_link=T("admin_project_link_hint", la),
+        label_immagine=T("admin_project_picture", la),
         immagine=esc(item.get("image", "")),
-        hint_immagine=T("admin_progetto_immagine_hint", la),
-        label_carica=T("admin_carica_immagine", la),
+        hint_immagine=T("admin_project_picture_hint", la),
+        label_carica=T("admin_upload_picture", la),
     ).rstrip("\n")
 
 
@@ -1703,17 +1703,17 @@ def code_guide(la, open_it):
     return render.render(
         "admin/codici_guida.html",
         aperta=" open" if open_it else "",
-        titolo=T("admin_guida_codici_titolo", la),
-        intro=T("admin_guida_codici_intro", la),
-        ti_danno=T("admin_guida_ti_danno", la),
-        cosa_fai=T("admin_guida_cosa_fai", la),
-        es1_titolo=T("admin_guida_es1_titolo", la),
-        es1_passi=T("admin_guida_es1_passi", la),
-        es2_titolo=T("admin_guida_es2_titolo", la),
-        es2_passi=T("admin_guida_es2_passi", la),
-        es3_titolo=T("admin_guida_es3_titolo", la),
-        es3_passi=T("admin_guida_es3_passi", la),
-        fiducia=T("admin_guida_fiducia", la),
+        titolo=T("admin_guide_codes_title", la),
+        intro=T("admin_guide_codes_intro", la),
+        ti_danno=T("admin_guide_you_give", la),
+        cosa_fai=T("admin_guide_what_do", la),
+        es1_titolo=T("admin_guide_ex1_title", la),
+        es1_passi=T("admin_guide_ex1_steps", la),
+        es2_titolo=T("admin_guide_ex2_title", la),
+        es2_passi=T("admin_guide_ex2_steps", la),
+        es3_titolo=T("admin_guide_ex3_title", la),
+        es3_passi=T("admin_guide_ex3_steps", la),
+        fiducia=T("admin_guide_trust", la),
     ).rstrip("\n")
 
 
@@ -1738,7 +1738,7 @@ def section_state_html(section_id, config, la):
     warn = ""
     if tone == "warn":
         # The colour alone would leave a screen reader with no warning.
-        warn = icon(ICON_WARN, 16) + f'<span class="vh">{T("admin_stato_tono_warn", la)}: </span>'
+        warn = icon(ICON_WARN, 16) + f'<span class="vh">{T("admin_state_tone_warn", la)}: </span>'
     return f'<span class="scheda-stato stato-{tone}">{warn}{esc(text)}</span>'
 
 
@@ -1797,14 +1797,14 @@ def config_section_header(key, la, config=None):
     label_key = dict(CONFIG_SECTIONS)[key]
     # The way back is the first word of the breadcrumb, on every screen;
     # the phone also gets the arrow it expects in the corner.
-    trail = f'<a href="#elenco">{T("admin_impostazioni", la)}</a>'
+    trail = f'<a href="#elenco">{T("admin_settings_page", la)}</a>'
     group_key = settings_panel.group_label(key)
     if group_key != "":
         trail = trail + f' <span aria-hidden="true">›</span> {T(group_key, la)}'
     return (
         '  <div class="sezione-testata">\n'
         f'    <a class="pulsante pulsante-icona sezione-indietro" href="#elenco" '
-        f'aria-label="{esc(T("admin_torna_impostazioni", la))}">{icon(ICON_BACK, 22)}</a>\n'
+        f'aria-label="{esc(T("admin_back_to_settings_page", la))}">{icon(ICON_BACK, 22)}</a>\n'
         '    <div>\n'
         f'      <p class="sezione-occhiello">{trail}</p>\n'
         f'      <h1 class="pagina-titolo" id="titolo-{key}">{T(label_key, la)}</h1>\n'
@@ -1861,10 +1861,10 @@ def config_page(csrf):
             "admin/config_card.html",
             indice=index_value,
             checked=checked,
-            label_mostra=T("admin_mostra_card", la),
-            label_titolo=T("admin_titolo_card", la),
+            label_mostra=T("admin_show_card", la),
+            label_titolo=T("admin_title_card", la),
             titolo=esc(card.get("title", "")),
-            label_contenuto=T("admin_contenuto", la),
+            label_contenuto=T("admin_content", la),
         ).rstrip("\n"))
         index_value = index_value + 1
 
@@ -1890,218 +1890,218 @@ def config_page(csrf):
     nl_state = newsletter.load_state()
     nl_rows = []
     for reader in nl_state["subscribers"]:
-        stato = T("admin_nl_confermato" if reader.get("status") == "confirmed" else "admin_nl_attesa", la)
+        stato = T("admin_nl_confirmed" if reader.get("status") == "confirmed" else "admin_nl_waiting", la)
         email = esc(reader.get("email", ""))
         nl_rows.append(
             f'      <li><span class="nl-email">{email}</span> <span class="hint">{stato}</span>'
             f'<button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo" '
-            f'data-email="{email}" onclick="removeSubscriber(this)">{T("admin_nl_rimuovi", la)}</button></li>')
+            f'data-email="{email}" onclick="removeSubscriber(this)">{T("admin_nl_remove", la)}</button></li>')
     if nl_rows:
         nl_list = '    <ul class="nl-elenco">\n' + "\n".join(nl_rows) + "\n    </ul>"
     else:
-        nl_list = f'    <p class="aiuto">{T("admin_nl_nessuno", la)}</p>'
+        nl_list = f'    <p class="aiuto">{T("admin_nl_nobody", la)}</p>'
     nl_confirmed = sum(1 for r in nl_state["subscribers"] if r.get("status") == "confirmed")
     last = nl_state["last"]
     nl_last = ""
     if last.get("title"):
         if last.get("error"):
-            nl_last = (f'    <p class="avviso avviso-danger">' + esc(T("admin_nl_ultimo_errore", la)
+            nl_last = (f'    <p class="avviso avviso-danger">' + esc(T("admin_nl_last_failure", la)
                        .replace("{title}", last["title"]).replace("{error}", last["error"])) + "</p>")
         else:
-            nl_last = (f'    <p class="aiuto">' + esc(T("admin_nl_ultimo", la)
+            nl_last = (f'    <p class="aiuto">' + esc(T("admin_nl_last", la)
                        .replace("{title}", last["title"]).replace("{sent}", str(last.get("sent", 0)))) + "</p>")
 
     context = dict(
-        titolo_impostazioni=T("admin_impostazioni", la),
+        titolo_impostazioni=T("admin_settings_page", la),
         checked_nl=checked_if(nl["enabled"]),
-        label_nl_attiva=T("admin_nl_attiva", la),
-        hint_nl_attiva=T("admin_nl_attiva_hint", la),
-        label_nl_dove=T("admin_nl_dove", la),
+        label_nl_attiva=T("admin_nl_active_f", la),
+        hint_nl_attiva=T("admin_nl_active_f_hint", la),
+        label_nl_dove=T("admin_nl_where", la),
         checked_nl_barra=checked_if(nl["in_sidebar"]),
-        label_nl_barra=T("admin_nl_barra", la),
+        label_nl_barra=T("admin_nl_bar", la),
         checked_nl_articolo=checked_if(nl["after_article"]),
-        label_nl_articolo=T("admin_nl_articolo", la),
-        label_nl_titolo=T("admin_nl_titolo", la),
+        label_nl_articolo=T("admin_nl_article", la),
+        label_nl_titolo=T("admin_nl_title", la),
         valore_nl_titolo=esc(nl["title"]),
-        ph_nl_titolo=esc(T("nl_titolo_default", site_language)),
-        label_nl_testo=T("admin_nl_testo", la),
+        ph_nl_titolo=esc(T("nl_title_default", site_language)),
+        label_nl_testo=T("admin_nl_text", la),
         valore_nl_testo=esc(nl["text"]),
-        ph_nl_testo=esc(T("nl_testo_default", site_language)),
-        hint_nl_testi=T("admin_nl_testi_hint", la),
+        ph_nl_testo=esc(T("nl_text_default", site_language)),
+        hint_nl_testi=T("admin_nl_texts_of_hint", la),
         checked_nl_invio=checked_if(nl["send_on_publish"]),
-        label_nl_invio=T("admin_nl_invio_auto", la),
-        hint_nl_invio=T("admin_nl_invio_auto_hint", la),
-        label_gr_nl_spedizione=T("admin_gr_nl_spedizione", la),
-        hint_gr_nl_spedizione=T("admin_gr_nl_spedizione_hint", la),
-        label_nl_mittente_nome=T("admin_nl_mittente_nome", la),
+        label_nl_invio=T("admin_nl_sending_auto", la),
+        hint_nl_invio=T("admin_nl_sending_auto_hint", la),
+        label_gr_nl_spedizione=T("admin_grp_nl_shipping", la),
+        hint_gr_nl_spedizione=T("admin_grp_nl_shipping_hint", la),
+        label_nl_mittente_nome=T("admin_nl_sender_name", la),
         valore_nl_mittente_nome=esc(nl["sender_name"]),
-        hint_nl_mittente_nome=T("admin_nl_mittente_nome_hint", la),
-        label_nl_mittente_email=T("admin_nl_mittente_email", la),
+        hint_nl_mittente_nome=T("admin_nl_sender_name_hint", la),
+        label_nl_mittente_email=T("admin_nl_sender_email", la),
         valore_nl_mittente_email=esc(nl["sender_email"]),
         label_nl_smtp_host=T("admin_nl_smtp_host", la),
         valore_nl_smtp_host=esc(nl["smtp_host"]),
         label_nl_smtp_port=T("admin_nl_smtp_port", la),
         valore_nl_smtp_port=nl["smtp_port"],
         hint_nl_smtp_port=T("admin_nl_smtp_port_hint", la),
-        label_nl_smtp_sicurezza=T("admin_nl_smtp_sicurezza", la),
+        label_nl_smtp_sicurezza=T("admin_nl_smtp_security", la),
         sel_nl_starttls=selected_if(nl["smtp_security"], "starttls"),
         sel_nl_ssl=selected_if(nl["smtp_security"], "ssl"),
         sel_nl_none=selected_if(nl["smtp_security"], "none"),
         label_nl_starttls=T("admin_nl_sic_starttls", la),
         label_nl_ssl=T("admin_nl_sic_ssl", la),
         label_nl_none=T("admin_nl_sic_none", la),
-        label_nl_smtp_utente=T("admin_nl_smtp_utente", la),
+        label_nl_smtp_utente=T("admin_nl_smtp_user", la),
         valore_nl_smtp_utente=esc(nl["smtp_user"]),
         label_nl_smtp_password=T("admin_nl_smtp_password", la),
         # The password is never written back into the page: an empty field
         # keeps the saved one, as the translation keys do.
-        ph_nl_password=esc(T("admin_nl_password_salvata", la)) if nl["smtp_password"] else "",
+        ph_nl_password=esc(T("admin_nl_password_saved_f", la)) if nl["smtp_password"] else "",
         hint_nl_smtp_password=T("admin_nl_smtp_password_hint", la),
-        label_nl_prova=T("admin_nl_prova", la),
-        hint_nl_prova=T("admin_nl_prova_hint", la),
-        label_gr_nl_iscritti=T("admin_gr_nl_iscritti", la),
-        nl_conteggio=T("admin_nl_conteggio", la).replace("{c}", str(nl_confirmed)).replace(
+        label_nl_prova=T("admin_nl_test", la),
+        hint_nl_prova=T("admin_nl_test_hint", la),
+        label_gr_nl_iscritti=T("admin_grp_nl_subscribers", la),
+        nl_conteggio=T("admin_nl_count", la).replace("{c}", str(nl_confirmed)).replace(
             "{p}", str(len(nl_state["subscribers"]) - nl_confirmed)),
         nl_ultimo=nl_last,
         nl_elenco=nl_list,
-        label_nl_esporta=T("admin_nl_esporta", la),
+        label_nl_esporta=T("admin_nl_export", la),
         checked_bio=checked_if(biography["enabled"]),
-        label_bio_attiva=T("admin_bio_attiva", la),
-        hint_bio_attiva=T("admin_bio_attiva_hint", la),
-        label_posizione_home=T("admin_posizione_home", la),
+        label_bio_attiva=T("admin_bio_active_f", la),
+        hint_bio_attiva=T("admin_bio_active_f_hint", la),
+        label_posizione_home=T("admin_position_home", la),
         label_pos_sidebar=T("admin_pos_sidebar", la),
         label_pos_top=T("admin_pos_top", la),
         label_pos_bottom=T("admin_pos_bottom", la),
         sel_bio_sidebar=selected_if(biography["position"], "sidebar"),
         sel_bio_top=selected_if(biography["position"], "top"),
         sel_bio_bottom=selected_if(biography["position"], "bottom"),
-        label_bio_foto=T("admin_bio_foto", la),
+        label_bio_foto=T("admin_bio_photo", la),
         valore_bio_foto=esc(biography["photo"]),
-        hint_bio_foto=T("admin_bio_foto_hint", la),
-        label_carica_foto=T("admin_carica_foto", la),
-        label_rimuovi=T("admin_rimuovi", la),
-        label_bio_testo=T("admin_bio_testo", la),
-        label_bio_testo_en=TL("admin_bio_testo_en", la),
-        hint_bio_testo_en=TL("admin_bio_testo_en_hint", la),
+        hint_bio_foto=T("admin_bio_photo_hint", la),
+        label_carica_foto=T("admin_upload_photo", la),
+        label_rimuovi=T("admin_remove", la),
+        label_bio_testo=T("admin_bio_text", la),
+        label_bio_testo_en=TL("admin_bio_text_en", la),
+        hint_bio_testo_en=TL("admin_bio_text_en_hint", la),
         checked_progetti=checked_if(projects["enabled"]),
-        label_progetti_attivi=T("admin_progetti_attivi", la),
-        hint_progetti_attivi=T("admin_progetti_attivi_hint", la),
+        label_progetti_attivi=T("admin_projects_active_pl", la),
+        hint_progetti_attivi=T("admin_projects_active_pl_hint", la),
         sel_progetti_sidebar=selected_if(projects["position"], "sidebar"),
         sel_progetti_top=selected_if(projects["position"], "top"),
         sel_progetti_bottom=selected_if(projects["position"], "bottom"),
         progetti_html="\n".join(project_cards),
         progetti_vuoto_nascosto=empty_note_hidden,
-        label_progetti_vuoto=T("admin_progetti_vuoto", la),
-        label_progetto_aggiungi=T("admin_progetto_aggiungi", la),
+        label_progetti_vuoto=T("admin_projects_empty_m", la),
+        label_progetto_aggiungi=T("admin_project_add", la),
         progetto_modello=project_card(None, la),
         elenco_sezioni=config_sections_list(la, config),
-        pannello_sottotitolo=T("admin_pannello_sottotitolo", la),
-        label_cerca_impostazione=T("admin_cerca_impostazione", la),
-        ph_cerca_impostazione=esc(T("admin_cerca_impostazione_ph", la)),
-        nessuna_impostazione=T("admin_nessuna_impostazione", la),
-        avanzate_invito=T("admin_avanzate_invito", la),
-        avanzate_link=T("admin_avanzate_link", la),
-        label_gr_sito=T("admin_gr_sito", la),
-        label_gr_autore=T("admin_gr_autore", la),
-        label_gr_immagini=T("admin_gr_immagini", la),
-        label_gr_disposizione=T("admin_gr_disposizione", la),
-        label_gr_pagina_articolo=T("admin_gr_pagina_articolo", la),
-        label_gr_statistiche=T("admin_gr_statistiche", la),
+        pannello_sottotitolo=T("admin_panel_subtitle", la),
+        label_cerca_impostazione=T("admin_search_setting", la),
+        ph_cerca_impostazione=esc(T("admin_search_setting_ph", la)),
+        nessuna_impostazione=T("admin_none_f_setting", la),
+        avanzate_invito=T("admin_advanced_invitation", la),
+        avanzate_link=T("admin_advanced_link", la),
+        label_gr_sito=T("admin_grp_site", la),
+        label_gr_autore=T("admin_grp_author", la),
+        label_gr_immagini=T("admin_grp_pictures", la),
+        label_gr_disposizione=T("admin_grp_layout_section", la),
+        label_gr_pagina_articolo=T("admin_grp_page_article", la),
+        label_gr_statistiche=T("admin_grp_analytics_section", la),
         label_umami_url=T("admin_umami_url", la),
         label_umami_id=T("admin_umami_id", la),
         hint_giscus="https://giscus.app",
-        label_annulla_modifiche=T("admin_annulla_modifiche", la),
-        nota_salva=T("admin_salva_nota", la),
+        label_annulla_modifiche=T("admin_cancel_changes_made", la),
+        nota_salva=T("admin_save_note_text", la),
         guida_codici=code_guide(la, len(config.get("custom_code", []) or []) == 0),
-        label_inserisci=T("admin_inserisci", la),
-        label_parte_alta=T("admin_parte_alta_home", la),
-        hint_parte_alta=T("admin_parte_alta_hint", la),
+        label_inserisci=T("admin_insert", la),
+        label_parte_alta=T("admin_part_top_home", la),
+        hint_parte_alta=T("admin_part_top_hint", la),
         tip_upload_image=esc(T("tip_upload_image", la)),
         label_from_library=T("admin_from_media_library", la),
         label_image_details=T("admin_image_details", la),
         label_image_alt_fix=T("admin_image_alt_fix", la),
-        label_carica_immagine=T("admin_carica_immagine", la),
+        label_carica_immagine=T("admin_upload_picture", la),
         tip_youtube=esc(T("tip_youtube", la)),
-        label_youtube=T("admin_inserisci_youtube", la),
+        label_youtube=T("admin_insert_youtube", la),
         tip_upload_video=esc(T("tip_upload_video", la)),
-        label_carica_video=T("admin_carica_video", la),
+        label_carica_video=T("admin_upload_video", la),
         tip_preview=esc(T("tip_preview", la)),
-        label_mostra_anteprima_home=T("admin_mostra_anteprima_home", la),
-        hint_come_appare=T("admin_come_appare_home", la),
-        label_presentazione_inglese=TL("admin_presentazione_inglese", la),
-        hint_presentazione_en=TL("admin_presentazione_en_hint", la),
-        label_traduci_italiano=TL("admin_traduci_dall_italiano", la),
-        label_lavoro_titolo=T("admin_lavoro_titolo", la),
+        label_mostra_anteprima_home=T("admin_show_preview_home", la),
+        hint_come_appare=T("admin_how_appears_home", la),
+        label_presentazione_inglese=TL("admin_introduction_english", la),
+        hint_presentazione_en=TL("admin_introduction_en_hint", la),
+        label_traduci_italiano=TL("admin_translate_from_the_italian", la),
+        label_lavoro_titolo=T("admin_job_title", la),
         checked_lavoro=checked_if(lavoro["enabled"]),
-        label_lavoro_attivo=T("admin_lavoro_attivo", la),
-        hint_lavoro_attivo=T("admin_lavoro_attivo_hint", la),
-        label_lavoro_url=T("admin_lavoro_url", la),
-        hint_lavoro_url=T("admin_lavoro_url_hint", la),
+        label_lavoro_attivo=T("admin_job_active", la),
+        hint_lavoro_attivo=T("admin_job_active_hint", la),
+        label_lavoro_url=T("admin_job_url", la),
+        hint_lavoro_url=T("admin_job_url_hint", la),
         valore_lavoro_url=esc(lavoro["url"]),
-        label_lavoro_label=T("admin_lavoro_label", la),
+        label_lavoro_label=T("admin_job_label", la),
         valore_lavoro_label=esc(lavoro["label"]),
-        ph_lavoro_label=esc(T("lavora_con_me", "it")),
-        label_lavoro_label_en=T("admin_lavoro_label_en", la),
+        ph_lavoro_label=esc(T("work_with_me", "it")),
+        label_lavoro_label_en=T("admin_job_label_en", la),
         valore_lavoro_label_en=esc(lavoro["label_en"]),
-        ph_lavoro_label_en=esc(T("lavora_con_me", "en")),
-        label_lavoro_testo=T("admin_lavoro_testo", la),
+        ph_lavoro_label_en=esc(T("work_with_me", "en")),
+        label_lavoro_testo=T("admin_job_text", la),
         valore_lavoro_testo=esc(lavoro["text"]),
-        ph_lavoro_testo=esc(T("lavora_invito", "it")),
-        label_lavoro_testo_en=T("admin_lavoro_testo_en", la),
+        ph_lavoro_testo=esc(T("work_invitation", "it")),
+        label_lavoro_testo_en=T("admin_job_text_en", la),
         valore_lavoro_testo_en=esc(lavoro["text_en"]),
-        ph_lavoro_testo_en=esc(T("lavora_invito", "en")),
+        ph_lavoro_testo_en=esc(T("work_invitation", "en")),
         hint_card_home=T("admin_card_home_hint", la),
         checked_card_home_attiva=checked_if(config.get("home_cards_enabled", True)),
-        label_card_home_attiva=T("admin_card_home_attiva", la),
-        hint_card_home_attiva=T("admin_card_home_attiva_hint", la),
+        label_card_home_attiva=T("admin_card_home_active_f", la),
+        hint_card_home_attiva=T("admin_card_home_active_f_hint", la),
         card_html="\n".join(card_html_parti),
-        label_codice_titolo=T("admin_codice_titolo", la),
-        hint_codice=T("admin_codice_hint", la),
+        label_codice_titolo=T("admin_code_title", la),
+        hint_codice=T("admin_code_hint", la),
         codice_html=custom_code_cards(config, la),
         codice_modello=custom_code_blank_card(la),
-        label_codice_vuoto=T("admin_codice_vuoto", la),
-        label_codice_aggiungi=T("admin_codice_aggiungi", la),
-        label_codice_modelli=T("admin_codice_modelli", la),
-        hint_codice_modelli=T("admin_codice_modelli_hint", la),
-        label_modello_libero=T("admin_codice_libero", la),
-        label_modello_adsense_auto=T("admin_modello_adsense_auto", la),
-        label_modello_adsense_unita=T("admin_modello_adsense_unita", la),
-        label_modello_google_ads=T("admin_modello_google_ads", la),
-        label_modello_altri=esc(T("admin_modello_altri", la)),
-        label_codice_crea=T("admin_codice_crea", la),
-        label_annulla_scelta=T("admin_annulla_scelta", la),
+        label_codice_vuoto=T("admin_code_empty_m", la),
+        label_codice_aggiungi=T("admin_code_add", la),
+        label_codice_modelli=T("admin_code_templates", la),
+        hint_codice_modelli=T("admin_code_templates_hint", la),
+        label_modello_libero=T("admin_code_free", la),
+        label_modello_adsense_auto=T("admin_template_adsense_auto", la),
+        label_modello_adsense_unita=T("admin_template_adsense_unit_ad", la),
+        label_modello_google_ads=T("admin_template_google_ads", la),
+        label_modello_altri=esc(T("admin_template_others", la)),
+        label_codice_crea=T("admin_code_create", la),
+        label_annulla_scelta=T("admin_cancel_choice", la),
         label_ads_txt=T("admin_ads_txt", la),
         hint_ads_txt=T("admin_ads_txt_hint", la),
         valore_ads_txt=esc(config.get("ads_txt", "")),
-        hint_consenso=T("admin_consenso_intro", la),
+        hint_consenso=T("admin_consent_intro", la),
         checked_consenso=checked_if(consent["enabled"]),
-        label_consenso_attivo=T("admin_consenso_attivo", la),
-        label_consenso_testo=T("admin_consenso_testo", la),
-        hint_consenso_testo=T("admin_consenso_testo_hint", la),
+        label_consenso_attivo=T("admin_consent_active", la),
+        label_consenso_testo=T("admin_consent_text", la),
+        hint_consenso_testo=T("admin_consent_text_hint", la),
         valore_consenso_testo=esc(consent["text"]),
-        ph_consenso_testo=esc(T("consenso_testo", main_language())),
-        label_consenso_testo_en=TL("admin_consenso_testo_en", la),
+        ph_consenso_testo=esc(T("consent_text", main_language())),
+        label_consenso_testo_en=TL("admin_consent_text_en", la),
         valore_consenso_testo_en=esc(consent["text_en"]),
-        ph_consenso_testo_en=esc(T("consenso_testo", secondary_language())),
-        label_consenso_privacy=T("admin_consenso_privacy", la),
+        ph_consenso_testo_en=esc(T("consent_text", secondary_language())),
+        label_consenso_privacy=T("admin_consent_privacy", la),
         valore_consenso_privacy=esc(consent["privacy_url"]),
         ph_consenso_privacy=ph["base_url"] + "/privacy.html",
-        label_consenso_rinnova=T("admin_consenso_rinnova", la),
-        hint_consenso_rinnova=T("admin_consenso_rinnova_hint", la),
-        label_titolo_sito=T("admin_titolo_sito", la),
+        label_consenso_rinnova=T("admin_consent_renew", la),
+        hint_consenso_rinnova=T("admin_consent_renew_hint", la),
+        label_titolo_sito=T("admin_title_site", la),
         valore_titolo_sito=esc(config.get("site_title", "")),
         ph_site_title=ph["site_title"],
-        label_sottotitolo=T("admin_sottotitolo", la),
+        label_sottotitolo=T("admin_subtitle", la),
         valore_sottotitolo=esc(config.get("subtitle", "")),
         ph_subtitle=ph["subtitle"],
-        label_autore=T("admin_autore", la),
+        label_autore=T("admin_author", la),
         valore_autore=esc(config.get("author", "")),
         ph_author=ph["author"],
-        label_dominio=T("admin_dominio_sito", la),
-        hint_dominio=T("admin_dominio_hint", la),
+        label_dominio=T("admin_domain_site", la),
+        hint_dominio=T("admin_domain_hint", la),
         valore_dominio=esc(config.get("base_url", "")),
-        label_indirizzo_admin=T("admin_indirizzo_admin", la),
-        hint_indirizzo_admin=T("admin_indirizzo_admin_hint", la),
+        label_indirizzo_admin=T("admin_address_admin", la),
+        hint_indirizzo_admin=T("admin_address_admin_hint", la),
         valore_indirizzo_admin=esc(str(config.get("admin_url", "") or "")),
         ph_base_url=ph["base_url"],
         label_analytics=T("admin_analytics", la),
@@ -2115,67 +2115,67 @@ def config_page(csrf):
         ph_umami_url=ph["umami_url"],
         valore_umami_id=esc(config.get("umami_website_id", "")),
         ph_umami_website_id=ph["umami_website_id"],
-        label_lingua_principale=T("admin_lingua_principale", la),
-        hint_lingua_principale=T("admin_lingua_principale_hint", la),
+        label_lingua_principale=T("admin_language_main", la),
+        hint_lingua_principale=T("admin_language_main_hint", la),
         sel_lingua_it=selected_if(site_language, "it"),
         sel_lingua_en=selected_if(site_language, "en"),
         hint_layout=T("admin_layout_hint", la),
-        label_intro_posizione=T("admin_intro_posizione", la),
-        hint_intro_posizione=T("admin_intro_posizione_hint", la),
+        label_intro_posizione=T("admin_intro_position", la),
+        hint_intro_posizione=T("admin_intro_position_hint", la),
         sel_intro_barra=selected_if(intro_position, "sidebar"),
-        label_intro_barra=T("admin_intro_barra", la),
+        label_intro_barra=T("admin_intro_bar", la),
         sel_intro_sopra=selected_if(intro_position, "top"),
-        label_intro_sopra=T("admin_intro_sopra", la),
-        label_parole_anteprima=T("admin_parole_anteprima", la),
-        hint_parole_anteprima=T("admin_parole_anteprima_hint", la),
+        label_intro_sopra=T("admin_intro_above", la),
+        label_parole_anteprima=T("admin_words_preview", la),
+        hint_parole_anteprima=T("admin_words_preview_hint", la),
         valore_parole_anteprima=esc(config.get("home_excerpt_words", 40)),
-        label_articoli_per_pagina=T("admin_articoli_per_pagina", la),
-        hint_articoli_per_pagina=T("admin_articoli_per_pagina_hint", la),
+        label_articoli_per_pagina=T("admin_articles_for_page", la),
+        hint_articoli_per_pagina=T("admin_articles_for_page_hint", la),
         valore_articoli_per_pagina=esc(config.get("articles_per_page", 10)),
         checked_home_evidenza=checked_if(config.get("home_featured", True)),
-        label_home_evidenza=T("admin_home_evidenza", la),
-        hint_home_evidenza=T("admin_home_evidenza_hint", la),
+        label_home_evidenza=T("admin_home_featured", la),
+        hint_home_evidenza=T("admin_home_featured_hint", la),
         checked_copertina_articolo=checked_if(config.get("article_cover", True)),
-        label_copia_link=T("admin_copia_link", la),
-        hint_copia_link=T("admin_copia_link_hint", la),
+        label_copia_link=T("admin_copy_link", la),
+        hint_copia_link=T("admin_copy_link_hint", la),
         checked_copia_link=checked_if(config.get("share_buttons", True) is not False),
-        label_larghezza_immagini=T("admin_larghezza_immagini", la),
-        hint_larghezza_immagini=T("admin_larghezza_immagini_hint", la),
+        label_larghezza_immagini=T("admin_width_pictures", la),
+        hint_larghezza_immagini=T("admin_width_pictures_hint", la),
         valore_larghezza_immagini=max_image_side(),
-        label_gr_aiuti_ai=T("admin_gr_aiuti_ai", la),
+        label_gr_aiuti_ai=T("admin_grp_helpers_ai", la),
         label_backlink=T("admin_backlink", la),
         hint_backlink=T("admin_backlink_hint", la),
         valore_backlink=esc(seo.get("backlink_site", "")),
-        label_copertina_articolo=T("admin_copertina_articolo", la),
-        hint_copertina_articolo=T("admin_copertina_articolo_hint", la),
+        label_copertina_articolo=T("admin_cover_article", la),
+        hint_copertina_articolo=T("admin_cover_article_hint", la),
         hint_seo=T("admin_seo_intro", la),
-        label_seo_autore_url=T("admin_seo_autore_url", la),
-        hint_seo_autore_url=T("admin_seo_autore_url_hint", la),
+        label_seo_autore_url=T("admin_seo_author_url", la),
+        hint_seo_autore_url=T("admin_seo_author_url_hint", la),
         valore_seo_autore_url=esc(seo.get("author_url", "")),
         ph_seo_author_url=ph["seo_author_url"],
-        label_seo_autore_immagine=T("admin_seo_autore_immagine", la),
+        label_seo_autore_immagine=T("admin_seo_author_picture", la),
         valore_seo_autore_immagine=esc(seo.get("author_image", "")),
         ph_seo_author_image=ph["seo_author_image"],
-        label_seo_autore_ruolo=T("admin_seo_autore_ruolo", la),
-        hint_seo_autore_ruolo=T("admin_seo_autore_ruolo_hint", la),
+        label_seo_autore_ruolo=T("admin_seo_author_role", la),
+        hint_seo_autore_ruolo=T("admin_seo_author_role_hint", la),
         valore_seo_autore_ruolo=esc(seo.get("author_role", "")),
         ph_seo_author_role=ph["seo_author_role"],
-        label_seo_autore_bio=T("admin_seo_autore_bio", la),
-        hint_seo_autore_bio=T("admin_seo_autore_bio_hint", la),
+        label_seo_autore_bio=T("admin_seo_author_bio", la),
+        hint_seo_autore_bio=T("admin_seo_author_bio_hint", la),
         valore_seo_autore_bio=esc(seo.get("author_bio", "")),
-        label_gr_altra_lingua=TL("admin_gr_altra_lingua", la),
-        hint_altra_lingua=TL("admin_altra_lingua_hint", la),
-        label_sottotitolo_en=TL("admin_sottotitolo_en", la),
+        label_gr_altra_lingua=TL("admin_grp_other_f_language", la),
+        hint_altra_lingua=TL("admin_other_f_language_hint", la),
+        label_sottotitolo_en=TL("admin_subtitle_en", la),
         valore_sottotitolo_en=esc(config.get("subtitle_en", "")),
-        label_ruolo_en=TL("admin_ruolo_en", la),
+        label_ruolo_en=TL("admin_role_en", la),
         valore_ruolo_en=esc(seo.get("author_role_en", "")),
         label_bio_en=TL("admin_bio_en", la),
         valore_bio_en=esc(seo.get("author_bio_en", "")),
         codice_altra_lingua="en" if site_language == "it" else "it",
         icona_ai=icon(ICON_AI_SPARKLE),
         ph_seo_author_bio=ph["seo_author_bio"],
-        label_seo_profili=T("admin_seo_profili", la),
-        hint_seo_profili=T("admin_seo_profili_hint", la),
+        label_seo_profili=T("admin_seo_profiles", la),
+        hint_seo_profili=T("admin_seo_profiles_hint", la),
         valore_seo_profili=esc("\n".join(profiles)),
         label_seo_logo=T("admin_seo_logo", la),
         valore_seo_logo=esc(seo.get("logo", "")),
@@ -2204,46 +2204,46 @@ def config_page(csrf):
         label_ai_statement=T("admin_ai_training_statement", la),
         hint_ai_statement=T("admin_ai_training_statement_hint", la),
         valore_ai_statement=esc(ai_training.get("statement", "")),
-        nota_ai_standard=T("admin_ai_training_nota_standard", la),
-        label_sistema_commenti=T("admin_sistema_commenti", la),
+        nota_ai_standard=T("admin_ai_training_note_text_standard", la),
+        label_sistema_commenti=T("admin_fix_comments", la),
         sel_commenti_nessuno=selected_if(commenti, "none"),
-        label_commenti_nessuno=T("admin_commenti_nessuno", la),
+        label_commenti_nessuno=T("admin_comments_nobody", la),
         sel_giscus=selected_if(commenti, "giscus"),
         sel_disqus=selected_if(commenti, "disqus"),
         valore_giscus_repo=esc(giscus.get("repo", "")),
         valore_giscus_repo_id=esc(giscus.get("repo_id", "")),
         valore_giscus_category=esc(giscus.get("category", "")),
         valore_giscus_category_id=esc(giscus.get("category_id", "")),
-        label_tema=T("admin_tema_label", la),
+        label_tema=T("admin_theme_label", la),
         valore_giscus_theme=esc(giscus.get("theme", "light")),
         hint_disqus=T("admin_disqus_hint", la),
         valore_disqus_shortname=esc(disqus.get("shortname", "")),
-        label_traduzione=TL("admin_traduzione_titolo", la),
-        hint_traduzione=T("admin_traduzione_intro", la),
-        label_servizio_traduzione=T("admin_servizio_traduzione", la),
+        label_traduzione=TL("admin_translation_of_title", la),
+        hint_traduzione=T("admin_translation_of_intro", la),
+        label_servizio_traduzione=T("admin_service_translation_of", la),
         sel_deepl=selected_if(translation_service, "deepl"),
         sel_google=selected_if(translation_service, "google"),
         sel_llm=selected_if(translation_service, "llm"),
         sel_openai=selected_if(translation_service, "openai"),
         sel_deepseek=selected_if(translation_service, "deepseek"),
-        label_chiave_api=T("admin_chiave_api", la),
-        ph_lascia_vuoto=esc(T("admin_lascia_vuoto", la)),
+        label_chiave_api=T("admin_key_api", la),
+        ph_lascia_vuoto=esc(T("admin_leave_empty_m", la)),
         valore_deepl_key=esc(translation.get("deepl_api_key", "")),
         valore_google_key=esc(translation.get("google_api_key", "")),
         valore_llm_key=esc(translation.get("llm_api_key", "")),
         label_endpoint=T("admin_endpoint", la),
         valore_llm_endpoint=esc(translation.get("llm_endpoint", "")),
-        label_modello=T("admin_modello_label", la),
+        label_modello=T("admin_template_label", la),
         valore_llm_modello=esc(translation.get("llm_model", "")),
         valore_openai_key=esc(translation.get("openai_api_key", "")),
         valore_openai_modello=esc(translation.get("openai_model", "gpt-4o-mini")),
         valore_deepseek_key=esc(translation.get("deepseek_api_key", "")),
         valore_deepseek_modello=esc(translation.get("deepseek_model", "deepseek-chat")),
-        label_salva_rigenera=T("admin_salva_rigenera", la),
-        label_config_avanzata=T("admin_config_avanzata", la),
-        hint_config_avanzata=T("admin_config_avanzata_hint", la),
-        label_salva_config_raw=T("admin_salva_config_raw", la),
-        label_ripristina=T("admin_ripristina", la),
+        label_salva_rigenera=T("admin_save_rebuild", la),
+        label_config_avanzata=T("admin_config_advanced_f", la),
+        hint_config_avanzata=T("admin_config_advanced_f_hint", la),
+        label_salva_config_raw=T("admin_save_config_raw", la),
+        label_ripristina=T("admin_restore", la),
     )
     for key, _ in CONFIG_SECTIONS:
         context["testata_" + key] = config_section_header(key, la, config)
@@ -2284,7 +2284,7 @@ def config_page(csrf):
                     f'<script src="{BLOT_FORMATTER_JS}"></script>\n'
                     + codemirror_scripts())
 
-    return admin_page_shell(T("admin_impostazioni", la), contenuto, la,
+    return admin_page_shell(T("admin_settings_page", la), contenuto, la,
                             csrf=csrf, navbar=admin_navbar("config", la),
                             head_extra=head_extra, script_extra=script_extra,
                             page_data=page_data, body_class="pagina-config")
@@ -2847,8 +2847,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         """One of the answers of the newsletter, as a page of the site."""
         site = CONFIG.get("site_title", "")
         self._send_public(build_module.newsletter_message_page(
-            language, T(prefix + "_titolo", language),
-            T(prefix + "_testo", language).replace("{site}", site), action), status)
+            language, T(prefix + "_title", language),
+            T(prefix + "_text", language).replace("{site}", site), action), status)
 
     def _handle_newsletter_post(self, route):
         """
@@ -2870,27 +2870,27 @@ class Handler(http.server.BaseHTTPRequestHandler):
             # The hidden field is invisible to people: whoever fills it in is
             # a robot, and gets the same answer as everybody, with no email.
             if form.get("website", form.get("sito", [""]))[0].strip() != "":
-                self._newsletter_page(language, "nl_richiesta")
+                self._newsletter_page(language, "nl_request_sent")
                 return
             if not newsletter.allowed_request(self._client_address()):
-                self._newsletter_page(language, "nl_troppi", status=429)
+                self._newsletter_page(language, "nl_too_many", status=429)
                 return
             result = newsletter.subscribe(form.get("email", [""])[0], language, self._site_url())
             if result == "invalid":
-                self._newsletter_page(language, "nl_invalido", status=400)
+                self._newsletter_page(language, "nl_invalid_value", status=400)
             elif result == "error":
-                self._newsletter_page(language, "nl_errore", status=503)
+                self._newsletter_page(language, "nl_failure", status=503)
             else:
-                self._newsletter_page(language, "nl_richiesta")
+                self._newsletter_page(language, "nl_request_sent")
             return
         token = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get("t", [""])[0]
         language = newsletter.token_language(token) or language
         if route == "/confirm":
             done = newsletter.confirm(token)
-            self._newsletter_page(language, "nl_confermata" if done else "nl_link")
+            self._newsletter_page(language, "nl_confirmed_f" if done else "nl_link")
         else:
             done = newsletter.unsubscribe(token)
-            self._newsletter_page(language, "nl_disiscritto" if done else "nl_link")
+            self._newsletter_page(language, "nl_unsubscribed" if done else "nl_link")
 
     def _handle_newsletter_link(self, route, query):
         """
@@ -2903,9 +2903,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._newsletter_page(language or main_language(), "nl_link", status=404)
             return
         if route == "/confirm":
-            prefix, button = "nl_conferma_pagina", T("nl_conferma_pulsante", language)
+            prefix, button = "nl_confirm_page", T("nl_confirm_button", language)
         else:
-            prefix, button = "nl_disiscrivi", T("nl_disiscrivi_pulsante", language)
+            prefix, button = "nl_unsubscribe", T("nl_unsubscribe_button", language)
         action = (f'        <form method="post" action="{route}?t={urllib.parse.quote(token)}">\n'
                   f'          <input type="hidden" name="language" value="{language}">\n'
                   f'          <button class="pulsante pulsante-primario" type="submit">{esc(button)}</button>\n'
@@ -3142,7 +3142,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         la = admin_language()
         result = updates.update(save_backup=backup.save_automatic_backup)
         if result.get("ok") is not True:
-            message = T(result.get("error", "upd_fallito"), la)
+            message = T(result.get("error", "upd_failed_upd"), la)
             if result.get("detail"):
                 message = message + " " + result["detail"]
             return {"ok": False, "error": message}
@@ -3197,7 +3197,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         """
         address = str(data.get("url", "")).strip().rstrip("/")
         if admin_address({"admin_url": address}) == "":
-            return {"ok": False, "error": T("js_admin_url_non_valido", admin_language())}
+            return {"ok": False, "error": T("js_admin_url_not_valid", admin_language())}
         nonce = secrets.token_urlsafe(16)
         with PING_LOCK:
             PING_NONCES.add(nonce)
@@ -3338,7 +3338,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if values["smtp_password"] == "" and data.get("keep_password", True):
             values["smtp_password"] = newsletter.settings()["smtp_password"]
         if not newsletter.valid_email(values["sender_email"]) or values["smtp_host"] == "":
-            return {"ok": False, "error": T("admin_nl_mittente_email", admin_language()) + " / "
+            return {"ok": False, "error": T("admin_nl_sender_email", admin_language()) + " / "
                     + T("admin_nl_smtp_host", admin_language())}
         try:
             newsletter.send_test(values, values["sender_email"])

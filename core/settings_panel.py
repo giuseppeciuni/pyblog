@@ -25,10 +25,10 @@ from core.i18n import LANGUAGE_NAMES, T
 # The groups of the panel, in order. The advanced section belongs to none:
 # it is a link at the bottom, for whoever knows what config.json is.
 GROUPS = [
-    ("sito", "admin_imp_gruppo_sito"),
-    ("lettori", "admin_imp_gruppo_lettori"),
-    ("servizi", "admin_imp_gruppo_servizi"),
-    ("regole", "admin_imp_gruppo_regole"),
+    ("sito", "admin_settings_group_site"),
+    ("lettori", "admin_settings_group_readers"),
+    ("servizi", "admin_settings_group_services"),
+    ("regole", "admin_settings_group_regole"),
 ]
 
 # Every section, in the order of the panel. The id is the one in the
@@ -38,37 +38,37 @@ GROUPS = [
 # description and the labels of its fields; they are mostly the technical
 # names someone might type, in both languages.
 SECTIONS = [
-    {"id": "sito", "group": "sito", "label": "admin_sez_sito",
+    {"id": "sito", "group": "sito", "label": "admin_section_site",
      "keywords": "titolo title dominio domain url lingua language autore author "
                  "foto photo seo logo favicon linkedin social immagini images larghezza width"},
-    {"id": "home", "group": "sito", "label": "admin_sez_home",
+    {"id": "home", "group": "sito", "label": "admin_section_home",
      "keywords": "homepage presentazione introduction disposizione layout copertina cover "
                  "condividi share copia link"},
-    {"id": "biografia", "group": "sito", "label": "admin_sez_biografia",
+    {"id": "biografia", "group": "sito", "label": "admin_section_biography",
      "keywords": "bio about chi sono who am i"},
-    {"id": "progetti", "group": "sito", "label": "admin_sez_progetti",
+    {"id": "progetti", "group": "sito", "label": "admin_section_projects",
      "keywords": "projects portfolio"},
-    {"id": "pagine", "group": "sito", "label": "admin_sez_pagine",
+    {"id": "pagine", "group": "sito", "label": "admin_section_pages",
      "keywords": "esplora explore riquadri cards contatti contacts avvisi lavora con me "
                  "work with me hire"},
-    {"id": "commenti", "group": "lettori", "label": "admin_sez_commenti",
+    {"id": "commenti", "group": "lettori", "label": "admin_section_comments",
      "keywords": "comments giscus disqus"},
-    {"id": "newsletter", "group": "lettori", "label": "admin_sez_newsletter",
+    {"id": "newsletter", "group": "lettori", "label": "admin_section_newsletter",
      "keywords": "email mail iscritti subscribers smtp"},
-    {"id": "traduzione", "group": "lettori", "label": "admin_sez_traduzione",
+    {"id": "traduzione", "group": "lettori", "label": "admin_section_translation_of",
      "keywords": "translation inglese english deepl google claude openai deepseek chiave key api "
                  "seo backlink anchor ai"},
-    {"id": "statistiche", "group": "servizi", "label": "admin_sez_statistiche",
+    {"id": "statistiche", "group": "servizi", "label": "admin_section_analytics_section",
      "keywords": "analytics google ga4 gtag umami visite visits"},
-    {"id": "codici", "group": "servizi", "label": "admin_sez_codici",
+    {"id": "codici", "group": "servizi", "label": "admin_section_codes",
      "keywords": "code script widget chat annunci ads adsense pixel tag manager gtm "
                  "clarity ads.txt"},
-    {"id": "cookie", "group": "regole", "label": "admin_sez_cookie",
+    {"id": "cookie", "group": "regole", "label": "admin_section_cookie",
      "keywords": "cookies consenso consent gdpr privacy banner"},
-    {"id": "ai", "group": "regole", "label": "admin_sez_ai",
+    {"id": "ai", "group": "regole", "label": "admin_section_ai",
      "keywords": "intelligenza artificiale artificial intelligence crawler bot gptbot "
                  "claudebot chatgpt addestramento training robots.txt llms.txt"},
-    {"id": "avanzate", "group": None, "label": "admin_sez_avanzate",
+    {"id": "avanzate", "group": None, "label": "admin_section_advanced",
      "keywords": "config.json json avanzate advanced"},
 ]
 
@@ -255,20 +255,20 @@ def umami_is_set(config):
 def _state_site(config, la):
     problems = []
     if _text(config.get("site_title", "")) == "":
-        problems.append(("warn", T("stato_manca_titolo", la)))
+        problems.append(("warn", T("state_missing_one_title", la)))
     if not domain_is_set(config):
-        problems.append(("warn", T("stato_manca_dominio", la)))
+        problems.append(("warn", T("state_missing_one_domain", la)))
     if _text(config.get("author", "")) == "":
-        problems.append(("warn", T("stato_manca_autore", la)))
+        problems.append(("warn", T("state_missing_one_author", la)))
     if _text(str(config.get("admin_url", "") or "")) != "" and admin_address(config) == "":
-        problems.append(("warn", T("stato_admin_non_valido", la)))
+        problems.append(("warn", T("state_admin_not_valid", la)))
     elif admin_address(config) == "" and domain_is_set(config) and outside_code(config):
         # Code of outside services on the site's own address can read what
         # the logged-in author sees there, settings and keys included.
-        problems.append(("warn", T("stato_admin_condiviso", la)))
+        problems.append(("warn", T("state_admin_shared", la)))
     if site_is_bilingual(config) and texts_only_in_main_language(config):
         main = config.get("language", "it") if config.get("language") in ("it", "en") else "it"
-        problems.append(("warn", T("stato_testi_solo_principale", la)
+        problems.append(("warn", T("state_texts_of_only_main", la)
                          .replace("{principale}", LANGUAGE_NAMES[main][la])))
     if problems:
         return problems
@@ -279,19 +279,19 @@ def _state_site(config, la):
 def _state_home(config, la):
     contents = [config.get("home_content", ""), config.get("home_content_en", "")]
     if any(has_placeholder(c) for c in contents):
-        return [("warn", T("stato_presentazione_esempio", la))]
+        return [("warn", T("state_introduction_example", la))]
     if plain_text(contents[0]) == "":
-        return [("off", T("stato_presentazione_vuota", la))]
-    return [("ok", T("stato_presentazione_scritta", la))]
+        return [("off", T("state_introduction_empty_f", la))]
+    return [("ok", T("state_introduction_written_f", la))]
 
 
 def _state_biography(config, la):
     bio = _dict(config, "biography")
     if bio.get("enabled", False) is not True:
-        return [("off", T("stato_spenta", la))]
+        return [("off", T("state_off_f", la))]
     if plain_text(bio.get("content", "")) == "":
-        return [("warn", T("stato_accesa_vuota", la))]
-    return [("ok", T("stato_accesa", la))]
+        return [("warn", T("state_on_f_empty_f", la))]
+    return [("ok", T("state_on_f", la))]
 
 
 def _state_projects(config, la):
@@ -300,10 +300,10 @@ def _state_projects(config, la):
     projects = projects_settings(config)
     shown = [p for p in projects["items"] if p["visible"] and p["name"] != ""]
     if not projects["enabled"]:
-        return [("off", T("stato_spenti", la))]
+        return [("off", T("state_off_pl", la))]
     if len(shown) == 0:
-        return [("warn", T("stato_accesi_senza_progetti", la))]
-    return [("ok", T("stato_n_progetti", la).replace("{n}", str(len(shown))))]
+        return [("warn", T("state_on_pl_without_projects", la))]
+    return [("ok", T("state_n_projects", la).replace("{n}", str(len(shown))))]
 
 
 def _state_cards(config, la):
@@ -314,12 +314,12 @@ def _state_cards(config, la):
     example = [c for c in active
                if has_placeholder(c.get("content", "")) or has_placeholder(c.get("content_en", ""))]
     if len(example) == 1:
-        return [("warn", T("stato_riquadro_esempio", la))]
+        return [("warn", T("state_box_example", la))]
     if len(example) > 1:
-        return [("warn", T("stato_riquadri_esempio", la).replace("{n}", str(len(example))))]
+        return [("warn", T("state_boxes_example", la).replace("{n}", str(len(example))))]
     if len(active) == 0:
-        return [("off", T("stato_nessun_riquadro", la))]
-    return [("ok", T("stato_n_riquadri", la).replace("{n}", str(len(active))))]
+        return [("off", T("state_no_one_box", la))]
+    return [("ok", T("state_n_boxes", la).replace("{n}", str(len(active))))]
 
 
 def _state_comments(config, la):
@@ -328,23 +328,23 @@ def _state_comments(config, la):
         giscus = _dict(config, "giscus")
         values = [_text(giscus.get(k, "")) for k in ("repo", "repo_id", "category_id")]
         if any(v == "" or v in PLACEHOLDER_GISCUS for v in values):
-            return [("warn", T("stato_giscus_da_configurare", la))]
+            return [("warn", T("state_giscus_from_configure", la))]
         return [("ok", "Giscus")]
     if system == "disqus":
         if _text(_dict(config, "disqus").get("shortname", "")) in PLACEHOLDER_DISQUS:
-            return [("warn", T("stato_disqus_da_configurare", la))]
+            return [("warn", T("state_disqus_from_configure", la))]
         return [("ok", "Disqus")]
-    return [("off", T("stato_spenti", la))]
+    return [("off", T("state_off_pl", la))]
 
 
 def _state_newsletter(config, la):
     current = newsletter.settings(config)
     if not current["enabled"]:
-        return [("off", T("stato_spenta", la))]
+        return [("off", T("state_off_f", la))]
     if not newsletter.ready(current):
-        return [("warn", T("stato_newsletter_senza_posta", la))]
+        return [("warn", T("state_newsletter_without_mail", la))]
     confirmed, _ = newsletter.counts()
-    return [("ok", T("stato_n_iscritti", la).replace("{n}", str(confirmed)))]
+    return [("ok", T("state_n_subscribers", la).replace("{n}", str(confirmed)))]
 
 
 def _state_translation(config, la):
@@ -354,7 +354,7 @@ def _state_translation(config, la):
         service = "deepl"
     name, key_name = TRANSLATION_SERVICES[service]
     if _text(secret_setting(translation, key_name)) == "":
-        return [("warn", T("stato_manca_chiave", la).replace("{servizio}", name))]
+        return [("warn", T("state_missing_one_key", la).replace("{servizio}", name))]
     return [("ok", name)]
 
 
@@ -362,7 +362,7 @@ def _state_analytics(config, la):
     loads = analytics_loads(config)
     doubled = sorted({i for i in loads if loads.count(i) > 1})
     if doubled:
-        return [("warn", T("stato_analytics_doppio", la)
+        return [("warn", T("state_analytics_double", la)
                  .replace("{n}", str(loads.count(doubled[0]))))]
     names = []
     if loads:
@@ -370,10 +370,10 @@ def _state_analytics(config, la):
     if umami_is_set(config):
         names.append("Umami")
     if not names:
-        return [("off", T("stato_nessuna", la))]
+        return [("off", T("state_none_f", la))]
     text = " + ".join(names)
     if loads and _text(config.get("analytics_id", "")) == "":
-        text = T("stato_analytics_da_codice", la).replace("{nome}", text)
+        text = T("state_analytics_from_code", la).replace("{nome}", text)
     return [("ok", text)]
 
 
@@ -381,13 +381,13 @@ def _state_code(config, la):
     # The warning of the cookie banner, again where it is fixed: the
     # consent of a card of code is chosen here.
     if _dict(config, "consent").get("enabled", False) is True and analytics_without_consent(config):
-        return [("warn", T("stato_cookie_analytics_necessario", la))]
+        return [("warn", T("state_cookie_analytics_needed", la))]
     count = len(enabled_snippets(config))
     if count == 0:
-        return [("off", T("stato_nessuno", la))]
+        return [("off", T("state_nobody", la))]
     if count == 1:
-        return [("ok", T("stato_uno_attivo", la))]
-    return [("ok", T("stato_n_attivi", la).replace("{n}", str(count)))]
+        return [("ok", T("state_one_item_active", la))]
+    return [("ok", T("state_n_active_pl", la).replace("{n}", str(count)))]
 
 
 def _state_consent(config, la):
@@ -397,22 +397,22 @@ def _state_consent(config, la):
         # Google Analytics marked "necessary" runs before anyone agrees,
         # banner or not: the most common way to get this wrong.
         if analytics_without_consent(config):
-            problems.append(("warn", T("stato_cookie_analytics_necessario", la)))
+            problems.append(("warn", T("state_cookie_analytics_needed", la)))
         # With nothing waiting for consent the banner never shows, and the
         # author who switched it on is left wondering why.
         if not consent_categories(config):
-            problems.append(("warn", T("stato_cookie_acceso_inutile", la)))
-        return problems or [("ok", T("stato_acceso", la))]
+            problems.append(("warn", T("state_cookie_on_m_useless", la)))
+        return problems or [("ok", T("state_on_m", la))]
     # Google Analytics sets cookies, and in Europe it needs consent first.
     if analytics_loads(config):
-        return [("warn", T("stato_cookie_spento_analytics", la))]
-    return [("off", T("stato_spento", la))]
+        return [("warn", T("state_cookie_off_m_analytics", la))]
+    return [("off", T("state_off_m", la))]
 
 
 def _state_ai(config, la):
     policy = _dict(config, "ai_training").get("policy", "open")
-    keys = {"licensed": "stato_ai_licenza", "disallow": "stato_ai_vietato"}
-    return [("ok", T(keys.get(policy, "stato_ai_aperto"), la))]
+    keys = {"licensed": "state_ai_licence", "disallow": "state_ai_forbidden"}
+    return [("ok", T(keys.get(policy, "state_ai_open"), la))]
 
 
 STATE_FUNCTIONS = {
@@ -458,5 +458,5 @@ def setup_steps(config, articles, la):
             if tone == "warn":
                 steps.append((section_id, text))
     if not any(a.get("status") == "published" for a in articles):
-        steps.append(("", T("stato_primo_articolo", la)))
+        steps.append(("", T("state_first_article", la)))
     return steps

@@ -339,11 +339,11 @@ def send_confirmation(address, token, language, site_url):
     current = settings()
     site = CONFIG.get("site_title", "")
     link = f"{site_url}/confirm?t={token}"
-    subject = T("nl_conferma_oggetto", language).replace("{site}", site)
-    lines = [T("nl_conferma_testo", language).replace("{site}", site),
-             T("nl_conferma_ignora", language)]
+    subject = T("nl_confirm_subject", language).replace("{site}", site)
+    lines = [T("nl_confirm_text", language).replace("{site}", site),
+             T("nl_confirm_ignore", language)]
     text = "\n\n".join([lines[0], link, lines[1]])
-    html = email_html(language, subject, lines, T("nl_conferma_pulsante", language), link, "")
+    html = email_html(language, subject, lines, T("nl_confirm_button", language), link, "")
     with smtp_connection(current) as server:
         server.send_message(message(current, address, subject, text, html))
 
@@ -351,9 +351,9 @@ def send_confirmation(address, token, language, site_url):
 def send_test(current, to):
     """A test email, to check the SMTP settings from the Settings page."""
     language = CONFIG.get("admin_language", "it")
-    subject = T("nl_prova_oggetto", language).replace("{site}", CONFIG.get("site_title", ""))
-    text = T("nl_prova_testo", language)
-    html = email_html(language, subject, [text], T("nl_prova_pulsante", language),
+    subject = T("nl_test_subject", language).replace("{site}", CONFIG.get("site_title", ""))
+    text = T("nl_test_text", language)
+    html = email_html(language, subject, [text], T("nl_test_button", language),
                       CONFIG.get("base_url", ""), "")
     with smtp_connection(current) as server:
         server.send_message(message(current, to, subject, text, html))
@@ -380,13 +380,13 @@ def article_email(art, subscriber, current, site_url):
     link = site_url + build.article_url(art, language)
     unsubscribe_url = f"{site_url}/unsubscribe?t={subscriber['token']}"
     site = CONFIG.get("site_title", "")
-    footer_text = T("nl_piede", language).replace("{site}", site)
+    footer_text = T("nl_foot", language).replace("{site}", site)
     from core.render import esc
     footer = (esc(footer_text) + ' <a href="' + esc(unsubscribe_url) + '" style="color:#5b6470">'
-              + esc(T("nl_disiscriviti", language)) + "</a>")
-    text = "\n\n".join([title, excerpt, T("nl_leggi", language) + ": " + link,
-                        "--", footer_text + " " + T("nl_disiscriviti", language) + ": " + unsubscribe_url])
-    html = email_html(language, title, [excerpt], T("nl_leggi", language), link, footer)
+              + esc(T("nl_unsubscribe_now", language)) + "</a>")
+    text = "\n\n".join([title, excerpt, T("nl_read", language) + ": " + link,
+                        "--", footer_text + " " + T("nl_unsubscribe_now", language) + ": " + unsubscribe_url])
+    html = email_html(language, title, [excerpt], T("nl_read", language), link, footer)
     return title, text, html, unsubscribe_url
 
 

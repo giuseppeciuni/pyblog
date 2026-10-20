@@ -127,12 +127,12 @@ def test_site_and_home():
     c["base_url"] = "https://tuodominio.com"
     states = settings_panel.section_states("sito", c, "it")
     check("titolo e dominio mancanti sono due avvisi",
-          [t for _, t in states] == [T("stato_manca_titolo", "it"), T("stato_manca_dominio", "it")],
+          [t for _, t in states] == [T("state_missing_one_title", "it"), T("state_missing_one_domain", "it")],
           str(states))
     c = finished_config()
     c["home_content_en"] = CONFIG_DEFAULT["home_content_en"]
     check("la presentazione inglese di esempio è un avviso",
-          state("home", c) == ("warn", T("stato_presentazione_esempio", "it")))
+          state("home", c) == ("warn", T("state_introduction_example", "it")))
     # The older text of the example, the one on ciunix.com.
     c["home_content_en"] = ("<p>To customize this introduction, go to the <em>Settings and "
                             "homepage</em> page in the admin area.</p>")
@@ -148,11 +148,11 @@ def test_texts_in_other_language():
     print("\ntesti nell'altra lingua")
     c = finished_config()
     c["seo"]["author_role"] = "Programmatore"
-    notice = ("warn", T("stato_testi_solo_principale", "it").replace("{principale}", "italiano"))
+    notice = ("warn", T("state_texts_of_only_main", "it").replace("{principale}", "italiano"))
     check("ruolo scritto solo in italiano su un sito bilingue: avviso",
           state("sito", c) == notice, str(state("sito", c)))
     check("in inglese l'avviso nomina la lingua in inglese",
-          state("sito", c, "en")[1] == T("stato_testi_solo_principale", "en")
+          state("sito", c, "en")[1] == T("state_texts_of_only_main", "en")
           .replace("{principale}", "Italian"))
     c["seo"]["author_role_en"] = "Software developer"
     check("tradotto anche il ruolo, l'avviso sparisce", state("sito", c)[0] == "ok")
@@ -169,17 +169,17 @@ def test_admin_address():
     check("senza codici esterni, l'admin sull'indirizzo del sito va bene", state("sito", c)[0] == "ok")
     c["custom_code"] = [{"id": "a", "enabled": True, "code": GTAG}]
     check("con un codice esterno attivo, l'avviso",
-          state("sito", c) == ("warn", T("stato_admin_condiviso", "it")))
+          state("sito", c) == ("warn", T("state_admin_shared", "it")))
     c["custom_code"] = []
     c["analytics_id"] = "G-WFH9MSGK86"
     check("anche con Google Analytics nel campo delle Statistiche", state("sito", c)[0] == "warn")
     c["base_url"] = ""
     states = [t for _, t in settings_panel.section_states("sito", c, "it")]
-    check("un sito non ancora online non riceve l'avviso", T("stato_admin_condiviso", "it") not in states)
+    check("un sito non ancora online non riceve l'avviso", T("state_admin_shared", "it") not in states)
     c = finished_config()
     c["admin_url"] = "admin.ciunix.com/editor"
     check("un indirizzo scritto male lo dice, e l'admin resta dov'era",
-          state("sito", c) == ("warn", T("stato_admin_non_valido", "it")))
+          state("sito", c) == ("warn", T("state_admin_not_valid", "it")))
 
 
 def test_boxes():
@@ -195,11 +195,11 @@ def test_boxes():
         {"active": True, "title": "Contatti", "content": "<p>Scrivimi.</p>"},
     ]
     check("contano solo i riquadri accesi con il testo di esempio",
-          state("pagine", c) == ("warn", T("stato_riquadri_esempio", "it").replace("{n}", "2")),
+          state("pagine", c) == ("warn", T("state_boxes_example", "it").replace("{n}", "2")),
           str(state("pagine", c)))
     c["home_cards"] = c["home_cards"][3:]
     check("con i testi scritti dice quanti sono accesi",
-          state("pagine", c) == ("ok", T("stato_n_riquadri", "it").replace("{n}", "1")))
+          state("pagine", c) == ("ok", T("state_n_boxes", "it").replace("{n}", "1")))
     c["home_cards_enabled"] = False
     check("con i riquadri spenti, nessun riquadro", state("pagine", c)[0] == "off")
 
@@ -207,7 +207,7 @@ def test_boxes():
 def test_biography_projects_comments():
     print("\nbiografia, progetti, commenti")
     c = finished_config()
-    check("biografia spenta", state("biografia", c) == ("off", T("stato_spenta", "it")))
+    check("biografia spenta", state("biografia", c) == ("off", T("state_off_f", "it")))
     c["biography"] = {"enabled": True, "content": "<p><br></p>"}
     check("biografia accesa ma vuota", state("biografia", c)[0] == "warn")
     c["projects"] = {"enabled": True, "items": [{"name": "", "visible": True},
@@ -215,7 +215,7 @@ def test_biography_projects_comments():
     check("progetti accesi ma nessuno da mostrare", state("progetti", c)[0] == "warn")
     c["projects"]["items"].append({"name": "Vaitony", "visible": True})
     check("conta solo i progetti che si vedono",
-          state("progetti", c) == ("ok", T("stato_n_progetti", "it").replace("{n}", "1")))
+          state("progetti", c) == ("ok", T("state_n_projects", "it").replace("{n}", "1")))
     c["comments"] = "giscus"
     check("Giscus con i valori di esempio va configurato", state("commenti", c)[0] == "warn")
     c["giscus"] = {"repo": "giuseppe/blog", "repo_id": "R_1", "category": "C", "category_id": "DIC_1"}
@@ -229,11 +229,11 @@ def test_analytics():
     check("niente statistiche", state("statistiche", c)[0] == "off")
     c["custom_code"] = [{"id": "a", "enabled": True, "code": GTAG, "scope": "all"}]
     check("un codice esterno con Google Analytics",
-          state("statistiche", c) == ("ok", T("stato_analytics_da_codice", "it")
+          state("statistiche", c) == ("ok", T("state_analytics_from_code", "it")
                                       .replace("{nome}", "Google Analytics")))
     c["custom_code"].append({"id": "b", "enabled": True, "code": GTAG, "scope": "all"})
     check("lo stesso id in due codici: ogni visita conta due volte",
-          state("statistiche", c) == ("warn", T("stato_analytics_doppio", "it").replace("{n}", "2")),
+          state("statistiche", c) == ("warn", T("state_analytics_double", "it").replace("{n}", "2")),
           str(state("statistiche", c)))
     c["custom_code"][1]["enabled"] = False
     check("un codice spento non conta", state("statistiche", c)[0] == "ok")
@@ -251,7 +251,7 @@ def test_analytics():
     c["umami_website_id"] = "3e9b1c2a"
     check("con Umami li nomina tutti e due",
           state("statistiche", c) == ("ok", "Google Analytics + Umami"))
-    check("codici esterni: uno acceso", state("codici", c) == ("ok", T("stato_uno_attivo", "it")))
+    check("codici esterni: uno acceso", state("codici", c) == ("ok", T("state_one_item_active", "it")))
 
 
 def test_cookie_translation_newsletter_ai():
@@ -260,9 +260,9 @@ def test_cookie_translation_newsletter_ai():
     check("banner spento senza statistiche: solo spento", state("cookie", c)[0] == "off")
     c["analytics_id"] = "G-WFH9MSGK86"
     check("banner spento con Google Analytics: da sistemare",
-          state("cookie", c) == ("warn", T("stato_cookie_spento_analytics", "it")))
+          state("cookie", c) == ("warn", T("state_cookie_off_m_analytics", "it")))
     c["consent"] = {"enabled": True}
-    check("banner acceso", state("cookie", c) == ("ok", T("stato_acceso", "it")))
+    check("banner acceso", state("cookie", c) == ("ok", T("state_on_m", "it")))
 
     # The case of ciunix.com: banner on, Google Analytics in a snippet
     # marked "necessary", nothing else asking for consent.
@@ -273,21 +273,21 @@ def test_cookie_translation_newsletter_ai():
                           "consent": "necessary"}]
     states = settings_panel.section_states("cookie", c2, "it")
     check("banner acceso con Google Analytics «Necessario»: due avvisi, il primo su Google Analytics",
-          [t for _, t in states] == [T("stato_cookie_analytics_necessario", "it"),
-                                    T("stato_cookie_acceso_inutile", "it")], str(states))
+          [t for _, t in states] == [T("state_cookie_analytics_needed", "it"),
+                                    T("state_cookie_on_m_useless", "it")], str(states))
     check("lo stesso avviso nei Codici esterni, dove si sistema",
-          state("codici", c2) == ("warn", T("stato_cookie_analytics_necessario", "it")))
+          state("codici", c2) == ("warn", T("state_cookie_analytics_needed", "it")))
     c2["custom_code"][0]["consent"] = "statistics"
     check("con Google Analytics su «Statistiche» il banner serve ed è a posto",
-          state("cookie", c2) == ("ok", T("stato_acceso", "it")))
+          state("cookie", c2) == ("ok", T("state_on_m", "it")))
     check("e i Codici esterni tornano a contare",
-          state("codici", c2) == ("ok", T("stato_n_attivi", "it").replace("{n}", "2")))
+          state("codici", c2) == ("ok", T("state_n_active_pl", "it").replace("{n}", "2")))
     c2["custom_code"] = c2["custom_code"][1:]
     check("senza niente che chieda il consenso, il banner acceso non compare: si dice",
-          state("cookie", c2) == ("warn", T("stato_cookie_acceso_inutile", "it")))
+          state("cookie", c2) == ("warn", T("state_cookie_on_m_useless", "it")))
 
     check("DeepL senza chiave",
-          state("traduzione", c) == ("warn", T("stato_manca_chiave", "it").replace("{servizio}", "DeepL")))
+          state("traduzione", c) == ("warn", T("state_missing_one_key", "it").replace("{servizio}", "DeepL")))
     os.environ["PYBLOG_DEEPL_API_KEY"] = "chiave-di-prova"
     try:
         check("la chiave in una variabile d'ambiente vale come quella scritta",
@@ -301,13 +301,13 @@ def test_cookie_translation_newsletter_ai():
     check("newsletter spenta", state("newsletter", c)[0] == "off")
     c["newsletter"] = {"enabled": True}
     check("newsletter accesa senza server di posta",
-          state("newsletter", c) == ("warn", T("stato_newsletter_senza_posta", "it")))
+          state("newsletter", c) == ("warn", T("state_newsletter_without_mail", "it")))
 
     check("permessi alle AI: aperto per chi non ha scelto",
-          state("ai", c) == ("ok", T("stato_ai_aperto", "it")))
+          state("ai", c) == ("ok", T("state_ai_open", "it")))
     c["ai_training"] = {"policy": "disallow"}
-    check("permessi alle AI: non consentito", state("ai", c) == ("ok", T("stato_ai_vietato", "it")))
-    check("gli stati parlano anche inglese", state("ai", c, "en") == ("ok", T("stato_ai_vietato", "en")))
+    check("permessi alle AI: non consentito", state("ai", c) == ("ok", T("state_ai_forbidden", "it")))
+    check("gli stati parlano anche inglese", state("ai", c, "en") == ("ok", T("state_ai_forbidden", "en")))
 
 
 def test_first_steps():
@@ -318,13 +318,13 @@ def test_first_steps():
           settings_panel.setup_steps(c, published, "it") == [])
     check("senza articoli pubblicati, il primo passo è scriverne uno",
           settings_panel.setup_steps(c, [{"status": "draft"}], "it")
-          == [("", T("stato_primo_articolo", "it"))])
+          == [("", T("state_first_article", "it"))])
     c["base_url"] = ""
     c["translation"]["service"] = "deepl"
     c["newsletter"] = {"enabled": True}
     steps = settings_panel.setup_steps(c, published, "it")
     check("un dominio mancante è un passo; la chiave di traduzione e la newsletter no",
-          steps == [("sito", T("stato_manca_dominio", "it"))], str(steps))
+          steps == [("sito", T("state_missing_one_domain", "it"))], str(steps))
 
 
 def test_pages():
@@ -340,7 +340,7 @@ def test_pages():
         check("la scheda Statistiche avvisa del doppione, anche a chi non vede il colore",
               'href="#statistiche"' in panel
               and 'class="scheda-stato stato-warn"' in panel
-              and T("admin_stato_tono_warn", "it") in panel)
+              and T("admin_state_tone_warn", "it") in panel)
         check("la scheda prende il colore del suo stato",
               'class="scheda-impostazione scheda-warn" href="#statistiche"' in panel
               and 'class="scheda-impostazione scheda-ok" href="#sito"' in panel
@@ -354,10 +354,10 @@ def test_pages():
         page_html = server.config_page("TOKEN")
         check("la testata di una sezione riporta al pannello e dice il gruppo",
               '<a href="#elenco">Impostazioni</a> <span aria-hidden="true">›</span> '
-              + T("admin_imp_gruppo_servizi", "it") in page_html)
+              + T("admin_settings_group_services", "it") in page_html)
         check("la sezione Statistiche ripete il suo avviso in alto",
               '<ul class="sezione-avvisi" id="avvisi-statistiche">' in page_html
-              and T("stato_analytics_doppio", "it").replace("{n}", "2") in page_html)
+              and T("state_analytics_double", "it").replace("{n}", "2") in page_html)
         check("una sezione senza avvisi ha la lista vuota e nascosta, pronta per dopo il salvataggio",
               '<ul class="sezione-avvisi" id="avvisi-progetti" hidden>' in page_html)
         check("la pagina ha la ricerca, con la sua etichetta",
@@ -370,7 +370,7 @@ def test_pages():
         check("e anche del banner dei cookie spento con Google Analytics",
               'href="/config#cookie"' in dashboard)
         check("ogni passo dice di quale sezione parla",
-              '<span class="passo-dove">' + T("admin_sez_cookie", "it") + '</span>' in dashboard)
+              '<span class="passo-dove">' + T("admin_section_cookie", "it") + '</span>' in dashboard)
         c["custom_code"] = c["custom_code"][:1]
         c["custom_code"][0]["consent"] = "statistics"
         c["consent"] = {"enabled": True}

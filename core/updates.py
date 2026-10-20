@@ -179,23 +179,23 @@ def update(save_backup=None):
     or {"ok": False, "error": key, "detail": text}. The caller restarts.
     """
     if not UPDATE_LOCK.acquire(blocking=False):
-        return {"ok": False, "error": "upd_in_corso"}
+        return {"ok": False, "error": "upd_in_progress"}
     try:
         if not is_git_checkout():
-            return {"ok": False, "error": "upd_non_git"}
+            return {"ok": False, "error": "upd_not_git"}
         status = git_status()
         if "error" in status:
             return {"ok": False, "error": status["error"]}
         if not status["can_update"]:
-            key = "upd_modifiche_locali" if status["dirty"] else (
-                "upd_avanti" if status["ahead"] else "upd_aggiornato")
+            key = "upd_changes_made_local_edits" if status["dirty"] else (
+                "upd_ahead" if status["ahead"] else "upd_updated")
             return {"ok": False, "error": key}
         if save_backup is not None:
             save_backup()
         before = _git("rev-parse", "HEAD").stdout.strip()
         pull = _git("pull", "--ff-only", "--quiet", timeout=120)
         if pull.returncode != 0:
-            return {"ok": False, "error": "upd_fallito", "detail": pull.stderr.strip()[-400:]}
+            return {"ok": False, "error": "upd_failed_upd", "detail": pull.stderr.strip()[-400:]}
         # A cache of compiled files of its own: the old ones on disk could
         # stand in for the new code (same size, same second) and hide an
         # error until the restart.
@@ -205,7 +205,7 @@ def update(save_backup=None):
                                    text=True, timeout=120, env=environment)
         if trial.returncode != 0:
             _git("reset", "--hard", "--quiet", before)
-            return {"ok": False, "error": "upd_fallito", "detail": trial.stderr.strip()[-400:]}
+            return {"ok": False, "error": "upd_failed_upd", "detail": trial.stderr.strip()[-400:]}
         after = _git("rev-parse", "HEAD").stdout.strip()
         state = read_state()
         state.pop("result", None)

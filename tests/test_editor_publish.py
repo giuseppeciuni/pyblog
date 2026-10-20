@@ -90,7 +90,7 @@ def test_same_words_as_dashboard():
     save_article(article)
     dashboard = server.admin_page(load_articles(), "TOKEN")
     editor = server.editor_page(load_article(SLUG), "TOKEN")
-    withdraw = T("admin_ritira", admin_language())
+    withdraw = T("admin_withdraw", admin_language())
     check(f'la dashboard dice "{withdraw}"', withdraw in dashboard)
     check("come l'editor", withdraw in editor)
     check('"Metti in bozza" non c\'è più', "Metti in bozza" not in dashboard)
