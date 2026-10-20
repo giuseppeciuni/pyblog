@@ -460,6 +460,12 @@ All notable changes to PyBlog are documented in this file.
   JavaScript in the external code that targets the old class names; check
   it against `core/legacy_names.py`, which lists every old name and its new
   one.
+- **The code speaks English too.** Variables, functions and parameters in
+  Python and JavaScript, the placeholders inside the translations
+  (`{lingua}` is `{other_language}`, `{principale}` is `{main_language}`)
+  and the form fields of the password pages (`current`, `new`, `confirm`)
+  went English. One thing you will notice: the session cookie is now called
+  `session`, so after the update you log in once more.
 - **The public addresses are in English.** The card pages moved from
   `/pagine/` to `/pages/`, the series from `/serie/` to `/series/`, and the
   newsletter's pages from `/iscriviti`, `/conferma` and `/disiscrivi` to
