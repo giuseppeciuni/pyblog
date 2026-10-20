@@ -361,6 +361,8 @@ def test_editor():
     check("l'editor cresce col testo, con i pulsanti sempre in vista",
           "#editor.ql-container, #editor-en.ql-container { height:auto; }" in css
           and "position:sticky; top:var(--editor-toolbar-top, 0px)" in css and "function followPublishBar()" in script)
+    check("le nuvolette della barra dell'editor si aprono sotto, non dietro la striscia di pubblicazione",
+          ".ql-toolbar [data-tooltip]::after { bottom:auto; top:calc(100% + 8px); }" in css)
     check("il riquadro di un'immagine non esce dall'editor",
           "function clipToEditor()" in script and "overlay.style.clipPath" in script)
     check("un gruppo chiuso dice cosa contiene",

@@ -43,6 +43,12 @@
   left:0; transform:none;
 }
 .ql-toolbar span.ql-formats:first-child > [data-tooltip]::before { left:14px; }
+/* The editor's toolbar opens its bubbles below the buttons: while writing
+   it stays at the top of the screen, under the publishing strip, and a
+   bubble above it ended up hidden behind the strip. */
+.ql-toolbar [data-tooltip]::after { bottom:auto; top:calc(100% + 8px); }
+.ql-toolbar [data-tooltip]::before { bottom:auto; top:calc(100% - 2px);
+  border-top-color:transparent; border-bottom-color:#1f2937; }
 body { background:var(--a-bg); color:var(--a-text); }
 .pb-content { max-width:960px; margin:0 auto; padding:1.5rem 1rem 4rem; }
 .pb-card { background:#fff; border:1px solid #e4e4e7; border-radius:12px; }
