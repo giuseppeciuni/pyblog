@@ -3745,6 +3745,29 @@ function deleteMedia(buttonEl, itemName, uses) {
             function() { sendMediaDeletion(buttonEl, [itemName]); });
 }
 
+// The same picture saved more than once (a Word document imported twice):
+// the server keeps one copy, points articles and settings at it, and sends
+// the others to the trash.
+function mergeDuplicateMedia(buttonEl, copies) {
+  pbConfirm(t('js_media_merge_title'), t('js_media_merge_body').replace('{n}', copies),
+            t('js_media_merge_confirm'), 'primary', function() {
+    pbBusy(buttonEl, true);
+    pbPostJson('/media-library-delete', { merge: true })
+      .then(function(outcome) {
+        if (outcome.ok !== true) {
+          pbBusy(buttonEl, false);
+          pbToast(t('js_error_prefix') + outcome.error, 'danger');
+          return;
+        }
+        window.location.reload();
+      })
+      .catch(function() {
+        pbBusy(buttonEl, false);
+        pbToast(t('admin_failure_saving'), 'danger');
+      });
+  });
+}
+
 function deleteUnusedMedia(buttonEl) {
   var cardSet = document.querySelectorAll('.media-card[data-used="0"]');
   var nameList = [];

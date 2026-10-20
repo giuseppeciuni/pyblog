@@ -198,6 +198,7 @@ JS_TRANSLATION_KEYS = (
     "js_restoring_ignored", "js_restoring_failure_network",
     "js_media_copied", "js_media_delete_title", "js_media_delete_body",
     "js_media_delete_used", "js_media_cleanup_body", "js_media_uploading",
+    "js_media_merge_title", "js_media_merge_body", "js_media_merge_confirm",
     "upd_checking", "upd_installation", "upd_restarting", "upd_restarted", "upd_confirm_title",
     "upd_confirm_body", "admin_update_now", "upd_offline",
     "js_media_picker_title", "js_media_picker_search", "js_media_picker_empty",
@@ -735,6 +736,16 @@ def library_page(csrf):
     lang = admin_language()
     files = media_library.media_files()
     uses = media_library.media_uses()
+    # The same picture saved more than once: each copy says which file it
+    # repeats, and one button folds them into that one.
+    copy_of = {}
+    for names in media_library.duplicate_groups(files):
+        keep = max(names, key=lambda n: (len(uses.get(n, [])), -names.index(n)))
+        for name in names:
+            if name != keep:
+                copy_of[name] = keep
+    sizes = {item["name"]: item["size"] for item in files}
+    copies_size = sum(sizes[name] for name in copy_of)
     cards = []
     unused_size = 0
     unused_count = 0
@@ -759,6 +770,9 @@ def library_page(csrf):
             usage = f'{T("admin_media_used_f_in", lang)} ' + ", ".join(links)
         else:
             usage = f'<span class="media-unused">{T("admin_media_not_used_f", lang)}</span>'
+        if name in copy_of:
+            usage += (f'<br><span class="media-copy">'
+                      f'{esc(T("admin_media_copy_of", lang).replace("{name}", copy_of[name]))}</span>')
         cards.append(
             f'    <li class="media-card" data-name="{esc(name.lower())}" data-used="{1 if where else 0}" '
             f'data-where="{len(where)}">\n'
@@ -767,7 +781,7 @@ def library_page(csrf):
             f'        <p class="media-name">{esc(name)}</p>\n'
             f'        <p class="media-meta">{file_size_text(item["size"])} · '
             f'{item["date"].strftime("%d/%m/%Y")}</p>\n'
-            f'        <p class="media-usi">{usage}</p>\n'
+            f'        <p class="media-uses">{usage}</p>\n'
             f'        <div class="media-actions">'
             f'<button type="button" class="button button-small" '
             f'onclick="copyMediaAddress({js_attr(address)})">{T("admin_media_copy", lang)}'
@@ -797,6 +811,10 @@ def library_page(csrf):
         label_search=esc(T("admin_media_search", lang)),
         label_cleanup=cleanup,
         cleanup_hidden_f="" if unused_count > 0 else " hidden",
+        label_merge=(T("admin_media_merge", lang).replace("{n}", str(len(copy_of)))
+                     .replace("{size}", file_size_text(copies_size) if copy_of else "0 KB")),
+        merge_hidden_f="" if copy_of else " hidden",
+        copies=len(copy_of),
         cards="\n".join(cards),
         empty_f_hidden_f="" if not files else " hidden",
         label_empty_f=T("admin_media_empty_f", lang),
@@ -3157,7 +3175,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
         return {"ok": True, "auto": updates.automatic_check_enabled()}
 
     def _api_delete_media(self, data):
-        """Move uploaded files to the trash of the media library."""
+        """
+        Move uploaded files to the trash of the media library, or, with
+        "merge", fold the copies of the same picture into one. Merging goes
+        through this route so that the nginx files already on the servers
+        need nothing new.
+        """
+        if data.get("merge") is True:
+            with BUILD_LOCK:
+                outcome = media_library.merge_duplicates()
+                build()
+            return {"ok": True, **outcome}
         deleted = media_library.delete_media(data.get("names", []))
         return {"ok": True, "deleted": deleted}
 

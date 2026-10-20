@@ -934,16 +934,51 @@ def sanitize_file_name(name_value):
     return clean_name
 
 
+def identical_media(binary_data):
+    """
+    The name of a file in the media folder with exactly these bytes, or None.
+    Only files of the same size are read, so a full folder costs little.
+    The oldest copy wins, so the answer does not change between two calls.
+    """
+    if not MEDIA_DIR.is_dir():
+        return None
+    size = len(binary_data)
+    same_size = []
+    for path_value in MEDIA_DIR.iterdir():
+        try:
+            stat = path_value.stat()
+        except OSError:
+            continue
+        if path_value.is_file() and stat.st_size == size:
+            same_size.append((stat.st_mtime, path_value.name, path_value))
+    for _, name, path_value in sorted(same_size):
+        try:
+            if path_value.read_bytes() == binary_data:
+                return name
+        except OSError:
+            continue
+    return None
+
+
 def save_uploaded_file(file_name, binary_data):
     """
     Save an uploaded file (video or image) into the media folder and
     return its URL. If a file with the same name already exists, it
     appends a progressive number so that nothing is overwritten.
 
+    The same file uploaded again - a Word document imported twice, a picture
+    chosen once more - gets the address it already has: every import used
+    to leave a copy with a number at the end, and the media library filled
+    up with the same pictures.
+
     The caller must have run validate_upload() first: this function writes
     what it is given.
     """
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+
+    existing = identical_media(binary_data)
+    if existing is not None:
+        return "/media/" + existing
 
     safe_name = sanitize_file_name(file_name)
     if safe_name == "":

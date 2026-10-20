@@ -252,6 +252,13 @@ UI_TRANSLATIONS = {
     "admin_media_empty_f": {"it": "Nessun file caricato, per ora.", "en": "No uploaded files yet."},
     "admin_media_used_f_in": {"it": "Usato in:", "en": "Used in:"},
     "admin_media_not_used_f": {"it": "Non usato da nessuna parte", "en": "Not used anywhere"},
+    "admin_media_copy_of": {"it": "Copia di {name}", "en": "Copy of {name}"},
+    "admin_media_merge": {"it": "Unisci i doppioni ({n}, {size})", "en": "Merge the duplicates ({n}, {size})"},
+    "js_media_merge_title": {"it": "Unire i doppioni?", "en": "Merge the duplicates?"},
+    "js_media_merge_body": {
+        "it": "{n} file sono copie di un'immagine che c'è già. Articoli e impostazioni useranno una copia sola, le altre vanno nel cestino dei media (per 30 giorni) e il sito viene rigenerato.",
+        "en": "{n} files are copies of a picture that is already there. Articles and settings will use one copy, the others go to the media trash (for 30 days) and the site is rebuilt."},
+    "js_media_merge_confirm": {"it": "Unisci", "en": "Merge"},
     "admin_media_copy": {"it": "Copia l'indirizzo", "en": "Copy the address"},
     "admin_media_trash_hint": {
         "it": "Un file eliminato resta per 30 giorni nella cartella backups/deleted-media del server, da dove si può rimettere a mano in output/media. Nell'elenco degli usi contano gli articoli (anche le bozze) e le impostazioni; le versioni precedenti degli articoli no.",

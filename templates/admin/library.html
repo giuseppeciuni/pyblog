@@ -21,6 +21,7 @@
     </div>
     <label for="search-media" class="vh">$label_search</label>
     <input type="search" class="field-input list-search" id="search-media" placeholder="$label_search" oninput="filterMedia()">
+    <button type="button" class="button" onclick="mergeDuplicateMedia(this, $copies)"$merge_hidden_f>$label_merge</button>
     <button type="button" class="button" onclick="deleteUnusedMedia(this)"$cleanup_hidden_f>$label_cleanup</button>
   </div>
   <p class="hint" id="media-library-state" role="status"></p>

@@ -6,6 +6,12 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **The same picture is no longer saved again and again.** Importing a Word
+  document a second time, or uploading a picture that is already there, used
+  to save a new copy with a number at the end (`image1-1.png`). Now the file
+  that has the same bytes is reused. The copies already on disk show in the
+  Media page as "Copy of …", and **Merge the duplicates** keeps one, points
+  articles and settings at it and moves the others to the media trash.
 - **The administration can live at an address of its own.** The code of
   outside services on the public pages (analytics, ads, chat widgets) ran
   on the same origin as the editor, and could read what the logged-in

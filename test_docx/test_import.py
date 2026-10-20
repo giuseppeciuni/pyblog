@@ -244,9 +244,15 @@ def test_lines_and_pictures():
     keys = warning_keys(result)
     link = '<a href="https://example.com/normale">'
 
+    # The picture is the same one word-document.docx carries: the import
+    # reuses the file already saved instead of writing a copy of it.
+    saved_picture = content.split('<img src="', 1)[1].split('"', 1)[0] if '<img src="' in content else ""
+    check("the same picture imported again reuses the file already saved",
+          saved_picture.startswith("/media/word-document-grafico"), saved_picture)
+
     def picture(description, width="200"):
         """The <img> the importer writes for the picture with this alternative text."""
-        return ('<img src="/media/document-lines-grafico.png" alt="' + description
+        return ('<img src="' + saved_picture + '" alt="' + description
                 + '" width="' + width + '" loading="lazy">')
 
     # --- Line breaks: Quill has none inside a block ---
@@ -379,8 +385,10 @@ def test_cover_picture():
         return
     check("the heading under the picture is the title",
           result["title"] == "Titolo sotto la copertina", repr(result["title"]))
+    # The same picture may already be in the media folder from another
+    # document of these tests: then it keeps the name it was saved under.
     check("the picture opens the article",
-          result["content"].startswith('<p><img src="/media/cover-image1'))
+          result["content"].startswith('<p><img src="/media/'), result["content"][:80])
     check("the title is not repeated as a heading", "<h2>" not in result["content"])
 
 

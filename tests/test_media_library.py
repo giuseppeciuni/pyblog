@@ -59,7 +59,7 @@ class Library:
         media_library.load_config = lambda: CONFIG
         media_library.MEDIA_DIR.mkdir(parents=True)
         for name in ("foto.png", "copertina.jpg", "dimenticata.png", "video.mp4"):
-            (media_library.MEDIA_DIR / name).write_bytes(PNG)
+            (media_library.MEDIA_DIR / name).write_bytes(PNG + name.encode())
         (media_library.MEDIA_DIR / ".nascosto").write_bytes(b"x")
         self.root = root
 
@@ -142,10 +142,72 @@ def test_page():
         lib.close()
 
 
+def test_duplicates():
+    print("\nla stessa immagine salvata più volte")
+    folder = tempfile.TemporaryDirectory()
+    root = pathlib.Path(folder.name)
+    from core import articles
+    saved = (media_library.MEDIA_DIR, media_library.TRASH_DIR, media_library.POSTS_DIR,
+             media_library.load_articles, media_library.load_config, media_library.save_config,
+             articles.MEDIA_DIR)
+    media_dir = root / "output" / "media"
+    media_dir.mkdir(parents=True)
+    posts = root / "posts"
+    posts.mkdir()
+    config = {"seo": {"author_image": "/media/schema-1.png"}}
+    stored = []
+    try:
+        media_library.MEDIA_DIR = articles.MEDIA_DIR = media_dir
+        media_library.TRASH_DIR = root / "backups" / "deleted-media"
+        media_library.POSTS_DIR = posts
+        media_library.load_config = lambda: config
+        media_library.save_config = stored.append
+        picture = PNG + b"schema"
+        first = articles.save_uploaded_file("schema.png", picture)
+        again = articles.save_uploaded_file("doc-image1.png", picture)
+        check("caricare di nuovo la stessa immagine riusa il file che c'è",
+              first == again == "/media/schema.png" and sorted(p.name for p in media_dir.iterdir()) == ["schema.png"],
+              str((first, again)))
+        other = articles.save_uploaded_file("schema.png", PNG + b"altro")
+        check("un'immagine diversa con lo stesso nome prende un nome nuovo", other == "/media/schema-1.png")
+
+        # Copies left by the imports of before: same bytes, other names.
+        (media_dir / "schema-2.png").write_bytes(picture)
+        (media_dir / "schema-3.png").write_bytes(picture)
+        os.utime(media_dir / "schema.png", (time.time() - 100, time.time() - 100))
+        groups = media_library.duplicate_groups()
+        check("trova le copie, la più vecchia per prima",
+              groups == [["schema.png", "schema-2.png", "schema-3.png"]], str(groups))
+        article = {"slug": "uno", "title": "Uno", "status": "published",
+                   "content": '<p><img src="/media/schema-2.png"></p><p><img src="/media/schema-3.png"></p>',
+                   "image": "/media/schema-10.png"}
+        (posts / "uno.json").write_text(__import__("json").dumps(article))
+        media_library.load_articles = lambda: [__import__("json").loads((posts / "uno.json").read_text())]
+        outcome = media_library.merge_duplicates()
+        merged = __import__("json").loads((posts / "uno.json").read_text())
+        # The copy that stays is the one already used: fewer uses to rewrite.
+        check("unire i doppioni tiene la copia già usata e toglie le altre", outcome == {"merged": 2, "articles": 1}
+              and sorted(p.name for p in media_dir.iterdir()) == ["schema-1.png", "schema-2.png"], str(outcome))
+        check("e l'articolo usa la copia che resta",
+              merged["content"].count("/media/schema-2.png") == 2 and "schema-3" not in merged["content"])
+        check("senza toccare un nome che comincia allo stesso modo", merged["image"] == "/media/schema-10.png")
+        check("le copie vanno nel cestino", (media_library.TRASH_DIR / "schema.png").is_file()
+              and (media_library.TRASH_DIR / "schema-3.png").is_file())
+        check("le impostazioni che non usano copie restano come sono", stored == [])
+        check("una seconda volta non c'è più niente da unire",
+              media_library.merge_duplicates() == {"merged": 0, "articles": 0})
+    finally:
+        (media_library.MEDIA_DIR, media_library.TRASH_DIR, media_library.POSTS_DIR,
+         media_library.load_articles, media_library.load_config, media_library.save_config,
+         articles.MEDIA_DIR) = saved
+        folder.cleanup()
+
+
 def main():
     test_list_and_uses()
     test_deleting()
     test_page()
+    test_duplicates()
     print(f"\n{PASSED} passed, {FAILED} failed")
     if FAILED > 0:
         sys.exit(1)

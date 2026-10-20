@@ -670,8 +670,9 @@ select.field-input { padding-right:2rem; }
 .media-info { padding:0.75rem 0.875rem 0.875rem; display:flex; flex-direction:column; gap:0.25rem; flex:1; }
 .media-name { margin:0; font-weight:600; font-size:0.875rem; overflow-wrap:anywhere; }
 .media-meta { margin:0; font-size:0.8125rem; color:var(--a-text-2); }
-.media-usi { margin:0; font-size:0.8125rem; color:var(--a-text-2); flex:1; }
+.media-uses { margin:0; font-size:0.8125rem; color:var(--a-text-2); flex:1; }
 .media-unused { color:#8a4b00; font-weight:600; }
+.media-copy { color:#8a4b00; }
 .media-actions { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem; }
 #media-library-state:empty { display:none; }
 

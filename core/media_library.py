@@ -12,6 +12,7 @@ for those addresses. It reads the current version of each article only: an
 earlier version that names a picture does not keep it alive, and putting
 that version back says so in the editor anyway.
 """
+import hashlib
 import json
 import os
 import re
@@ -20,7 +21,8 @@ import time
 from datetime import datetime
 
 from core.articles import load_articles, upload_kind
-from core.config import BASE_DIR, MEDIA_DIR, load_config
+from core.config import (BASE_DIR, MEDIA_DIR, POSTS_DIR, load_config, save_config,
+                         write_json_atomically)
 
 # Deleted media wait here for a month before they are gone for good: a
 # picture deleted by mistake can still be put back by hand. The folder sits
@@ -49,6 +51,75 @@ def media_files():
         found.append({"name": path_value.name, "kind": kind or "other",
                       "size": stat.st_size, "date": datetime.fromtimestamp(stat.st_mtime)})
     return sorted(found, key=lambda m: (m["date"], m["name"]), reverse=True)
+
+
+def duplicate_groups(files=None):
+    """
+    The files saved more than once with the same bytes: a list of groups,
+    each a list of names, oldest first. Files of a size no other file has
+    are never read.
+    """
+    if files is None:
+        files = media_files()
+    by_size = {}
+    for item in files:
+        by_size.setdefault(item["size"], []).append(item)
+    groups = []
+    for same_size in by_size.values():
+        if len(same_size) < 2:
+            continue
+        by_content = {}
+        for item in sorted(same_size, key=lambda m: (m["date"], m["name"])):
+            try:
+                digest = hashlib.sha256((MEDIA_DIR / item["name"]).read_bytes()).hexdigest()
+            except OSError:
+                continue
+            by_content.setdefault(digest, []).append(item["name"])
+        groups.extend(names for names in by_content.values() if len(names) > 1)
+    return sorted(groups)
+
+
+def merge_duplicates():
+    """
+    Keep one file for each picture saved more than once, and point every use
+    of the others at it: the articles and the settings name the copy that
+    stays, and the others go to the trash, as a deletion would send them.
+    The copy that stays is the most used one, the oldest when it is a tie.
+    Return {"merged": copies removed, "articles": articles changed}.
+    The caller rebuilds the site.
+    """
+    uses = media_uses()
+    renames = {}
+    for names in duplicate_groups():
+        keep = max(names, key=lambda n: (len(uses.get(n, [])), -names.index(n)))
+        for name in names:
+            if name != keep:
+                renames[name] = keep
+    if not renames:
+        return {"merged": 0, "articles": 0}
+    pattern = re.compile(r"/media/(" + "|".join(map(re.escape, sorted(renames, key=len, reverse=True)))
+                         + r")(?![A-Za-z0-9._-])")
+
+    def renamed(value):
+        text = json.dumps(value, ensure_ascii=False)
+        new_text = pattern.sub(lambda m: "/media/" + renames[m.group(1)], text)
+        return None if new_text == text else json.loads(new_text)
+
+    changed_articles = 0
+    for path_value in sorted(POSTS_DIR.glob("*.json")):
+        try:
+            article = json.loads(path_value.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        new_article = renamed(article)
+        if new_article is not None:
+            write_json_atomically(path_value, new_article)
+            changed_articles += 1
+    new_config = renamed(load_config())
+    if new_config is not None:
+        save_config(new_config)
+    deleted = delete_media(sorted(renames))
+    return {"merged": len(deleted), "articles": changed_articles}
 
 
 def references(value):
