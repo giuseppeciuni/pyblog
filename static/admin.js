@@ -785,6 +785,10 @@ function watchImageDescriptions(editor) {
     if (event.target.tagName === 'IMG') {
       imageDetailsTarget = { editor: editor, image: event.target };
       if (button) { button.hidden = false; }
+      // blot-formatter draws its box in this same click: the button goes
+      // on it once it is there.
+      var clickY = event.clientY;
+      window.requestAnimationFrame(function() { showImageDetailsOnPicture(editor, clickY); });
     } else if (button) {
       button.hidden = true;
     }
@@ -801,6 +805,32 @@ function watchImageDescriptions(editor) {
     pending = setTimeout(function() { countUndescribedImages(editor); }, 400);
   });
   countUndescribedImages(editor);
+}
+
+// The same button, on the picture's box, at the height of the click. The
+// one in the Insert bar stays for the keyboard, but under a long article it
+// is far below the screen: whoever clicked a picture never saw it appear.
+function showImageDetailsOnPicture(editor, clickY) {
+  var formatter = editor.getModule('blotFormatter');
+  var overlay = formatter && formatter.overlay;
+  if (!overlay) { return; }
+  var button = overlay.querySelector('.image-details-on-picture');
+  if (!button) {
+    button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'image-details-on-picture';
+    button.textContent = t('js_image_details_title');
+    // blot-formatter hides its box on a mousedown outside the picture.
+    button.addEventListener('mousedown', function(event) { event.stopPropagation(); event.preventDefault(); });
+    button.addEventListener('click', function(event) {
+      event.stopPropagation();
+      openImageDetails();
+    });
+    overlay.appendChild(button);
+  }
+  var box = overlay.getBoundingClientRect();
+  var top = Math.min(Math.max(clickY - box.top + 16, 24), Math.max(box.height - 44, 24));
+  button.style.top = Math.round(top) + 'px';
 }
 
 function undescribedImages(editor) {

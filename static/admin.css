@@ -408,6 +408,12 @@ html:has(body.page-config) { scroll-padding-bottom:7rem; }
    Without !important, an image resized wider than the editor would
    overflow it horizontally instead of being visually contained. */
 .ql-editor img { height:auto; max-width:100% !important; vertical-align:top; }
+/* The alternative text and caption button, on the box of the chosen picture. */
+.image-details-on-picture { position:absolute; left:50%; transform:translateX(-50%); z-index:2;
+  background:#1f2937; color:#fff; border:0; border-radius:999px; padding:0.45rem 0.9rem;
+  font:600 0.85rem/1.2 var(--pb-font); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.3); white-space:nowrap; }
+.image-details-on-picture:hover { background:#111827; }
+.image-details-on-picture:focus-visible { outline:3px solid var(--a-accent); outline-offset:2px; }
 .ql-editor .ql-align-center { text-align:center; }
 .ql-editor .ql-align-center img { display:inline-block; margin-left:auto; margin-right:auto; }
 .ql-editor .ql-align-right { text-align:right; }
