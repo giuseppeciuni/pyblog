@@ -91,19 +91,19 @@ def start_mail_server():
     return server_thread
 
 
-def text_of(messaggio):
-    parti = [p.get_content() for p in messaggio.walk() if p.get_content_type() == "text/plain"]
-    return "\n".join(parti)
+def text_of(message):
+    parts = [p.get_content() for p in message.walk() if p.get_content_type() == "text/plain"]
+    return "\n".join(parts)
 
 
 SITE_URL = "https://blog.example.org"
 
 
-def set_value(port, **altro):
+def set_value(port, **other_value):
     nl = {"enabled": True, "sender_email": "blog@example.org", "sender_name": "Il blog",
           "smtp_host": "127.0.0.1", "smtp_port": port, "smtp_security": "none",
           "enabled_since": (datetime.now(timezone.utc) - timedelta(minutes=5)).replace(microsecond=0).isoformat()}
-    nl.update(altro)
+    nl.update(other_value)
     CONFIG["newsletter"] = nl
 
 
@@ -123,8 +123,8 @@ def test_subscription(port):
     RECEIVED.clear()
     check("un indirizzo sbagliato non entra", newsletter.subscribe("non-un-indirizzo", "it", SITE_URL) == "invalid")
     check("un indirizzo buono riceve la risposta di sempre", newsletter.subscribe("Anna@Example.org ", "it", SITE_URL) == "ok")
-    stato = newsletter.load_state()
-    anna_entry = newsletter.find(stato, "email", "anna@example.org")
+    state = newsletter.load_state()
+    anna_entry = newsletter.find(state, "email", "anna@example.org")
     check("è in attesa, in minuscolo, con la sua lingua", anna_entry and anna_entry["status"] == "pending" and anna_entry["language"] == "it")
     check("è arrivata un'email di conferma", len(RECEIVED) == 1 and "Conferma" in RECEIVED[0]["Subject"])
     link = re.search(r"https://blog\.example\.org/confirm\?t=([\w-]+)", text_of(RECEIVED[0]))
@@ -200,9 +200,9 @@ def test_articles(port):
                   m["List-Unsubscribe"].startswith(f"<{SITE_URL}/unsubscribe?t=")
                   and m["List-Unsubscribe-Post"] == "List-Unsubscribe=One-Click")
             check("il mittente è quello scelto", m["From"] == "Il blog <blog@example.org>")
-        stato = newsletter.load_state()
+        state = newsletter.load_state()
         check("la coda si svuota e l'invio viene ricordato",
-              stato["outbox"] == [] and stato["last"]["sent"] == 1 and stato["last"]["title"] == "Articolo per gli iscritti")
+              state["outbox"] == [] and state["last"]["sent"] == 1 and state["last"]["title"] == "Articolo per gli iscritti")
         check("l'articolo è segnato come mandato", load_article(new).get("newsletter_sent") is True)
         art = load_article(new)
         art["original_slug"] = new
@@ -223,18 +223,18 @@ def test_articles(port):
 def test_site(port):
     print("\nil modulo sul sito")
     set_value(port, in_sidebar=True, after_article=True)
-    pubblicati = [a for a in build.load_articles() if a.get("status") == "published"]
-    home = build.generate_homepage(pubblicati, "it")
+    published = [a for a in build.load_articles() if a.get("status") == "published"]
+    home = build.generate_homepage(published, "it")
     check("il modulo è nella barra laterale", 'class="box box-newsletter"' in home and 'action="/subscribe"' in home)
     check("con il campo trappola per i robot", 'name="website" tabindex="-1"' in home)
     check("e la lingua della pagina", 'name="language" value="it"' in home)
-    article = build.generate_article_page(pubblicati[0], "it", pubblicati)
+    article = build.generate_article_page(published[0], "it", published)
     check("e in fondo all'articolo", 'class="newsletter-article"' in article)
     set_value(port, in_sidebar=False, after_article=False)
-    check("dove l'autore non lo vuole, non c'è", 'action="/subscribe"' not in build.generate_homepage(pubblicati, "it"))
+    check("dove l'autore non lo vuole, non c'è", 'action="/subscribe"' not in build.generate_homepage(published, "it"))
     set_value(port, enabled=False)
     check("con la newsletter spenta non c'è da nessuna parte",
-          'action="/subscribe"' not in build.generate_article_page(pubblicati[0], "it", pubblicati))
+          'action="/subscribe"' not in build.generate_article_page(published[0], "it", published))
     page_html = build.newsletter_message_page("en", "Check your inbox", "An email has arrived.")
     check("le pagine di risposta hanno la grafica del sito e non si indicizzano",
           "<h1>Check your inbox</h1>" in page_html and 'content="noindex"' in page_html)

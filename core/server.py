@@ -195,7 +195,7 @@ JS_TRANSLATION_KEYS = (
     "js_admin_url_confirm_title", "js_admin_url_confirm_body", "js_admin_url_confirm",
     "js_choose_backup", "js_restoring_title", "js_restoring_body", "js_restoring_confirm",
     "js_restoring_automatic_body", "js_restoring_in_progress", "js_restoring_made",
-    "js_restoring_ignored", "js_restoring_failure_rete",
+    "js_restoring_ignored", "js_restoring_failure_network",
     "js_media_copied", "js_media_delete_title", "js_media_delete_body",
     "js_media_delete_used", "js_media_cleanup_body", "js_media_uploading",
     "upd_checking", "upd_installation", "upd_restarting", "upd_restarted", "upd_confirm_title",
@@ -289,18 +289,18 @@ def fill_languages(text, language):
 
     The translation goes from the main language to the other one, and which
     is which depends on the site: Italian to English, or English to Italian.
-    The labels say {principale} and {lingua} instead of naming them, and
-    {CODICE} is the short code of the translation ("EN" or "IT").
+    The labels say {main_language} and {other_language} instead of naming them, and
+    {CODE} is the short code of the translation ("EN" or "IT").
     """
     main = main_language()
     other = secondary_language()
     main_name = LANGUAGE_NAMES[main].get(language, LANGUAGE_NAMES[main]["it"])
     other_name = LANGUAGE_NAMES[other].get(language, LANGUAGE_NAMES[other]["it"])
-    return (text.replace("{principale}", main_name)
-                .replace("{Principale}", main_name[:1].upper() + main_name[1:])
-                .replace("{lingua}", other_name)
-                .replace("{Lingua}", other_name[:1].upper() + other_name[1:])
-                .replace("{CODICE}", other.upper()))
+    return (text.replace("{main_language}", main_name)
+                .replace("{Main_language}", main_name[:1].upper() + main_name[1:])
+                .replace("{other_language}", other_name)
+                .replace("{Other_language}", other_name[:1].upper() + other_name[1:])
+                .replace("{CODE}", other.upper()))
 
 
 def TL(key, language):
@@ -343,10 +343,10 @@ def optimisation_note(optimisation, language):
     saved_kb = optimisation.get("saved", 0) // 1024
 
     if action == "resized":
-        da = "%dx%d" % optimisation["from"]
-        a = "%dx%d" % optimisation["to"]
+        size_from = "%dx%d" % optimisation["from"]
+        size_to = "%dx%d" % optimisation["to"]
         return (T("img_resized_f", language)
-                .replace("{da}", da).replace("{a}", a).replace("{n}", str(saved_kb)))
+                .replace("{from}", size_from).replace("{to}", size_to).replace("{n}", str(saved_kb)))
     if action == "stripped" and saved_kb > 0:
         return T("img_metadata_removed_pl", language).replace("{n}", str(saved_kb))
 
@@ -439,7 +439,7 @@ def admin_navbar(active_page, language, articles_count=None):
 
     # The last field says whether the item is also in the phone's bar, which
     # has room for four: the others are in the menu "More" opens.
-    voci = [
+    entries = [
         ("articles", "/admin", ICON_ARTICLES, T("admin_articles", language),
          T("admin_articles", language), str(articles_count), True),
         ("new", "/edit", ICON_NEW, T("admin_new_article_title", language),
@@ -451,7 +451,7 @@ def admin_navbar(active_page, language, articles_count=None):
     ]
     menu_html = []
     bar_html = []
-    for key, url, path, label, short_label, count, in_bar in voci:
+    for key, url, path, label, short_label, count, in_bar in entries:
         current = ""
         if key == active_page:
             current = ' aria-current="page"'
@@ -520,7 +520,7 @@ def admin_navbar(active_page, language, articles_count=None):
     )
 
 
-def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
+def admin_page_shell(title, content_html, language, csrf="", navbar="",
                      head_extra="", script_extra="", page_data=None,
                      body_class=""):
     """Wrap an admin page body in templates/admin/base.html."""
@@ -535,7 +535,7 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
     return render.render(
         "admin/base.html",
         lang=language,
-        title_page=esc(titolo),
+        title_page=esc(title),
         bootstrap_css=BOOTSTRAP_CSS,
         bootstrap_js=BOOTSTRAP_JS,
         head_extra=build_module.block(head_extra),
@@ -544,7 +544,7 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
         navbar=build_module.block(navbar),
         label_close=T("admin_close", language),
         label_cancel=T("admin_cancel", language),
-        content=contenuto,
+        content=content_html,
         i18n=js(js_translations(language)),
         csrf=js(csrf),
         page_data=js(page_data),
@@ -558,7 +558,7 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
     )
 
 
-def notify_checkbox(art, la):
+def notify_checkbox(art, lang):
     """
     "Tell the subscribers when it is published", in the publishing panel of
     a draft or a scheduled article, when the newsletter can send. Not for an
@@ -570,10 +570,10 @@ def notify_checkbox(art, la):
     checked = checked_if(art.get("notify_subscribers", True) is not False)
     return ('      <label class="row-flag notify-subscribers only-not-published">'
             f'<input type="checkbox" id="notify_subscribers" {checked}> '
-            f'{T("admin_nl_notify", la)}</label>\n')
+            f'{T("admin_nl_notify", lang)}</label>\n')
 
 
-def moment_html(moment, la):
+def moment_html(moment, lang):
     """
     "goes out on <date>" for a scheduled article. The date is written by
     admin.js in the reader's own time zone and language; the text inside is
@@ -582,7 +582,7 @@ def moment_html(moment, la):
     if moment == "":
         return ""
     fallback = moment.replace("T", " ")[:16] + " UTC"
-    return T("admin_goes_out_the", la).replace(
+    return T("admin_goes_out_the", lang).replace(
         "{date}", f'<time class="now-local" datetime="{esc(moment)}">{esc(fallback)}</time>')
 
 
@@ -596,51 +596,51 @@ def alert_block(message, kind):
 
 def login_page(error_message=""):
     """Login page to access the administration area."""
-    la = admin_language()
-    contenuto = render.render(
+    lang = admin_language()
+    content_html = render.render(
         "admin/login.html",
-        title=T("admin_area_reserved", la),
-        invitation=T("admin_login_invitation", la),
+        title=T("admin_area_reserved", lang),
+        invitation=T("admin_login_invitation", lang),
         failure=alert_block(error_message, "danger"),
-        label_password=T("admin_password", la),
-        login=T("admin_login", la),
+        label_password=T("admin_password", lang),
+        login=T("admin_login", lang),
     )
-    return admin_page_shell(T("admin_area_reserved", la), contenuto, la)
+    return admin_page_shell(T("admin_area_reserved", lang), content_html, lang)
 
 
 def set_password_page(error_message=""):
     """Page shown on first run to create the administration password."""
-    la = admin_language()
-    contenuto = render.render(
+    lang = admin_language()
+    content_html = render.render(
         "admin/set_password.html",
-        title=T("admin_create_password_title", la),
-        invitation=T("admin_create_password_invitation", la),
+        title=T("admin_create_password_title", lang),
+        invitation=T("admin_create_password_invitation", lang),
         failure=alert_block(error_message, "danger"),
-        label_new_f=T("admin_new_f_password", la),
-        label_confirm=T("admin_confirm_password", la),
-        hint_length_of=T("admin_password_length_of", la),
-        create_login=T("admin_create_login", la),
+        label_new_f=T("admin_new_f_password", lang),
+        label_confirm=T("admin_confirm_password", lang),
+        hint_length_of=T("admin_password_length_of", lang),
+        create_login=T("admin_create_login", lang),
     )
-    return admin_page_shell(T("admin_create_password_title", la), contenuto, la)
+    return admin_page_shell(T("admin_create_password_title", lang), content_html, lang)
 
 
 def change_password_page(csrf, error_message="", success_message=""):
     """Page to change the password while logged in."""
-    la = admin_language()
-    contenuto = render.render(
+    lang = admin_language()
+    content_html = render.render(
         "admin/change_password.html",
-        title=T("admin_change_password", la),
-        subtitle=T("admin_change_password_desc", la),
-        hint_length_of=T("admin_password_length_of", la),
+        title=T("admin_change_password", lang),
+        subtitle=T("admin_change_password_desc", lang),
+        hint_length_of=T("admin_password_length_of", lang),
         failure=alert_block(error_message, "danger"),
         success=alert_block(success_message, "success"),
         csrf_token=esc(csrf),
-        label_current=T("admin_password_current", la),
-        label_new_f=T("admin_new_f_password", la),
-        label_confirm=T("admin_confirm_new_f", la),
+        label_current=T("admin_password_current", lang),
+        label_new_f=T("admin_new_f_password", lang),
+        label_confirm=T("admin_confirm_new_f", lang),
     )
-    return admin_page_shell(T("admin_change_password", la), contenuto, la,
-                            csrf=csrf, navbar=admin_navbar("password", la))
+    return admin_page_shell(T("admin_change_password", lang), content_html, lang,
+                            csrf=csrf, navbar=admin_navbar("password", lang))
 
 
 def updates_state(force=False):
@@ -649,7 +649,7 @@ def updates_state(force=False):
     written: what the page shows, and whether the dashboard should say
     something.
     """
-    la = admin_language()
+    lang = admin_language()
     try:
         result = updates.check(force=force)
     except Exception:
@@ -658,26 +658,26 @@ def updates_state(force=False):
     message = ""
     available = False
     if result.get("error"):
-        message = T(result["error"], la)
+        message = T(result["error"], lang)
     elif result.get("kind") == "git":
         if result.get("behind", 0) > 0:
             available = True
-            message = T("upd_news", la).replace("{n}", str(result["behind"]))
+            message = T("upd_news", lang).replace("{n}", str(result["behind"]))
             if result.get("dirty"):
-                message = message + " " + T("upd_changes_made_local_edits", la)
+                message = message + " " + T("upd_changes_made_local_edits", lang)
             elif result.get("ahead"):
-                message = message + " " + T("upd_ahead", la)
+                message = message + " " + T("upd_ahead", lang)
         else:
-            message = T("upd_updated", la)
+            message = T("upd_updated", lang)
     elif result.get("kind") == "other":
         if result.get("behind"):
             available = True
-            message = (T("upd_version", la).replace("{v}", result.get("latest", ""))
+            message = (T("upd_version", lang).replace("{v}", result.get("latest", ""))
                        .replace("{c}", __version__))
         else:
-            message = T("upd_updated", la)
+            message = T("upd_updated", lang)
     else:
-        message = T("upd_never_checked", la)
+        message = T("upd_never_checked", lang)
     return {"ok": True, "message": message, "available": available,
             "can_update": result.get("can_update") is True,
             "news": result.get("news", []) if result.get("kind") == "git" else [],
@@ -687,24 +687,24 @@ def updates_state(force=False):
 
 def updates_page(csrf):
     """The Updates page: the version, what is new, and the update button."""
-    la = admin_language()
-    contenuto = render.render(
+    lang = admin_language()
+    content_html = render.render(
         "admin/updates.html",
-        title=T("admin_updates", la),
-        version_installed=T("admin_version_installed", la).replace("{v}", __version__),
-        label_state=T("admin_updates_state", la),
-        label_checking=T("upd_checking", la),
-        instructions=T("upd_instructions", la).replace("{url}", updates.CHANGELOG_URL),
-        label_update=T("admin_update_now", la),
-        label_check_now=T("admin_check_now_now", la),
-        hint_update=T("admin_update_hint", la),
-        label_automatic=T("admin_checking_automatic_title", la),
-        label_checking_automatic=T("admin_checking_automatic", la),
-        hint_checking_automatic=T("admin_checking_automatic_hint", la),
+        title=T("admin_updates", lang),
+        version_installed=T("admin_version_installed", lang).replace("{v}", __version__),
+        label_state=T("admin_updates_state", lang),
+        label_checking=T("upd_checking", lang),
+        instructions=T("upd_instructions", lang).replace("{url}", updates.CHANGELOG_URL),
+        label_update=T("admin_update_now", lang),
+        label_check_now=T("admin_check_now_now", lang),
+        hint_update=T("admin_update_hint", lang),
+        label_automatic=T("admin_checking_automatic_title", lang),
+        label_checking_automatic=T("admin_checking_automatic", lang),
+        hint_checking_automatic=T("admin_checking_automatic_hint", lang),
         checked_automatic=checked_if(updates.automatic_check_enabled()),
     )
-    return admin_page_shell(T("admin_updates", la), contenuto, la, csrf=csrf,
-                            navbar=admin_navbar("updates", la), page_data={"page": "updates"})
+    return admin_page_shell(T("admin_updates", lang), content_html, lang, csrf=csrf,
+                            navbar=admin_navbar("updates", lang), page_data={"page": "updates"})
 
 
 def file_size_text(size):
@@ -732,7 +732,7 @@ def library_page(csrf):
     The media library: every uploaded file with where it is used, to copy
     its address, upload new ones and clear out the ones nothing uses.
     """
-    la = admin_language()
+    lang = admin_language()
     files = media_library.media_files()
     uses = media_library.media_uses()
     cards = []
@@ -755,10 +755,10 @@ def library_page(csrf):
                 if use["kind"] == "article":
                     links.append(f'<a href="/edit?slug={esc(use["slug"])}">{esc(use["title"])}</a>')
                 else:
-                    links.append(f'<a href="/config">{T("admin_settings_page", la)}</a>')
-            usage = f'{T("admin_media_used_f_in", la)} ' + ", ".join(links)
+                    links.append(f'<a href="/config">{T("admin_settings_page", lang)}</a>')
+            usage = f'{T("admin_media_used_f_in", lang)} ' + ", ".join(links)
         else:
-            usage = f'<span class="media-unused">{T("admin_media_not_used_f", la)}</span>'
+            usage = f'<span class="media-unused">{T("admin_media_not_used_f", lang)}</span>'
         cards.append(
             f'    <li class="media-card" data-name="{esc(name.lower())}" data-used="{1 if where else 0}" '
             f'data-where="{len(where)}">\n'
@@ -770,41 +770,41 @@ def library_page(csrf):
             f'        <p class="media-usi">{usage}</p>\n'
             f'        <div class="media-actions">'
             f'<button type="button" class="button button-small" '
-            f'onclick="copyMediaAddress({js_attr(address)})">{T("admin_media_copy", la)}'
+            f'onclick="copyMediaAddress({js_attr(address)})">{T("admin_media_copy", lang)}'
             f'<span class="vh"> {esc(name)}</span></button>'
             f'<button type="button" class="button button-small button-danger" '
-            f'onclick="deleteMedia(this, {js_attr(name)}, {len(where)})">{T("admin_delete", la)}'
+            f'onclick="deleteMedia(this, {js_attr(name)}, {len(where)})">{T("admin_delete", lang)}'
             f'<span class="vh"> {esc(name)}</span></button></div>\n'
             f'      </div>\n'
             f'    </li>')
     total_size = sum(item["size"] for item in files)
-    summary = (T("admin_media_overview", la).replace("{n}", str(len(files)))
-               .replace("{peso}", file_size_text(total_size) if files else "0 KB"))
-    cleanup = (T("admin_media_cleanup", la).replace("{n}", str(unused_count))
-               .replace("{peso}", file_size_text(unused_size) if unused_count else "0 KB"))
-    contenuto = render.render(
+    summary = (T("admin_media_overview", lang).replace("{n}", str(len(files)))
+               .replace("{size}", file_size_text(total_size) if files else "0 KB"))
+    cleanup = (T("admin_media_cleanup", lang).replace("{n}", str(unused_count))
+               .replace("{size}", file_size_text(unused_size) if unused_count else "0 KB"))
+    content_html = render.render(
         "admin/library.html",
-        title=T("admin_media_library", la),
+        title=T("admin_media_library", lang),
         overview=summary,
-        label_upload=T("admin_media_upload", la),
-        label_show=T("admin_show_group", la),
-        label_all=T("admin_filter_all", la),
+        label_upload=T("admin_media_upload", lang),
+        label_show=T("admin_show_group", lang),
+        label_all=T("admin_filter_all", lang),
         total=len(files),
-        label_used_pl=T("admin_media_used_pl", la),
+        label_used_pl=T("admin_media_used_pl", lang),
         used_pl=len(files) - unused_count,
-        label_not_used_pl=T("admin_media_not_used_pl", la),
+        label_not_used_pl=T("admin_media_not_used_pl", lang),
         not_used_pl=unused_count,
-        label_search=esc(T("admin_media_search", la)),
+        label_search=esc(T("admin_media_search", lang)),
         label_cleanup=cleanup,
         cleanup_hidden_f="" if unused_count > 0 else " hidden",
         cards="\n".join(cards),
         empty_f_hidden_f="" if not files else " hidden",
-        label_empty_f=T("admin_media_empty_f", la),
-        label_no_one_outcome=T("admin_no_one_matches", la),
-        hint_trash=T("admin_media_trash_hint", la),
+        label_empty_f=T("admin_media_empty_f", lang),
+        label_no_one_outcome=T("admin_no_one_matches", lang),
+        hint_trash=T("admin_media_trash_hint", lang),
     )
-    return admin_page_shell(T("admin_media_library", la), contenuto, la, csrf=csrf,
-                            navbar=admin_navbar("media", la),
+    return admin_page_shell(T("admin_media_library", lang), content_html, lang, csrf=csrf,
+                            navbar=admin_navbar("media", lang),
                             page_data={"page": "library",
                                        "max_image_mb": MAX_IMAGE_BYTES // (1024 * 1024),
                                        "max_video_mb": MAX_VIDEO_BYTES // (1024 * 1024),
@@ -817,7 +817,7 @@ def restore_page(csrf):
     automatic backups saved before every restore, which is how a restore
     is undone.
     """
-    la = admin_language()
+    lang = admin_language()
     rows = []
     for item in backup.automatic_backups():
         when = item["date"].strftime("%d/%m/%Y %H:%M:%S")
@@ -826,48 +826,48 @@ def restore_page(csrf):
             f'      <li><span class="backup-when">{when} · {size}</span>'
             f'<span class="backup-actions">'
             f'<a class="button button-small" href="/automatic-backup?file={esc(item["name"])}">'
-            f'{T("admin_download", la)}</a>'
+            f'{T("admin_download", lang)}</a>'
             f'<button type="button" class="button button-small" '
             f'onclick="restoreAutomatic(this, {js_attr(item["name"])})">'
-            f'{T("admin_restore_this", la)}</button></span></li>')
+            f'{T("admin_restore_this", lang)}</button></span></li>')
     if rows:
         listing = '    <ul class="list-box-backup">\n' + "\n".join(rows) + "\n    </ul>"
     else:
-        listing = f'    <p class="list-empty">{T("admin_no_one_backup_automatic", la)}</p>'
-    contenuto = render.render(
+        listing = f'    <p class="list-empty">{T("admin_no_one_backup_automatic", lang)}</p>'
+    content_html = render.render(
         "admin/restore.html",
-        title=T("admin_restore_backup", la),
-        subtitle=T("admin_restoring_subtitle", la),
-        label_from_file=T("admin_restoring_from_file", la),
-        hint_from_file=T("admin_restoring_from_file_hint", la),
-        label_choose_file=T("admin_restoring_choose", la),
-        label_restore=T("admin_restore_now", la),
-        label_automatic_pl=T("admin_backup_automatic_pl", la),
-        hint_automatic_pl=T("admin_backup_automatic_pl_hint", la),
+        title=T("admin_restore_backup", lang),
+        subtitle=T("admin_restoring_subtitle", lang),
+        label_from_file=T("admin_restoring_from_file", lang),
+        hint_from_file=T("admin_restoring_from_file_hint", lang),
+        label_choose_file=T("admin_restoring_choose", lang),
+        label_restore=T("admin_restore_now", lang),
+        label_automatic_pl=T("admin_backup_automatic_pl", lang),
+        hint_automatic_pl=T("admin_backup_automatic_pl_hint", lang),
         list_automatic_pl=listing,
     )
-    return admin_page_shell(T("admin_restore_backup", la), contenuto, la, csrf=csrf,
-                            navbar=admin_navbar("restore", la), page_data={"page": "restore"})
+    return admin_page_shell(T("admin_restore_backup", lang), content_html, lang, csrf=csrf,
+                            navbar=admin_navbar("restore", lang), page_data={"page": "restore"})
 
 
-def setup_steps_html(articles, la):
+def setup_steps_html(articles, lang):
     """
     The "First steps" box at the top of the dashboard: what a visitor of the
     site would notice is unfinished, each with a link to where it is fixed.
     It disappears once there is nothing left.
     """
-    steps = settings_panel.setup_steps(load_config(), articles, la)
+    steps = settings_panel.setup_steps(load_config(), articles, lang)
     if not steps:
         return ""
     rows = []
     for section_id, text in steps:
         if section_id == "":
-            href, action, where = "/edit", T("admin_write_it", la), ""
+            href, action, where = "/edit", T("admin_write_it", lang), ""
         else:
-            href, action = "/config#" + section_id, T("admin_fix", la)
+            href, action = "/config#" + section_id, T("admin_fix", lang)
             # "Off, but Google Analytics uses cookies" needs to say what is off.
             where = (f'<span class="step-where">'
-                     f'{T(settings_panel.section(section_id)["label"], la)}</span> ')
+                     f'{T(settings_panel.section(section_id)["label"], lang)}</span> ')
         rows.append(
             f'      <li><span class="step-text">{icon(ICON_WARN, 18)}'
             f'<span>{where}{esc(text)}</span></span>'
@@ -875,9 +875,9 @@ def setup_steps_html(articles, la):
             f'<span class="vh">: {esc(text)}</span>{icon(ICON_NEXT, 16)}</a></li>')
     return (
         '  <section class="first-steps" aria-labelledby="first-steps-title">\n'
-        f'    <h2 id="first-steps-title">{T("admin_first_steps_of_steps", la)} '
+        f'    <h2 id="first-steps-title">{T("admin_first_steps_of_steps", lang)} '
         f'<span class="first-steps-count">{len(steps)}</span></h2>\n'
-        f'    <p class="help">{T("admin_first_steps_of_steps_desc", la)}</p>\n'
+        f'    <p class="help">{T("admin_first_steps_of_steps_desc", lang)}</p>\n'
         '    <ul>\n' + "\n".join(rows) + '\n    </ul>\n'
         '  </section>')
 
@@ -888,7 +888,7 @@ def admin_page(articles, csrf):
     filters by status, a search box, and the actions on each article (edit
     in sight, the rarer ones in a small menu).
     """
-    la = admin_language()
+    lang = admin_language()
     # We count published and drafts for the summary and the filters.
     published_count = 0
     draft_count = 0
@@ -902,19 +902,19 @@ def admin_page(articles, csrf):
             draft_count = draft_count + 1
 
     other = secondary_language()
-    other_name = LANGUAGE_NAMES[other].get(la, LANGUAGE_NAMES[other]["it"])
+    other_name = LANGUAGE_NAMES[other].get(lang, LANGUAGE_NAMES[other]["it"])
 
     # We build one row for each article.
     lines = []
     for number, art in enumerate(articles):
         if art.get("status") == "published":
             pill_class = "pill-published"
-            status_label = T("admin_published", la)
+            status_label = T("admin_published", lang)
             # If it is published, the menu puts it back to draft. Same
             # words as the editor's link, from the same key, so the two
             # cannot drift apart again.
             status_action = "draft"
-            status_action_label = T("admin_withdraw", la)
+            status_action_label = T("admin_withdraw", lang)
             # Sorting happens in the browser, so every row carries the keys
             # it can be sorted by. Drafts sort first, because they are the
             # ones still waiting for work.
@@ -923,28 +923,28 @@ def admin_page(articles, csrf):
             # Scheduled: it goes out by itself. The quick action publishes
             # it at once; the second one, in the menu, takes the schedule back.
             pill_class = "pill-scheduled"
-            status_label = T("admin_state_scheduled", la)
+            status_label = T("admin_state_scheduled", lang)
             status_action = "published"
-            status_action_label = T("admin_publish_now", la)
+            status_action_label = T("admin_publish_now", lang)
             status_order = "s"
         else:
             pill_class = "pill-draft"
-            status_label = T("admin_draft", la)
+            status_label = T("admin_draft", lang)
             status_action = "published"
-            status_action_label = T("admin_publish", la)
+            status_action_label = T("admin_publish", lang)
             status_order = "0"
 
         # The translated version, said in words next to the date.
         also_in = ""
         if art.get("translation_confirmed", False):
-            also_in = " &middot; " + T("admin_also_in", la).replace("{language}", other_name)
+            also_in = " &middot; " + T("admin_also_in", lang).replace("{language}", other_name)
 
         # Preview of the translated page: the link appears as soon as some
         # translated content exists (even if not confirmed yet), so that you
         # can check the translation BEFORE confirming it.
         preview_other_link = ""
         if not html_content_is_empty(art.get("content_en", "")):
-            preview_label = T("admin_preview_language", la).replace("{language}", other_name)
+            preview_label = T("admin_preview_language", lang).replace("{language}", other_name)
             preview_other_link = (
                 f'<a role="menuitem" tabindex="-1" '
                 f'href="/preview?slug={esc(art["slug"])}&amp;language={other}" '
@@ -953,20 +953,20 @@ def admin_page(articles, csrf):
 
         # A scheduled article says when it goes out instead of its date, and
         # its menu can also take the schedule back.
-        shown_date = format_date(art["date"], la)
+        shown_date = format_date(art["date"], lang)
         cancel_item = ""
         if art.get("status") == "scheduled":
-            shown_date = moment_html(art.get("publish_at", ""), la)
+            shown_date = moment_html(art.get("publish_at", ""), lang)
             cancel_item = (f'<button role="menuitem" tabindex="-1" type="button" '
                            f'onclick="changeStatus(this, {js_attr(art["slug"])}, &quot;draft&quot;)">'
-                           f'{T("admin_schedule_cancel", la)}</button>')
+                           f'{T("admin_schedule_cancel", lang)}</button>')
 
         # A plain article can get its lab from here: the editor opens on a
         # new article already tied to this one.
         lab_item = ""
         if art.get("kind", "") == "":
             lab_item = (f'<a role="menuitem" tabindex="-1" '
-                        f'href="/edit?lab_of={esc(art["slug"])}">{T("admin_create_lab", la)}</a>')
+                        f'href="/edit?lab_of={esc(art["slug"])}">{T("admin_create_lab", lang)}</a>')
 
         lines.append(render.render(
             "admin/dashboard_row.html",
@@ -975,7 +975,7 @@ def admin_page(articles, csrf):
             title_lowercase=esc(art["title"].lower()),
             data_iso=esc(art.get("date", "")),
             order_state=status_order,
-            time_reading=compute_reading_time(art.get("content", ""), la),
+            time_reading=compute_reading_time(art.get("content", ""), lang),
             css_class_pill=pill_class,
             label_text_state=status_label,
             also_in=also_in,
@@ -986,59 +986,59 @@ def admin_page(articles, csrf):
             title=esc(art["title"]),
             title_js=js_attr(art["title"]),
             data=shown_date,
-            label_edit=T("admin_edit", la),
-            label_others_f_actions=esc(T("admin_others_f_actions", la).replace("{title}", art["title"])),
+            label_edit=T("admin_edit", lang),
+            label_others_f_actions=esc(T("admin_others_f_actions", lang).replace("{title}", art["title"])),
             icon_other=icon(ICON_MORE, 20),
-            label_preview=T("admin_preview", la),
+            label_preview=T("admin_preview", lang),
             link_preview_language=preview_other_link,
             action_state_js=js_attr(status_action),
             label_text_action_state=status_action_label,
-            label_delete=T("admin_delete", la),
+            label_delete=T("admin_delete", lang),
         ).rstrip("\n"))
 
     if len(lines) > 0:
         listing = "\n".join(lines)
     else:
-        listing = f'<p class="list-empty">{T("admin_no_one_article", la)}</p>'
+        listing = f'<p class="list-empty">{T("admin_no_one_article", lang)}</p>'
 
-    summary = (T("admin_overview_articles", la)
+    summary = (T("admin_overview_articles", lang)
                .replace("{p}", str(published_count))
                .replace("{b}", str(draft_count)))
     if scheduled_count > 0:
-        summary = summary + T("admin_overview_scheduled_pl", la).replace(
+        summary = summary + T("admin_overview_scheduled_pl", lang).replace(
             "{s}", str(scheduled_count))
 
-    contenuto = render.render(
+    content_html = render.render(
         "admin/dashboard.html",
-        label_articles=T("admin_articles", la),
+        label_articles=T("admin_articles", lang),
         overview=summary,
-        new_article=T("admin_new_article_title", la),
-        label_show=T("admin_show_group", la),
-        label_all=T("admin_filter_all", la),
+        new_article=T("admin_new_article_title", lang),
+        label_show=T("admin_show_group", lang),
+        label_all=T("admin_filter_all", lang),
         total=len(articles),
-        label_published_pl=T("admin_published_pl", la),
+        label_published_pl=T("admin_published_pl", lang),
         published_pl=published_count,
-        label_drafts=T("admin_drafts", la),
+        label_drafts=T("admin_drafts", lang),
         drafts=draft_count,
-        label_scheduled_pl=T("admin_scheduled_pl", la),
+        label_scheduled_pl=T("admin_scheduled_pl", lang),
         scheduled_pl=scheduled_count,
         scheduled_pl_hidden_m="" if scheduled_count > 0 else " hidden",
-        label_search=esc(T("admin_search_articles", la)),
-        label_sort=T("admin_sort", la),
-        sort_recent=T("admin_sort_recenti", la),
-        sort_old=T("admin_sort_old", la),
-        sort_title=T("admin_sort_title", la),
-        sort_state=T("admin_sort_state", la),
+        label_search=esc(T("admin_search_articles", lang)),
+        label_sort=T("admin_sort", lang),
+        sort_recent=T("admin_sort_recenti", lang),
+        sort_old=T("admin_sort_old", lang),
+        sort_title=T("admin_sort_title", lang),
+        sort_state=T("admin_sort_state", lang),
         list=listing,
-        no_one_matches=T("admin_no_one_matches", la),
-        first_steps_of_steps=setup_steps_html(articles, la),
-        label_see_update_notice=T("admin_see_update_notice", la),
+        no_one_matches=T("admin_no_one_matches", lang),
+        first_steps_of_steps=setup_steps_html(articles, lang),
+        label_see_update_notice=T("admin_see_update_notice", lang),
     )
 
     return admin_page_shell(
-        T("admin_title_page", la) + " - " + CONFIG["site_title"],
-        contenuto, la, csrf=csrf,
-        navbar=admin_navbar("articles", la, len(articles)),
+        T("admin_title_page", lang) + " - " + CONFIG["site_title"],
+        content_html, lang, csrf=csrf,
+        navbar=admin_navbar("articles", lang, len(articles)),
         page_data={"page": "dashboard"})
 
 
@@ -1047,13 +1047,13 @@ def codemirror_scripts():
     return "\n".join(f'<script src="{url}"></script>' for url in CODEMIRROR_JS)
 
 
-def lab_of_options(art, la):
+def lab_of_options(art, lang):
     """
     The articles a lab or a practical version can start from, as the
     options of a select: every plain article but the one being edited.
     """
     chosen = art.get("lab_of", "")
-    options = [f'<option value="">{esc(T("admin_lab_nobody", la))}</option>']
+    options = [f'<option value="">{esc(T("admin_lab_nobody", lang))}</option>']
     for other in load_articles():
         slug = other.get("slug", "")
         if other.get("kind") in ("lab", "practical") or slug == "" or slug == art.get("slug"):
@@ -1064,18 +1064,18 @@ def lab_of_options(art, la):
     return "".join(options)
 
 
-def subject_tabs(art, la):
+def subject_tabs(art, lang):
     """
     The tabs over the editor: the articles on the same subject - the theory,
     its practical version, its labs - with the state of each, and the links
     that add the ones still missing. The author moves between the theory
     and its lab without going back to the list.
     """
-    state_words = {"published": T("admin_state_published", la),
-                   "scheduled": T("admin_state_scheduled", la),
-                   "draft": T("admin_state_draft", la)}
-    labels = {"": T("admin_card_theory", la), "practical": T("admin_card_practice", la),
-              "lab": T("admin_card_lab", la)}
+    state_words = {"published": T("admin_state_published", lang),
+                   "scheduled": T("admin_state_scheduled", lang),
+                   "draft": T("admin_state_draft", lang)}
+    labels = {"": T("admin_card_theory", lang), "practical": T("admin_card_practice", lang),
+              "lab": T("admin_card_lab", lang)}
     everything = load_articles()
     kind = art.get("kind", "") or ""
     root_slug = art.get("slug", "")
@@ -1096,7 +1096,7 @@ def subject_tabs(art, la):
     for other in group:
         name = labels[other.get("kind") or ""]
         if not other.get("slug"):
-            state = T("admin_card_new", la)
+            state = T("admin_card_new", lang)
         else:
             state = state_words.get(other.get("status", "draft"), state_words["draft"])
         text = f'<span class="card-name">{name}</span><span class="card-state">{esc(state)}</span>'
@@ -1110,9 +1110,9 @@ def subject_tabs(art, la):
         if not any(other.get("kind") == "practical" for other in group):
             tabs.append(f'    <a class="card-theme card-add" '
                         f'href="/edit?lab_of={esc(root_slug)}&amp;kind=practical">'
-                        f'{T("admin_card_add_practice", la)}</a>')
+                        f'{T("admin_card_add_practice", lang)}</a>')
         tabs.append(f'    <a class="card-theme card-add" id="link-create-lab" '
-                    f'href="/edit?lab_of={esc(root_slug)}">{T("admin_card_add_lab", la)}</a>')
+                    f'href="/edit?lab_of={esc(root_slug)}">{T("admin_card_add_lab", lang)}</a>')
     return "\n".join(tabs)
 
 
@@ -1123,27 +1123,27 @@ def editor_page(art, csrf, starts_from=None, new_kind="lab"):
     is being created for: the new article opens already tied to it, with
     its tags.
     """
-    la = admin_language()
+    lang = admin_language()
 
     # If we are editing an existing article, we take its values.
     # If instead this is a new article (art is None), we start from empty fields.
     if art is not None:
-        page_title = T("admin_edit_article_title", la)
+        page_title = T("admin_edit_article_title", lang)
         menu_item = "articles"
         # Deleting sits at the very bottom of the sidebar, small: it used to
         # be a red button as big as Save, right under it.
         delete_button = (f'<button type="button" class="button button-text button-danger button-small btn-delete-article" '
-                         f'onclick="deleteItem()">{T("admin_delete_article", la)}</button>')
+                         f'onclick="deleteItem()">{T("admin_delete_article", lang)}</button>')
     else:
         art = {}
-        page_title = T("admin_new_article_title", la)
+        page_title = T("admin_new_article_title", lang)
         if starts_from is not None:
             art = {"kind": new_kind, "lab_of": starts_from.get("slug", ""),
                    "tags": starts_from.get("tags", "")}
             title_key = "admin_lab_new_of"
             if new_kind == "practical":
                 title_key = "admin_practice_new_f_of"
-            page_title = T(title_key, la).replace("{title}", starts_from.get("title", ""))
+            page_title = T(title_key, lang).replace("{title}", starts_from.get("title", ""))
         menu_item = "new"
         delete_button = ""
 
@@ -1158,138 +1158,138 @@ def editor_page(art, csrf, starts_from=None, new_kind="lab"):
     if art.get("slug", "") != "":
         url_online = build_module.article_url(art, main_language())
 
-    contenuto = render.render(
+    content_html = render.render(
         "admin/editor.html",
         title_page_h1=page_title,
-        label_title=T("admin_title", la),
+        label_title=T("admin_title", lang),
         value_title=esc(art.get("title", "")),
-        label_content=T("admin_content", la),
-        tip_import_docx=esc(T("tip_import_docx", la)),
-        label_import_from_word=T("admin_import_from_word", la),
-        hint_docx=T("admin_docx_hint", la),
-        tip_upload_image=esc(T("tip_upload_image", la)),
-        label_from_library=T("admin_from_media_library", la),
-        label_image_details=T("admin_image_details", la),
-        label_image_alt_fix=T("admin_image_alt_fix", la),
-        label_upload_picture=T("admin_upload_picture", la),
-        tip_youtube=esc(T("tip_youtube", la)),
-        label_youtube=T("admin_insert_youtube", la),
-        tip_upload_video=esc(T("tip_upload_video", la)),
-        label_upload_video=T("admin_upload_video", la),
-        tip_table=esc(T("tip_table", la)),
-        label_table=T("admin_insert_table", la),
-        label_back_to_articles=T("admin_back_to_articles", la),
-        label_insert=T("admin_insert", la),
-        label_address=T("admin_address_slug", la),
-        hint_address=T("admin_address_slug_hint", la),
+        label_content=T("admin_content", lang),
+        tip_import_docx=esc(T("tip_import_docx", lang)),
+        label_import_from_word=T("admin_import_from_word", lang),
+        hint_docx=T("admin_docx_hint", lang),
+        tip_upload_image=esc(T("tip_upload_image", lang)),
+        label_from_library=T("admin_from_media_library", lang),
+        label_image_details=T("admin_image_details", lang),
+        label_image_alt_fix=T("admin_image_alt_fix", lang),
+        label_upload_picture=T("admin_upload_picture", lang),
+        tip_youtube=esc(T("tip_youtube", lang)),
+        label_youtube=T("admin_insert_youtube", lang),
+        tip_upload_video=esc(T("tip_upload_video", lang)),
+        label_upload_video=T("admin_upload_video", lang),
+        tip_table=esc(T("tip_table", lang)),
+        label_table=T("admin_insert_table", lang),
+        label_back_to_articles=T("admin_back_to_articles", lang),
+        label_insert=T("admin_insert", lang),
+        label_address=T("admin_address_slug", lang),
+        hint_address=T("admin_address_slug_hint", lang),
         state=status,
-        label_state_draft=T("admin_state_draft", la),
-        hint_state_draft=T("admin_state_draft_hint", la),
-        label_state_published=T("admin_state_published", la),
-        label_state_scheduled=T("admin_state_scheduled", la),
-        tick_notify=notify_checkbox(art, la),
-        label_versions=T("admin_versions", la),
-        hint_versions=T("admin_versions_hint", la),
+        label_state_draft=T("admin_state_draft", lang),
+        hint_state_draft=T("admin_state_draft_hint", lang),
+        label_state_published=T("admin_state_published", lang),
+        label_state_scheduled=T("admin_state_scheduled", lang),
+        tick_notify=notify_checkbox(art, lang),
+        label_versions=T("admin_versions", lang),
+        hint_versions=T("admin_versions_hint", lang),
         versions_hidden_m="" if art.get("slug", "") else " hidden",
-        goes_out_the=moment_html(publish_at, la),
-        label_save_changes_made=T("admin_save_changes_made", la),
-        label_publish_now=T("admin_publish_now", la),
-        label_schedule_cancel=T("admin_schedule_cancel", la),
-        label_schedule=T("admin_schedule", la),
-        label_schedule_change=T("admin_schedule_change", la),
-        label_schedule_when=T("admin_schedule_when", la),
-        hint_schedule=T("admin_schedule_hint", la),
-        label_schedule_confirm=T("admin_schedule_confirm", la),
+        goes_out_the=moment_html(publish_at, lang),
+        label_save_changes_made=T("admin_save_changes_made", lang),
+        label_publish_now=T("admin_publish_now", lang),
+        label_schedule_cancel=T("admin_schedule_cancel", lang),
+        label_schedule=T("admin_schedule", lang),
+        label_schedule_change=T("admin_schedule_change", lang),
+        label_schedule_when=T("admin_schedule_when", lang),
+        hint_schedule=T("admin_schedule_hint", lang),
+        label_schedule_confirm=T("admin_schedule_confirm", lang),
         url_online=esc(url_online),
-        label_cards_theme=esc(T("admin_cards_theme", la)),
-        cards_theme=subject_tabs(art, la),
-        label_details=T("admin_details", la),
-        label_close=T("admin_close", la),
-        label_lab_project=T("admin_lab_project", la),
-        label_share=T("admin_share", la),
-        hint_share=T("admin_share_hint", la),
-        label_see_online=T("admin_see_online", la),
-        label_publish=T("admin_publish", la),
-        tip_publish=esc(T("tip_publish_article", la)),
-        label_update=T("admin_update_article", la),
-        tip_update=esc(T("tip_update_article", la)),
-        label_save_draft=T("admin_save_draft", la),
-        tip_save_draft=esc(T("tip_save_draft", la)),
-        label_preview=T("admin_preview_page", la),
-        tip_preview_page=esc(T("tip_preview_page", la)),
-        label_withdraw=T("admin_withdraw", la),
+        label_cards_theme=esc(T("admin_cards_theme", lang)),
+        cards_theme=subject_tabs(art, lang),
+        label_details=T("admin_details", lang),
+        label_close=T("admin_close", lang),
+        label_lab_project=T("admin_lab_project", lang),
+        label_share=T("admin_share", lang),
+        hint_share=T("admin_share_hint", lang),
+        label_see_online=T("admin_see_online", lang),
+        label_publish=T("admin_publish", lang),
+        tip_publish=esc(T("tip_publish_article", lang)),
+        label_update=T("admin_update_article", lang),
+        tip_update=esc(T("tip_update_article", lang)),
+        label_save_draft=T("admin_save_draft", lang),
+        tip_save_draft=esc(T("tip_save_draft", lang)),
+        label_preview=T("admin_preview_page", lang),
+        tip_preview_page=esc(T("tip_preview_page", lang)),
+        label_withdraw=T("admin_withdraw", lang),
         button_el_delete=delete_button,
-        label_section_of_metadata=T("admin_section_of_metadata", la),
-        label_group_series=T("admin_group_series", la),
-        label_group_preview=T("admin_group_preview", la),
-        label_group_advanced=T("admin_group_advanced", la),
-        overview_advanced=T("admin_group_advanced_overview", la),
+        label_section_of_metadata=T("admin_section_of_metadata", lang),
+        label_group_series=T("admin_group_series", lang),
+        label_group_preview=T("admin_group_preview", lang),
+        label_group_advanced=T("admin_group_advanced", lang),
+        overview_advanced=T("admin_group_advanced_overview", lang),
         value_slug=esc(art.get("slug", "")),
-        label_tag=T("admin_tag", la),
+        label_tag=T("admin_tag", lang),
         value_tag=esc(art.get("tags", "")),
-        label_series=T("admin_series", la),
+        label_series=T("admin_series", lang),
         value_series=esc(art.get("series", "")),
         value_series_number=art.get("series_number") or "",
-        label_series_number=esc(T("admin_series_number", la)),
-        hint_series=help_text(T("admin_series_hint", la)),
+        label_series_number=esc(T("admin_series_number", lang)),
+        hint_series=help_text(T("admin_series_hint", lang)),
         series_existing="".join(f'<option value="{esc(entry["name"])}">'
                                 for entry in collect_series(load_articles()).values()),
-        label_original=T("admin_original", la),
+        label_original=T("admin_original", lang),
         value_original=esc(art.get("original_url", "")),
-        hint_original=help_text(T("admin_original_hint", la)),
+        hint_original=help_text(T("admin_original_hint", lang)),
         original_canonical_checked="checked" if art.get("original_canonical") is True else "",
-        label_original_canonical=T("admin_original_canonical", la),
-        hint_original_canonical=help_text(T("admin_original_canonical_hint", la)),
-        label_kind=T("admin_kind", la),
-        hint_kind=help_text(T("admin_kind_hint", la)),
-        label_kind_article=T("admin_kind_article", la),
-        label_kind_practice=T("admin_kind_practice", la),
-        label_kind_lab=T("admin_kind_lab", la),
+        label_original_canonical=T("admin_original_canonical", lang),
+        hint_original_canonical=help_text(T("admin_original_canonical_hint", lang)),
+        label_kind=T("admin_kind", lang),
+        hint_kind=help_text(T("admin_kind_hint", lang)),
+        label_kind_article=T("admin_kind_article", lang),
+        label_kind_practice=T("admin_kind_practice", lang),
+        label_kind_lab=T("admin_kind_lab", lang),
         sel_kind_article=selected_if(art.get("kind", ""), ""),
         sel_kind_practice=selected_if(art.get("kind", ""), "practical"),
         sel_kind_lab=selected_if(art.get("kind", ""), "lab"),
         reference_hidden="" if art.get("kind") in ("lab", "practical") else "hidden",
         lab_hidden="" if art.get("kind") == "lab" else "hidden",
-        label_lab_of=T("admin_lab_of", la),
-        options_lab_of=lab_of_options(art, la),
-        label_lab_repo=T("admin_lab_repo", la),
+        label_lab_of=T("admin_lab_of", lang),
+        options_lab_of=lab_of_options(art, lang),
+        label_lab_repo=T("admin_lab_repo", lang),
         value_repo=esc(art.get("repo_url", "")),
-        label_lab_stack=T("admin_lab_stack", la),
+        label_lab_stack=T("admin_lab_stack", lang),
         value_stack=esc(art.get("stack", "")),
-        label_lab_commands=T("admin_lab_commands", la),
+        label_lab_commands=T("admin_lab_commands", lang),
         value_commands=esc(art.get("run_steps", "")),
-        label_picture=T("admin_picture_cover", la),
-        hint_picture=help_text(T("admin_picture_cover_hint", la)),
+        label_picture=T("admin_picture_cover", lang),
+        hint_picture=help_text(T("admin_picture_cover_hint", lang)),
         value_picture=esc(art.get("image", "")),
         ph_picture="https://... /media/...",
-        label_upload_cover=T("admin_upload_cover", la),
-        label_remove_cover=T("admin_remove_cover", la),
-        label_preview_readers=T("admin_preview_readers", la),
-        hint_preview=help_text(T("admin_preview_hint", la)),
+        label_upload_cover=T("admin_upload_cover", lang),
+        label_remove_cover=T("admin_remove_cover", lang),
+        label_preview_readers=T("admin_preview_readers", lang),
+        hint_preview=help_text(T("admin_preview_hint", lang)),
         value_preview=esc(art.get("preview", "")),
-        label_generate_preview=T("admin_generate_preview", la),
-        label_description_seo=T("admin_description_seo", la),
-        hint_description=help_text(T("admin_description_hint", la)),
+        label_generate_preview=T("admin_generate_preview", lang),
+        label_description_seo=T("admin_description_seo", lang),
+        hint_description=help_text(T("admin_description_hint", lang)),
         value_description=esc(art.get("description", "")),
-        label_suggest=T("admin_suggest_description", la),
-        label_analysis_seo=T("admin_analysis_seo", la),
-        hint_analysis_seo=T("admin_analysis_seo_hint", la),
-        label_analyze=T("admin_analyze_seo", la),
-        label_version_english=TL("admin_version_english", la),
-        label_authorize=TL("admin_authorize_translation_of", la),
-        label_translate=T("admin_translate_auto", la),
-        label_preview_en=TL("admin_preview_en", la),
-        hint_preview_en=help_text(TL("admin_preview_en_hint", la)),
-        label_confirm_translation_of=TL("admin_confirm_translation_of", la),
+        label_suggest=T("admin_suggest_description", lang),
+        label_analysis_seo=T("admin_analysis_seo", lang),
+        hint_analysis_seo=T("admin_analysis_seo_hint", lang),
+        label_analyze=T("admin_analyze_seo", lang),
+        label_version_english=TL("admin_version_english", lang),
+        label_authorize=TL("admin_authorize_translation_of", lang),
+        label_translate=T("admin_translate_auto", lang),
+        label_preview_en=TL("admin_preview_en", lang),
+        hint_preview_en=help_text(TL("admin_preview_en_hint", lang)),
+        label_confirm_translation_of=TL("admin_confirm_translation_of", lang),
         code_translation_of=secondary_language().upper(),
-        label_code_title=T("admin_code_article_title", la),
-        hint_code=T("admin_code_article_hint", la),
-        code_article_html=article_custom_code_html(art, la),
-        label_code_own=T("admin_code_own_title", la),
-        hint_code_own=T("admin_code_own_hint", la),
-        code_own_html=article_own_code_html(art, la),
-        code_own_template=custom_code_blank_card(la, own=True),
-        label_code_own_add=T("admin_code_own_add", la),
+        label_code_title=T("admin_code_article_title", lang),
+        hint_code=T("admin_code_article_hint", lang),
+        code_article_html=article_custom_code_html(art, lang),
+        label_code_own=T("admin_code_own_title", lang),
+        hint_code_own=T("admin_code_own_hint", lang),
+        code_own_html=article_own_code_html(art, lang),
+        code_own_template=custom_code_blank_card(lang, own=True),
+        label_code_own_add=T("admin_code_own_add", lang),
     )
 
     # The article content and the translation flags travel as JSON, never as
@@ -1335,8 +1335,8 @@ def editor_page(art, csrf, starts_from=None, new_kind="lab"):
                     f'<script src="{BLOT_FORMATTER_JS}"></script>\n'
                     + codemirror_scripts())
 
-    return admin_page_shell(page_title, contenuto, la, csrf=csrf,
-                            navbar=admin_navbar(menu_item, la),
+    return admin_page_shell(page_title, content_html, lang, csrf=csrf,
+                            navbar=admin_navbar(menu_item, lang),
                             head_extra=head_extra, script_extra=script_extra,
                             page_data=page_data, body_class="menu-compatto")
 
@@ -1405,27 +1405,27 @@ SCOPE_LABEL_KEYS = {
 }
 
 
-def snippet_summary(snippet, la, own=False):
+def snippet_summary(snippet, lang, own=False):
     """
     The line under the name of a folded card: where the code goes, on which
     pages, and whether it waits for consent. A long list of cards can then be
     read without opening any of them.
     """
     position = snippet.get("position", "head")
-    pieces = [T(POSITION_LABEL_KEYS.get(position, "admin_code_pos_head"), la)]
+    pieces = [T(POSITION_LABEL_KEYS.get(position, "admin_code_pos_head"), lang)]
     if position == "anchor" and str(snippet.get("anchor_label", "")).strip() != "":
         pieces = [str(snippet["anchor_label"]).strip()]
     if not own:
         pieces.append(T(SCOPE_LABEL_KEYS.get(snippet.get("scope", "home"),
-                                             "admin_code_scope_home"), la))
+                                             "admin_code_scope_home"), lang))
     consent = snippet.get("consent", "necessary")
     if consent not in ("necessary", "statistics", "marketing"):
         consent = "necessary"
-    pieces.append(T("consent_" + consent, la))
+    pieces.append(T("consent_" + consent, lang))
     return " · ".join(pieces)
 
 
-def custom_code_card(snippet, index_value, la, own=False, open_card=False):
+def custom_code_card(snippet, index_value, lang, own=False, open_card=False):
     """
     Build one card for a custom code snippet: a folded summary, and the
     fields underneath.
@@ -1444,26 +1444,26 @@ def custom_code_card(snippet, index_value, la, own=False, open_card=False):
     name = snippet.get("name", "")
     shown_name = name
     if shown_name.strip() == "":
-        shown_name = T("admin_code_without_name", la)
+        shown_name = T("admin_code_without_name", lang)
 
     scope_block = ""
     if not own:
         scope_block = render.render(
             "admin/custom_code_scope.html",
-            label_scope=T("admin_code_scope", la),
+            label_scope=T("admin_code_scope", lang),
             sel_everything=selected_if(scope, "all"),
-            label_scope_everything=T("admin_code_scope_everything", la),
+            label_scope_everything=T("admin_code_scope_everything", lang),
             sel_home=selected_if(scope, "home"),
-            label_scope_home=T("admin_code_scope_home", la),
+            label_scope_home=T("admin_code_scope_home", lang),
             sel_only_articles=selected_if(scope, "articles"),
-            label_scope_only_articles=T("admin_code_scope_only_articles", la),
+            label_scope_only_articles=T("admin_code_scope_only_articles", lang),
             sel_articles=selected_if(scope, "home_articles"),
-            label_scope_articles=T("admin_code_scope_articles", la),
+            label_scope_articles=T("admin_code_scope_articles", lang),
             sel_only_optin=selected_if(scope, "optin"),
-            label_scope_only_optin=T("admin_code_scope_only_optin", la),
+            label_scope_only_optin=T("admin_code_scope_only_optin", lang),
             sel_optin=selected_if(scope, "home_optin"),
-            label_scope_optin=T("admin_code_scope_optin", la),
-            hint_scope=T("admin_code_scope_hint", la),
+            label_scope_optin=T("admin_code_scope_optin", lang),
+            hint_scope=T("admin_code_scope_hint", lang),
         )
 
     values = {
@@ -1471,39 +1471,39 @@ def custom_code_card(snippet, index_value, la, own=False, open_card=False):
         "id_snippet": esc(snippet.get("id", "")),
         "open": " open" if open_card else "",
         "name_shown": esc(shown_name),
-        "summary_text": esc(snippet_summary(snippet, la, own)),
-        "state": T("admin_code_active", la) if enabled else T("admin_code_off_m", la),
+        "summary_text": esc(snippet_summary(snippet, lang, own)),
+        "state": T("admin_code_active", lang) if enabled else T("admin_code_off_m", lang),
         "css_class_off_m": "" if enabled else " off",
         "checked": checked_if(enabled),
-        "label_active": T("admin_code_active", la),
-        "label_delete": T("admin_code_delete", la),
-        "label_name": T("admin_code_name", la),
+        "label_active": T("admin_code_active", lang),
+        "label_delete": T("admin_code_delete", lang),
+        "label_name": T("admin_code_name", lang),
         "name": esc(name),
-        "ph_name": esc(T("admin_code_name_ph", la)),
-        "label_position": T("admin_code_position", la),
-        "group_technical": T("admin_code_pos_group_technical", la),
-        "group_visible": T("admin_code_pos_group_visible", la),
+        "ph_name": esc(T("admin_code_name_ph", lang)),
+        "label_position": T("admin_code_position", lang),
+        "group_technical": T("admin_code_pos_group_technical", lang),
+        "group_visible": T("admin_code_pos_group_visible", lang),
         "lock_scope": scope_block,
-        "label_consent": T("admin_code_consent", la),
+        "label_consent": T("admin_code_consent", lang),
         "sel_necessary": selected_if(consent, "necessary"),
-        "label_consent_choice_necessary": T("admin_code_consent_choice_necessary", la),
+        "label_consent_choice_necessary": T("admin_code_consent_choice_necessary", lang),
         "sel_statistics": selected_if(consent, "statistics"),
-        "label_consent_choice_statistics": T("admin_code_consent_choice_statistics", la),
+        "label_consent_choice_statistics": T("admin_code_consent_choice_statistics", lang),
         "sel_marketing": selected_if(consent, "marketing"),
-        "label_consent_choice_marketing": T("admin_code_consent_choice_marketing", la),
+        "label_consent_choice_marketing": T("admin_code_consent_choice_marketing", lang),
         # The homepage list is no place for code that belongs to one article.
         "only_site": " hidden disabled" if own else "",
-        "hint_position": T("admin_code_pos_hint_own" if own else "admin_code_pos_hint", la),
-        "hint_consent": T("admin_code_consent_hint_own" if own else "admin_code_consent_hint", la),
-        "label_code": esc(T("admin_code_code", la)),
+        "hint_position": T("admin_code_pos_hint_own" if own else "admin_code_pos_hint", lang),
+        "hint_consent": T("admin_code_consent_hint_own" if own else "admin_code_consent_hint", lang),
+        "label_code": esc(T("admin_code_code", lang)),
         "code": esc(snippet.get("code", "")),
         # The point chosen on the page, for the "anchor" position.
         "point_hidden_m": "" if position == "anchor" else " hidden",
-        "label_point": T("admin_point", la),
+        "label_point": T("admin_point", lang),
         "point_text": esc(str(snippet.get("anchor_label", "")).strip()
-                           or T("admin_point_nobody", la)),
-        "label_choose_point": T("admin_choose_point", la),
-        "hint_point": T("admin_point_hint", la),
+                           or T("admin_point_nobody", lang)),
+        "label_choose_point": T("admin_choose_point", lang),
+        "hint_point": T("admin_point_hint", lang),
         "anchor_point": esc(str(snippet.get("anchor_selector", ""))),
         "anchor_point_where": esc(str(snippet.get("anchor_where", "after"))),
         "anchor_point_label_text": esc(str(snippet.get("anchor_label", ""))),
@@ -1511,11 +1511,11 @@ def custom_code_card(snippet, index_value, la, own=False, open_card=False):
     }
     for key, label_key in POSITION_LABEL_KEYS.items():
         values["sel_" + key] = selected_if(position, key)
-        values["label_pos_" + key] = T(label_key, la)
+        values["label_pos_" + key] = T(label_key, lang)
     return render.render("admin/custom_code_card.html", **values).rstrip("\n")
 
 
-def custom_code_cards(config, la):
+def custom_code_cards(config, lang):
     """Build the settings card of every configured custom code snippet."""
     snippets = config.get("custom_code", [])
     if not isinstance(snippets, list):
@@ -1526,12 +1526,12 @@ def custom_code_cards(config, la):
     for snippet in snippets:
         if not isinstance(snippet, dict):
             continue
-        parts.append(custom_code_card(snippet, index_value, la))
+        parts.append(custom_code_card(snippet, index_value, lang))
         index_value = index_value + 1
     return "\n".join(parts)
 
 
-def custom_code_blank_card(la, own=False):
+def custom_code_blank_card(lang, own=False):
     """
     The empty card that the "Add code" button clones, rendered once into a
     <template>. Cloning beats building the markup in JavaScript: the fields
@@ -1545,10 +1545,10 @@ def custom_code_blank_card(la, own=False):
     blank = {"enabled": True, "scope": "all", "position": "head"}
     if own:
         blank = {"enabled": True, "position": "article_end"}
-    return custom_code_card(blank, 0, la, own=own, open_card=True)
+    return custom_code_card(blank, 0, lang, own=own, open_card=True)
 
 
-def article_custom_code_html(art, la):
+def article_custom_code_html(art, lang):
     """
     The site-wide snippets that can reach this article, one checkbox each.
 
@@ -1577,29 +1577,29 @@ def article_custom_code_html(art, la):
         optin = scope in ("optin", "home_optin")
         if optin:
             checked = " checked" if snippet_id in ticked else ""
-            kind = T("admin_code_article_chosen", la)
+            kind = T("admin_code_article_chosen", lang)
         else:
             checked = "" if snippet_id in switched_off else " checked"
-            kind = T("admin_code_article_always", la)
+            kind = T("admin_code_article_always", lang)
         where = esc(T(POSITION_LABEL_KEYS.get(snippet.get("position", "head"),
-                                              "admin_code_pos_head"), la))
+                                              "admin_code_pos_head"), lang))
         rows.append(
             '<label class="row-flag code-article-row">'
             f'<input type="checkbox" class="code-article" value="{esc(snippet_id)}"'
-            f' data-kind="{"optin" if optin else "sempre"}"{checked}> {name} '
+            f' data-kind="{"optin" if optin else "always"}"{checked}> {name} '
             f'<span class="hint">({where}, {esc(kind)})</span></label>')
 
     if len(rows) == 0:
-        return f'<p class="hint">{T("admin_code_article_empty_m", la)}</p>'
+        return f'<p class="hint">{T("admin_code_article_empty_m", lang)}</p>'
     return "\n".join(rows)
 
 
-def article_own_code_html(art, la):
+def article_own_code_html(art, lang):
     """The cards of the snippets written inside this article."""
     parts = []
     index_value = 0
     for snippet in build_module.article_own_snippets(art):
-        parts.append(custom_code_card(snippet, index_value, la, own=True))
+        parts.append(custom_code_card(snippet, index_value, lang, own=True))
         index_value = index_value + 1
     return "\n".join(parts)
 
@@ -1664,7 +1664,7 @@ def checked_if(value):
     return ""
 
 
-def project_card(item, la):
+def project_card(item, lang):
     """
     The card of one project in the Settings. With item None it is the blank
     card admin.js clones for "Add a project".
@@ -1675,45 +1675,45 @@ def project_card(item, la):
     return render.render(
         "admin/project_card.html",
         checked=checked_if(item.get("visible", True)),
-        label_visible=T("admin_project_visible", la),
-        label_on_top=esc(T("admin_move_on_top", la)),
-        label_down=esc(T("admin_move_down", la)),
+        label_visible=T("admin_project_visible", lang),
+        label_on_top=esc(T("admin_move_on_top", lang)),
+        label_down=esc(T("admin_move_down", lang)),
         icon_on_top=icon(ICON_UP),
         icon_down=icon(ICON_DOWN),
-        label_delete=T("admin_project_delete", la),
-        label_name=T("admin_project_name", la),
+        label_delete=T("admin_project_delete", lang),
+        label_name=T("admin_project_name", lang),
         name=esc(item.get("name", "")),
-        label_description=T("admin_project_description", la),
+        label_description=T("admin_project_description", lang),
         description=esc(item.get("description", "")),
-        hint_description=T("admin_project_description_hint", la),
-        label_description_en=TL("admin_project_description_en", la),
+        hint_description=T("admin_project_description_hint", lang),
+        label_description_en=TL("admin_project_description_en", lang),
         description_en=esc(item.get("description_en", "")),
-        label_link=T("admin_project_link", la),
+        label_link=T("admin_project_link", lang),
         link=esc(item.get("url", "")),
-        hint_link=T("admin_project_link_hint", la),
-        label_picture=T("admin_project_picture", la),
+        hint_link=T("admin_project_link_hint", lang),
+        label_picture=T("admin_project_picture", lang),
         picture=esc(item.get("image", "")),
-        hint_picture=T("admin_project_picture_hint", la),
-        label_upload=T("admin_upload_picture", la),
+        hint_picture=T("admin_project_picture_hint", lang),
+        label_upload=T("admin_upload_picture", lang),
     ).rstrip("\n")
 
 
-def code_guide(la, open_it):
+def code_guide(lang, open_it):
     """The three worked examples above the list of external code."""
     return render.render(
         "admin/code_guide.html",
         open_f=" open" if open_it else "",
-        title=T("admin_guide_codes_title", la),
-        intro=T("admin_guide_codes_intro", la),
-        you_give=T("admin_guide_you_give", la),
-        what_do=T("admin_guide_what_do", la),
-        ex1_title=T("admin_guide_ex1_title", la),
-        ex1_steps=T("admin_guide_ex1_steps", la),
-        ex2_title=T("admin_guide_ex2_title", la),
-        ex2_steps=T("admin_guide_ex2_steps", la),
-        ex3_title=T("admin_guide_ex3_title", la),
-        ex3_steps=T("admin_guide_ex3_steps", la),
-        trust=T("admin_guide_trust", la),
+        title=T("admin_guide_codes_title", lang),
+        intro=T("admin_guide_codes_intro", lang),
+        you_give=T("admin_guide_you_give", lang),
+        what_do=T("admin_guide_what_do", lang),
+        ex1_title=T("admin_guide_ex1_title", lang),
+        ex1_steps=T("admin_guide_ex1_steps", lang),
+        ex2_title=T("admin_guide_ex2_title", lang),
+        ex2_steps=T("admin_guide_ex2_steps", lang),
+        ex3_title=T("admin_guide_ex3_title", lang),
+        ex3_steps=T("admin_guide_ex3_steps", lang),
+        trust=T("admin_guide_trust", lang),
     ).rstrip("\n")
 
 
@@ -1729,20 +1729,20 @@ def help_text(text):
     return text
 
 
-def section_state_html(section_id, config, la):
+def section_state_html(section_id, config, lang):
     """The state line of a card: a tone the CSS colours, and its text."""
-    state = settings_panel.section_state(section_id, config, la)
+    state = settings_panel.section_state(section_id, config, lang)
     if state is None:
         return ""
     tone, text = state
     warn = ""
     if tone == "warn":
         # The colour alone would leave a screen reader with no warning.
-        warn = icon(ICON_WARN, 16) + f'<span class="vh">{T("admin_state_tone_warn", la)}: </span>'
+        warn = icon(ICON_WARN, 16) + f'<span class="vh">{T("admin_state_tone_warn", lang)}: </span>'
     return f'<span class="card-state state-{tone}">{warn}{esc(text)}</span>'
 
 
-def section_warnings_html(key, config, la):
+def section_warnings_html(key, config, lang):
     """
     What a section has to fix, at the top of the section itself: whoever
     opens Analytics because the panel warned about it finds the warning
@@ -1750,13 +1750,13 @@ def section_warnings_html(key, config, la):
     admin.js can fill it after a save.
     """
     rows = [f'    <li>{icon(ICON_WARN, 18)}{esc(text)}</li>'
-            for tone, text in settings_panel.section_states(key, config, la) if tone == "warn"]
+            for tone, text in settings_panel.section_states(key, config, lang) if tone == "warn"]
     hidden = "" if rows else " hidden"
     return (f'  <ul class="section-notices" id="notices-{key}"{hidden}>\n'
             + "\n".join(rows) + ("\n" if rows else "") + '  </ul>')
 
 
-def config_sections_list(la, config=None):
+def config_sections_list(lang, config=None):
     """
     The Settings panel, what /config opens on: the sections grouped, each
     card with what it is for and how it stands now. data-search carries the
@@ -1772,24 +1772,24 @@ def config_sections_list(la, config=None):
             key = entry["id"]
             # The card takes the colour of its state: green when it is in
             # order, orange when something is to fix, plain when off.
-            state = settings_panel.section_state(key, config, la)
+            state = settings_panel.section_state(key, config, lang)
             tone = state[0] if state else "off"
             cards.append(
                 f'      <li><a class="card-setting card-{tone}" href="#{key}" data-section="{key}" '
                 f'data-search="{esc(entry["keywords"])}">'
-                f'<span class="card-name">{T(entry["label"], la)}</span>'
-                f'<span class="card-desc">{TL(entry["label"] + "_desc", la)}</span>'
-                f'{section_state_html(key, config, la)}'
+                f'<span class="card-name">{T(entry["label"], lang)}</span>'
+                f'<span class="card-desc">{TL(entry["label"] + "_desc", lang)}</span>'
+                f'{section_state_html(key, config, lang)}'
                 f'{icon(ICON_NEXT, 20)}</a></li>')
         parts.append(
             f'  <div class="panel-group" role="group" aria-labelledby="group-{group_id}">\n'
-            f'    <h2 class="panel-group-title" id="group-{group_id}">{T(group_key, la)}</h2>\n'
+            f'    <h2 class="panel-group-title" id="group-{group_id}">{T(group_key, lang)}</h2>\n'
             f'    <ul class="panel-cards">\n' + "\n".join(cards) + '\n    </ul>\n'
             '  </div>')
     return "\n".join(parts)
 
 
-def config_section_header(key, la, config=None):
+def config_section_header(key, lang, config=None):
     """
     The top of a Settings section: on a phone a link back to the list, then
     the name of the section and one line about what it holds.
@@ -1797,21 +1797,21 @@ def config_section_header(key, la, config=None):
     label_key = dict(CONFIG_SECTIONS)[key]
     # The way back is the first word of the breadcrumb, on every screen;
     # the phone also gets the arrow it expects in the corner.
-    trail = f'<a href="#list">{T("admin_settings_page", la)}</a>'
+    trail = f'<a href="#list">{T("admin_settings_page", lang)}</a>'
     group_key = settings_panel.group_label(key)
     if group_key != "":
-        trail = trail + f' <span aria-hidden="true">›</span> {T(group_key, la)}'
+        trail = trail + f' <span aria-hidden="true">›</span> {T(group_key, lang)}'
     return (
         '  <div class="section-header">\n'
         f'    <a class="button button-icon section-back" href="#list" '
-        f'aria-label="{esc(T("admin_back_to_settings_page", la))}">{icon(ICON_BACK, 22)}</a>\n'
+        f'aria-label="{esc(T("admin_back_to_settings_page", lang))}">{icon(ICON_BACK, 22)}</a>\n'
         '    <div>\n'
         f'      <p class="section-eyebrow">{trail}</p>\n'
-        f'      <h1 class="page-title" id="title-{key}">{T(label_key, la)}</h1>\n'
-        f'      <p class="page-subtitle">{TL(label_key + "_desc", la)}</p>\n'
+        f'      <h1 class="page-title" id="title-{key}">{T(label_key, lang)}</h1>\n'
+        f'      <p class="page-subtitle">{TL(label_key + "_desc", lang)}</p>\n'
         '    </div>\n'
         '  </div>\n'
-        + section_warnings_html(key, config if config is not None else CONFIG, la))
+        + section_warnings_html(key, config if config is not None else CONFIG, lang))
 
 
 def config_page(csrf):
@@ -1823,7 +1823,7 @@ def config_page(csrf):
     It also shows a live preview of the home content.
     """
     config = load_config()
-    la = admin_language()
+    lang = admin_language()
     site_language = config.get("language", "it")
 
     seo = config.get("seo", {})
@@ -1848,27 +1848,27 @@ def config_page(csrf):
         intro_position = "sidebar"
 
     # --- Editorial cards: one WYSIWYG editor each, filled in by admin.js ---
-    card_lista = config.get("home_cards", [])
-    card_html_parti = []
+    card_list = config.get("home_cards", [])
+    card_html_parts = []
     card_contents = []
     index_value = 0
-    for card in card_lista:
+    for card in card_list:
         card_contents.append(card.get("content", ""))
         checked = ""
         if card.get("active", False):
             checked = "checked"
-        card_html_parti.append(render.render(
+        card_html_parts.append(render.render(
             "admin/config_card.html",
             toc_index=index_value,
             checked=checked,
-            label_show=T("admin_show_card", la),
-            label_title=T("admin_title_card", la),
+            label_show=T("admin_show_card", lang),
+            label_title=T("admin_title_card", lang),
             title=esc(card.get("title", "")),
-            label_content=T("admin_content", la),
+            label_content=T("admin_content", lang),
         ).rstrip("\n"))
         index_value = index_value + 1
 
-    commenti = config.get("comments", "none")
+    comments_value = config.get("comments", "none")
     giscus = config.get("giscus", {})
     disqus = config.get("disqus", {})
     translation = config.get("translation", {})
@@ -1879,9 +1879,9 @@ def config_page(csrf):
     ph = {k: esc(v) for k, v in ph.items()}
 
     biography = build_module.biography_settings(config)
-    lavoro = build_module.work_settings(config)
+    work = build_module.work_settings(config)
     projects = build_module.projects_settings(config)
-    project_cards = [project_card(item, la) for item in projects["items"]]
+    project_cards = [project_card(item, lang) for item in projects["items"]]
     empty_note_hidden = ""
     if len(project_cards) > 0:
         empty_note_hidden = " hidden"
@@ -1890,369 +1890,369 @@ def config_page(csrf):
     nl_state = newsletter.load_state()
     nl_rows = []
     for reader in nl_state["subscribers"]:
-        stato = T("admin_nl_confirmed" if reader.get("status") == "confirmed" else "admin_nl_waiting", la)
+        reader_state = T("admin_nl_confirmed" if reader.get("status") == "confirmed" else "admin_nl_waiting", lang)
         email = esc(reader.get("email", ""))
         nl_rows.append(
-            f'      <li><span class="nl-email">{email}</span> <span class="hint">{stato}</span>'
+            f'      <li><span class="nl-email">{email}</span> <span class="hint">{reader_state}</span>'
             f'<button type="button" class="button button-text button-danger button-small" '
-            f'data-email="{email}" onclick="removeSubscriber(this)">{T("admin_nl_remove", la)}</button></li>')
+            f'data-email="{email}" onclick="removeSubscriber(this)">{T("admin_nl_remove", lang)}</button></li>')
     if nl_rows:
         nl_list = '    <ul class="nl-list">\n' + "\n".join(nl_rows) + "\n    </ul>"
     else:
-        nl_list = f'    <p class="help">{T("admin_nl_nobody", la)}</p>'
+        nl_list = f'    <p class="help">{T("admin_nl_nobody", lang)}</p>'
     nl_confirmed = sum(1 for r in nl_state["subscribers"] if r.get("status") == "confirmed")
     last = nl_state["last"]
     nl_last = ""
     if last.get("title"):
         if last.get("error"):
-            nl_last = (f'    <p class="notice notice-danger">' + esc(T("admin_nl_last_failure", la)
+            nl_last = (f'    <p class="notice notice-danger">' + esc(T("admin_nl_last_failure", lang)
                        .replace("{title}", last["title"]).replace("{error}", last["error"])) + "</p>")
         else:
-            nl_last = (f'    <p class="help">' + esc(T("admin_nl_last", la)
+            nl_last = (f'    <p class="help">' + esc(T("admin_nl_last", lang)
                        .replace("{title}", last["title"]).replace("{sent}", str(last.get("sent", 0)))) + "</p>")
 
     context = dict(
-        title_settings_page=T("admin_settings_page", la),
+        title_settings_page=T("admin_settings_page", lang),
         checked_nl=checked_if(nl["enabled"]),
-        label_nl_active_f=T("admin_nl_active_f", la),
-        hint_nl_active_f=T("admin_nl_active_f_hint", la),
-        label_nl_where=T("admin_nl_where", la),
+        label_nl_active_f=T("admin_nl_active_f", lang),
+        hint_nl_active_f=T("admin_nl_active_f_hint", lang),
+        label_nl_where=T("admin_nl_where", lang),
         checked_nl_bar=checked_if(nl["in_sidebar"]),
-        label_nl_bar=T("admin_nl_bar", la),
+        label_nl_bar=T("admin_nl_bar", lang),
         checked_nl_article=checked_if(nl["after_article"]),
-        label_nl_article=T("admin_nl_article", la),
-        label_nl_title=T("admin_nl_title", la),
+        label_nl_article=T("admin_nl_article", lang),
+        label_nl_title=T("admin_nl_title", lang),
         value_nl_title=esc(nl["title"]),
         ph_nl_title=esc(T("nl_title_default", site_language)),
-        label_nl_text=T("admin_nl_text", la),
+        label_nl_text=T("admin_nl_text", lang),
         value_nl_text=esc(nl["text"]),
         ph_nl_text=esc(T("nl_text_default", site_language)),
-        hint_nl_texts_of=T("admin_nl_texts_of_hint", la),
+        hint_nl_texts_of=T("admin_nl_texts_of_hint", lang),
         checked_nl_sending=checked_if(nl["send_on_publish"]),
-        label_nl_sending=T("admin_nl_sending_auto", la),
-        hint_nl_sending=T("admin_nl_sending_auto_hint", la),
-        label_grp_nl_shipping=T("admin_grp_nl_shipping", la),
-        hint_grp_nl_shipping=T("admin_grp_nl_shipping_hint", la),
-        label_nl_sender_name=T("admin_nl_sender_name", la),
+        label_nl_sending=T("admin_nl_sending_auto", lang),
+        hint_nl_sending=T("admin_nl_sending_auto_hint", lang),
+        label_grp_nl_shipping=T("admin_grp_nl_shipping", lang),
+        hint_grp_nl_shipping=T("admin_grp_nl_shipping_hint", lang),
+        label_nl_sender_name=T("admin_nl_sender_name", lang),
         value_nl_sender_name=esc(nl["sender_name"]),
-        hint_nl_sender_name=T("admin_nl_sender_name_hint", la),
-        label_nl_sender_email=T("admin_nl_sender_email", la),
+        hint_nl_sender_name=T("admin_nl_sender_name_hint", lang),
+        label_nl_sender_email=T("admin_nl_sender_email", lang),
         value_nl_sender_email=esc(nl["sender_email"]),
-        label_nl_smtp_host=T("admin_nl_smtp_host", la),
+        label_nl_smtp_host=T("admin_nl_smtp_host", lang),
         value_nl_smtp_host=esc(nl["smtp_host"]),
-        label_nl_smtp_port=T("admin_nl_smtp_port", la),
+        label_nl_smtp_port=T("admin_nl_smtp_port", lang),
         value_nl_smtp_port=nl["smtp_port"],
-        hint_nl_smtp_port=T("admin_nl_smtp_port_hint", la),
-        label_nl_smtp_security=T("admin_nl_smtp_security", la),
+        hint_nl_smtp_port=T("admin_nl_smtp_port_hint", lang),
+        label_nl_smtp_security=T("admin_nl_smtp_security", lang),
         sel_nl_starttls=selected_if(nl["smtp_security"], "starttls"),
         sel_nl_ssl=selected_if(nl["smtp_security"], "ssl"),
         sel_nl_none=selected_if(nl["smtp_security"], "none"),
-        label_nl_starttls=T("admin_nl_sic_starttls", la),
-        label_nl_ssl=T("admin_nl_sic_ssl", la),
-        label_nl_none=T("admin_nl_sic_none", la),
-        label_nl_smtp_user=T("admin_nl_smtp_user", la),
+        label_nl_starttls=T("admin_nl_sic_starttls", lang),
+        label_nl_ssl=T("admin_nl_sic_ssl", lang),
+        label_nl_none=T("admin_nl_sic_none", lang),
+        label_nl_smtp_user=T("admin_nl_smtp_user", lang),
         value_nl_smtp_user=esc(nl["smtp_user"]),
-        label_nl_smtp_password=T("admin_nl_smtp_password", la),
+        label_nl_smtp_password=T("admin_nl_smtp_password", lang),
         # The password is never written back into the page: an empty field
         # keeps the saved one, as the translation keys do.
-        ph_nl_password=esc(T("admin_nl_password_saved_f", la)) if nl["smtp_password"] else "",
-        hint_nl_smtp_password=T("admin_nl_smtp_password_hint", la),
-        label_nl_test=T("admin_nl_test", la),
-        hint_nl_test=T("admin_nl_test_hint", la),
-        label_grp_nl_subscribers=T("admin_grp_nl_subscribers", la),
-        nl_count=T("admin_nl_count", la).replace("{c}", str(nl_confirmed)).replace(
+        ph_nl_password=esc(T("admin_nl_password_saved_f", lang)) if nl["smtp_password"] else "",
+        hint_nl_smtp_password=T("admin_nl_smtp_password_hint", lang),
+        label_nl_test=T("admin_nl_test", lang),
+        hint_nl_test=T("admin_nl_test_hint", lang),
+        label_grp_nl_subscribers=T("admin_grp_nl_subscribers", lang),
+        nl_count=T("admin_nl_count", lang).replace("{c}", str(nl_confirmed)).replace(
             "{p}", str(len(nl_state["subscribers"]) - nl_confirmed)),
         nl_last=nl_last,
         nl_list=nl_list,
-        label_nl_export=T("admin_nl_export", la),
+        label_nl_export=T("admin_nl_export", lang),
         checked_bio=checked_if(biography["enabled"]),
-        label_bio_active_f=T("admin_bio_active_f", la),
-        hint_bio_active_f=T("admin_bio_active_f_hint", la),
-        label_position_home=T("admin_position_home", la),
-        label_pos_sidebar=T("admin_pos_sidebar", la),
-        label_pos_top=T("admin_pos_top", la),
-        label_pos_bottom=T("admin_pos_bottom", la),
+        label_bio_active_f=T("admin_bio_active_f", lang),
+        hint_bio_active_f=T("admin_bio_active_f_hint", lang),
+        label_position_home=T("admin_position_home", lang),
+        label_pos_sidebar=T("admin_pos_sidebar", lang),
+        label_pos_top=T("admin_pos_top", lang),
+        label_pos_bottom=T("admin_pos_bottom", lang),
         sel_bio_sidebar=selected_if(biography["position"], "sidebar"),
         sel_bio_top=selected_if(biography["position"], "top"),
         sel_bio_bottom=selected_if(biography["position"], "bottom"),
-        label_bio_photo=T("admin_bio_photo", la),
+        label_bio_photo=T("admin_bio_photo", lang),
         value_bio_photo=esc(biography["photo"]),
-        hint_bio_photo=T("admin_bio_photo_hint", la),
-        label_upload_photo=T("admin_upload_photo", la),
-        label_remove=T("admin_remove", la),
-        label_bio_text=T("admin_bio_text", la),
-        label_bio_text_en=TL("admin_bio_text_en", la),
-        hint_bio_text_en=TL("admin_bio_text_en_hint", la),
+        hint_bio_photo=T("admin_bio_photo_hint", lang),
+        label_upload_photo=T("admin_upload_photo", lang),
+        label_remove=T("admin_remove", lang),
+        label_bio_text=T("admin_bio_text", lang),
+        label_bio_text_en=TL("admin_bio_text_en", lang),
+        hint_bio_text_en=TL("admin_bio_text_en_hint", lang),
         checked_projects=checked_if(projects["enabled"]),
-        label_projects_active_pl=T("admin_projects_active_pl", la),
-        hint_projects_active_pl=T("admin_projects_active_pl_hint", la),
+        label_projects_active_pl=T("admin_projects_active_pl", lang),
+        hint_projects_active_pl=T("admin_projects_active_pl_hint", lang),
         sel_projects_sidebar=selected_if(projects["position"], "sidebar"),
         sel_projects_top=selected_if(projects["position"], "top"),
         sel_projects_bottom=selected_if(projects["position"], "bottom"),
         projects_html="\n".join(project_cards),
         projects_empty_m_hidden_m=empty_note_hidden,
-        label_projects_empty_m=T("admin_projects_empty_m", la),
-        label_project_add=T("admin_project_add", la),
-        project_template=project_card(None, la),
-        list_sections=config_sections_list(la, config),
-        panel_subtitle=T("admin_panel_subtitle", la),
-        label_search_setting=T("admin_search_setting", la),
-        ph_search_setting=esc(T("admin_search_setting_ph", la)),
-        none_f_setting=T("admin_none_f_setting", la),
-        advanced_invitation=T("admin_advanced_invitation", la),
-        advanced_link=T("admin_advanced_link", la),
-        label_grp_site=T("admin_grp_site", la),
-        label_grp_author=T("admin_grp_author", la),
-        label_grp_pictures=T("admin_grp_pictures", la),
-        label_grp_layout_section=T("admin_grp_layout_section", la),
-        label_grp_page_article=T("admin_grp_page_article", la),
-        label_gr_statistiche=T("admin_grp_analytics_section", la),
-        label_umami_url=T("admin_umami_url", la),
-        label_umami_id=T("admin_umami_id", la),
+        label_projects_empty_m=T("admin_projects_empty_m", lang),
+        label_project_add=T("admin_project_add", lang),
+        project_template=project_card(None, lang),
+        list_sections=config_sections_list(lang, config),
+        panel_subtitle=T("admin_panel_subtitle", lang),
+        label_search_setting=T("admin_search_setting", lang),
+        ph_search_setting=esc(T("admin_search_setting_ph", lang)),
+        none_f_setting=T("admin_none_f_setting", lang),
+        advanced_invitation=T("admin_advanced_invitation", lang),
+        advanced_link=T("admin_advanced_link", lang),
+        label_grp_site=T("admin_grp_site", lang),
+        label_grp_author=T("admin_grp_author", lang),
+        label_grp_pictures=T("admin_grp_pictures", lang),
+        label_grp_layout_section=T("admin_grp_layout_section", lang),
+        label_grp_page_article=T("admin_grp_page_article", lang),
+        label_gr_analytics=T("admin_grp_analytics_section", lang),
+        label_umami_url=T("admin_umami_url", lang),
+        label_umami_id=T("admin_umami_id", lang),
         hint_giscus="https://giscus.app",
-        label_cancel_changes_made=T("admin_cancel_changes_made", la),
-        note_text_save=T("admin_save_note_text", la),
-        guide_codes=code_guide(la, len(config.get("custom_code", []) or []) == 0),
-        label_insert=T("admin_insert", la),
-        label_part_top=T("admin_part_top_home", la),
-        hint_part_top=T("admin_part_top_hint", la),
-        tip_upload_image=esc(T("tip_upload_image", la)),
-        label_from_library=T("admin_from_media_library", la),
-        label_image_details=T("admin_image_details", la),
-        label_image_alt_fix=T("admin_image_alt_fix", la),
-        label_upload_picture=T("admin_upload_picture", la),
-        tip_youtube=esc(T("tip_youtube", la)),
-        label_youtube=T("admin_insert_youtube", la),
-        tip_upload_video=esc(T("tip_upload_video", la)),
-        label_upload_video=T("admin_upload_video", la),
-        tip_preview=esc(T("tip_preview", la)),
-        label_show_preview_home=T("admin_show_preview_home", la),
-        hint_how_appears=T("admin_how_appears_home", la),
-        label_introduction_english=TL("admin_introduction_english", la),
-        hint_introduction_en=TL("admin_introduction_en_hint", la),
-        label_translate_italian=TL("admin_translate_from_the_italian", la),
-        label_job_title=T("admin_job_title", la),
-        checked_job=checked_if(lavoro["enabled"]),
-        label_job_active=T("admin_job_active", la),
-        hint_job_active=T("admin_job_active_hint", la),
-        label_job_url=T("admin_job_url", la),
-        hint_job_url=T("admin_job_url_hint", la),
-        value_job_url=esc(lavoro["url"]),
-        label_job_label=T("admin_job_label", la),
-        value_job_label=esc(lavoro["label"]),
+        label_cancel_changes_made=T("admin_cancel_changes_made", lang),
+        note_text_save=T("admin_save_note_text", lang),
+        guide_codes=code_guide(lang, len(config.get("custom_code", []) or []) == 0),
+        label_insert=T("admin_insert", lang),
+        label_part_top=T("admin_part_top_home", lang),
+        hint_part_top=T("admin_part_top_hint", lang),
+        tip_upload_image=esc(T("tip_upload_image", lang)),
+        label_from_library=T("admin_from_media_library", lang),
+        label_image_details=T("admin_image_details", lang),
+        label_image_alt_fix=T("admin_image_alt_fix", lang),
+        label_upload_picture=T("admin_upload_picture", lang),
+        tip_youtube=esc(T("tip_youtube", lang)),
+        label_youtube=T("admin_insert_youtube", lang),
+        tip_upload_video=esc(T("tip_upload_video", lang)),
+        label_upload_video=T("admin_upload_video", lang),
+        tip_preview=esc(T("tip_preview", lang)),
+        label_show_preview_home=T("admin_show_preview_home", lang),
+        hint_how_appears=T("admin_how_appears_home", lang),
+        label_introduction_english=TL("admin_introduction_english", lang),
+        hint_introduction_en=TL("admin_introduction_en_hint", lang),
+        label_translate_italian=TL("admin_translate_from_the_italian", lang),
+        label_job_title=T("admin_job_title", lang),
+        checked_job=checked_if(work["enabled"]),
+        label_job_active=T("admin_job_active", lang),
+        hint_job_active=T("admin_job_active_hint", lang),
+        label_job_url=T("admin_job_url", lang),
+        hint_job_url=T("admin_job_url_hint", lang),
+        value_job_url=esc(work["url"]),
+        label_job_label=T("admin_job_label", lang),
+        value_job_label=esc(work["label"]),
         ph_job_label=esc(T("work_with_me", "it")),
-        label_job_label_en=T("admin_job_label_en", la),
-        value_job_label_en=esc(lavoro["label_en"]),
+        label_job_label_en=T("admin_job_label_en", lang),
+        value_job_label_en=esc(work["label_en"]),
         ph_job_label_en=esc(T("work_with_me", "en")),
-        label_job_text=T("admin_job_text", la),
-        value_job_text=esc(lavoro["text"]),
+        label_job_text=T("admin_job_text", lang),
+        value_job_text=esc(work["text"]),
         ph_job_text=esc(T("work_invitation", "it")),
-        label_job_text_en=T("admin_job_text_en", la),
-        value_job_text_en=esc(lavoro["text_en"]),
+        label_job_text_en=T("admin_job_text_en", lang),
+        value_job_text_en=esc(work["text_en"]),
         ph_job_text_en=esc(T("work_invitation", "en")),
-        hint_card_home=T("admin_card_home_hint", la),
+        hint_card_home=T("admin_card_home_hint", lang),
         checked_card_home_active_f=checked_if(config.get("home_cards_enabled", True)),
-        label_card_home_active_f=T("admin_card_home_active_f", la),
-        hint_card_home_active_f=T("admin_card_home_active_f_hint", la),
-        card_html="\n".join(card_html_parti),
-        label_code_title=T("admin_code_title", la),
-        hint_code=T("admin_code_hint", la),
-        code_html=custom_code_cards(config, la),
-        code_template=custom_code_blank_card(la),
-        label_code_empty_m=T("admin_code_empty_m", la),
-        label_code_add=T("admin_code_add", la),
-        label_code_templates=T("admin_code_templates", la),
-        hint_code_templates=T("admin_code_templates_hint", la),
-        label_template_free=T("admin_code_free", la),
-        label_template_adsense_auto=T("admin_template_adsense_auto", la),
-        label_template_adsense_unit_ad=T("admin_template_adsense_unit_ad", la),
-        label_template_google_ads=T("admin_template_google_ads", la),
-        label_template_others=esc(T("admin_template_others", la)),
-        label_code_create=T("admin_code_create", la),
-        label_cancel_choice=T("admin_cancel_choice", la),
-        label_ads_txt=T("admin_ads_txt", la),
-        hint_ads_txt=T("admin_ads_txt_hint", la),
+        label_card_home_active_f=T("admin_card_home_active_f", lang),
+        hint_card_home_active_f=T("admin_card_home_active_f_hint", lang),
+        card_html="\n".join(card_html_parts),
+        label_code_title=T("admin_code_title", lang),
+        hint_code=T("admin_code_hint", lang),
+        code_html=custom_code_cards(config, lang),
+        code_template=custom_code_blank_card(lang),
+        label_code_empty_m=T("admin_code_empty_m", lang),
+        label_code_add=T("admin_code_add", lang),
+        label_code_templates=T("admin_code_templates", lang),
+        hint_code_templates=T("admin_code_templates_hint", lang),
+        label_template_free=T("admin_code_free", lang),
+        label_template_adsense_auto=T("admin_template_adsense_auto", lang),
+        label_template_adsense_unit_ad=T("admin_template_adsense_unit_ad", lang),
+        label_template_google_ads=T("admin_template_google_ads", lang),
+        label_template_others=esc(T("admin_template_others", lang)),
+        label_code_create=T("admin_code_create", lang),
+        label_cancel_choice=T("admin_cancel_choice", lang),
+        label_ads_txt=T("admin_ads_txt", lang),
+        hint_ads_txt=T("admin_ads_txt_hint", lang),
         value_ads_txt=esc(config.get("ads_txt", "")),
-        hint_consent=T("admin_consent_intro", la),
+        hint_consent=T("admin_consent_intro", lang),
         checked_consent=checked_if(consent["enabled"]),
-        label_consent_active=T("admin_consent_active", la),
-        label_consent_text=T("admin_consent_text", la),
-        hint_consent_text=T("admin_consent_text_hint", la),
+        label_consent_active=T("admin_consent_active", lang),
+        label_consent_text=T("admin_consent_text", lang),
+        hint_consent_text=T("admin_consent_text_hint", lang),
         value_consent_text=esc(consent["text"]),
         ph_consent_text=esc(T("consent_text", main_language())),
-        label_consent_text_en=TL("admin_consent_text_en", la),
+        label_consent_text_en=TL("admin_consent_text_en", lang),
         value_consent_text_en=esc(consent["text_en"]),
         ph_consent_text_en=esc(T("consent_text", secondary_language())),
-        label_consent_privacy=T("admin_consent_privacy", la),
+        label_consent_privacy=T("admin_consent_privacy", lang),
         value_consent_privacy=esc(consent["privacy_url"]),
         ph_consent_privacy=ph["base_url"] + "/privacy.html",
-        label_consent_renew=T("admin_consent_renew", la),
-        hint_consent_renew=T("admin_consent_renew_hint", la),
-        label_title_site=T("admin_title_site", la),
+        label_consent_renew=T("admin_consent_renew", lang),
+        hint_consent_renew=T("admin_consent_renew_hint", lang),
+        label_title_site=T("admin_title_site", lang),
         value_title_site=esc(config.get("site_title", "")),
         ph_site_title=ph["site_title"],
-        label_subtitle=T("admin_subtitle", la),
+        label_subtitle=T("admin_subtitle", lang),
         value_subtitle=esc(config.get("subtitle", "")),
         ph_subtitle=ph["subtitle"],
-        label_author=T("admin_author", la),
+        label_author=T("admin_author", lang),
         value_author=esc(config.get("author", "")),
         ph_author=ph["author"],
-        label_domain=T("admin_domain_site", la),
-        hint_domain=T("admin_domain_hint", la),
+        label_domain=T("admin_domain_site", lang),
+        hint_domain=T("admin_domain_hint", lang),
         value_domain=esc(config.get("base_url", "")),
-        label_address_admin=T("admin_address_admin", la),
-        hint_address_admin=T("admin_address_admin_hint", la),
+        label_address_admin=T("admin_address_admin", lang),
+        hint_address_admin=T("admin_address_admin_hint", lang),
         value_address_admin=esc(str(config.get("admin_url", "") or "")),
         ph_base_url=ph["base_url"],
-        label_analytics=T("admin_analytics", la),
-        label_ga_id=T("admin_ga_id", la),
-        hint_analytics=T("admin_analytics_hint", la),
+        label_analytics=T("admin_analytics", lang),
+        label_ga_id=T("admin_ga_id", lang),
+        hint_analytics=T("admin_analytics_hint", lang),
         value_analytics=esc(config.get("analytics_id", "")),
         ph_analytics_id=ph["analytics_id"],
-        label_umami=T("admin_umami", la),
-        hint_umami=T("admin_umami_hint", la),
+        label_umami=T("admin_umami", lang),
+        hint_umami=T("admin_umami_hint", lang),
         value_umami_url=esc(config.get("umami_url", "")),
         ph_umami_url=ph["umami_url"],
         value_umami_id=esc(config.get("umami_website_id", "")),
         ph_umami_website_id=ph["umami_website_id"],
-        label_language_main=T("admin_language_main", la),
-        hint_language_main=T("admin_language_main_hint", la),
+        label_language_main=T("admin_language_main", lang),
+        hint_language_main=T("admin_language_main_hint", lang),
         sel_language_it=selected_if(site_language, "it"),
         sel_language_en=selected_if(site_language, "en"),
-        hint_layout=T("admin_layout_hint", la),
-        label_intro_position=T("admin_intro_position", la),
-        hint_intro_position=T("admin_intro_position_hint", la),
+        hint_layout=T("admin_layout_hint", lang),
+        label_intro_position=T("admin_intro_position", lang),
+        hint_intro_position=T("admin_intro_position_hint", lang),
         sel_intro_bar=selected_if(intro_position, "sidebar"),
-        label_intro_bar=T("admin_intro_bar", la),
+        label_intro_bar=T("admin_intro_bar", lang),
         sel_intro_above=selected_if(intro_position, "top"),
-        label_intro_above=T("admin_intro_above", la),
-        label_words_preview=T("admin_words_preview", la),
-        hint_words_preview=T("admin_words_preview_hint", la),
+        label_intro_above=T("admin_intro_above", lang),
+        label_words_preview=T("admin_words_preview", lang),
+        hint_words_preview=T("admin_words_preview_hint", lang),
         value_words_preview=esc(config.get("home_excerpt_words", 40)),
-        label_articles_for_page=T("admin_articles_for_page", la),
-        hint_articles_for_page=T("admin_articles_for_page_hint", la),
+        label_articles_for_page=T("admin_articles_for_page", lang),
+        hint_articles_for_page=T("admin_articles_for_page_hint", lang),
         value_articles_for_page=esc(config.get("articles_per_page", 10)),
         checked_home_featured=checked_if(config.get("home_featured", True)),
-        label_home_featured=T("admin_home_featured", la),
-        hint_home_featured=T("admin_home_featured_hint", la),
+        label_home_featured=T("admin_home_featured", lang),
+        hint_home_featured=T("admin_home_featured_hint", lang),
         checked_cover_article=checked_if(config.get("article_cover", True)),
-        label_copy_link=T("admin_copy_link", la),
-        hint_copy_link=T("admin_copy_link_hint", la),
+        label_copy_link=T("admin_copy_link", lang),
+        hint_copy_link=T("admin_copy_link_hint", lang),
         checked_copy_link=checked_if(config.get("share_buttons", True) is not False),
-        label_width_pictures=T("admin_width_pictures", la),
-        hint_width_pictures=T("admin_width_pictures_hint", la),
+        label_width_pictures=T("admin_width_pictures", lang),
+        hint_width_pictures=T("admin_width_pictures_hint", lang),
         value_width_pictures=max_image_side(),
-        label_grp_helpers_ai=T("admin_grp_helpers_ai", la),
-        label_backlink=T("admin_backlink", la),
-        hint_backlink=T("admin_backlink_hint", la),
+        label_grp_helpers_ai=T("admin_grp_helpers_ai", lang),
+        label_backlink=T("admin_backlink", lang),
+        hint_backlink=T("admin_backlink_hint", lang),
         value_backlink=esc(seo.get("backlink_site", "")),
-        label_cover_article=T("admin_cover_article", la),
-        hint_cover_article=T("admin_cover_article_hint", la),
-        hint_seo=T("admin_seo_intro", la),
-        label_seo_author_url=T("admin_seo_author_url", la),
-        hint_seo_author_url=T("admin_seo_author_url_hint", la),
+        label_cover_article=T("admin_cover_article", lang),
+        hint_cover_article=T("admin_cover_article_hint", lang),
+        hint_seo=T("admin_seo_intro", lang),
+        label_seo_author_url=T("admin_seo_author_url", lang),
+        hint_seo_author_url=T("admin_seo_author_url_hint", lang),
         value_seo_author_url=esc(seo.get("author_url", "")),
         ph_seo_author_url=ph["seo_author_url"],
-        label_seo_author_picture=T("admin_seo_author_picture", la),
+        label_seo_author_picture=T("admin_seo_author_picture", lang),
         value_seo_author_picture=esc(seo.get("author_image", "")),
         ph_seo_author_image=ph["seo_author_image"],
-        label_seo_author_role=T("admin_seo_author_role", la),
-        hint_seo_author_role=T("admin_seo_author_role_hint", la),
+        label_seo_author_role=T("admin_seo_author_role", lang),
+        hint_seo_author_role=T("admin_seo_author_role_hint", lang),
         value_seo_author_role=esc(seo.get("author_role", "")),
         ph_seo_author_role=ph["seo_author_role"],
-        label_seo_author_bio=T("admin_seo_author_bio", la),
-        hint_seo_author_bio=T("admin_seo_author_bio_hint", la),
+        label_seo_author_bio=T("admin_seo_author_bio", lang),
+        hint_seo_author_bio=T("admin_seo_author_bio_hint", lang),
         value_seo_author_bio=esc(seo.get("author_bio", "")),
-        label_grp_other_f_language=TL("admin_grp_other_f_language", la),
-        hint_other_f_language=TL("admin_other_f_language_hint", la),
-        label_subtitle_en=TL("admin_subtitle_en", la),
+        label_grp_other_f_language=TL("admin_grp_other_f_language", lang),
+        hint_other_f_language=TL("admin_other_f_language_hint", lang),
+        label_subtitle_en=TL("admin_subtitle_en", lang),
         value_subtitle_en=esc(config.get("subtitle_en", "")),
-        label_role_en=TL("admin_role_en", la),
+        label_role_en=TL("admin_role_en", lang),
         value_role_en=esc(seo.get("author_role_en", "")),
-        label_bio_en=TL("admin_bio_en", la),
+        label_bio_en=TL("admin_bio_en", lang),
         value_bio_en=esc(seo.get("author_bio_en", "")),
         code_other_f_language="en" if site_language == "it" else "it",
         icon_ai=icon(ICON_AI_SPARKLE),
         ph_seo_author_bio=ph["seo_author_bio"],
-        label_seo_profiles=T("admin_seo_profiles", la),
-        hint_seo_profiles=T("admin_seo_profiles_hint", la),
+        label_seo_profiles=T("admin_seo_profiles", lang),
+        hint_seo_profiles=T("admin_seo_profiles_hint", lang),
         value_seo_profiles=esc("\n".join(profiles)),
-        label_seo_logo=T("admin_seo_logo", la),
+        label_seo_logo=T("admin_seo_logo", lang),
         value_seo_logo=esc(seo.get("logo", "")),
         ph_seo_logo=ph["seo_logo"],
-        label_seo_twitter=T("admin_seo_twitter", la),
-        hint_seo_twitter=T("admin_seo_twitter_hint", la),
+        label_seo_twitter=T("admin_seo_twitter", lang),
+        hint_seo_twitter=T("admin_seo_twitter_hint", lang),
         value_seo_twitter=esc(seo.get("twitter_site", "")),
         ph_seo_twitter=ph["seo_twitter"],
-        label_seo_favicon=T("admin_seo_favicon", la),
-        hint_seo_favicon=T("admin_seo_favicon_hint", la),
+        label_seo_favicon=T("admin_seo_favicon", lang),
+        hint_seo_favicon=T("admin_seo_favicon_hint", lang),
         value_seo_favicon=esc(seo.get("favicon", "")),
-        hint_ai_training=T("admin_ai_training_intro", la),
-        label_ai_policy=T("admin_ai_training_policy", la),
+        hint_ai_training=T("admin_ai_training_intro", lang),
+        label_ai_policy=T("admin_ai_training_policy", lang),
         sel_ai_open=selected_if(ai_policy, "open"),
-        label_ai_open=T("admin_ai_training_open", la),
+        label_ai_open=T("admin_ai_training_open", lang),
         sel_ai_licensed=selected_if(ai_policy, "licensed"),
-        label_ai_licensed=T("admin_ai_training_licensed", la),
+        label_ai_licensed=T("admin_ai_training_licensed", lang),
         sel_ai_disallow=selected_if(ai_policy, "disallow"),
-        label_ai_disallow=T("admin_ai_training_disallow", la),
-        label_ai_email=T("admin_ai_training_email", la),
-        hint_ai_email=T("admin_ai_training_email_hint", la),
+        label_ai_disallow=T("admin_ai_training_disallow", lang),
+        label_ai_email=T("admin_ai_training_email", lang),
+        hint_ai_email=T("admin_ai_training_email_hint", lang),
         value_ai_email=esc(ai_training.get("contact_email", "")),
-        label_ai_license_url=T("admin_ai_training_license_url", la),
-        hint_ai_license_url=T("admin_ai_training_license_url_hint", la),
+        label_ai_license_url=T("admin_ai_training_license_url", lang),
+        hint_ai_license_url=T("admin_ai_training_license_url_hint", lang),
         value_ai_license_url=esc(ai_training.get("license_url", "")),
-        label_ai_statement=T("admin_ai_training_statement", la),
-        hint_ai_statement=T("admin_ai_training_statement_hint", la),
+        label_ai_statement=T("admin_ai_training_statement", lang),
+        hint_ai_statement=T("admin_ai_training_statement_hint", lang),
         value_ai_statement=esc(ai_training.get("statement", "")),
-        note_text_ai_standard=T("admin_ai_training_note_text_standard", la),
-        label_fix_comments=T("admin_fix_comments", la),
-        sel_comments_nobody=selected_if(commenti, "none"),
-        label_comments_nobody=T("admin_comments_nobody", la),
-        sel_giscus=selected_if(commenti, "giscus"),
-        sel_disqus=selected_if(commenti, "disqus"),
+        note_text_ai_standard=T("admin_ai_training_note_text_standard", lang),
+        label_fix_comments=T("admin_fix_comments", lang),
+        sel_comments_nobody=selected_if(comments_value, "none"),
+        label_comments_nobody=T("admin_comments_nobody", lang),
+        sel_giscus=selected_if(comments_value, "giscus"),
+        sel_disqus=selected_if(comments_value, "disqus"),
         value_giscus_repo=esc(giscus.get("repo", "")),
         value_giscus_repo_id=esc(giscus.get("repo_id", "")),
         value_giscus_category=esc(giscus.get("category", "")),
         value_giscus_category_id=esc(giscus.get("category_id", "")),
-        label_theme=T("admin_theme_label", la),
+        label_theme=T("admin_theme_label", lang),
         value_giscus_theme=esc(giscus.get("theme", "light")),
-        hint_disqus=T("admin_disqus_hint", la),
+        hint_disqus=T("admin_disqus_hint", lang),
         value_disqus_shortname=esc(disqus.get("shortname", "")),
-        label_translation_of=TL("admin_translation_of_title", la),
-        hint_translation_of=T("admin_translation_of_intro", la),
-        label_service_translation_of=T("admin_service_translation_of", la),
+        label_translation_of=TL("admin_translation_of_title", lang),
+        hint_translation_of=T("admin_translation_of_intro", lang),
+        label_service_translation_of=T("admin_service_translation_of", lang),
         sel_deepl=selected_if(translation_service, "deepl"),
         sel_google=selected_if(translation_service, "google"),
         sel_llm=selected_if(translation_service, "llm"),
         sel_openai=selected_if(translation_service, "openai"),
         sel_deepseek=selected_if(translation_service, "deepseek"),
-        label_key_api=T("admin_key_api", la),
-        ph_leave_empty_m=esc(T("admin_leave_empty_m", la)),
+        label_key_api=T("admin_key_api", lang),
+        ph_leave_empty_m=esc(T("admin_leave_empty_m", lang)),
         value_deepl_key=esc(translation.get("deepl_api_key", "")),
         value_google_key=esc(translation.get("google_api_key", "")),
         value_llm_key=esc(translation.get("llm_api_key", "")),
-        label_endpoint=T("admin_endpoint", la),
+        label_endpoint=T("admin_endpoint", lang),
         value_llm_endpoint=esc(translation.get("llm_endpoint", "")),
-        label_template=T("admin_template_label", la),
+        label_template=T("admin_template_label", lang),
         value_llm_template=esc(translation.get("llm_model", "")),
         value_openai_key=esc(translation.get("openai_api_key", "")),
         value_openai_template=esc(translation.get("openai_model", "gpt-4o-mini")),
         value_deepseek_key=esc(translation.get("deepseek_api_key", "")),
         value_deepseek_template=esc(translation.get("deepseek_model", "deepseek-chat")),
-        label_save_rebuild=T("admin_save_rebuild", la),
-        label_config_advanced_f=T("admin_config_advanced_f", la),
-        hint_config_advanced_f=T("admin_config_advanced_f_hint", la),
-        label_save_config_raw=T("admin_save_config_raw", la),
-        label_restore=T("admin_restore", la),
+        label_save_rebuild=T("admin_save_rebuild", lang),
+        label_config_advanced_f=T("admin_config_advanced_f", lang),
+        hint_config_advanced_f=T("admin_config_advanced_f_hint", lang),
+        label_save_config_raw=T("admin_save_config_raw", lang),
+        label_restore=T("admin_restore", lang),
     )
     for key, _ in CONFIG_SECTIONS:
-        context["section_header_" + key] = config_section_header(key, la, config)
+        context["section_header_" + key] = config_section_header(key, lang, config)
     # The hints used to sit in brackets after the label; under the field
     # they read as a sentence of their own.
     for key in context:
         if key.startswith("hint_"):
             context[key] = help_text(context[key])
-    contenuto = render.render("admin/config.html", **context)
+    content_html = render.render("admin/config.html", **context)
 
     page_data = {
         "page": "config",
@@ -2268,7 +2268,7 @@ def config_page(csrf):
         "home_content_en": config.get("home_content_en", ""),
         "card_contents": card_contents,
         # The pages offered by the window that chooses a point for code.
-        "articoli_punto": [{"slug": a["slug"], "title": a.get("title", "")}
+        "articles_for_point": [{"slug": a["slug"], "title": a.get("title", "")}
                            for a in load_articles() if a.get("status") == "published"][:30],
         "bio_content": biography["content"],
         "bio_content_en": biography["content_en"],
@@ -2284,8 +2284,8 @@ def config_page(csrf):
                     f'<script src="{BLOT_FORMATTER_JS}"></script>\n'
                     + codemirror_scripts())
 
-    return admin_page_shell(T("admin_settings_page", la), contenuto, la,
-                            csrf=csrf, navbar=admin_navbar("config", la),
+    return admin_page_shell(T("admin_settings_page", lang), content_html, lang,
+                            csrf=csrf, navbar=admin_navbar("config", lang),
                             head_extra=head_extra, script_extra=script_extra,
                             page_data=page_data, body_class="page-config")
 
@@ -2339,9 +2339,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         """
         self.send_header("Cache-Control", "no-store")
 
-    def _send(self, content, tipo="text/html", with_csp=True, sandbox=False):
+    def _send(self, content, mime_type="text/html", with_csp=True, sandbox=False):
         self.send_response(200)
-        self.send_header("Content-Type", f"{tipo}; charset=utf-8")
+        self.send_header("Content-Type", f"{mime_type}; charset=utf-8")
         self._no_store()
         self._security_headers(with_csp)
         if sandbox:
@@ -2383,8 +2383,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         pieces = cookie_header.split(";")
         for piece in pieces:
             piece = piece.strip()
-            if piece.startswith("sessione="):
-                return piece[len("sessione="):]
+            if piece.startswith("session="):
+                return piece[len("session="):]
         return None
 
     def _client_address(self):
@@ -2458,7 +2458,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         the flag is omitted, otherwise the browser would drop the cookie
         and login would silently stop working.
         """
-        cookie = "sessione=" + token + "; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax"
+        cookie = "session=" + token + "; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax"
         proto = self.headers.get("X-Forwarded-Proto", "")
         if proto == "https":
             cookie = cookie + "; Secure"
@@ -2561,14 +2561,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def _send_file(self, path_value, with_csp=False):
         """Send a file from disk as binary, with its content type."""
         data = path_value.read_bytes()
-        tipo = self._content_type_for(path_value)
-        if tipo.startswith("text/") or tipo in ("application/json",
+        mime_type = self._content_type_for(path_value)
+        if mime_type.startswith("text/") or mime_type in ("application/json",
                                                 "application/javascript",
                                                 "application/rss+xml",
                                                 "image/svg+xml"):
-            tipo = tipo + "; charset=utf-8"
+            mime_type = mime_type + "; charset=utf-8"
         self.send_response(200)
-        self.send_header("Content-Type", tipo)
+        self.send_header("Content-Type", mime_type)
         self.send_header("Content-Length", str(len(data)))
         self._security_headers(with_csp)
         self.end_headers()
@@ -2620,10 +2620,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_error(404, "File not found.")
             return
         if name.endswith(".css"):
-            tipo = "text/css"
+            mime_type = "text/css"
         else:
-            tipo = "text/javascript"
-        self._send(render.read_static(name), tipo, with_csp=False)
+            mime_type = "text/javascript"
+        self._send(render.read_static(name), mime_type, with_csp=False)
 
     # --- GET ----------------------------------------------------------------
 
@@ -2676,7 +2676,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
         if route == "/logout":
             destroy_session(self._read_cookie_token())
-            self._redirect("/login", cookie="sessione=; Max-Age=0; Path=/")
+            self._redirect("/login", cookie="session=; Max-Age=0; Path=/")
             return
 
         # --- Administration (authentication required) ---
@@ -2965,8 +2965,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         size = archive.tell()
         archive.seek(0)
         # File name with today's date.
-        oggi = datetime.now().strftime("%Y-%m-%d")
-        file_name = "pyblog-backup-" + oggi + ".zip"
+        today = datetime.now().strftime("%Y-%m-%d")
+        file_name = "pyblog-backup-" + today + ".zip"
 
         self.send_response(200)
         self.send_header("Content-Type", "application/zip")
@@ -2985,7 +2985,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         route = urllib.parse.urlparse(self.path).path
-        la = admin_language()
+        lang = admin_language()
         # One handler instance serves every request of a keep-alive
         # connection, so the form stashed by the CSRF check must not survive
         # into the next request.
@@ -3015,7 +3015,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
         # --- From here on everything requires authentication ---
         if not self._user_is_authenticated():
-            self._send_json({"ok": False, "error": T("err_unauthorized", la)})
+            self._send_json({"ok": False, "error": T("err_unauthorized", lang)})
             return
 
         # --- ...and a valid CSRF token ---
@@ -3025,9 +3025,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # every route, listed or not.
         if not self._csrf_token_ok(route):
             if route == "/change-password":
-                self._send(change_password_page(self._csrf(), T("err_csrf", la)))
+                self._send(change_password_page(self._csrf(), T("err_csrf", lang)))
             else:
-                self._send_json({"ok": False, "error": T("err_csrf", la)})
+                self._send_json({"ok": False, "error": T("err_csrf", lang)})
             return
 
         # The password change (a form) and the upload (multipart) have their
@@ -3106,14 +3106,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         videos can weigh hundreds of megabytes, and it goes straight to a
         temporary file next to the others instead of into memory.
         """
-        la = admin_language()
+        lang = admin_language()
         length = self._content_length(MAX_BACKUP_BODY)
         if length is None:
-            self._send_json({"ok": False, "error": T("err_file_too_large", la).replace(
+            self._send_json({"ok": False, "error": T("err_file_too_large", lang).replace(
                 "{n}", str(MAX_BACKUP_BODY // (1024 * 1024)))})
             return
         if length == 0:
-            self._send_json({"ok": False, "error": T("err_no_file_received", la)})
+            self._send_json({"ok": False, "error": T("err_no_file_received", lang)})
             return
         backup.BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
         descriptor, temporary = tempfile.mkstemp(dir=str(backup.BACKUPS_DIR), suffix=".caricato")
@@ -3127,7 +3127,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     target.write(chunk)
                     remaining -= len(chunk)
             if remaining > 0:
-                self._send_json({"ok": False, "error": T("err_malformed_upload", la)})
+                self._send_json({"ok": False, "error": T("err_malformed_upload", lang)})
                 return
             self._send_json(self._restore_from(pathlib.Path(temporary)))
         finally:
@@ -3139,10 +3139,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
         Install the update and restart. The site's backup is saved first,
         among the automatic ones of the restore page.
         """
-        la = admin_language()
+        lang = admin_language()
         result = updates.update(save_backup=backup.save_automatic_backup)
         if result.get("ok") is not True:
-            message = T(result.get("error", "upd_failed_upd"), la)
+            message = T(result.get("error", "upd_failed_upd"), lang)
             if result.get("detail"):
                 message = message + " " + result["detail"]
             return {"ok": False, "error": message}
@@ -3171,14 +3171,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         rebuild the site, all under the build lock: no save and no build can
         run in the middle.
         """
-        la = admin_language()
+        lang = admin_language()
         with BUILD_LOCK:
             try:
                 content = backup.read_backup(path_value)
                 saved = backup.save_automatic_backup()
                 summary = backup.restore_backup(content)
             except backup.BackupError as error:
-                return {"ok": False, "error": T(str(error), la)}
+                return {"ok": False, "error": T(str(error), lang)}
             reload_global_config()
             build()
         summary["ok"] = True
@@ -3258,14 +3258,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
         slug belongs to another article it gets a free one instead, and the
         editor is told so. A rename onto another article's slug is refused.
         """
-        la = admin_language()
+        lang = admin_language()
         old_slug = str(data.get("original_slug", "") or "").strip()
         with BUILD_LOCK:
             try:
                 new_slug = save_article(data, new_article=(old_slug == ""))
             except SlugTakenError as error:
                 return {"ok": False,
-                        "error": T("err_slug_taken", la).replace("{slug}", error.slug)}
+                        "error": T("err_slug_taken", lang).replace("{slug}", error.slug)}
             # If the slug has changed, remove the old file.
             if old_slug and old_slug != new_slug:
                 delete_article(old_slug)
@@ -3276,7 +3276,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                   "url": build_module.article_url({"slug": new_slug}, main_language())}
         wanted = requested_slug(data)
         if old_slug == "" and new_slug != wanted:
-            result["notice"] = (T("js_slug_was_taken", la)
+            result["notice"] = (T("js_slug_was_taken", lang)
                                 .replace("{slug}", wanted).replace("{new}", new_slug))
         return result
 
@@ -3298,9 +3298,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if new_language not in ("it", "en"):
             new_language = "it"
         with BUILD_LOCK:
-            config_attuale = load_config()
-            config_attuale["admin_language"] = new_language
-            save_config(config_attuale)
+            current_config = load_config()
+            current_config["admin_language"] = new_language
+            save_config(current_config)
             reload_global_config()
         return {"ok": True}
 
@@ -3359,24 +3359,24 @@ class Handler(http.server.BaseHTTPRequestHandler):
             # overwriting it. The form of the Settings page does not contain
             # ALL the fields (e.g. admin_language): without this merge, every
             # save would wipe them.
-            config_attuale = load_config()
+            current_config = load_config()
             # The moment the newsletter is switched on: only what is
             # published from then on goes to the subscribers.
-            nuova = data.get("newsletter")
-            if isinstance(nuova, dict):
-                vecchia = config_attuale.get("newsletter", {})
-                if not isinstance(vecchia, dict):
-                    vecchia = {}
-                since = vecchia.get("enabled_since", "")
-                if nuova.get("enabled") is True and since == "":
+            new_password = data.get("newsletter")
+            if isinstance(new_password, dict):
+                old_value = current_config.get("newsletter", {})
+                if not isinstance(old_value, dict):
+                    old_value = {}
+                since = old_value.get("enabled_since", "")
+                if new_password.get("enabled") is True and since == "":
                     since = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-                nuova["enabled_since"] = since
+                new_password["enabled_since"] = since
                 # An empty password field keeps the saved password.
-                if nuova.get("smtp_password", "") == "" and vecchia.get("smtp_password"):
-                    nuova["smtp_password"] = vecchia["smtp_password"]
+                if new_password.get("smtp_password", "") == "" and old_value.get("smtp_password"):
+                    new_password["smtp_password"] = old_value["smtp_password"]
             for key in data:
-                config_attuale[key] = data[key]
-            save_config(config_attuale)
+                current_config[key] = data[key]
+            save_config(current_config)
             reload_global_config()
             build()  # rebuilds the site with the new configuration
         return {"ok": True}
@@ -3387,7 +3387,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         We validate the JSON BEFORE saving: if it is malformed we reject it
         with a clear message, so the site does not break.
         """
-        la = admin_language()
+        lang = admin_language()
         config_text = data.get("content", "")
         # We try to parse the text as JSON: if it fails,
         # the error tells us the line and column of the problem.
@@ -3395,10 +3395,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             config_validata = json.loads(config_text)
         except json.JSONDecodeError as json_error:
             return {"ok": False,
-                    "error": T("err_invalid_json_prefix", la) + str(json_error)}
+                    "error": T("err_invalid_json_prefix", lang) + str(json_error)}
         # It must be an object (a dictionary), not a list or anything else.
         if not isinstance(config_validata, dict):
-            return {"ok": False, "error": T("err_config_must_be_object", la)}
+            return {"ok": False, "error": T("err_config_must_be_object", lang)}
         with BUILD_LOCK:
             save_config(config_validata)
             reload_global_config()
@@ -3443,18 +3443,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if password_is_set():
             self._redirect("/login")
             return
-        la = admin_language()
+        lang = admin_language()
         if not self._may_set_first_password():
-            self._send(set_password_page(T("err_setup_remote", la)))
+            self._send(set_password_page(T("err_setup_remote", lang)))
             return
         form = self._read_form()
         password = form.get("password", [""])[0]
-        confirmed = form.get("conferma", [""])[0]
+        confirmed = form.get("confirm", [""])[0]
         if password == "" or len(password) < 6:
-            self._send(set_password_page(T("err_password_too_short", la)))
+            self._send(set_password_page(T("err_password_too_short", lang)))
             return
         if password != confirmed:
-            self._send(set_password_page(T("err_passwords_dont_match_setup", la)))
+            self._send(set_password_page(T("err_passwords_dont_match_setup", lang)))
             return
         set_password(password)
         token = create_session_token()
@@ -3464,11 +3464,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
         """Verify the password and create a session."""
         # If there have been too many errors in a row, login is locked
         # for a few moments: it makes a brute-force attack pointless.
-        la = admin_language()
+        lang = admin_language()
         client = self._client_address()
         if login_is_locked(client):
             self._send(login_page(
-                T("err_too_many_attempts", la).replace("{n}", str(login_lock_remaining(client)))))
+                T("err_too_many_attempts", lang).replace("{n}", str(login_lock_remaining(client)))))
             return
         form = self._read_form()
         password = form.get("password", [""])[0]
@@ -3480,7 +3480,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             record_failed_login(client)
             # A small pause: it slows automated attempts down even further.
             time.sleep(0.5)
-            self._send(login_page(T("err_wrong_password", la)))
+            self._send(login_page(T("err_wrong_password", lang)))
 
     def _handle_change_password(self):
         """Change the password while logged in."""
@@ -3491,20 +3491,20 @@ class Handler(http.server.BaseHTTPRequestHandler):
             form = self._read_form()
         self._pending_form = None
 
-        attuale = form.get("attuale", [""])[0]
-        new_value = form.get("nuova", [""])[0]
-        confirmed = form.get("conferma", [""])[0]
-        la = admin_language()
+        typed_password = form.get("current", [""])[0]
+        new_value = form.get("new", [""])[0]
+        confirmed = form.get("confirm", [""])[0]
+        lang = admin_language()
         csrf = self._csrf()
 
-        if not verify_password(attuale):
-            self._send(change_password_page(csrf, T("err_current_password_wrong", la)))
+        if not verify_password(typed_password):
+            self._send(change_password_page(csrf, T("err_current_password_wrong", lang)))
             return
         if len(new_value) < 6:
-            self._send(change_password_page(csrf, T("err_new_password_too_short", la)))
+            self._send(change_password_page(csrf, T("err_new_password_too_short", lang)))
             return
         if new_value != confirmed:
-            self._send(change_password_page(csrf, T("err_new_passwords_dont_match", la)))
+            self._send(change_password_page(csrf, T("err_new_passwords_dont_match", lang)))
             return
 
         set_password(new_value)
@@ -3514,7 +3514,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         destroy_all_sessions()
         token = create_session_token()
         page = change_password_page(csrf_token_for(token), "",
-                                    T("success_password_changed", la))
+                                    T("success_password_changed", lang))
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Set-Cookie", self._session_cookie(token))
@@ -3532,20 +3532,20 @@ class Handler(http.server.BaseHTTPRequestHandler):
         an image, 100 MB for a video) is applied right after, once the file
         name tells us which kind of file this is.
         """
-        la = admin_language()
+        lang = admin_language()
         try:
             content_type = self.headers.get("Content-Type", "")
 
             # In a multipart body, the header contains the "boundary" that
             # separates the parts of the form. We extract it to split the body.
             if "boundary=" not in content_type:
-                self._send_json({"ok": False, "error": T("err_invalid_format", la)})
+                self._send_json({"ok": False, "error": T("err_invalid_format", lang)})
                 return
             boundary = content_type.split("boundary=")[1].strip()
             # A quoted boundary is legal: boundary="----abc".
             boundary = boundary.strip('"')
             if boundary == "":
-                self._send_json({"ok": False, "error": T("err_invalid_format", la)})
+                self._send_json({"ok": False, "error": T("err_invalid_format", lang)})
                 return
             boundary_bytes = ("--" + boundary).encode("utf-8")
 
@@ -3553,22 +3553,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if length is None:
                 self._send_json({
                     "ok": False,
-                    "error": T("err_file_too_large", la).replace(
+                    "error": T("err_file_too_large", lang).replace(
                         "{n}", str(MAX_UPLOAD_BODY // (1024 * 1024)))})
                 return
             body = self.rfile.read(length)
 
             file_name, file_data = self._parse_multipart_file(body, boundary_bytes)
             if file_name is None:
-                self._send_json({"ok": False, "error": T("err_malformed_upload", la)})
+                self._send_json({"ok": False, "error": T("err_malformed_upload", lang)})
                 return
             if file_name == "":
-                self._send_json({"ok": False, "error": T("err_no_file_received", la)})
+                self._send_json({"ok": False, "error": T("err_no_file_received", lang)})
                 return
 
             check = validate_upload(file_name, file_data)
             if not check["ok"]:
-                message = T(check["error_key"], la)
+                message = T(check["error_key"], lang)
                 if "limit_mb" in check:
                     message = message.replace("{n}", str(check["limit_mb"]))
                 self._send_json({"ok": False, "error": message})
@@ -3576,7 +3576,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
             url = save_uploaded_file(file_name, check["data"])
             self._send_json({"ok": True, "url": url,
-                             "note": optimisation_note(check.get("optimisation"), la)})
+                             "note": optimisation_note(check.get("optimisation"), lang)})
 
         except Exception as e:
             self._send_json({"ok": False, "error": str(e)})
@@ -3591,22 +3591,22 @@ class Handler(http.server.BaseHTTPRequestHandler):
         must be a ZIP signature: a .doc, a PDF or a renamed executable is
         refused before the converter ever sees it.
         """
-        la = admin_language()
+        lang = admin_language()
         try:
             content_type = self.headers.get("Content-Type", "")
             if "boundary=" not in content_type:
-                self._send_json({"ok": False, "error": T("err_invalid_format", la)})
+                self._send_json({"ok": False, "error": T("err_invalid_format", lang)})
                 return
             boundary = content_type.split("boundary=")[1].strip().strip('"')
             if boundary == "":
-                self._send_json({"ok": False, "error": T("err_invalid_format", la)})
+                self._send_json({"ok": False, "error": T("err_invalid_format", lang)})
                 return
 
             length = self._content_length(MAX_DOCX_BODY)
             if length is None:
                 self._send_json({
                     "ok": False,
-                    "error": T("err_file_too_large", la).replace(
+                    "error": T("err_file_too_large", lang).replace(
                         "{n}", str(MAX_DOCX_BODY // (1024 * 1024)))})
                 return
             body = self.rfile.read(length)
@@ -3614,16 +3614,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
             file_name, file_data = self._parse_multipart_file(
                 body, ("--" + boundary).encode("utf-8"))
             if file_name is None:
-                self._send_json({"ok": False, "error": T("err_malformed_upload", la)})
+                self._send_json({"ok": False, "error": T("err_malformed_upload", lang)})
                 return
             if file_name == "":
-                self._send_json({"ok": False, "error": T("err_no_file_received", la)})
+                self._send_json({"ok": False, "error": T("err_no_file_received", lang)})
                 return
             if not file_name.lower().endswith(".docx"):
-                self._send_json({"ok": False, "error": T("js_docx_wrong_extension", la)})
+                self._send_json({"ok": False, "error": T("js_docx_wrong_extension", lang)})
                 return
             if not looks_like_docx(file_data):
-                self._send_json({"ok": False, "error": T("err_docx_not_a_zip", la)})
+                self._send_json({"ok": False, "error": T("err_docx_not_a_zip", lang)})
                 return
 
             fallback_title = file_name.rsplit(".", 1)[0]
@@ -3633,7 +3633,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 result = convert_docx(file_data, fallback_title=fallback_title)
 
             if not result["ok"]:
-                self._send_json({"ok": False, "error": T(result["error_key"], la)})
+                self._send_json({"ok": False, "error": T(result["error_key"], lang)})
                 return
 
             self._send_json({
@@ -3641,7 +3641,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 "title": result["title"],
                 "subtitle": result.get("subtitle", ""),
                 "content": result["content"],
-                "warnings": translate_warnings(result["warnings"], la),
+                "warnings": translate_warnings(result["warnings"], lang),
             })
         except Exception as error:
             self._send_json({"ok": False, "error": str(error)})
@@ -3659,32 +3659,32 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return None, b""
 
         blocks = body.split(boundary_bytes)
-        separatore = b"\r\n\r\n"
+        separator = b"\r\n\r\n"
 
         for block in blocks:
             if b"filename=" not in block:
                 continue
             # We separate the block headers from the binary content.
             # They are divided by an empty line (\r\n\r\n).
-            posizione = block.find(separatore)
-            if posizione == -1:
+            found_at = block.find(separator)
+            if found_at == -1:
                 continue
-            intestazioni = block[:posizione].decode("utf-8", "ignore")
-            content = block[posizione + len(separatore):]
+            header_lines = block[:found_at].decode("utf-8", "ignore")
+            content = block[found_at + len(separator):]
 
             # We remove the trailing \r\n that precedes the next boundary.
             if content.endswith(b"\r\n"):
                 content = content[:-2]
 
             # We extract the file name from the header.
-            pieces = intestazioni.split('filename="')
+            pieces = header_lines.split('filename="')
             if len(pieces) < 2:
                 continue
-            resto = pieces[1]
-            end = resto.find('"')
+            rest = pieces[1]
+            end = rest.find('"')
             if end == -1:
                 return None, b""
-            return resto[:end], content
+            return rest[:end], content
 
         return "", b""
 

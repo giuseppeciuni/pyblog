@@ -415,13 +415,13 @@ def migrate_config_schema(data):
 
     # Nested: homepage cards.
     if isinstance(converted.get("home_cards"), list):
-        nuove = []
+        new_cards = []
         for card in converted["home_cards"]:
             if isinstance(card, dict):
-                nuove.append({OLD_CARD_KEYS.get(k, k): card[k] for k in card})
+                new_cards.append({OLD_CARD_KEYS.get(k, k): card[k] for k in card})
             else:
-                nuove.append(card)
-        converted["home_cards"] = nuove
+                new_cards.append(card)
+        converted["home_cards"] = new_cards
 
     # Values: comment system and homepage section order.
     if converted.get("comments") in OLD_COMMENT_VALUES:

@@ -52,23 +52,23 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def titolo_pagina(page_html):
+def page_title(page_html):
     """The h1 of the article (the last h1: the site title may come first)."""
-    titoli = re.findall(r"<h1[^>]*>(.*?)</h1>", page_html, re.DOTALL)
-    if len(titoli) == 0:
+    titles = re.findall(r"<h1[^>]*>(.*?)</h1>", page_html, re.DOTALL)
+    if len(titles) == 0:
         return ""
-    return re.sub(r"<[^>]+>", "", titoli[-1]).strip()
+    return re.sub(r"<[^>]+>", "", titles[-1]).strip()
 
 
 def test_article_pages():
     print("\npagine dell'articolo con l'inglese come lingua principale")
     CONFIG["language"] = "en"
-    principale = build.generate_article_page(ARTICLE_FIXTURE, "en", [ARTICLE_FIXTURE])
+    main_html = build.generate_article_page(ARTICLE_FIXTURE, "en", [ARTICLE_FIXTURE])
     translated = build.generate_article_page(ARTICLE_FIXTURE, "it", [ARTICLE_FIXTURE])
     check("alla radice il titolo e' quello in cui l'articolo e' scritto",
-          titolo_pagina(principale) == "How an LLM writes", titolo_pagina(principale))
+          page_title(main_html) == "How an LLM writes", page_title(main_html))
     check("nella sottocartella c'e' la traduzione",
-          titolo_pagina(translated) == "Come scrive un LLM", titolo_pagina(translated))
+          page_title(translated) == "Come scrive un LLM", page_title(translated))
     check("e il testo tradotto", "Un modello indovina" in translated)
 
     home = build.generate_homepage([ARTICLE_FIXTURE], "en", 1, 1)
@@ -78,9 +78,9 @@ def test_article_pages():
     check("la home tradotta mostra il titolo tradotto", "Come scrive un LLM" in home_it)
 
     CONFIG["language"] = "it"
-    principale = build.generate_article_page(ARTICLE_FIXTURE, "it", [ARTICLE_FIXTURE])
+    main_html = build.generate_article_page(ARTICLE_FIXTURE, "it", [ARTICLE_FIXTURE])
     check("con l'italiano principale tutto resta com'era",
-          titolo_pagina(principale) == "How an LLM writes")
+          page_title(main_html) == "How an LLM writes")
 
 
 def test_search_knows_which_language_is_translated():
@@ -114,7 +114,7 @@ def test_comments_in_page_language():
 def test_translation_direction():
     print("\ntraduzione automatica")
     seen = []
-    originale = ai.translate_with_deepl
+    original = ai.translate_with_deepl
 
     def fake(text, api_key, source="it", target="en"):
         seen.append((source, target))
@@ -129,14 +129,14 @@ def test_translation_direction():
         CONFIG["language"] = "en"
         ai.translate_text("<p>hello</p>")
     finally:
-        ai.translate_with_deepl = originale
+        ai.translate_with_deepl = original
         CONFIG["translation"] = old_translation
         CONFIG["language"] = "it"
     check("sito italiano: dall'italiano all'inglese", seen[0] == ("it", "en"), str(seen))
     check("sito inglese: dall'inglese all'italiano", seen[1] == ("en", "it"), str(seen))
-    istruzione = ai.translation_instruction("<p>x</p>", "en", "it")
+    instruction = ai.translation_instruction("<p>x</p>", "en", "it")
     check("il modello linguistico riceve la direzione giusta",
-          "from English to Italian" in istruzione)
+          "from English to Italian" in instruction)
 
 
 def test_editor_labels():
@@ -166,10 +166,10 @@ def test_editor_labels():
 
 def test_main_language_is_a_choice():
     print("\nimpostazioni")
-    originale = server.load_config
+    original = server.load_config
 
     def english_config():
-        values = originale()
+        values = original()
         values["language"] = "en"
         return values
 
@@ -177,7 +177,7 @@ def test_main_language_is_a_choice():
     try:
         page_html = server.config_page("TOKEN")
     finally:
-        server.load_config = originale
+        server.load_config = original
     check("la lingua principale si sceglie da un menu",
           re.search(r'<select[^>]* id="language"', page_html) is not None)
     check("con l'inglese gia' selezionato",
@@ -185,7 +185,7 @@ def test_main_language_is_a_choice():
 
 
 def main():
-    lingua = CONFIG.get("language", "it")
+    language = CONFIG.get("language", "it")
     try:
         test_article_pages()
         test_search_knows_which_language_is_translated()
@@ -194,7 +194,7 @@ def main():
         test_editor_labels()
         test_main_language_is_a_choice()
     finally:
-        CONFIG["language"] = lingua
+        CONFIG["language"] = language
     print(f"\n{PASSED} passed, {FAILED} failed")
     if FAILED > 0:
         sys.exit(1)

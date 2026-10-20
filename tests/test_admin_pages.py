@@ -61,30 +61,30 @@ class CollectorHandler(html.parser.HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         self.tags_seen.append(tag)
-        for nome, value in attrs:
-            if nome.startswith("on"):
-                self.handler.append((nome, value))
-            elif value is None and ("(" in nome or ")" in nome or '"' in nome):
+        for name, value in attrs:
+            if name.startswith("on"):
+                self.handler.append((name, value))
+            elif value is None and ("(" in name or ")" in name or '"' in name):
                 # An attribute NAME that looks like code is what a value
                 # escaping its own quotes leaves behind.
-                self.stray_attributes.append(nome)
+                self.stray_attributes.append(name)
 
     handle_startendtag = handle_starttag
 
 
-def handler_problems(testo):
+def handler_problems(text):
     """Return the list of broken event handlers in a page."""
     parser = CollectorHandler()
-    parser.feed(testo)
+    parser.feed(text)
     problems = []
-    for nome, value in parser.handler:
+    for name, value in parser.handler:
         if value is None:
-            problems.append(f"{nome} senza valore")
+            problems.append(f"{name} senza valore")
             continue
         if value.count("(") != value.count(")"):
-            problems.append(f'{nome}="{value}" parentesi sbilanciate')
+            problems.append(f'{name}="{value}" parentesi sbilanciate')
         elif not value.rstrip().endswith((")", ";")):
-            problems.append(f'{nome}="{value}" troncato')
+            problems.append(f'{name}="{value}" troncato')
     for stray in parser.stray_attributes:
         problems.append(f"attributo spurio {stray!r}")
     return problems, len(parser.handler)
@@ -106,11 +106,11 @@ def admin_pages():
 def test_handlers_intact():
     """Every inline handler must survive the HTML parser whole."""
     print("\nevent handler")
-    for lingua in ("it", "en"):
-        config.CONFIG["admin_language"] = lingua
-        for nome, testo in admin_pages().items():
-            problems, how_many = handler_problems(testo)
-            check(f"{lingua} / {nome}: {how_many} handler intatti",
+    for language in ("it", "en"):
+        config.CONFIG["admin_language"] = language
+        for name, text in admin_pages().items():
+            problems, how_many = handler_problems(text)
+            check(f"{language} / {name}: {how_many} handler intatti",
                   len(problems) == 0, "; ".join(problems[:3]))
     config.CONFIG["admin_language"] = "it"
 
@@ -156,12 +156,12 @@ def test_json_iniettato():
     import json
     import re
     print("\nblocchi JSON iniettati")
-    for lingua in ("it", "en"):
-        config.CONFIG["admin_language"] = lingua
-        for nome, testo in admin_pages().items():
+    for language in ("it", "en"):
+        config.CONFIG["admin_language"] = language
+        for name, text in admin_pages().items():
             ok = True
-            for etichetta in ("PB_I18N", "PB_CSRF", "PB_PAGE"):
-                found = re.search(r"window\." + etichetta + r" = (.*?);\n", testo, re.S)
+            for label in ("PB_I18N", "PB_CSRF", "PB_PAGE"):
+                found = re.search(r"window\." + label + r" = (.*?);\n", text, re.S)
                 if found is None:
                     ok = False
                     continue
@@ -169,7 +169,7 @@ def test_json_iniettato():
                     json.loads(found.group(1).replace("<\\/", "</"))
                 except ValueError:
                     ok = False
-            check(f"{lingua} / {nome}: i tre blocchi sono JSON valido", ok)
+            check(f"{language} / {name}: i tre blocchi sono JSON valido", ok)
     config.CONFIG["admin_language"] = "it"
 
 
@@ -177,11 +177,11 @@ def test_no_placeholder_left():
     """A template placeholder left behind means a missing value."""
     import re
     print("\nsegnaposto dei template")
-    for lingua in ("it", "en"):
-        config.CONFIG["admin_language"] = lingua
-        for nome, testo in admin_pages().items():
-            remaining = set(re.findall(r"\$\{?[a-z_]{3,}\}?", testo))
-            check(f"{lingua} / {nome}: nessun $segnaposto", len(remaining) == 0, str(remaining))
+    for language in ("it", "en"):
+        config.CONFIG["admin_language"] = language
+        for name, text in admin_pages().items():
+            remaining = set(re.findall(r"\$\{?[a-z_]{3,}\}?", text))
+            check(f"{language} / {name}: nessun $segnaposto", len(remaining) == 0, str(remaining))
     config.CONFIG["admin_language"] = "it"
 
 

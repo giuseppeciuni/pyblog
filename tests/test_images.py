@@ -52,20 +52,20 @@ def paeth(a, b, c):
     return c
 
 
-def apply_filter(tipo, line, precedente, bpp):
+def apply_filter(kind_value, line, previous, bpp):
     """Apply a PNG scanline filter, the forward direction."""
     out = bytearray(len(line))
     for i in range(len(line)):
         left = line[i - bpp] if i >= bpp else 0
-        above = precedente[i]
-        above_left = precedente[i - bpp] if i >= bpp else 0
-        if tipo == 0:
+        above = previous[i]
+        above_left = previous[i - bpp] if i >= bpp else 0
+        if kind_value == 0:
             out[i] = line[i]
-        elif tipo == 1:
+        elif kind_value == 1:
             out[i] = (line[i] - left) & 0xFF
-        elif tipo == 2:
+        elif kind_value == 2:
             out[i] = (line[i] - above) & 0xFF
-        elif tipo == 3:
+        elif kind_value == 3:
             out[i] = (line[i] - ((left + above) >> 1)) & 0xFF
         else:
             out[i] = (line[i] - paeth(left, above, above_left)) & 0xFF
@@ -78,11 +78,11 @@ def build_png(width, height, channels, lines, filter_value=0, bit_depth=8,
     if colour_type is None:
         colour_type = {1: 0, 2: 4, 3: 2, 4: 6}[channels]
     raw = bytearray()
-    precedente = bytes(width * channels)
+    previous = bytes(width * channels)
     for line in lines:
         raw.append(filter_value)
-        raw.extend(apply_filter(filter_value, line, precedente, channels))
-        precedente = line
+        raw.extend(apply_filter(filter_value, line, previous, channels))
+        previous = line
 
     def chunk(kind, payload):
         return (struct.pack(">I", len(payload)) + kind + payload
@@ -209,7 +209,7 @@ def test_never_larger():
 def test_pixel_ceiling():
     """Beyond the budget the file is kept, with a reason."""
     print("\ntetto di pixel")
-    originale = images.MAX_RESIZE_PIXELS
+    original = images.MAX_RESIZE_PIXELS
     try:
         images.MAX_RESIZE_PIXELS = 100          # tiny, so the fixture stays small
         large = build_png(60, 40, 3, test_lines(60, 40, 3))
@@ -218,7 +218,7 @@ def test_pixel_ceiling():
         check("e il motivo e' il tetto", outcome["reason"] == "too_many_pixels", str(outcome))
         check("i byte sono quelli di partenza", outcome["data"] == large)
     finally:
-        images.MAX_RESIZE_PIXELS = originale
+        images.MAX_RESIZE_PIXELS = original
 
 
 def test_jpeg_metadata():

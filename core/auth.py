@@ -114,26 +114,26 @@ def verify_password(password):
     if not PASSWORD_FILE.exists():
         return False
     content = PASSWORD_FILE.read_text(encoding="utf-8").strip()
-    parti = content.split(":")
+    parts = content.split(":")
 
-    if len(parti) == 3 and parti[0] == "pbkdf2":
+    if len(parts) == 3 and parts[0] == "pbkdf2":
         # New format: pbkdf2:salt:digest
-        salt = parti[1]
-        stored_digest = parti[2]
+        salt = parts[1]
+        stored_digest = parts[2]
         computed_digest = compute_pbkdf2_hash(password, salt)
         return secrets.compare_digest(computed_digest, stored_digest)
 
-    if len(parti) == 2:
+    if len(parts) == 2:
         # Old format: salt:digest (plain SHA-256).
-        salt = parti[0]
-        stored_digest = parti[1]
+        salt = parts[0]
+        stored_digest = parts[1]
         computed_digest = compute_legacy_password_hash(password, salt)
-        corretta = secrets.compare_digest(computed_digest, stored_digest)
-        if corretta:
+        correct = secrets.compare_digest(computed_digest, stored_digest)
+        if correct:
             # Automatic migration to the new format, now that we know
             # the password in clear text (only in memory, during login).
             set_password(password)
-        return corretta
+        return correct
 
     return False
 
@@ -232,11 +232,11 @@ def _purge_expired_sessions():
     The caller must already hold _SESSION_LOCK.
     """
     now = time.time()
-    scaduti = []
+    expired = []
     for token in ACTIVE_SESSIONS:
         if now - ACTIVE_SESSIONS[token]["created"] > SESSION_MAX_AGE:
-            scaduti.append(token)
-    for token in scaduti:
+            expired.append(token)
+    for token in expired:
         del ACTIVE_SESSIONS[token]
 
 

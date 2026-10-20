@@ -57,6 +57,7 @@ LEGACY_PUBLIC_NAMES = {
     "esplora-lista": "explore-list-box",
     "hljs-tema": "hljs-theme",
     "home-biografia": "home-biography",
+    "home-progetti": "home-projects",
     "home-sezione": "home-section",
     "home-sezione-titolo": "home-section-title",
     "icona": "icon",

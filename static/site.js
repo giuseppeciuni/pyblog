@@ -24,10 +24,10 @@
   document.documentElement.classList.add('js');
   try {
     // The theme was saved as pb-tema before the names went English.
-    var salvato = localStorage.getItem('pb-theme') || localStorage.getItem('pb-tema');
-    if (salvato === 'dark') {
+    var savedValue = localStorage.getItem('pb-theme') || localStorage.getItem('pb-tema');
+    if (savedValue === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark');
-    } else if (salvato === null && window.matchMedia
+    } else if (savedValue === null && window.matchMedia
                && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       // No saved choice: we respect the system preference.
       document.documentElement.setAttribute('data-theme', 'dark');
@@ -40,8 +40,8 @@
 function updateCodeTheme() {
   var link = document.getElementById('hljs-theme');
   if (!link) { return; }
-  var scuro = document.documentElement.getAttribute('data-theme') === 'dark';
-  if (scuro) {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (dark) {
     link.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css';
   } else {
     link.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css';
@@ -50,8 +50,8 @@ function updateCodeTheme() {
 
 // Switches between light and dark theme and saves the choice.
 function toggleTheme() {
-  var attuale = document.documentElement.getAttribute('data-theme');
-  if (attuale === 'dark') {
+  var current = document.documentElement.getAttribute('data-theme');
+  if (current === 'dark') {
     document.documentElement.removeAttribute('data-theme');
     try { localStorage.setItem('pb-theme', 'light'); } catch (e) { }
   } else {
@@ -70,8 +70,8 @@ document.addEventListener('DOMContentLoaded', updateCodeTheme);
 // We only colour the blocks when the library is really there.
 document.addEventListener('DOMContentLoaded', function() {
   if (!window.hljs) { return; }
-  document.querySelectorAll('pre.ql-syntax').forEach(function(blocco) {
-    hljs.highlightElement(blocco);
+  document.querySelectorAll('pre.ql-syntax').forEach(function(blockEl) {
+    hljs.highlightElement(blockEl);
   });
 });
 
@@ -81,39 +81,39 @@ document.addEventListener('DOMContentLoaded', function() {
 // It shows a snippet of the context around the searched word, with
 // highlighting. It searches both languages. A 100% static site.
 document.addEventListener('DOMContentLoaded', function() {
-  var opzioni = window.PB_SITE;
-  if (!opzioni) { return; }
+  var options = window.PB_SITE;
+  if (!options) { return; }
 
   var input = document.getElementById('search-box-input');
   var info = document.getElementById('search-box-info');
-  var lista = document.getElementById('list-box-articles');
-  if (!input || !info || !lista) { return; }
-  if (opzioni.post_prefix === undefined) { return; }
+  var itemList = document.getElementById('list-box-articles');
+  if (!input || !info || !itemList) { return; }
+  if (options.post_prefix === undefined) { return; }
 
   // The list exactly as the generator wrote it. When the box is emptied it
   // goes back as it was, lead row and all: rebuilding it from the index used
   // to give back cards with a different excerpt, and on the translated
   // homepage with the excerpt of the other language.
-  var listaOriginale = lista.innerHTML;
-  var paginazione = document.querySelector('.pagination');
+  var originalList = itemList.innerHTML;
+  var pagination = document.querySelector('.pagination');
 
-  var indice = [];
+  var idx = [];
 
   // Variables that depend on the page language (injected from Python).
-  var LINGUA_PAGINA = opzioni.language;
+  var PAGE_LANGUAGE = options.language;
   // True on the pages of the translation. The _en fields of the index hold
   // the translated version, whichever language that is: on a site written in
   // English they are the Italian one.
-  var SECONDARIA = opzioni.secondary === true;
-  var PREFISSO_POST = opzioni.post_prefix;
-  var PREFISSO_TAG = opzioni.tag_prefix;
-  var MSG_SEARCH_UNAVAILABLE = opzioni.msg_unavailable;
-  var MSG_NO_RESULTS_FOR = opzioni.msg_no_results;
-  var MSG_RESULTS_FOR = opzioni.msg_results_for;
+  var SECONDARY = options.secondary === true;
+  var POST_PREFIX = options.post_prefix;
+  var TAG_PREFIX = options.tag_prefix;
+  var MSG_SEARCH_UNAVAILABLE = options.msg_unavailable;
+  var MSG_NO_RESULTS_FOR = options.msg_no_results;
+  var MSG_RESULTS_FOR = options.msg_results_for;
 
   // Returns the date formatted in the page language.
   function articleDate(a) {
-    if (LINGUA_PAGINA === 'en' && a.date_en) {
+    if (PAGE_LANGUAGE === 'en' && a.date_en) {
       return a.date_en;
     }
     return a.date_it;
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Returns the right title based on the page language.
   function articleTitle(a) {
-    if (SECONDARIA && a.title_en) {
+    if (SECONDARY && a.title_en) {
       return a.title_en;
     }
     return a.title;
@@ -129,19 +129,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // The reading time and the opening of the text, in the page language.
   function articleReading(a) {
-    if (SECONDARIA && a.reading_en) { return a.reading_en; }
+    if (SECONDARY && a.reading_en) { return a.reading_en; }
     return a.reading;
   }
 
   function articleExcerpt(a) {
-    if (SECONDARIA && a.excerpt_en) { return a.excerpt_en; }
+    if (SECONDARY && a.excerpt_en) { return a.excerpt_en; }
     return a.excerpt;
   }
 
   // Tells whether an article should be shown in this language.
   // On the translated home we only show articles with a confirmed translation.
   function articleIsVisible(a) {
-    if (SECONDARIA) {
+    if (SECONDARY) {
       return a.has_en === true;
     }
     return true;
@@ -151,12 +151,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // readers here with ?q=..., so once the index is in we run that query.
   fetch('/search-index.json')
     .then(function(r) { return r.json(); })
-    .then(function(dati) {
-      indice = dati;
-      var iniziale = queryFromUrl();
-      if (iniziale !== '') {
-        input.value = iniziale;
-        searchArticles(iniziale);
+    .then(function(payload) {
+      idx = payload;
+      var initial = queryFromUrl();
+      if (initial !== '') {
+        input.value = initial;
+        searchArticles(initial);
         input.focus();
       }
     })
@@ -165,10 +165,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Reads the q parameter of the address, if there is one.
   function queryFromUrl() {
     try {
-      var parametri = new URLSearchParams(window.location.search);
-      var valore = parametri.get('q');
-      if (valore === null) { return ''; }
-      return valore;
+      var params = new URLSearchParams(window.location.search);
+      var val = params.get('q');
+      if (val === null) { return ''; }
+      return val;
     } catch (e) {
       return '';
     }
@@ -183,101 +183,101 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Bolds the occurrences of the term in a text (already made safe).
-  function highlight(testoSicuro, termine) {
-    var testoNorm = normalizeText(testoSicuro);
-    var termineNorm = normalizeText(termine);
-    var risultato = '';
-    var posizione = 0;
-    var trovato = testoNorm.indexOf(termineNorm, posizione);
-    while (trovato !== -1) {
-      risultato = risultato + testoSicuro.substring(posizione, trovato);
-      risultato = risultato + '<mark>' +
-        testoSicuro.substring(trovato, trovato + termine.length) + '</mark>';
-      posizione = trovato + termine.length;
-      trovato = testoNorm.indexOf(termineNorm, posizione);
+  function highlight(safeText, term) {
+    var textNorm = normalizeText(safeText);
+    var termNorm = normalizeText(term);
+    var resultValue = '';
+    var placement = 0;
+    var found = textNorm.indexOf(termNorm, placement);
+    while (found !== -1) {
+      resultValue = resultValue + safeText.substring(placement, found);
+      resultValue = resultValue + '<mark>' +
+        safeText.substring(found, found + term.length) + '</mark>';
+      placement = found + term.length;
+      found = textNorm.indexOf(termNorm, placement);
     }
-    risultato = risultato + testoSicuro.substring(posizione);
-    return risultato;
+    resultValue = resultValue + safeText.substring(placement);
+    return resultValue;
   }
 
   // Derives a text snippet around the first occurrence of the term.
-  function extractSnippet(testo, termine) {
-    var testoNorm = normalizeText(testo);
-    var termineNorm = normalizeText(termine);
-    var posizione = testoNorm.indexOf(termineNorm);
-    if (posizione === -1) {
+  function extractSnippet(textValue, term) {
+    var textNorm = normalizeText(textValue);
+    var termNorm = normalizeText(term);
+    var placement = textNorm.indexOf(termNorm);
+    if (placement === -1) {
       return '';
     }
     // We take a bit of text before and after the word we found.
-    var inizio = posizione - 60;
-    if (inizio < 0) {
-      inizio = 0;
+    var startAt = placement - 60;
+    if (startAt < 0) {
+      startAt = 0;
     }
-    var fine = posizione + termine.length + 60;
-    if (fine > testo.length) {
-      fine = testo.length;
+    var endAt = placement + term.length + 60;
+    if (endAt > textValue.length) {
+      endAt = textValue.length;
     }
-    var frammento = testo.substring(inizio, fine);
-    if (inizio > 0) {
-      frammento = '…' + frammento;
+    var fragment = textValue.substring(startAt, endAt);
+    if (startAt > 0) {
+      fragment = '…' + fragment;
     }
-    if (fine < testo.length) {
-      frammento = frammento + '…';
+    if (endAt < textValue.length) {
+      fragment = fragment + '…';
     }
     // We make the text safe and then highlight the term.
-    return highlight(escapeHtml(frammento), termine);
+    return highlight(escapeHtml(fragment), term);
   }
 
   function searchArticles(q) {
-    var termine = q.trim();
-    var termineNorm = normalizeText(termine);
-    if (termineNorm === '') {
+    var term = q.trim();
+    var termNorm = normalizeText(term);
+    if (termNorm === '') {
       // Empty query: the list goes back exactly as the page had it.
       info.textContent = '';
-      lista.innerHTML = listaOriginale;
-      if (paginazione) { paginazione.hidden = false; }
+      itemList.innerHTML = originalList;
+      if (pagination) { pagination.hidden = false; }
       return;
     }
     // The pages of the pagination are pages of the full list; a list of
     // results has none.
-    if (paginazione) { paginazione.hidden = true; }
+    if (pagination) { pagination.hidden = true; }
 
     // For each article we check where the term appears.
-    var risultati = [];
-    for (var i = 0; i < indice.length; i++) {
-      var a = indice[i];
+    var results = [];
+    for (var i = 0; i < idx.length; i++) {
+      var a = idx[i];
       // On the translated home we skip the articles with no translation.
       if (articleIsVisible(a) === false) {
         continue;
       }
-      var inTitolo = normalizeText(a.title).includes(termineNorm);
-      var inDescr = normalizeText(a.description).includes(termineNorm);
-      var inTags = normalizeText(a.tags).includes(termineNorm);
-      var inTesto = normalizeText(a.text).includes(termineNorm);
-      var inTestoEn = normalizeText(a.text_en).includes(termineNorm);
-      var inTitoloEn = normalizeText(a.title_en).includes(termineNorm);
+      var inTitle = normalizeText(a.title).includes(termNorm);
+      var inDescription = normalizeText(a.description).includes(termNorm);
+      var inTags = normalizeText(a.tags).includes(termNorm);
+      var inText = normalizeText(a.text).includes(termNorm);
+      var inTextEn = normalizeText(a.text_en).includes(termNorm);
+      var inTitleEn = normalizeText(a.title_en).includes(termNorm);
 
-      if (inTitolo || inDescr || inTags || inTesto || inTestoEn || inTitoloEn) {
+      if (inTitle || inDescription || inTags || inText || inTextEn || inTitleEn) {
         // We build the snippet from the point where the word was found.
         var snippet = '';
-        if (SECONDARIA && inTestoEn) {
-          snippet = extractSnippet(a.text_en, termine);
-        } else if (inTesto) {
-          snippet = extractSnippet(a.text, termine);
-        } else if (inTestoEn) {
-          snippet = extractSnippet(a.text_en, termine);
-        } else if (inDescr) {
-          snippet = extractSnippet(a.description, termine);
+        if (SECONDARY && inTextEn) {
+          snippet = extractSnippet(a.text_en, term);
+        } else if (inText) {
+          snippet = extractSnippet(a.text, term);
+        } else if (inTextEn) {
+          snippet = extractSnippet(a.text_en, term);
+        } else if (inDescription) {
+          snippet = extractSnippet(a.description, term);
         }
-        risultati.push({ articolo: a, snippet: snippet });
+        results.push({ article: a, snippet: snippet });
       }
     }
 
-    renderResults(risultati, termine);
-    if (risultati.length === 0) {
-      info.textContent = MSG_NO_RESULTS_FOR + ' "' + termine + '".';
+    renderResults(results, term);
+    if (results.length === 0) {
+      info.textContent = MSG_NO_RESULTS_FOR + ' "' + term + '".';
     } else {
-      info.textContent = risultati.length + ' ' + MSG_RESULTS_FOR + ' "' + termine + '".';
+      info.textContent = results.length + ' ' + MSG_RESULTS_FOR + ' "' + term + '".';
     }
   }
 
@@ -288,23 +288,23 @@ document.addEventListener('DOMContentLoaded', function() {
   // search box: any difference here would show up as the page changing shape
   // mid-search.
   //
-  // titoloHtml arrives ready: the results highlight the search term inside
-  // it. testoSotto is the snippet around the term, or the opening of the
+  // titleHtml arrives ready: the results highlight the search term inside
+  // it. textBelow is the snippet around the term, or the opening of the
   // article when the term was only in the title.
-  function rowHtml(a, titoloHtml, testoSotto) {
-    var miniatura = '<span class="art-tile">' + escapeHtml(a.tile) + '</span>';
+  function rowHtml(a, titleHtml, textBelow) {
+    var thumbnail = '<span class="art-tile">' + escapeHtml(a.tile) + '</span>';
     if (a.image) {
-      miniatura = '<img class="art-thumb-img" src="' + escapeHtml(a.image) +
+      thumbnail = '<img class="art-thumb-img" src="' + escapeHtml(a.image) +
                   '" alt="" loading="lazy">';
     }
-    var indirizzo = PREFISSO_POST + a.slug + '.html';
+    var address = POST_PREFIX + a.slug + '.html';
     return '<article class="art-row">' +
-      '<div class="art-thumb" aria-hidden="true">' + miniatura + '</div>' +
+      '<div class="art-thumb" aria-hidden="true">' + thumbnail + '</div>' +
       '<div class="art-body">' +
       tagsHtml(a) +
-      '<h3 class="art-title"><a href="' + indirizzo + '">' + titoloHtml + '</a></h3>' +
+      '<h3 class="art-title"><a href="' + address + '">' + titleHtml + '</a></h3>' +
       '<p class="art-meta">' + articleDate(a) + ' &middot; ' + escapeHtml(articleReading(a)) + '</p>' +
-      testoSotto +
+      textBelow +
       '</div></article>';
   }
 
@@ -313,28 +313,28 @@ document.addEventListener('DOMContentLoaded', function() {
   // a second version of that rule in JavaScript would drift.
   function tagsHtml(a) {
     if (!a.tag_links || a.tag_links.length === 0) { return ''; }
-    var pezzi = '';
+    var pieces = '';
     for (var i = 0; i < a.tag_links.length; i++) {
       var tag = a.tag_links[i];
-      pezzi = pezzi + '<a class="art-tag" href="' + PREFISSO_TAG +
+      pieces = pieces + '<a class="art-tag" href="' + TAG_PREFIX +
               escapeHtml(tag.slug) + '.html">#' + escapeHtml(tag.name) + '</a>';
     }
-    return '<p class="art-tags">' + pezzi + '</p>';
+    return '<p class="art-tags">' + pieces + '</p>';
   }
 
   // Shows the search results, with highlighted title and snippet.
-  function renderResults(risultati, termine) {
+  function renderResults(results, term) {
     var html = '';
-    for (var i = 0; i < risultati.length; i++) {
-      var a = risultati[i].articolo;
-      var snippet = risultati[i].snippet;
-      var testoSotto = '<p class="art-excerpt">' + escapeHtml(articleExcerpt(a)) + '</p>';
+    for (var i = 0; i < results.length; i++) {
+      var a = results[i].article;
+      var snippet = results[i].snippet;
+      var textBelow = '<p class="art-excerpt">' + escapeHtml(articleExcerpt(a)) + '</p>';
       if (snippet !== '') {
-        testoSotto = '<p class="art-snippet">' + snippet + '</p>';
+        textBelow = '<p class="art-snippet">' + snippet + '</p>';
       }
-      html = html + rowHtml(a, highlight(escapeHtml(articleTitle(a)), termine), testoSotto);
+      html = html + rowHtml(a, highlight(escapeHtml(articleTitle(a)), term), textBelow);
     }
-    lista.innerHTML = html;
+    itemList.innerHTML = html;
   }
 
   function escapeHtml(s) {
@@ -357,29 +357,29 @@ document.addEventListener('DOMContentLoaded', function() {
 // stylesheet only folds the menu when the html element carries the "js"
 // class, which the theme code above sets as soon as the script runs.
 document.addEventListener('DOMContentLoaded', function() {
-  var pulsante = document.querySelector('.menu-toggle');
+  var buttonEl = document.querySelector('.menu-toggle');
   var menu = document.getElementById('site-nav');
-  if (!pulsante || !menu) { return; }
+  if (!buttonEl || !menu) { return; }
 
-  function chiudi() {
+  function closeIt() {
     menu.classList.remove('open');
-    pulsante.setAttribute('aria-expanded', 'false');
+    buttonEl.setAttribute('aria-expanded', 'false');
   }
 
-  pulsante.addEventListener('click', function() {
-    var aperto = menu.classList.toggle('open');
-    pulsante.setAttribute('aria-expanded', aperto ? 'true' : 'false');
+  buttonEl.addEventListener('click', function() {
+    var isOpen = menu.classList.toggle('open');
+    buttonEl.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   });
   // Esc closes it, and so does following one of its links (an anchor such
   // as #articles keeps the page, so the menu would stay open over it).
-  document.addEventListener('keydown', function(evento) {
-    if (evento.key === 'Escape' && menu.classList.contains('open')) {
-      chiudi();
-      pulsante.focus();
+  document.addEventListener('keydown', function(evt) {
+    if (evt.key === 'Escape' && menu.classList.contains('open')) {
+      closeIt();
+      buttonEl.focus();
     }
   });
-  menu.addEventListener('click', function(evento) {
-    if (evento.target.closest('a')) { chiudi(); }
+  menu.addEventListener('click', function(evt) {
+    if (evt.target.closest('a')) { closeIt(); }
   });
 });
 
@@ -388,44 +388,44 @@ document.addEventListener('DOMContentLoaded', function() {
 // In the sidebar of an article, the entry of the section being read is
 // marked, so the index doubles as a "you are here".
 document.addEventListener('DOMContentLoaded', function() {
-  var voci = document.querySelectorAll('.box-toc-index a[href^="#"]');
-  if (voci.length === 0 || !('IntersectionObserver' in window)) { return; }
+  var entries = document.querySelectorAll('.box-toc-index a[href^="#"]');
+  if (entries.length === 0 || !('IntersectionObserver' in window)) { return; }
 
-  var perId = {};
-  var titoli = [];
-  for (var i = 0; i < voci.length; i++) {
-    var id = decodeURIComponent(voci[i].getAttribute('href').substring(1));
-    var titolo = document.getElementById(id);
-    if (titolo) {
-      perId[id] = voci[i];
-      titoli.push(titolo);
+  var byId = {};
+  var titles = [];
+  for (var i = 0; i < entries.length; i++) {
+    var id = decodeURIComponent(entries[i].getAttribute('href').substring(1));
+    var titleText = document.getElementById(id);
+    if (titleText) {
+      byId[id] = entries[i];
+      titles.push(titleText);
     }
   }
-  if (titoli.length === 0) { return; }
+  if (titles.length === 0) { return; }
 
-  function segna(id) {
-    for (var chiave in perId) {
-      if (chiave === id) {
-        perId[chiave].setAttribute('aria-current', 'location');
+  function mark(id) {
+    for (var key in byId) {
+      if (key === id) {
+        byId[key].setAttribute('aria-current', 'location');
       } else {
-        perId[chiave].removeAttribute('aria-current');
+        byId[key].removeAttribute('aria-current');
       }
     }
   }
 
   // A heading counts as "being read" once it has crossed the top third of
   // the window; the last one that did is the current section.
-  var osservatore = new IntersectionObserver(function() {
-    var attuale = titoli[0].id;
-    for (var j = 0; j < titoli.length; j++) {
-      if (titoli[j].getBoundingClientRect().top < window.innerHeight / 3) {
-        attuale = titoli[j].id;
+  var observer = new IntersectionObserver(function() {
+    var current = titles[0].id;
+    for (var j = 0; j < titles.length; j++) {
+      if (titles[j].getBoundingClientRect().top < window.innerHeight / 3) {
+        current = titles[j].id;
       }
     }
-    segna(attuale);
+    mark(current);
   }, { rootMargin: '0px 0px -66% 0px' });
-  for (var k = 0; k < titoli.length; k++) {
-    osservatore.observe(titoli[k]);
+  for (var k = 0; k < titles.length; k++) {
+    observer.observe(titles[k]);
   }
 });
 
@@ -438,59 +438,59 @@ document.addEventListener('DOMContentLoaded', function() {
 // JavaScript rather than baked into the HTML so that articles written before
 // this existed get it too, and so the generated pages stay clean.
 document.addEventListener('DOMContentLoaded', function() {
-  var opzioni = window.PB_SITE;
-  if (!opzioni) { return; }
+  var options = window.PB_SITE;
+  if (!options) { return; }
 
-  var blocchi = document.querySelectorAll('article.post pre.ql-syntax, .card-page pre.ql-syntax');
-  for (var i = 0; i < blocchi.length; i++) {
-    aggiungiPulsanteCopia(blocchi[i], opzioni);
+  var blocks = document.querySelectorAll('article.post pre.ql-syntax, .card-page pre.ql-syntax');
+  for (var i = 0; i < blocks.length; i++) {
+    addCopyButton(blocks[i], options);
   }
 });
 
-function aggiungiPulsanteCopia(blocco, opzioni) {
+function addCopyButton(blockEl, options) {
   // The button is positioned against a wrapper, so the block itself keeps
   // its own scrolling and padding untouched.
-  var contenitore = document.createElement('div');
-  contenitore.className = 'code-block';
-  blocco.parentNode.insertBefore(contenitore, blocco);
-  contenitore.appendChild(blocco);
+  var containerEl = document.createElement('div');
+  containerEl.className = 'code-block';
+  blockEl.parentNode.insertBefore(containerEl, blockEl);
+  containerEl.appendChild(blockEl);
 
-  var pulsante = document.createElement('button');
-  pulsante.type = 'button';
-  pulsante.className = 'copy-code';
-  pulsante.textContent = opzioni.copy_label;
-  pulsante.setAttribute('title', opzioni.copy_title);
-  pulsante.setAttribute('aria-label', opzioni.copy_title);
+  var buttonEl = document.createElement('button');
+  buttonEl.type = 'button';
+  buttonEl.className = 'copy-code';
+  buttonEl.textContent = options.copy_label;
+  buttonEl.setAttribute('title', options.copy_title);
+  buttonEl.setAttribute('aria-label', options.copy_title);
 
-  pulsante.addEventListener('click', function() {
-    var testo = blocco.textContent;
-    copiaTesto(testo, function(riuscito) {
-      if (riuscito) {
-        pulsante.textContent = opzioni.copied_label;
-        pulsante.classList.add('copied');
+  buttonEl.addEventListener('click', function() {
+    var textValue = blockEl.textContent;
+    copyText(textValue, function(success) {
+      if (success) {
+        buttonEl.textContent = options.copied_label;
+        buttonEl.classList.add('copied');
       }
       setTimeout(function() {
-        pulsante.textContent = opzioni.copy_label;
-        pulsante.classList.remove('copied');
+        buttonEl.textContent = options.copy_label;
+        buttonEl.classList.remove('copied');
       }, 1500);
     });
   });
 
-  contenitore.appendChild(pulsante);
+  containerEl.appendChild(buttonEl);
 }
 
 // "Copy the link" at the end of an article: the address goes to the
 // clipboard and the button says so for a moment.
 document.addEventListener('DOMContentLoaded', function() {
-  var pulsanti = document.querySelectorAll('.share-copy');
-  for (var i = 0; i < pulsanti.length; i++) {
-    pulsanti[i].addEventListener('click', function() {
-      var pulsante = this;
-      var scritta = pulsante.textContent;
-      copiaTesto(pulsante.getAttribute('data-url'), function(riuscito) {
-        if (!riuscito) { return; }
-        pulsante.textContent = pulsante.getAttribute('data-done');
-        setTimeout(function() { pulsante.textContent = scritta; }, 1500);
+  var buttons = document.querySelectorAll('.share-copy');
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener('click', function() {
+      var buttonEl = this;
+      var caption = buttonEl.textContent;
+      copyText(buttonEl.getAttribute('data-url'), function(success) {
+        if (!success) { return; }
+        buttonEl.textContent = buttonEl.getAttribute('data-done');
+        setTimeout(function() { buttonEl.textContent = caption; }, 1500);
       });
     });
   }
@@ -498,28 +498,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Copies text to the clipboard, with a fallback for browsers without the
 // clipboard API and for pages served over plain HTTP, where it is disabled.
-function copiaTesto(testo, quandoFatto) {
+function copyText(textValue, onDone) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(testo)
-      .then(function() { quandoFatto(true); })
-      .catch(function() { quandoFatto(false); });
+    navigator.clipboard.writeText(textValue)
+      .then(function() { onDone(true); })
+      .catch(function() { onDone(false); });
     return;
   }
   var area = document.createElement('textarea');
-  area.value = testo;
+  area.value = textValue;
   area.setAttribute('readonly', 'readonly');
   area.style.position = 'absolute';
   area.style.left = '-9999px';
   document.body.appendChild(area);
   area.select();
-  var riuscito = false;
+  var success = false;
   try {
-    riuscito = document.execCommand('copy');
+    success = document.execCommand('copy');
   } catch (e) {
-    riuscito = false;
+    success = false;
   }
   document.body.removeChild(area);
-  quandoFatto(riuscito);
+  onDone(success);
 }
 
 /* --- 5) Reading progress bar --------------------------------------------- */
@@ -530,55 +530,55 @@ function copiaTesto(testo, quandoFatto) {
 // related articles and the footer are not part of the read, and counting
 // them would show 60% when you have actually finished.
 document.addEventListener('DOMContentLoaded', function() {
-  var opzioni = window.PB_SITE;
-  var articolo = document.querySelector('article.post');
-  if (!opzioni || !articolo) { return; }
+  var options = window.PB_SITE;
+  var article = document.querySelector('article.post');
+  if (!options || !article) { return; }
 
-  var barra = document.createElement('div');
-  barra.className = 'progress-reading';
-  barra.setAttribute('role', 'progressbar');
-  barra.setAttribute('aria-label', opzioni.progress_label);
-  barra.setAttribute('aria-valuemin', '0');
-  barra.setAttribute('aria-valuemax', '100');
+  var bar = document.createElement('div');
+  bar.className = 'progress-reading';
+  bar.setAttribute('role', 'progressbar');
+  bar.setAttribute('aria-label', options.progress_label);
+  bar.setAttribute('aria-valuemin', '0');
+  bar.setAttribute('aria-valuemax', '100');
 
-  var riempimento = document.createElement('div');
-  riempimento.className = 'progress-reading-bar';
-  barra.appendChild(riempimento);
-  document.body.appendChild(barra);
+  var fill = document.createElement('div');
+  fill.className = 'progress-reading-bar';
+  bar.appendChild(fill);
+  document.body.appendChild(bar);
 
-  var inAttesa = false;
+  var pending = false;
 
-  function aggiorna() {
-    inAttesa = false;
-    var inizio = articolo.offsetTop;
-    var altezza = articolo.offsetHeight;
-    var visibile = window.innerHeight;
+  function refresh() {
+    pending = false;
+    var startAt = article.offsetTop;
+    var height = article.offsetHeight;
+    var visible = window.innerHeight;
     // How much of the article has scrolled past the bottom of the window.
-    var percorso = altezza - visibile;
-    if (percorso <= 0) {
-      riempimento.style.width = '100%';
-      barra.setAttribute('aria-valuenow', '100');
+    var path = height - visible;
+    if (path <= 0) {
+      fill.style.width = '100%';
+      bar.setAttribute('aria-valuenow', '100');
       return;
     }
-    var avanzamento = (window.pageYOffset - inizio) / percorso;
-    if (avanzamento < 0) { avanzamento = 0; }
-    if (avanzamento > 1) { avanzamento = 1; }
-    var percentuale = Math.round(avanzamento * 100);
-    riempimento.style.width = percentuale + '%';
-    barra.setAttribute('aria-valuenow', String(percentuale));
+    var progress = (window.pageYOffset - startAt) / path;
+    if (progress < 0) { progress = 0; }
+    if (progress > 1) { progress = 1; }
+    var percent = Math.round(progress * 100);
+    fill.style.width = percent + '%';
+    bar.setAttribute('aria-valuenow', String(percent));
   }
 
   // requestAnimationFrame keeps the work to one update per painted frame,
   // instead of one per scroll event.
-  function pianifica() {
-    if (inAttesa) { return; }
-    inAttesa = true;
-    window.requestAnimationFrame(aggiorna);
+  function schedule() {
+    if (pending) { return; }
+    pending = true;
+    window.requestAnimationFrame(refresh);
   }
 
-  window.addEventListener('scroll', pianifica, { passive: true });
-  window.addEventListener('resize', pianifica);
-  aggiorna();
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', schedule);
+  refresh();
 });
 
 /* --- 6) Enlarging the article cover --------------------------------------- */
@@ -593,87 +593,87 @@ document.addEventListener('DOMContentLoaded', function() {
 // part of it is cropped, and "let me see the whole thing" is a real need
 // rather than an invented one.
 document.addEventListener('DOMContentLoaded', function() {
-  var opzioni = window.PB_SITE;
-  if (!opzioni) { return; }
+  var options = window.PB_SITE;
+  if (!options) { return; }
 
-  var immagini = document.querySelectorAll('.article-cover img[data-zoom]');
-  if (immagini.length === 0) { return; }
+  var images = document.querySelectorAll('.article-cover img[data-zoom]');
+  if (images.length === 0) { return; }
 
-  for (var i = 0; i < immagini.length; i++) {
-    preparaZoom(immagini[i], opzioni);
+  for (var i = 0; i < images.length; i++) {
+    prepareZoom(images[i], options);
   }
 });
 
-function preparaZoom(immagine, opzioni) {
+function prepareZoom(img, options) {
   // The image becomes a real button: it can be reached with the keyboard and
   // a screen reader announces it as something you can activate.
-  immagine.setAttribute('role', 'button');
-  immagine.setAttribute('tabindex', '0');
-  immagine.setAttribute('aria-label', opzioni.zoom_label);
+  img.setAttribute('role', 'button');
+  img.setAttribute('tabindex', '0');
+  img.setAttribute('aria-label', options.zoom_label);
 
-  function apri() {
-    apriZoom(immagine.getAttribute('data-zoom'), immagine.alt, opzioni);
+  function openIt() {
+    openZoom(img.getAttribute('data-zoom'), img.alt, options);
   }
 
-  immagine.addEventListener('click', apri);
-  immagine.addEventListener('keydown', function(evento) {
-    if (evento.key === 'Enter' || evento.key === ' ') {
-      evento.preventDefault();
-      apri();
+  img.addEventListener('click', openIt);
+  img.addEventListener('keydown', function(evt) {
+    if (evt.key === 'Enter' || evt.key === ' ') {
+      evt.preventDefault();
+      openIt();
     }
   });
 }
 
 // Shows the picture over the page. Built by hand rather than with a library:
 // it is a div, an image and two ways to close it.
-function apriZoom(indirizzo, testoAlternativo, opzioni) {
+function openZoom(address, altText, options) {
   if (document.querySelector('.zoom-picture')) { return; }
 
-  var sfondo = document.createElement('div');
-  sfondo.className = 'zoom-picture';
-  sfondo.setAttribute('role', 'dialog');
-  sfondo.setAttribute('aria-modal', 'true');
-  sfondo.setAttribute('aria-label', testoAlternativo || opzioni.zoom_label);
+  var backdrop = document.createElement('div');
+  backdrop.className = 'zoom-picture';
+  backdrop.setAttribute('role', 'dialog');
+  backdrop.setAttribute('aria-modal', 'true');
+  backdrop.setAttribute('aria-label', altText || options.zoom_label);
 
-  var grande = document.createElement('img');
-  grande.src = indirizzo;
-  grande.alt = testoAlternativo || '';
-  sfondo.appendChild(grande);
+  var bigImage = document.createElement('img');
+  bigImage.src = address;
+  bigImage.alt = altText || '';
+  backdrop.appendChild(bigImage);
 
-  var chiudi = document.createElement('button');
-  chiudi.type = 'button';
-  chiudi.className = 'zoom-close';
-  chiudi.setAttribute('aria-label', opzioni.close_label);
-  chiudi.textContent = '×';
-  sfondo.appendChild(chiudi);
+  var closeIt = document.createElement('button');
+  closeIt.type = 'button';
+  closeIt.className = 'zoom-close';
+  closeIt.setAttribute('aria-label', options.close_label);
+  closeIt.textContent = '×';
+  backdrop.appendChild(closeIt);
 
   // Where the focus was, so it can go back there when the picture closes.
-  var elementoPrecedente = document.activeElement;
+  var previousElement = document.activeElement;
 
-  function chiudiZoom() {
-    document.removeEventListener('keydown', suTasto);
-    if (sfondo.parentNode) { sfondo.parentNode.removeChild(sfondo); }
+  function closeZoom() {
+    document.removeEventListener('keydown', onKey);
+    if (backdrop.parentNode) { backdrop.parentNode.removeChild(backdrop); }
     document.body.classList.remove('zoom-open');
-    if (elementoPrecedente && elementoPrecedente.focus) { elementoPrecedente.focus(); }
+    if (previousElement && previousElement.focus) { previousElement.focus(); }
   }
 
-  function suTasto(evento) {
-    if (evento.key === 'Escape') { chiudiZoom(); }
+  function onKey(evt) {
+    if (evt.key === 'Escape') { closeZoom(); }
   }
 
-  chiudi.addEventListener('click', chiudiZoom);
+  closeIt.addEventListener('click', closeZoom);
   // A click ANYWHERE closes it, the picture included. Excluding the picture
   // meant that on a phone, where it fills nearly the whole screen, almost
   // every tap landed on it and did nothing: the only way out was a small
   // button in a corner. Tapping what you are looking at to dismiss it is
   // what people try first, and there is nothing else to do here.
-  sfondo.addEventListener('click', chiudiZoom);
-  document.addEventListener('keydown', suTasto);
+  backdrop.addEventListener('click', closeZoom);
+  document.addEventListener('keydown', onKey);
 
-  document.body.appendChild(sfondo);
+  document.body.appendChild(backdrop);
   // Stops the page behind from scrolling while the picture is open.
   document.body.classList.add('zoom-open');
-  chiudi.focus();
+  closeIt.focus();
 }
 
 /* --- 6b) Code placed at a point chosen on the page -------------------------- */
@@ -682,20 +682,20 @@ function apriZoom(indirizzo, testoAlternativo, opzioni) {
 // script cloned out of a template does not run: it has to be created anew.
 // External scripts keep their own async; the others keep the order they were
 // written in, which is what a loader followed by its set-up expects.
-function attivaModello(modello) {
-  var frammento = modello.content.cloneNode(true);
-  var script = frammento.querySelectorAll('script');
+function activateTemplate(template) {
+  var fragment = template.content.cloneNode(true);
+  var script = fragment.querySelectorAll('script');
   for (var j = 0; j < script.length; j++) {
-    var vecchio = script[j];
-    var nuovo = document.createElement('script');
-    for (var k = 0; k < vecchio.attributes.length; k++) {
-      nuovo.setAttribute(vecchio.attributes[k].name, vecchio.attributes[k].value);
+    var oldValue = script[j];
+    var newValue = document.createElement('script');
+    for (var k = 0; k < oldValue.attributes.length; k++) {
+      newValue.setAttribute(oldValue.attributes[k].name, oldValue.attributes[k].value);
     }
-    if (vecchio.src) { nuovo.async = vecchio.hasAttribute('async'); }
-    nuovo.text = vecchio.text;
-    vecchio.parentNode.replaceChild(nuovo, vecchio);
+    if (oldValue.src) { newValue.async = oldValue.hasAttribute('async'); }
+    newValue.text = oldValue.text;
+    oldValue.parentNode.replaceChild(newValue, oldValue);
   }
-  modello.parentNode.replaceChild(frammento, modello);
+  template.parentNode.replaceChild(fragment, template);
 }
 
 // The author chose, by clicking on the page, the block a piece of code goes
@@ -705,29 +705,29 @@ function attivaModello(modello) {
 // not, it runs now. A page without that block simply does not show it.
 // This listener is registered before the consent one, so it runs first.
 document.addEventListener('DOMContentLoaded', function() {
-  var modelli = document.querySelectorAll('template[data-pb-anchor]');
-  for (var i = 0; i < modelli.length; i++) {
-    var modello = modelli[i];
-    var bersaglio = null;
+  var templates = document.querySelectorAll('template[data-pb-anchor]');
+  for (var i = 0; i < templates.length; i++) {
+    var template = templates[i];
+    var targetEl = null;
     try {
-      bersaglio = document.querySelector(modello.getAttribute('data-pb-anchor'));
+      targetEl = document.querySelector(template.getAttribute('data-pb-anchor'));
     } catch (e) {
-      bersaglio = null;
+      targetEl = null;
     }
-    if (bersaglio === null) {
-      modello.parentNode.removeChild(modello);
+    if (targetEl === null) {
+      template.parentNode.removeChild(template);
       continue;
     }
-    var contenitore = document.createElement('div');
-    contenitore.className = 'code-positioned';
-    if (modello.getAttribute('data-pb-where') === 'before') {
-      bersaglio.parentNode.insertBefore(contenitore, bersaglio);
+    var containerEl = document.createElement('div');
+    containerEl.className = 'code-positioned';
+    if (template.getAttribute('data-pb-where') === 'before') {
+      targetEl.parentNode.insertBefore(containerEl, targetEl);
     } else {
-      bersaglio.parentNode.insertBefore(contenitore, bersaglio.nextSibling);
+      targetEl.parentNode.insertBefore(containerEl, targetEl.nextSibling);
     }
-    contenitore.appendChild(modello);
-    if (!modello.hasAttribute('data-pb-consent')) {
-      attivaModello(modello);
+    containerEl.appendChild(template);
+    if (!template.hasAttribute('data-pb-consent')) {
+      activateTemplate(template);
     }
   }
 });
@@ -742,147 +742,147 @@ document.addEventListener('DOMContentLoaded', function() {
 // the site starts using a category the visitor never decided about, or when
 // the author asks everybody again (the version number changes).
 document.addEventListener('DOMContentLoaded', function() {
-  var opzioni = window.PB_SITE;
-  if (!opzioni || !opzioni.consent) { return; }
+  var options = window.PB_SITE;
+  if (!options || !options.consent) { return; }
   var banner = document.getElementById('pb-consent');
   if (!banner) { return; }
 
-  var CHIAVE = 'pb-consent';
-  var versione = opzioni.consent.version;
-  var categorie = opzioni.consent.categories || [];
-  var scelte = document.getElementById('pb-consent-choices');
-  var pulsanteSalva = banner.querySelector('[data-consent="save"]');
-  var pulsantePersonalizza = banner.querySelector('[data-consent="customize"]');
+  var STORAGE_KEY = 'pb-consent';
+  var version = options.consent.version;
+  var categories = options.consent.categories || [];
+  var choices = document.getElementById('pb-consent-choices');
+  var saveButton = banner.querySelector('[data-consent="save"]');
+  var customizeButton = banner.querySelector('[data-consent="customize"]');
 
-  function leggiScelta() {
+  function readChoice() {
     try {
       // A choice made before the names went English was saved as pb-consenso:
       // it still counts, so a visitor is not asked again.
-      var valore = JSON.parse(localStorage.getItem(CHIAVE) || localStorage.getItem('pb-consenso'));
-      if (valore && valore.v === versione) { return valore; }
+      var val = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem('pb-consenso'));
+      if (val && val.v === version) { return val; }
     } catch (e) { }
     return null;
   }
 
-  function salvaScelta(valore) {
-    valore.v = versione;
-    valore.data = new Date().toISOString();
-    try { localStorage.setItem(CHIAVE, JSON.stringify(valore)); } catch (e) { }
+  function saveChoice(val) {
+    val.v = version;
+    val.data = new Date().toISOString();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(val)); } catch (e) { }
   }
 
-  function attivaCategoria(categoria) {
-    var modelli = document.querySelectorAll('template[data-pb-consent="' + categoria + '"]');
-    for (var i = 0; i < modelli.length; i++) {
-      attivaModello(modelli[i]);
+  function activateCategory(category) {
+    var templates = document.querySelectorAll('template[data-pb-consent="' + category + '"]');
+    for (var i = 0; i < templates.length; i++) {
+      activateTemplate(templates[i]);
     }
   }
 
-  function aggiornaGoogle(valore) {
+  function updateGoogle(val) {
     if (typeof window.gtag !== 'function') { return; }
-    var statistiche = valore.statistics === true ? 'granted' : 'denied';
-    var pubblicita = valore.marketing === true ? 'granted' : 'denied';
+    var analytics = val.statistics === true ? 'granted' : 'denied';
+    var advertising = val.marketing === true ? 'granted' : 'denied';
     window.gtag('consent', 'update', {
-      analytics_storage: statistiche,
-      ad_storage: pubblicita,
-      ad_user_data: pubblicita,
-      ad_personalization: pubblicita
+      analytics_storage: analytics,
+      ad_storage: advertising,
+      ad_user_data: advertising,
+      ad_personalization: advertising
     });
   }
 
-  function applica(valore) {
-    aggiornaGoogle(valore);
-    for (var i = 0; i < categorie.length; i++) {
-      if (valore[categorie[i]] === true) { attivaCategoria(categorie[i]); }
+  function applyIt(val) {
+    updateGoogle(val);
+    for (var i = 0; i < categories.length; i++) {
+      if (val[categories[i]] === true) { activateCategory(categories[i]); }
     }
   }
 
-  function mostraScelte(valore) {
-    var caselle = scelte.querySelectorAll('input[data-category]');
-    for (var i = 0; i < caselle.length; i++) {
-      caselle[i].checked = !!(valore && valore[caselle[i].getAttribute('data-category')] === true);
+  function showChoices(val) {
+    var checkboxes = choices.querySelectorAll('input[data-category]');
+    for (var i = 0; i < checkboxes.length; i++) {
+      checkboxes[i].checked = !!(val && val[checkboxes[i].getAttribute('data-category')] === true);
     }
-    scelte.hidden = false;
-    pulsanteSalva.hidden = false;
-    pulsantePersonalizza.hidden = true;
+    choices.hidden = false;
+    saveButton.hidden = false;
+    customizeButton.hidden = true;
   }
 
-  function apri(conScelte) {
-    var attuale = leggiScelta();
-    if (conScelte) {
-      mostraScelte(attuale);
+  function openIt(withChoices) {
+    var current = readChoice();
+    if (withChoices) {
+      showChoices(current);
     } else {
-      scelte.hidden = true;
-      pulsanteSalva.hidden = true;
-      pulsantePersonalizza.hidden = false;
+      choices.hidden = true;
+      saveButton.hidden = true;
+      customizeButton.hidden = false;
     }
     banner.hidden = false;
   }
 
   // A category taken back cannot be switched off in a page where its code
   // already runs: the page is reloaded without it.
-  function decidi(valore) {
-    var prima = leggiScelta();
-    salvaScelta(valore);
+  function decide(val) {
+    var before = readChoice();
+    saveChoice(val);
     banner.hidden = true;
-    var ritirata = false;
-    for (var i = 0; i < categorie.length; i++) {
-      if (prima && prima[categorie[i]] === true && valore[categorie[i]] !== true) { ritirata = true; }
+    var withdrawn = false;
+    for (var i = 0; i < categories.length; i++) {
+      if (before && before[categories[i]] === true && val[categories[i]] !== true) { withdrawn = true; }
     }
-    if (ritirata) {
+    if (withdrawn) {
       window.location.reload();
       return;
     }
-    applica(valore);
+    applyIt(val);
   }
 
-  function tutte(valoreDiOgni) {
-    var valore = prendiPrecedenti();
-    for (var i = 0; i < categorie.length; i++) { valore[categorie[i]] = valoreDiOgni; }
-    return valore;
+  function all(valueOfEach) {
+    var val = takePrevious();
+    for (var i = 0; i < categories.length; i++) { val[categories[i]] = valueOfEach; }
+    return val;
   }
 
   // Categories decided on another page, and not used on this one, keep the
   // answer the visitor gave there.
-  function prendiPrecedenti() {
-    var prima = leggiScelta();
-    var valore = {};
-    if (prima) {
-      for (var chiave in prima) {
-        if (chiave !== 'v' && chiave !== 'data') { valore[chiave] = prima[chiave]; }
+  function takePrevious() {
+    var before = readChoice();
+    var val = {};
+    if (before) {
+      for (var key in before) {
+        if (key !== 'v' && key !== 'data') { val[key] = before[key]; }
       }
     }
-    return valore;
+    return val;
   }
 
-  banner.addEventListener('click', function(evento) {
-    var pulsante = evento.target.closest('[data-consent]');
-    if (!pulsante) { return; }
-    var azione = pulsante.getAttribute('data-consent');
-    if (azione === 'accept') { decidi(tutte(true)); }
-    if (azione === 'refuse') { decidi(tutte(false)); }
-    if (azione === 'customize') { mostraScelte(leggiScelta()); }
-    if (azione === 'save') {
-      var valore = prendiPrecedenti();
-      var caselle = scelte.querySelectorAll('input[data-category]');
-      for (var i = 0; i < caselle.length; i++) {
-        valore[caselle[i].getAttribute('data-category')] = caselle[i].checked;
+  banner.addEventListener('click', function(evt) {
+    var buttonEl = evt.target.closest('[data-consent]');
+    if (!buttonEl) { return; }
+    var action = buttonEl.getAttribute('data-consent');
+    if (action === 'accept') { decide(all(true)); }
+    if (action === 'refuse') { decide(all(false)); }
+    if (action === 'customize') { showChoices(readChoice()); }
+    if (action === 'save') {
+      var val = takePrevious();
+      var checkboxes = choices.querySelectorAll('input[data-category]');
+      for (var i = 0; i < checkboxes.length; i++) {
+        val[checkboxes[i].getAttribute('data-category')] = checkboxes[i].checked;
       }
-      decidi(valore);
+      decide(val);
     }
   });
 
   // The "cookie preferences" link of the footer reopens the banner.
-  document.addEventListener('click', function(evento) {
-    if (evento.target.closest('.link-preferences')) { apri(true); }
+  document.addEventListener('click', function(evt) {
+    if (evt.target.closest('.link-preferences')) { openIt(true); }
   });
 
-  var salvata = leggiScelta();
-  var daChiedere = salvata === null;
-  if (salvata !== null) {
-    for (var i = 0; i < categorie.length; i++) {
-      if (salvata[categorie[i]] === undefined) { daChiedere = true; }
+  var saved = readChoice();
+  var toAsk = saved === null;
+  if (saved !== null) {
+    for (var i = 0; i < categories.length; i++) {
+      if (saved[categories[i]] === undefined) { toAsk = true; }
     }
   }
-  if (salvata !== null) { applica(salvata); }
-  if (daChiedere) { apri(false); }
+  if (saved !== null) { applyIt(saved); }
+  if (toAsk) { openIt(false); }
 });

@@ -24,48 +24,48 @@ var PB_MAIN_QUILL = null;
 
 // Returns a translated string, or the key itself if it is missing (so a
 // forgotten key is visible during development instead of printing "undefined").
-function t(chiave) {
-  if (window.PB_I18N && window.PB_I18N[chiave] !== undefined) {
-    return window.PB_I18N[chiave];
+function t(key) {
+  if (window.PB_I18N && window.PB_I18N[key] !== undefined) {
+    return window.PB_I18N[key];
   }
-  return chiave;
+  return key;
 }
 
 // Returns a page value injected by the template.
-function pbPage(chiave, valorePredefinito) {
-  if (window.PB_PAGE && window.PB_PAGE[chiave] !== undefined) {
-    return window.PB_PAGE[chiave];
+function pbPage(key, defaultValue) {
+  if (window.PB_PAGE && window.PB_PAGE[key] !== undefined) {
+    return window.PB_PAGE[key];
   }
-  return valorePredefinito;
+  return defaultValue;
 }
 
 // Every state-changing request goes through here, so the CSRF token is never
 // forgotten: the server rejects a POST that arrives without it.
-function pbFetch(url, opzioni) {
-  if (!opzioni) {
-    opzioni = {};
+function pbFetch(url, options) {
+  if (!options) {
+    options = {};
   }
-  if (!opzioni.headers) {
-    opzioni.headers = {};
+  if (!options.headers) {
+    options.headers = {};
   }
-  opzioni.headers['X-CSRF-Token'] = window.PB_CSRF || '';
-  return fetch(url, opzioni);
+  options.headers['X-CSRF-Token'] = window.PB_CSRF || '';
+  return fetch(url, options);
 }
 
 // Shorthand for the common case: a POST with a JSON body.
-function pbPostJson(url, dati) {
+function pbPostJson(url, payload) {
   return pbFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(dati)
+    body: JSON.stringify(payload)
   }).then(function(r) { return r.json(); });
 }
 
 // Writes a message in a status element, if that element exists on the page.
-function pbStatus(idElemento, testo) {
-  var elemento = document.getElementById(idElemento);
-  if (elemento) {
-    elemento.textContent = testo;
+function pbStatus(elementId, textValue) {
+  var element = document.getElementById(elementId);
+  if (element) {
+    element.textContent = textValue;
   }
 }
 
@@ -74,11 +74,11 @@ function pbStatus(idElemento, testo) {
 // Shows a Bootstrap toast. It replaces alert(), which blocks the page, steals
 // the focus and cannot say whether something went well or badly.
 // kind is a Bootstrap colour: success, danger, warning or info.
-function pbToast(messaggio, kind) {
-  var contenitore = document.getElementById('pb-toasts');
-  if (!contenitore || !window.bootstrap) {
+function pbToast(message, kind) {
+  var containerEl = document.getElementById('pb-toasts');
+  if (!containerEl || !window.bootstrap) {
     // Without Bootstrap we still have to tell the author something.
-    alert(messaggio);
+    alert(message);
     return;
   }
   if (!kind) { kind = 'success'; }
@@ -89,77 +89,77 @@ function pbToast(messaggio, kind) {
   toast.setAttribute('aria-live', 'polite');
   toast.setAttribute('aria-atomic', 'true');
 
-  var riga = document.createElement('div');
-  riga.className = 'd-flex';
-  var corpo = document.createElement('div');
-  corpo.className = 'toast-body';
+  var row = document.createElement('div');
+  row.className = 'd-flex';
+  var bodyEl = document.createElement('div');
+  bodyEl.className = 'toast-body';
   // textContent, never innerHTML: a message can carry a server error, and an
   // error can carry anything.
-  corpo.textContent = messaggio;
-  var chiudi = document.createElement('button');
-  chiudi.type = 'button';
-  chiudi.className = 'btn-close btn-close-white me-2 m-auto';
-  chiudi.setAttribute('data-bs-dismiss', 'toast');
-  chiudi.setAttribute('aria-label', t('admin_close'));
-  riga.appendChild(corpo);
-  riga.appendChild(chiudi);
-  toast.appendChild(riga);
-  contenitore.appendChild(toast);
+  bodyEl.textContent = message;
+  var closeIt = document.createElement('button');
+  closeIt.type = 'button';
+  closeIt.className = 'btn-close btn-close-white me-2 m-auto';
+  closeIt.setAttribute('data-bs-dismiss', 'toast');
+  closeIt.setAttribute('aria-label', t('admin_close'));
+  row.appendChild(bodyEl);
+  row.appendChild(closeIt);
+  toast.appendChild(row);
+  containerEl.appendChild(toast);
 
   var delay = 4000;
   if (kind === 'danger' || kind === 'warning') { delay = 8000; }
-  var istanza = new bootstrap.Toast(toast, { delay: delay });
+  var instance = new bootstrap.Toast(toast, { delay: delay });
   toast.addEventListener('hidden.bs.toast', function() { toast.remove(); });
-  istanza.show();
+  instance.show();
 }
 
 // Asks the author to confirm a destructive or overwriting action, using the
 // Bootstrap modal in the layout instead of the browser's confirm(), which
 // cannot be styled and gives no room to explain the consequence.
-function pbConfirm(titolo, corpo, etichettaConferma, kind, quandoConfermato) {
-  var finestra = document.getElementById('pb-confirm');
-  if (!finestra || !window.bootstrap) {
-    if (confirm(titolo + '\n\n' + corpo)) { quandoConfermato(); }
+function pbConfirm(titleText, bodyEl, confirmLabel, kind, onConfirmed) {
+  var popup = document.getElementById('pb-confirm');
+  if (!popup || !window.bootstrap) {
+    if (confirm(titleText + '\n\n' + bodyEl)) { onConfirmed(); }
     return;
   }
-  document.getElementById('pb-confirm-title').textContent = titolo;
-  document.getElementById('pb-confirm-body').textContent = corpo;
+  document.getElementById('pb-confirm-title').textContent = titleText;
+  document.getElementById('pb-confirm-body').textContent = bodyEl;
 
-  var vecchio = document.getElementById('pb-confirm-ok');
+  var oldValue = document.getElementById('pb-confirm-ok');
   // Replacing the button drops every listener a previous call attached, so
   // confirming twice cannot fire the first action again.
-  var conferma = vecchio.cloneNode(false);
-  conferma.textContent = etichettaConferma;
+  var confirmButton = oldValue.cloneNode(false);
+  confirmButton.textContent = confirmLabel;
   // The buttons of the shared family: a deleting action is red.
-  conferma.className = 'button button-primary' + (kind === 'danger' ? ' button-danger' : '');
-  vecchio.parentNode.replaceChild(conferma, vecchio);
+  confirmButton.className = 'button button-primary' + (kind === 'danger' ? ' button-danger' : '');
+  oldValue.parentNode.replaceChild(confirmButton, oldValue);
 
-  var istanza = bootstrap.Modal.getOrCreateInstance(finestra);
-  conferma.addEventListener('click', function() {
-    istanza.hide();
-    quandoConfermato();
+  var instance = bootstrap.Modal.getOrCreateInstance(popup);
+  confirmButton.addEventListener('click', function() {
+    instance.hide();
+    onConfirmed();
   });
-  istanza.show();
+  instance.show();
 }
 
 // Puts a button in its waiting state and back. The label is left alone: only
 // a spinner appears in front of it, so the button keeps its width and the
 // author is not shown a different word every time something is slow.
-function pbBusy(pulsante, occupato) {
-  if (!pulsante) { return; }
-  if (occupato) {
-    if (pulsante.querySelector('.pb-spinner')) { return; }
+function pbBusy(buttonEl, busy) {
+  if (!buttonEl) { return; }
+  if (busy) {
+    if (buttonEl.querySelector('.pb-spinner')) { return; }
     var spinner = document.createElement('span');
     spinner.className = 'pb-spinner';
     spinner.setAttribute('aria-hidden', 'true');
-    pulsante.insertBefore(spinner, pulsante.firstChild);
-    pulsante.disabled = true;
-    pulsante.setAttribute('aria-busy', 'true');
+    buttonEl.insertBefore(spinner, buttonEl.firstChild);
+    buttonEl.disabled = true;
+    buttonEl.setAttribute('aria-busy', 'true');
   } else {
-    var esistente = pulsante.querySelector('.pb-spinner');
-    if (esistente) { esistente.remove(); }
-    pulsante.disabled = false;
-    pulsante.removeAttribute('aria-busy');
+    var existing = buttonEl.querySelector('.pb-spinner');
+    if (existing) { existing.remove(); }
+    buttonEl.disabled = false;
+    buttonEl.removeAttribute('aria-busy');
   }
 }
 
@@ -172,31 +172,31 @@ function pbBusy(pulsante, occupato) {
 // toolbar ("centre", for example), the image moves but the box stays where it
 // was, on the left, with the old size: it looks "detached" from the image.
 // Here we recompute it every time something in the editor moves.
-function attachImageOverlay(istanzaQuill) {
-  if (!istanzaQuill) { return; }
-  var formattatore = istanzaQuill.getModule('blotFormatter');
-  if (!formattatore) { return; }
+function attachImageOverlay(quillInstance) {
+  if (!quillInstance) { return; }
+  var formatter = quillInstance.getModule('blotFormatter');
+  if (!formatter) { return; }
 
   function reposition() {
     // No image selected: there is nothing to reposition.
-    if (!formattatore.currentSpec) { return; }
+    if (!formatter.currentSpec) { return; }
     // When the paragraph formatting changes, Quill may recreate the
     // image from scratch: the box would point to an element that is no
     // longer in the page. In that case we hide it.
-    if (typeof formattatore.currentSpec.getTargetElement === 'function') {
-      var bersaglio = formattatore.currentSpec.getTargetElement();
-      if (bersaglio && !document.contains(bersaglio)) {
-        if (typeof formattatore.hide === 'function') { formattatore.hide(); }
+    if (typeof formatter.currentSpec.getTargetElement === 'function') {
+      var targetEl = formatter.currentSpec.getTargetElement();
+      if (targetEl && !document.contains(targetEl)) {
+        if (typeof formatter.hide === 'function') { formatter.hide(); }
         return;
       }
     }
     // update() recomputes both the box and the corner handles.
     // If the library version does not expose it, we fall back to
     // repositioning the box alone.
-    if (typeof formattatore.update === 'function') {
-      formattatore.update();
-    } else if (typeof formattatore.repositionOverlay === 'function') {
-      formattatore.repositionOverlay();
+    if (typeof formatter.update === 'function') {
+      formatter.update();
+    } else if (typeof formatter.repositionOverlay === 'function') {
+      formatter.repositionOverlay();
     }
   }
 
@@ -208,15 +208,15 @@ function attachImageOverlay(istanzaQuill) {
 
   // 1) Any text or format change, including the "centre" button
   //    of the toolbar.
-  istanzaQuill.on('editor-change', repositionAfterPaint);
+  quillInstance.on('editor-change', repositionAfterPaint);
 
   // 2) Style or class changes inside the editor: these are what really
   //    move the image (Quill puts the ql-align-center class on the
   //    paragraph, and resizing writes width/height on the image).
   //    The box lives outside .ql-editor, so it does not self-trigger.
   if (window.MutationObserver) {
-    var osservatore = new MutationObserver(repositionAfterPaint);
-    osservatore.observe(istanzaQuill.root, {
+    var observer = new MutationObserver(repositionAfterPaint);
+    observer.observe(quillInstance.root, {
       attributes: true, childList: true, subtree: true,
       attributeFilter: ['style', 'class', 'width', 'height', 'align']
     });
@@ -224,11 +224,11 @@ function attachImageOverlay(istanzaQuill) {
 
   // 3) A freshly inserted image changes size when it finishes
   //    loading, i.e. after the box has already been drawn.
-  istanzaQuill.root.addEventListener('load', repositionAfterPaint, true);
+  quillInstance.root.addEventListener('load', repositionAfterPaint, true);
 
   // 4) Window resizing and editor scrolling.
   window.addEventListener('resize', repositionAfterPaint);
-  istanzaQuill.root.addEventListener('scroll', repositionAfterPaint);
+  quillInstance.root.addEventListener('scroll', repositionAfterPaint);
 }
 
 /* --- Quill: recovering images pasted from Word ---------------------------- */
@@ -265,20 +265,20 @@ function attachImageOverlay(istanzaQuill) {
 // clipboard image whose real pixel size matches. Only tags with no
 // declared size, and only when the remaining tags and remaining images
 // are equal in number, fall back to the old position-based pairing.
-function handlePastedImages(istanzaQuill, statusElementId) {
-  istanzaQuill.root.addEventListener('paste', function(evento) {
-    if (!evento.clipboardData) { return; }
+function handlePastedImages(quillInstance, statusElementId) {
+  quillInstance.root.addEventListener('paste', function(evt) {
+    if (!evt.clipboardData) { return; }
 
-    var elementiImmagine = [];
-    for (var i = 0; i < evento.clipboardData.items.length; i++) {
-      var voce = evento.clipboardData.items[i];
-      if (voce.type && voce.type.indexOf('image/') === 0) {
-        elementiImmagine.push(voce);
+    var imageElements = [];
+    for (var i = 0; i < evt.clipboardData.items.length; i++) {
+      var entryEl = evt.clipboardData.items[i];
+      if (entryEl.type && entryEl.type.indexOf('image/') === 0) {
+        imageElements.push(entryEl);
       }
     }
     // No embedded images in this paste: let Quill handle it as usual
     // (plain text, or a paste that already has no images at all).
-    if (elementiImmagine.length === 0) {
+    if (imageElements.length === 0) {
       // Some sources (Word on Windows, when you copy text together with a
       // picture) put in the clipboard only a broken local reference
       // ("file:///C:/Users/.../image1.png") and no actual image data at
@@ -287,62 +287,62 @@ function handlePastedImages(istanzaQuill, statusElementId) {
       // author instead of letting the picture disappear with no
       // explanation (a plain web page copy does not have this problem:
       // browsers normally embed the picture itself in that HTML).
-      var statoAvviso = statusElementId ? document.getElementById(statusElementId) : null;
-      if (statoAvviso && contieneImmagineNonRecuperabile(evento.clipboardData.getData('text/html'))) {
-        statoAvviso.textContent = t('js_pasted_word_image_unavailable');
+      var noticeState = statusElementId ? document.getElementById(statusElementId) : null;
+      if (noticeState && hasUnrecoverableImage(evt.clipboardData.getData('text/html'))) {
+        noticeState.textContent = t('js_pasted_word_image_unavailable');
       }
       return;
     }
 
-    var htmlIncollato = evento.clipboardData.getData('text/html');
+    var pastedHtml = evt.clipboardData.getData('text/html');
     // No HTML at all: a single image was copied on its own (e.g. from
     // an image viewer), not part of a larger document paste. Quill's own
     // built-in image paste handling already covers that case.
-    if (!htmlIncollato) { return; }
+    if (!pastedHtml) { return; }
 
     // From here on we take full control of this paste.
-    evento.preventDefault();
-    evento.stopPropagation();
+    evt.preventDefault();
+    evt.stopPropagation();
 
-    var stato = null;
+    var state = null;
     if (statusElementId) {
-      stato = document.getElementById(statusElementId);
+      state = document.getElementById(statusElementId);
     }
-    if (stato) { stato.textContent = t('js_recovering_pasted_images'); }
+    if (state) { state.textContent = t('js_recovering_pasted_images'); }
 
     // The <img> tags found in the pasted HTML, in the order they appear,
     // together with the width/height they declare (if any). This is what
     // lets us pair each tag with the right clipboard image further down,
     // instead of just trusting the order they came in.
-    var tagImmagine = [];
+    var imageTag = [];
     var regexTagImg = /<img\b[^>]*>/gi;
-    var trovato = regexTagImg.exec(htmlIncollato);
-    while (trovato !== null) {
-      tagImmagine.push({
-        larghezza: leggiLarghezzaDichiarata(trovato[0]),
-        altezza: leggiAltezzaDichiarata(trovato[0])
+    var found = regexTagImg.exec(pastedHtml);
+    while (found !== null) {
+      imageTag.push({
+        width: readDeclaredWidth(found[0]),
+        height: readDeclaredHeight(found[0])
       });
-      trovato = regexTagImg.exec(htmlIncollato);
+      found = regexTagImg.exec(pastedHtml);
     }
 
     // We upload every clipboard image and, in parallel, decode it locally
     // to read its real pixel size: we need that size to pair it safely
     // with the right <img> tag.
-    var operazioni = [];
-    for (var j = 0; j < elementiImmagine.length; j++) {
-      var blobCorrente = elementiImmagine[j].getAsFile();
-      operazioni.push(Promise.all([uploadImageBlob(blobCorrente), leggiDimensioneBlob(blobCorrente)]));
+    var operations = [];
+    for (var j = 0; j < imageElements.length; j++) {
+      var currentBlob = imageElements[j].getAsFile();
+      operations.push(Promise.all([uploadImageBlob(currentBlob), readBlobSize(currentBlob)]));
     }
 
-    Promise.all(operazioni).then(function(risultati) {
-      var immaginiCaricate = [];
-      for (var k = 0; k < risultati.length; k++) {
-        var dimensioneReale = risultati[k][1];
-        immaginiCaricate.push({
-          url: risultati[k][0],
-          larghezza: dimensioneReale ? dimensioneReale.larghezza : null,
-          altezza: dimensioneReale ? dimensioneReale.altezza : null,
-          usata: false
+    Promise.all(operations).then(function(results) {
+      var uploadedImages = [];
+      for (var k = 0; k < results.length; k++) {
+        var realSize = results[k][1];
+        uploadedImages.push({
+          url: results[k][0],
+          width: realSize ? realSize.width : null,
+          height: realSize ? realSize.height : null,
+          used: false
         });
       }
 
@@ -350,17 +350,17 @@ function handlePastedImages(istanzaQuill, statusElementId) {
       //    image whose real size matches (within a small tolerance for
       //    Word/Google Docs rounding). This is what stops a flattened
       //    text+image screenshot from being mistaken for a real picture.
-      var assegnazioni = [];
-      for (var t1 = 0; t1 < tagImmagine.length; t1++) {
-        assegnazioni.push(null);
+      var assignments = [];
+      for (var t1 = 0; t1 < imageTag.length; t1++) {
+        assignments.push(null);
       }
-      for (var t2 = 0; t2 < tagImmagine.length; t2++) {
-        var tagCorrente = tagImmagine[t2];
-        if (tagCorrente.larghezza === null || tagCorrente.altezza === null) { continue; }
-        var indiceTrovato = trovaImmagineDiTagliaCorrispondente(tagCorrente, immaginiCaricate);
-        if (indiceTrovato !== null) {
-          assegnazioni[t2] = immaginiCaricate[indiceTrovato].url;
-          immaginiCaricate[indiceTrovato].usata = true;
+      for (var t2 = 0; t2 < imageTag.length; t2++) {
+        var currentTag = imageTag[t2];
+        if (currentTag.width === null || currentTag.height === null) { continue; }
+        var foundIndex = findImageOfMatchingSize(currentTag, uploadedImages);
+        if (foundIndex !== null) {
+          assignments[t2] = uploadedImages[foundIndex].url;
+          uploadedImages[foundIndex].used = true;
         }
       }
 
@@ -369,39 +369,39 @@ function handlePastedImages(istanzaQuill, statusElementId) {
       //    but only if their counts match exactly. This keeps the old,
       //    simple behaviour for the common case (a plain paste with no
       //    size hints at all, where there is no ambiguity to resolve).
-      var tagScoperti = [];
-      for (var t3 = 0; t3 < tagImmagine.length; t3++) {
-        if (assegnazioni[t3] === null) { tagScoperti.push(t3); }
+      var uncoveredTags = [];
+      for (var t3 = 0; t3 < imageTag.length; t3++) {
+        if (assignments[t3] === null) { uncoveredTags.push(t3); }
       }
-      var immaginiLibere = immaginiCaricate.filter(function(im) { return !im.usata; });
-      if (tagScoperti.length === immaginiLibere.length) {
-        for (var m = 0; m < tagScoperti.length; m++) {
-          assegnazioni[tagScoperti[m]] = immaginiLibere[m].url;
+      var freeImages = uploadedImages.filter(function(im) { return !im.used; });
+      if (uncoveredTags.length === freeImages.length) {
+        for (var m = 0; m < uncoveredTags.length; m++) {
+          assignments[uncoveredTags[m]] = freeImages[m].url;
         }
       }
 
       // We rebuild the HTML: each <img> tag with a safe pairing is
       // replaced with its uploaded URL; the others are dropped rather
       // than risking a wrong image ending up in their place.
-      var indiceTag = 0;
-      var htmlFinale = htmlIncollato.replace(/<img\b[^>]*>/gi, function() {
-        var urlAssegnato = assegnazioni[indiceTag];
-        indiceTag = indiceTag + 1;
-        if (urlAssegnato === null || urlAssegnato === undefined) { return ''; }
-        return '<img src="' + urlAssegnato + '">';
+      var tagIndex = 0;
+      var htmlFinale = pastedHtml.replace(/<img\b[^>]*>/gi, function() {
+        var assignedUrl = assignments[tagIndex];
+        tagIndex = tagIndex + 1;
+        if (assignedUrl === null || assignedUrl === undefined) { return ''; }
+        return '<img src="' + assignedUrl + '">';
       });
-      var posizione = istanzaQuill.getSelection(true) || { index: istanzaQuill.getLength() };
-      istanzaQuill.clipboard.dangerouslyPasteHTML(posizione.index, htmlFinale);
-      if (stato) {
-        var riuscite = 0;
-        for (var n = 0; n < assegnazioni.length; n++) {
-          if (assegnazioni[n] !== null && assegnazioni[n] !== undefined) { riuscite = riuscite + 1; }
+      var placement = quillInstance.getSelection(true) || { index: quillInstance.getLength() };
+      quillInstance.clipboard.dangerouslyPasteHTML(placement.index, htmlFinale);
+      if (state) {
+        var succeeded = 0;
+        for (var n = 0; n < assignments.length; n++) {
+          if (assignments[n] !== null && assignments[n] !== undefined) { succeeded = succeeded + 1; }
         }
-        if (riuscite === tagImmagine.length) {
-          stato.textContent = t('js_pasted_all_recovered').replace('{n}', riuscite);
+        if (succeeded === imageTag.length) {
+          state.textContent = t('js_pasted_all_recovered').replace('{n}', succeeded);
         } else {
-          stato.textContent = t('js_pasted_partial_recovered')
-            .replace('{ok}', riuscite).replace('{tot}', tagImmagine.length);
+          state.textContent = t('js_pasted_partial_recovered')
+            .replace('{ok}', succeeded).replace('{tot}', imageTag.length);
         }
       }
     });
@@ -418,14 +418,14 @@ function handlePastedImages(istanzaQuill, statusElementId) {
 // addresses that are actually loadable in a browser (http/https/data, or
 // a path relative to this site, like the "/media/..." PyBlog itself
 // generates) and treat anything else as unrecoverable.
-function contieneImmagineNonRecuperabile(html) {
+function hasUnrecoverableImage(html) {
   if (!html) { return false; }
   var regexTag = /<img\b[^>]*>/gi;
   var tag = regexTag.exec(html);
   while (tag !== null) {
-    var corrispondenzaSrc = tag[0].match(/\bsrc\s*=\s*["']([^"']*)["']/i);
-    var indirizzo = corrispondenzaSrc ? corrispondenzaSrc[1] : '';
-    if (!/^(https?:|data:|\/)/i.test(indirizzo)) {
+    var srcMatch = tag[0].match(/\bsrc\s*=\s*["']([^"']*)["']/i);
+    var address = srcMatch ? srcMatch[1] : '';
+    if (!/^(https?:|data:|\/)/i.test(address)) {
       return true;
     }
     tag = regexTag.exec(html);
@@ -436,54 +436,54 @@ function contieneImmagineNonRecuperabile(html) {
 // Reads the width a pasted <img> tag declares, either as a plain HTML
 // attribute (width="200") or as an inline style (style="width:200px").
 // Returns null when the tag declares no width at all.
-function leggiLarghezzaDichiarata(tag) {
-  var corrispondenzaAttributo = tag.match(/\bwidth\s*=\s*"(\d+)/i);
-  if (corrispondenzaAttributo) { return parseInt(corrispondenzaAttributo[1], 10); }
-  var corrispondenzaStile = tag.match(/width\s*:\s*(\d+)px/i);
-  if (corrispondenzaStile) { return parseInt(corrispondenzaStile[1], 10); }
+function readDeclaredWidth(tag) {
+  var attributeMatch = tag.match(/\bwidth\s*=\s*"(\d+)/i);
+  if (attributeMatch) { return parseInt(attributeMatch[1], 10); }
+  var styleMatch = tag.match(/width\s*:\s*(\d+)px/i);
+  if (styleMatch) { return parseInt(styleMatch[1], 10); }
   return null;
 }
 
-// Same as leggiLarghezzaDichiarata, for the height.
-function leggiAltezzaDichiarata(tag) {
-  var corrispondenzaAttributo = tag.match(/\bheight\s*=\s*"(\d+)/i);
-  if (corrispondenzaAttributo) { return parseInt(corrispondenzaAttributo[1], 10); }
-  var corrispondenzaStile = tag.match(/height\s*:\s*(\d+)px/i);
-  if (corrispondenzaStile) { return parseInt(corrispondenzaStile[1], 10); }
+// Same as readDeclaredWidth, for the height.
+function readDeclaredHeight(tag) {
+  var attributeMatch = tag.match(/\bheight\s*=\s*"(\d+)/i);
+  if (attributeMatch) { return parseInt(attributeMatch[1], 10); }
+  var styleMatch = tag.match(/height\s*:\s*(\d+)px/i);
+  if (styleMatch) { return parseInt(styleMatch[1], 10); }
   return null;
 }
 
 // Decodes an image blob locally to read its real pixel size. Resolves to
 // null if the blob turns out not to be a valid image.
-function leggiDimensioneBlob(blob) {
+function readBlobSize(blob) {
   return new Promise(function(resolve) {
-    var indirizzoTemporaneo = URL.createObjectURL(blob);
-    var immagine = new Image();
-    immagine.onload = function() {
-      URL.revokeObjectURL(indirizzoTemporaneo);
-      resolve({ larghezza: immagine.naturalWidth, altezza: immagine.naturalHeight });
+    var temporaryAddress = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function() {
+      URL.revokeObjectURL(temporaryAddress);
+      resolve({ width: img.naturalWidth, height: img.naturalHeight });
     };
-    immagine.onerror = function() {
-      URL.revokeObjectURL(indirizzoTemporaneo);
+    img.onerror = function() {
+      URL.revokeObjectURL(temporaryAddress);
       resolve(null);
     };
-    immagine.src = indirizzoTemporaneo;
+    img.src = temporaryAddress;
   });
 }
 
 // Looks, among the uploaded images not yet paired, for one whose real
 // pixel size matches the size declared by the pasted tag (with a small
 // tolerance for Word/Google Docs rounding). Returns its index in
-// immaginiCaricate, or null when none matches closely enough.
-function trovaImmagineDiTagliaCorrispondente(tagCorrente, immaginiCaricate) {
-  var tolleranza = 3; // pixel di margine per arrotondamenti/DPI
-  for (var i = 0; i < immaginiCaricate.length; i++) {
-    var immagine = immaginiCaricate[i];
-    if (immagine.usata) { continue; }
-    if (immagine.larghezza === null) { continue; }
-    var differenzaLarghezza = Math.abs(immagine.larghezza - tagCorrente.larghezza);
-    var differenzaAltezza = Math.abs(immagine.altezza - tagCorrente.altezza);
-    if (differenzaLarghezza <= tolleranza && differenzaAltezza <= tolleranza) {
+// uploadedImages, or null when none matches closely enough.
+function findImageOfMatchingSize(currentTag, uploadedImages) {
+  var tolerance = 3; // pixel di margine per arrotondamenti/DPI
+  for (var i = 0; i < uploadedImages.length; i++) {
+    var img = uploadedImages[i];
+    if (img.used) { continue; }
+    if (img.width === null) { continue; }
+    var widthDiff = Math.abs(img.width - currentTag.width);
+    var heightDiff = Math.abs(img.height - currentTag.height);
+    if (widthDiff <= tolerance && heightDiff <= tolerance) {
       return i;
     }
   }
@@ -495,17 +495,17 @@ function trovaImmagineDiTagliaCorrispondente(tagCorrente, immaginiCaricate) {
 // that resolves to the file URL, or null if the upload failed (so one
 // broken image does not stop the others from being recovered).
 function uploadImageBlob(blob) {
-  var datiForm = new FormData();
-  var estensione = 'png';
+  var formValues = new FormData();
+  var extension = 'png';
   if (blob.type && blob.type.split('/')[1]) {
-    estensione = blob.type.split('/')[1];
+    extension = blob.type.split('/')[1];
   }
-  datiForm.append('video', blob, 'pasted-image.' + estensione);
-  return pbFetch('/upload', { method: 'POST', body: datiForm })
-    .then(function(risposta) { return risposta.json(); })
-    .then(function(risultato) {
-      if (risultato.ok) {
-        return risultato.url;
+  formValues.append('video', blob, 'pasted-image.' + extension);
+  return pbFetch('/upload', { method: 'POST', body: formValues })
+    .then(function(reply) { return reply.json(); })
+    .then(function(resultValue) {
+      if (resultValue.ok) {
+        return resultValue.url;
       }
       return null;
     })
@@ -524,19 +524,19 @@ function uploadImageBlob(blob) {
 //
 // The map of CSS selector -> translated label arrives in PB_I18N.tooltips.
 function applyToolbarTooltips() {
-  var mappa = {};
+  var mapping = {};
   if (window.PB_I18N && window.PB_I18N.tooltips) {
-    mappa = window.PB_I18N.tooltips;
+    mapping = window.PB_I18N.tooltips;
   }
-  var barre = document.querySelectorAll('.ql-toolbar');
-  for (var i = 0; i < barre.length; i++) {
-    for (var selettore in mappa) {
-      var elementi = barre[i].querySelectorAll(selettore);
-      for (var j = 0; j < elementi.length; j++) {
+  var bars = document.querySelectorAll('.ql-toolbar');
+  for (var i = 0; i < bars.length; i++) {
+    for (var selector in mapping) {
+      var elements = bars[i].querySelectorAll(selector);
+      for (var j = 0; j < elements.length; j++) {
         // The dropdowns (font, size, heading...) are wrapped in a
         // .ql-picker span: we put the tooltip on the wrapper, otherwise
         // it would follow the open list of options around.
-        elementi[j].setAttribute('data-tooltip', mappa[selettore]);
+        elements[j].setAttribute('data-tooltip', mapping[selector]);
       }
     }
   }
@@ -596,11 +596,11 @@ function insertYoutube() {
     alert(t('js_youtube_not_recognized'));
     return;
   }
-  var codice = '<div class="video-youtube">';
-  codice = codice + '<iframe src="https://www.youtube.com/embed/' + idVideo + '"';
-  codice = codice + ' allowfullscreen></iframe></div><p><br></p>';
-  var posizione = PB_MAIN_QUILL.getSelection(true);
-  PB_MAIN_QUILL.clipboard.dangerouslyPasteHTML(posizione.index, codice);
+  var snippetCode = '<div class="video-youtube">';
+  snippetCode = snippetCode + '<iframe src="https://www.youtube.com/embed/' + idVideo + '"';
+  snippetCode = snippetCode + ' allowfullscreen></iframe></div><p><br></p>';
+  var placement = PB_MAIN_QUILL.getSelection(true);
+  PB_MAIN_QUILL.clipboard.dangerouslyPasteHTML(placement.index, snippetCode);
 }
 
 // Refuses a file that is over the limit before a single byte is uploaded.
@@ -609,11 +609,11 @@ function insertYoutube() {
 // connection while the browser is still sending: the author would see a
 // network error rather than a reason. Checking here turns that into a
 // sentence that says what the limit is.
-function fileFitsLimit(file, limiteMb) {
-  if (file.size <= limiteMb * 1024 * 1024) {
+function fileFitsLimit(file, limitMb) {
+  if (file.size <= limitMb * 1024 * 1024) {
     return true;
   }
-  pbToast(t('err_file_too_large').replace('{n}', String(limiteMb)), 'danger');
+  pbToast(t('err_file_too_large').replace('{n}', String(limitMb)), 'danger');
   return false;
 }
 
@@ -637,109 +637,109 @@ function fileFitsLimit(file, limiteMb) {
 // stop being a drawing; an animated GIF would come back as one frame; a WebP
 // may carry transparency that a re-encode would drop. None of those is a
 // trade the author asked for.
-function resizeImageBeforeUpload(file, latoMassimo) {
-  var rimpicciolibili = ['image/png', 'image/jpeg'];
-  if (!latoMassimo || rimpicciolibili.indexOf(file.type) === -1) {
+function resizeImageBeforeUpload(file, maxSide) {
+  var shrinkable = ['image/png', 'image/jpeg'];
+  if (!maxSide || shrinkable.indexOf(file.type) === -1) {
     return Promise.resolve(file);
   }
 
-  return new Promise(function(risolvi) {
-    var indirizzo = URL.createObjectURL(file);
-    var immagine = new Image();
+  return new Promise(function(resolveIt) {
+    var address = URL.createObjectURL(file);
+    var img = new Image();
 
-    immagine.onload = function() {
-      URL.revokeObjectURL(indirizzo);
-      var larghezza = immagine.naturalWidth;
-      var altezza = immagine.naturalHeight;
-      var lato = Math.max(larghezza, altezza);
+    img.onload = function() {
+      URL.revokeObjectURL(address);
+      var width = img.naturalWidth;
+      var height = img.naturalHeight;
+      var side = Math.max(width, height);
       // The same threshold the server uses: trimming an image by a little is
       // not worth re-encoding it.
-      if (lato <= latoMassimo * 1.25) { risolvi(file); return; }
+      if (side <= maxSide * 1.25) { resolveIt(file); return; }
 
-      var scala = latoMassimo / lato;
-      var tela = document.createElement('canvas');
-      tela.width = Math.round(larghezza * scala);
-      tela.height = Math.round(altezza * scala);
-      var contesto = tela.getContext('2d');
-      contesto.imageSmoothingEnabled = true;
-      contesto.imageSmoothingQuality = 'high';
-      contesto.drawImage(immagine, 0, 0, tela.width, tela.height);
+      var scala = maxSide / side;
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.round(width * scala);
+      canvas.height = Math.round(height * scala);
+      var context = canvas.getContext('2d');
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      tela.toBlob(function(blocco) {
+      canvas.toBlob(function(blockEl) {
         // A re-encode that came out bigger, or a browser that refused: keep
         // what the author chose. The file name is unchanged, so it still
         // matches the type the server checks it against.
-        if (!blocco || blocco.size >= file.size) { risolvi(file); return; }
-        var ridotto = new File([blocco], file.name, { type: file.type });
+        if (!blockEl || blockEl.size >= file.size) { resolveIt(file); return; }
+        var reduced = new File([blockEl], file.name, { type: file.type });
         pbToast(t('js_image_resized_local')
-                  .replace('{w}', tela.width).replace('{h}', tela.height), 'info');
-        risolvi(ridotto);
+                  .replace('{w}', canvas.width).replace('{h}', canvas.height), 'info');
+        resolveIt(reduced);
       }, file.type, 0.85);
     };
 
-    immagine.onerror = function() {
-      URL.revokeObjectURL(indirizzo);
-      risolvi(file);
+    img.onerror = function() {
+      URL.revokeObjectURL(address);
+      resolveIt(file);
     };
-    immagine.src = indirizzo;
+    img.src = address;
   });
 }
 
-function uploadChosenFile(idCampoFile, limiteMb, idStato, messaggioInizio) {
-  var campoFile = document.getElementById(idCampoFile);
-  if (!campoFile || campoFile.files.length === 0) {
+function uploadChosenFile(fileFieldId, limitMb, stateId, startMessage) {
+  var fileField = document.getElementById(fileFieldId);
+  if (!fileField || fileField.files.length === 0) {
     return Promise.resolve(null);
   }
-  var scelto = campoFile.files[0];
+  var chosen = fileField.files[0];
   // Clearing the input now lets the same file be chosen again later: without
   // this the change event would not fire a second time. FormData already
   // holds the file, so the upload is unaffected.
-  campoFile.value = '';
+  fileField.value = '';
 
-  if (!fileFitsLimit(scelto, limiteMb)) {
+  if (!fileFitsLimit(chosen, limitMb)) {
     return Promise.resolve(null);
   }
 
-  pbStatus(idStato, messaggioInizio);
-  return resizeImageBeforeUpload(scelto, pbPage('max_image_width', 1600))
-    .then(function(file) { return inviaFile(file, idStato); });
+  pbStatus(stateId, startMessage);
+  return resizeImageBeforeUpload(chosen, pbPage('max_image_width', 1600))
+    .then(function(file) { return sendFile(file, stateId); });
 }
 
-function inviaFile(file, idStato) {
-  var datiForm = new FormData();
-  datiForm.append('video', file);
+function sendFile(file, stateId) {
+  var formValues = new FormData();
+  formValues.append('video', file);
 
-  return pbFetch('/upload', { method: 'POST', body: datiForm })
-    .then(function(risposta) { return risposta.json(); })
-    .then(function(risultato) {
-      if (risultato.ok === true) {
+  return pbFetch('/upload', { method: 'POST', body: formValues })
+    .then(function(reply) { return reply.json(); })
+    .then(function(resultValue) {
+      if (resultValue.ok === true) {
         // The server says what it did with the file: shrank it, dropped the
         // metadata, or left it alone because it could not.
-        if (risultato.note) { pbToast(risultato.note, 'info'); }
-        return risultato.url;
+        if (resultValue.note) { pbToast(resultValue.note, 'info'); }
+        return resultValue.url;
       }
-      pbStatus(idStato, '');
-      pbToast(t('js_error_prefix') + risultato.error, 'danger');
+      pbStatus(stateId, '');
+      pbToast(t('js_error_prefix') + resultValue.error, 'danger');
       return null;
     })
     .catch(function() {
-      pbStatus(idStato, '');
+      pbStatus(stateId, '');
       pbToast(t('js_upload_error'), 'danger');
       return null;
     });
 }
 
-// Uploads a file and inserts the snippet built by costruisciCodice() at the
+// Uploads a file and inserts the snippet built by buildCode() at the
 // cursor. Used by the image and video buttons, on both admin pages.
-function uploadMediaFile(idCampoFile, limiteMb, messaggioInizio, messaggioFine,
-                         costruisciCodice) {
+function uploadMediaFile(fileFieldId, limitMb, startMessage, endMessage,
+                         buildCode) {
   if (!PB_MAIN_QUILL) { return; }
-  uploadChosenFile(idCampoFile, limiteMb, 'upload-status', messaggioInizio)
+  uploadChosenFile(fileFieldId, limitMb, 'upload-status', startMessage)
     .then(function(url) {
       if (url === null) { return; }
-      var posizione = PB_MAIN_QUILL.getSelection(true);
-      PB_MAIN_QUILL.clipboard.dangerouslyPasteHTML(posizione.index, costruisciCodice(url));
-      pbStatus('upload-status', messaggioFine);
+      var placement = PB_MAIN_QUILL.getSelection(true);
+      PB_MAIN_QUILL.clipboard.dangerouslyPasteHTML(placement.index, buildCode(url));
+      pbStatus('upload-status', endMessage);
     });
 }
 
@@ -1095,22 +1095,22 @@ function uploadCoverImage() {
 // the framing is not a surprise once the article is published. Called when
 // the field changes, however it changed.
 function updateCoverPreview() {
-  var campo = document.getElementById('image');
-  var anteprima = document.getElementById('cover-preview');
-  var rimuovi = document.getElementById('btn-remove-cover');
-  if (!campo || !anteprima) { return; }
+  var fieldEl = document.getElementById('image');
+  var previewEl = document.getElementById('cover-preview');
+  var removeButton = document.getElementById('btn-remove-cover');
+  if (!fieldEl || !previewEl) { return; }
 
-  var indirizzo = campo.value.trim();
-  if (indirizzo === '') {
-    anteprima.removeAttribute('src');
-    anteprima.hidden = true;
-    if (rimuovi) { rimuovi.hidden = true; }
+  var address = fieldEl.value.trim();
+  if (address === '') {
+    previewEl.removeAttribute('src');
+    previewEl.hidden = true;
+    if (removeButton) { removeButton.hidden = true; }
     return;
   }
-  anteprima.src = indirizzo;
-  anteprima.alt = document.getElementById('title').value;
-  anteprima.hidden = false;
-  if (rimuovi) { rimuovi.hidden = false; }
+  previewEl.src = address;
+  previewEl.alt = document.getElementById('title').value;
+  previewEl.hidden = false;
+  if (removeButton) { removeButton.hidden = false; }
 }
 
 // Clears the cover. The file itself stays in the media folder: another
@@ -1150,11 +1150,11 @@ function uploadImage() {
 // blog article does not), so the author has to look at the result before it
 // becomes an article. If the editor already holds text, we ask first.
 function importDocx() {
-  var campoFile = document.getElementById('file-docx');
-  if (!campoFile || campoFile.files.length === 0) { return; }
-  var file = campoFile.files[0];
+  var fileField = document.getElementById('file-docx');
+  if (!fileField || fileField.files.length === 0) { return; }
+  var file = fileField.files[0];
   // The same file can be chosen again after a cancelled confirmation.
-  campoFile.value = '';
+  fileField.value = '';
 
   if (file.name.toLowerCase().endsWith('.docx') === false) {
     pbToast(t('js_docx_wrong_extension'), 'danger');
@@ -1162,10 +1162,10 @@ function importDocx() {
   }
   if (!fileFitsLimit(file, pbPage('max_docx_mb', 30))) { return; }
 
-  var vuoto = true;
-  if (quill && quill.getText().trim() !== '') { vuoto = false; }
+  var isEmpty = true;
+  if (quill && quill.getText().trim() !== '') { isEmpty = false; }
 
-  if (vuoto) {
+  if (isEmpty) {
     sendDocx(file);
     return;
   }
@@ -1176,40 +1176,40 @@ function importDocx() {
 
 // Uploads the document and applies what comes back.
 function sendDocx(file) {
-  var pulsante = document.getElementById('btn-import-docx');
-  var datiForm = new FormData();
-  datiForm.append('docx', file, file.name);
+  var buttonEl = document.getElementById('btn-import-docx');
+  var formValues = new FormData();
+  formValues.append('docx', file, file.name);
 
-  pbBusy(pulsante, true);
+  pbBusy(buttonEl, true);
   pbStatus('docx-status', t('js_docx_importing'));
 
-  pbFetch('/import-docx', { method: 'POST', body: datiForm })
-    .then(function(risposta) { return risposta.json(); })
-    .then(function(risultato) {
-      pbBusy(pulsante, false);
-      if (risultato.ok !== true) {
+  pbFetch('/import-docx', { method: 'POST', body: formValues })
+    .then(function(reply) { return reply.json(); })
+    .then(function(resultValue) {
+      pbBusy(buttonEl, false);
+      if (resultValue.ok !== true) {
         pbStatus('docx-status', '');
-        pbToast(risultato.error, 'danger');
+        pbToast(resultValue.error, 'danger');
         return;
       }
-      applyImportedDocx(risultato);
+      applyImportedDocx(resultValue);
     })
     .catch(function() {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       pbStatus('docx-status', '');
       pbToast(t('js_docx_net_error'), 'danger');
     });
 }
 
 // Fills the form with the converted document and reports what was dropped.
-function applyImportedDocx(risultato) {
-  var campoTitolo = document.getElementById('title');
+function applyImportedDocx(resultValue) {
+  var titleField = document.getElementById('title');
   // An existing title is kept: the author may have chosen it deliberately,
   // and the one Word suggests is only the first heading of the file.
-  if (campoTitolo.value.trim() === '') {
-    campoTitolo.value = risultato.title;
+  if (titleField.value.trim() === '') {
+    titleField.value = resultValue.title;
   }
-  quill.root.innerHTML = risultato.content;
+  quill.root.innerHTML = resultValue.content;
   // Writing innerHTML puts the HTML in the page but leaves Quill's own
   // document model stale. update() makes it scan the new DOM now, so the
   // imported tables are recognised as rawHTML blots immediately instead of
@@ -1221,9 +1221,9 @@ function applyImportedDocx(risultato) {
 
   // The subtitle of the document is a ready-made description. It only fills
   // an empty field: a description the author already wrote stays.
-  var campoDescrizione = document.getElementById('description');
-  if (risultato.subtitle && campoDescrizione && campoDescrizione.value.trim() === '') {
-    campoDescrizione.value = risultato.subtitle;
+  var descriptionField = document.getElementById('description');
+  if (resultValue.subtitle && descriptionField && descriptionField.value.trim() === '') {
+    descriptionField.value = resultValue.subtitle;
     updateDescriptionCounter();
   }
 
@@ -1233,8 +1233,8 @@ function applyImportedDocx(risultato) {
   // The warnings go in one message, one per line: each names a specific
   // image, link or table, and an author needs to know which - but a pile of
   // separate toasts covered the editor and disappeared one by one.
-  if (risultato.warnings && risultato.warnings.length > 0) {
-    pbToast(t('js_docx_warnings_title') + '\n\u2022 ' + risultato.warnings.join('\n\u2022 '),
+  if (resultValue.warnings && resultValue.warnings.length > 0) {
+    pbToast(t('js_docx_warnings_title') + '\n\u2022 ' + resultValue.warnings.join('\n\u2022 '),
             'warning');
   }
 }
@@ -1243,8 +1243,8 @@ function applyImportedDocx(risultato) {
 
 // The cell content is rebuilt as an HTML string, so text coming from the
 // document must not be able to inject tags of its own.
-function escapeCellText(testo) {
-  return testo
+function escapeCellText(textValue) {
+  return textValue
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -1254,66 +1254,66 @@ function escapeCellText(testo) {
 // Finds the table a row or cell really belongs to. Word nests tables inside
 // tables, and querySelectorAll reaches into the nested ones too: without this
 // check a nested data table would be flattened into its wrapper.
-function closestTable(nodo) {
-  var corrente = nodo.parentNode;
-  while (corrente) {
-    if (corrente.tagName === 'TABLE') {
-      return corrente;
+function closestTable(node) {
+  var currentItem = node.parentNode;
+  while (currentItem) {
+    if (currentItem.tagName === 'TABLE') {
+      return currentItem;
     }
-    corrente = corrente.parentNode;
+    currentItem = currentItem.parentNode;
   }
   return null;
 }
 
 // The <tr> elements belonging to this table only, skipping nested tables.
-function ownRows(tabella) {
-  var tutte = tabella.querySelectorAll('tr');
-  var proprie = [];
-  for (var i = 0; i < tutte.length; i++) {
-    if (closestTable(tutte[i]) === tabella) {
-      proprie.push(tutte[i]);
+function ownRows(table) {
+  var all = table.querySelectorAll('tr');
+  var own = [];
+  for (var i = 0; i < all.length; i++) {
+    if (closestTable(all[i]) === table) {
+      own.push(all[i]);
     }
   }
-  return proprie;
+  return own;
 }
 
 // The cells belonging to this table only, skipping nested tables.
-function ownCells(riga, tabella) {
-  var tutte = riga.querySelectorAll('td, th');
-  var proprie = [];
-  for (var i = 0; i < tutte.length; i++) {
-    if (closestTable(tutte[i]) === tabella) {
-      proprie.push(tutte[i]);
+function ownCells(row, table) {
+  var all = row.querySelectorAll('td, th');
+  var own = [];
+  for (var i = 0; i < all.length; i++) {
+    if (closestTable(all[i]) === table) {
+      own.push(all[i]);
     }
   }
-  return proprie;
+  return own;
 }
 
 // Tells whether a pasted table is Word's page furniture rather than data.
 // The rules are deliberately simple and conservative: when in doubt we treat
 // it as a data table, because unwrapping a real grid loses more than keeping
 // a layout wrapper would.
-function isLayoutTable(tabella) {
+function isLayoutTable(table) {
   // A table wrapping another table is a layout wrapper: the inner one is
   // the real grid and will be matched on its own.
-  if (tabella.querySelector('table')) {
+  if (table.querySelector('table')) {
     return true;
   }
-  var righe = ownRows(tabella);
+  var rows = ownRows(table);
   // A single row is a strip of blocks placed side by side, not a grid:
   // this is the classic Word "text next to image" layout.
-  if (righe.length <= 1) {
+  if (rows.length <= 1) {
     return true;
   }
   // A single column is a stack of blocks, not a grid.
-  var maxCelle = 0;
-  for (var i = 0; i < righe.length; i++) {
-    var quante = ownCells(righe[i], tabella).length;
-    if (quante > maxCelle) {
-      maxCelle = quante;
+  var maxCells = 0;
+  for (var i = 0; i < rows.length; i++) {
+    var howMany = ownCells(rows[i], table).length;
+    if (howMany > maxCells) {
+      maxCells = howMany;
     }
   }
-  if (maxCelle <= 1) {
+  if (maxCells <= 1) {
     return true;
   }
   return false;
@@ -1322,28 +1322,28 @@ function isLayoutTable(tabella) {
 // Keeps the text AND the images of a cell, dropping Word's styling.
 // The old version used innerText, which silently deleted every image
 // inside a table cell.
-function buildCleanCell(cella) {
-  var pezzi = [];
-  collectCellContent(cella, pezzi);
-  return pezzi.join('').trim();
+function buildCleanCell(cell) {
+  var pieces = [];
+  collectCellContent(cell, pieces);
+  return pieces.join('').trim();
 }
 
-function collectCellContent(nodo, pezzi) {
-  for (var i = 0; i < nodo.childNodes.length; i++) {
-    var figlio = nodo.childNodes[i];
-    if (figlio.nodeType === 3) {
-      pezzi.push(escapeCellText(figlio.textContent.replace(/\s+/g, ' ')));
-    } else if (figlio.nodeType === 1) {
-      if (figlio.tagName === 'IMG') {
+function collectCellContent(node, pieces) {
+  for (var i = 0; i < node.childNodes.length; i++) {
+    var child = node.childNodes[i];
+    if (child.nodeType === 3) {
+      pieces.push(escapeCellText(child.textContent.replace(/\s+/g, ' ')));
+    } else if (child.nodeType === 1) {
+      if (child.tagName === 'IMG') {
         // Only the src survives: Word's width/height/styles are dropped.
-        var indirizzo = figlio.getAttribute('src');
-        if (indirizzo) {
-          pezzi.push('<img src="' + escapeCellText(indirizzo) + '">');
+        var address = child.getAttribute('src');
+        if (address) {
+          pieces.push('<img src="' + escapeCellText(address) + '">');
         }
-      } else if (figlio.tagName === 'BR') {
-        pezzi.push(' ');
+      } else if (child.tagName === 'BR') {
+        pieces.push(' ');
       } else {
-        collectCellContent(figlio, pezzi);
+        collectCellContent(child, pieces);
       }
     }
   }
@@ -1351,35 +1351,35 @@ function collectCellContent(nodo, pezzi) {
 
 // The merge of a cell, as attributes to write back: Word's merged cells
 // arrive as colspan and rowspan, and dropping them shifts every cell after.
-function mergeAttributes(cella) {
-  var risultato = '';
-  var colonne = parseInt(cella.getAttribute('colspan') || '1', 10);
-  var righe = parseInt(cella.getAttribute('rowspan') || '1', 10);
-  if (colonne > 1) { risultato = risultato + ' colspan="' + colonne + '"'; }
-  if (righe > 1) { risultato = risultato + ' rowspan="' + righe + '"'; }
-  return risultato;
+function mergeAttributes(cell) {
+  var resultValue = '';
+  var columns = parseInt(cell.getAttribute('colspan') || '1', 10);
+  var rows = parseInt(cell.getAttribute('rowspan') || '1', 10);
+  if (columns > 1) { resultValue = resultValue + ' colspan="' + columns + '"'; }
+  if (rows > 1) { resultValue = resultValue + ' rowspan="' + rows + '"'; }
+  return resultValue;
 }
 
 // Turns a Word <table> node into simple, clean HTML, keeping the images.
-function buildCleanTable(tabella) {
-  var risultato = '<table class="article-table"><tbody>';
-  var righe = ownRows(tabella);
-  for (var i = 0; i < righe.length; i++) {
-    risultato = risultato + '<tr>';
-    var celle = ownCells(righe[i], tabella);
-    for (var j = 0; j < celle.length; j++) {
-      var contenuto = buildCleanCell(celle[j]);
+function buildCleanTable(table) {
+  var resultValue = '<table class="article-table"><tbody>';
+  var rows = ownRows(table);
+  for (var i = 0; i < rows.length; i++) {
+    resultValue = resultValue + '<tr>';
+    var cells = ownCells(rows[i], table);
+    for (var j = 0; j < cells.length; j++) {
+      var contentValue = buildCleanCell(cells[j]);
       // We treat the first row as the header.
       if (i === 0) {
-        risultato = risultato + '<th' + mergeAttributes(celle[j]) + '>' + contenuto + '</th>';
+        resultValue = resultValue + '<th' + mergeAttributes(cells[j]) + '>' + contentValue + '</th>';
       } else {
-        risultato = risultato + '<td' + mergeAttributes(celle[j]) + '>' + contenuto + '</td>';
+        resultValue = resultValue + '<td' + mergeAttributes(cells[j]) + '>' + contentValue + '</td>';
       }
     }
-    risultato = risultato + '</tr>';
+    resultValue = resultValue + '</tr>';
   }
-  risultato = risultato + '</tbody></table>';
-  return risultato;
+  resultValue = resultValue + '</tbody></table>';
+  return resultValue;
 }
 
 // Registers the "rawHTML" blot and the clipboard matcher on an editor.
@@ -1393,17 +1393,17 @@ function buildCleanTable(tabella) {
 function registerRawHtmlBlot() {
   var BlockEmbed = Quill.import('blots/block/embed');
   var RawHtmlBlot = class extends BlockEmbed {
-    static create(valore) {
-      var nodo = super.create();
-      nodo.innerHTML = valore;
+    static create(val) {
+      var node = super.create();
+      node.innerHTML = val;
       // The browser must not let the user type inside the embed: Quill's
       // document model would not see those changes and could revert them.
       // Editing goes through the small table editor instead (click on it).
-      nodo.setAttribute('contenteditable', 'false');
-      return nodo;
+      node.setAttribute('contenteditable', 'false');
+      return node;
     }
-    static value(nodo) {
-      return nodo.innerHTML;
+    static value(node) {
+      return node.innerHTML;
     }
   };
   RawHtmlBlot.blotName = 'rawHTML';
@@ -1427,18 +1427,18 @@ function registerRawHtmlBlot() {
 // Now only real data tables become a block (a Quill limitation: editing
 // table cells in place would need a dedicated table module); to change a
 // data table, delete it and paste it again, or edit the source document.
-function attachTableSupport(istanzaQuill) {
-  istanzaQuill.clipboard.addMatcher('TABLE', function(nodo, delta) {
+function attachTableSupport(quillInstance) {
+  quillInstance.clipboard.addMatcher('TABLE', function(node, delta) {
     // A layout table is not a table at all, semantically. We return the delta
     // Quill already built from its children: text stays text, images stay
     // images, and everything remains editable.
-    if (isLayoutTable(nodo)) {
+    if (isLayoutTable(node)) {
       return delta;
     }
     // A real data table: rebuild it clean and keep it as a single block.
     var Delta = Quill.import('delta');
-    var htmlTabella = buildCleanTable(nodo);
-    return new Delta().insert({ rawHTML: htmlTabella });
+    var tableHtml = buildCleanTable(node);
+    return new Delta().insert({ rawHTML: tableHtml });
   });
 
   // A single click SELECTS the table, a double click opens the cell editor.
@@ -1448,33 +1448,33 @@ function attachTableSupport(istanzaQuill) {
   // toolbar had nothing to act on. Selecting first is also what makes the
   // block buttons (alignment, indent) work, because Quill applies those to
   // whatever the selection covers.
-  istanzaQuill.root.addEventListener('click', function(evento) {
-    var blocco = evento.target.closest('.raw-html-block');
-    if (!blocco) { return; }
-    selectTableBlock(istanzaQuill, blocco);
+  quillInstance.root.addEventListener('click', function(evt) {
+    var blockEl = evt.target.closest('.raw-html-block');
+    if (!blockEl) { return; }
+    selectTableBlock(quillInstance, blockEl);
   });
 
-  istanzaQuill.root.addEventListener('dblclick', function(evento) {
-    var blocco = evento.target.closest('.raw-html-block');
-    if (!blocco) { return; }
-    var tabella = blocco.querySelector('table');
-    if (!tabella) { return; }
-    openTableEditor(istanzaQuill, blocco, tabella);
+  quillInstance.root.addEventListener('dblclick', function(evt) {
+    var blockEl = evt.target.closest('.raw-html-block');
+    if (!blockEl) { return; }
+    var table = blockEl.querySelector('table');
+    if (!table) { return; }
+    openTableEditor(quillInstance, blockEl, table);
   });
 
   // The selected table is outlined, so it is obvious what the toolbar will
   // act on. Quill draws no selection of its own around a block embed.
-  istanzaQuill.on('selection-change', function(range) {
-    highlightSelectedTable(istanzaQuill, range);
+  quillInstance.on('selection-change', function(range) {
+    highlightSelectedTable(quillInstance, range);
   });
 
-  istanzaQuill.on('editor-change', refreshTableHints);
+  quillInstance.on('editor-change', refreshTableHints);
   refreshTableHints();
 }
 
 // The table the caret is currently on, or null. The toolbar handlers read it
 // to decide whether a button should act on a table or on ordinary text.
-var tabellaSelezionata = null;
+var selectedTable = null;
 
 // Puts Quill's own selection on a table block.
 //
@@ -1482,29 +1482,29 @@ var tabellaSelezionata = null;
 // it means a range of length 1 at its index. Once Quill knows that, the
 // block-level buttons work through their normal path and the toolbar shows
 // the right state.
-function selectTableBlock(istanzaQuill, blocco) {
-  var blot = Quill.find(blocco);
+function selectTableBlock(quillInstance, blockEl) {
+  var blot = Quill.find(blockEl);
   if (!blot) { return; }
-  var indice = istanzaQuill.getIndex(blot);
-  istanzaQuill.setSelection(indice, 1, 'user');
+  var idx = quillInstance.getIndex(blot);
+  quillInstance.setSelection(idx, 1, 'user');
 }
 
 // Outlines the selected table and remembers it.
-function highlightSelectedTable(istanzaQuill, range) {
-  var blocchi = istanzaQuill.root.querySelectorAll('.raw-html-block');
-  for (var i = 0; i < blocchi.length; i++) {
-    blocchi[i].classList.remove('pb-table-selected');
+function highlightSelectedTable(quillInstance, range) {
+  var blocks = quillInstance.root.querySelectorAll('.raw-html-block');
+  for (var i = 0; i < blocks.length; i++) {
+    blocks[i].classList.remove('pb-table-selected');
   }
-  tabellaSelezionata = null;
+  selectedTable = null;
   if (!range) { return; }
 
-  var linea = istanzaQuill.getLine(range.index);
-  if (!linea || !linea[0] || !linea[0].domNode) { return; }
-  var nodo = linea[0].domNode;
-  if (!nodo.classList || !nodo.classList.contains('raw-html-block')) { return; }
+  var lineText = quillInstance.getLine(range.index);
+  if (!lineText || !lineText[0] || !lineText[0].domNode) { return; }
+  var node = lineText[0].domNode;
+  if (!node.classList || !node.classList.contains('raw-html-block')) { return; }
 
-  nodo.classList.add('pb-table-selected');
-  tabellaSelezionata = nodo;
+  node.classList.add('pb-table-selected');
+  selectedTable = node;
 }
 
 // The "click to edit" hint over an embedded table is a translated string, so
@@ -1513,9 +1513,9 @@ function highlightSelectedTable(istanzaQuill, range) {
 // replaces the whole document.
 function refreshTableHints() {
   if (!quill) { return; }
-  var blocchi = quill.root.querySelectorAll('.raw-html-block');
-  for (var i = 0; i < blocchi.length; i++) {
-    blocchi[i].setAttribute('data-hint', t('admin_table_hint'));
+  var blocks = quill.root.querySelectorAll('.raw-html-block');
+  for (var i = 0; i < blocks.length; i++) {
+    blocks[i].setAttribute('data-hint', t('admin_table_hint'));
   }
 }
 
@@ -1540,8 +1540,8 @@ var TABLE_ALL_CLASSES = ['pb-tbl-bold', 'pb-tbl-italic', 'pb-tbl-underline',
 
 // The <table> inside a selected block, or null.
 function selectedTableElement() {
-  if (!tabellaSelezionata) { return null; }
-  return tabellaSelezionata.querySelector('table');
+  if (!selectedTable) { return null; }
+  return selectedTable.querySelector('table');
 }
 
 // Applies a change to the selected table and tells Quill about it.
@@ -1549,10 +1549,10 @@ function selectedTableElement() {
 // The change is made to the DOM inside the block, which is exactly what the
 // blot stores and what the save reads (the article is saved from
 // quill.root.innerHTML), so it survives a reload with no further work.
-function changeSelectedTable(azione) {
-  var tabella = selectedTableElement();
-  if (!tabella) { return false; }
-  azione(tabella);
+function changeSelectedTable(action) {
+  var table = selectedTableElement();
+  if (!table) { return false; }
+  action(table);
   quill.update();
   markEditorDirty();
   updatePreview();
@@ -1560,9 +1560,9 @@ function changeSelectedTable(azione) {
 }
 
 // Turns an inline format on or off for the whole table.
-function toggleTableClass(classe) {
-  return changeSelectedTable(function(tabella) {
-    tabella.classList.toggle(classe);
+function toggleTableClass(cls) {
+  return changeSelectedTable(function(table) {
+    table.classList.toggle(cls);
   });
 }
 
@@ -1577,68 +1577,68 @@ function toggleTableClass(classe) {
 // On a table we toggle instead, because the button's active state is derived
 // from Quill's model and our table formatting lives in the DOM: the button
 // never lights up, so the value we are handed is always "on".
-function inlineFormatHandler(nome) {
-  return function(valore) {
-    if (tabellaSelezionata && TABLE_FORMAT_CLASSES[nome]) {
-      toggleTableClass(TABLE_FORMAT_CLASSES[nome]);
+function inlineFormatHandler(itemName) {
+  return function(val) {
+    if (selectedTable && TABLE_FORMAT_CLASSES[itemName]) {
+      toggleTableClass(TABLE_FORMAT_CLASSES[itemName]);
       return;
     }
-    quill.format(nome, valore, 'user');
+    quill.format(itemName, val, 'user');
   };
 }
 
 // Text colour: on a table it goes on the table element, and the cells
 // inherit it.
-function colorHandler(valore) {
-  if (tabellaSelezionata) {
-    changeSelectedTable(function(tabella) {
-      if (valore) {
-        tabella.style.color = valore;
+function colorHandler(val) {
+  if (selectedTable) {
+    changeSelectedTable(function(table) {
+      if (val) {
+        table.style.color = val;
       } else {
-        tabella.style.color = '';
+        table.style.color = '';
       }
     });
     return;
   }
-  quill.format('color', valore, 'user');
+  quill.format('color', val, 'user');
 }
 
 // Background: a background is not inherited, and our own stylesheet paints
 // the header row and the alternating rows. So the colour goes on the table
 // and a class turns those cell backgrounds off, otherwise the new colour
 // would be hidden behind them.
-function backgroundHandler(valore) {
-  if (tabellaSelezionata) {
-    changeSelectedTable(function(tabella) {
-      if (valore) {
-        tabella.style.backgroundColor = valore;
-        tabella.classList.add('pb-tbl-background');
+function backgroundHandler(val) {
+  if (selectedTable) {
+    changeSelectedTable(function(table) {
+      if (val) {
+        table.style.backgroundColor = val;
+        table.classList.add('pb-tbl-background');
       } else {
-        tabella.style.backgroundColor = '';
-        tabella.classList.remove('pb-tbl-background');
+        table.style.backgroundColor = '';
+        table.classList.remove('pb-tbl-background');
       }
     });
     return;
   }
-  quill.format('background', valore, 'user');
+  quill.format('background', val, 'user');
 }
 
 // "Remove formatting" on a table strips what the buttons above added, and
 // the alignment Quill added, without touching the table itself.
 function cleanHandler() {
-  if (tabellaSelezionata) {
-    var blocco = tabellaSelezionata;
-    changeSelectedTable(function(tabella) {
+  if (selectedTable) {
+    var blockEl = selectedTable;
+    changeSelectedTable(function(table) {
       for (var i = 0; i < TABLE_ALL_CLASSES.length; i++) {
-        tabella.classList.remove(TABLE_ALL_CLASSES[i]);
+        table.classList.remove(TABLE_ALL_CLASSES[i]);
       }
-      tabella.style.color = '';
-      tabella.style.backgroundColor = '';
+      table.style.color = '';
+      table.style.backgroundColor = '';
     });
-    var classi = blocco.className.split(/\s+/);
-    for (var j = 0; j < classi.length; j++) {
-      if (classi[j].indexOf('ql-align-') === 0 || classi[j].indexOf('ql-indent-') === 0) {
-        blocco.classList.remove(classi[j]);
+    var classes = blockEl.className.split(/\s+/);
+    for (var j = 0; j < classes.length; j++) {
+      if (classes[j].indexOf('ql-align-') === 0 || classes[j].indexOf('ql-indent-') === 0) {
+        blockEl.classList.remove(classes[j]);
       }
     }
     quill.update();
@@ -1651,10 +1651,10 @@ function cleanHandler() {
   var range = quill.getSelection();
   if (range === null) { return; }
   if (range.length === 0) {
-    var formati = quill.getFormat();
-    for (var nome in formati) {
-      if (Quill.import('parchment').query(nome, Quill.import('parchment').Scope.INLINE) != null) {
-        quill.format(nome, false, 'user');
+    var formats = quill.getFormat();
+    for (var itemName in formats) {
+      if (Quill.import('parchment').query(itemName, Quill.import('parchment').Scope.INLINE) != null) {
+        quill.format(itemName, false, 'user');
       }
     }
     return;
@@ -1666,13 +1666,13 @@ function cleanHandler() {
 // a list, a quote, a code block - would destroy the table, so on a selected
 // table they do nothing. Doing nothing is the point: before this they were
 // one click away from silently swallowing the table.
-function blockFormatHandler(nome) {
-  return function(valore) {
-    if (tabellaSelezionata) {
+function blockFormatHandler(itemName) {
+  return function(val) {
+    if (selectedTable) {
       pbToast(t('js_table_format_not_applicable'), 'info');
       return;
     }
-    quill.format(nome, valore, 'user');
+    quill.format(itemName, val, 'user');
   };
 }
 
@@ -1702,175 +1702,175 @@ function tableAwareToolbarHandlers() {
 // picked up with no further work.
 
 // Builds and shows the modal with an editable copy of the table.
-function openTableEditor(istanzaQuill, blocco, tabellaOriginale) {
+function openTableEditor(quillInstance, blockEl, originalTable) {
   // Only one editor at a time.
-  var esistente = document.getElementById('table-editor-overlay');
-  if (esistente) { return; }
+  var existing = document.getElementById('table-editor-overlay');
+  if (existing) { return; }
 
-  var sfondo = document.createElement('div');
-  sfondo.id = 'table-editor-overlay';
+  var backdrop = document.createElement('div');
+  backdrop.id = 'table-editor-overlay';
 
-  var finestra = document.createElement('div');
-  finestra.className = 'table-editor-window';
+  var popup = document.createElement('div');
+  popup.className = 'table-editor-window';
 
-  var titolo = document.createElement('h3');
-  titolo.textContent = t('admin_table_editor_title');
-  finestra.appendChild(titolo);
+  var titleText = document.createElement('h3');
+  titleText.textContent = t('admin_table_editor_title');
+  popup.appendChild(titleText);
 
   // An editable copy: the original stays untouched until "save".
-  var copia = tabellaOriginale.cloneNode(true);
-  var celle = copia.querySelectorAll('td, th');
-  for (var i = 0; i < celle.length; i++) {
-    celle[i].setAttribute('contenteditable', 'true');
+  var copyItem = originalTable.cloneNode(true);
+  var cells = copyItem.querySelectorAll('td, th');
+  for (var i = 0; i < cells.length; i++) {
+    cells[i].setAttribute('contenteditable', 'true');
   }
-  var areaTabella = document.createElement('div');
-  areaTabella.className = 'table-editor-area';
-  areaTabella.appendChild(copia);
-  finestra.appendChild(areaTabella);
+  var tableArea = document.createElement('div');
+  tableArea.className = 'table-editor-area';
+  tableArea.appendChild(copyItem);
+  popup.appendChild(tableArea);
 
   // Row and column controls.
-  var barra = document.createElement('div');
-  barra.className = 'table-editor-bar';
-  barra.appendChild(tableEditorButton(t('admin_table_add_row'), function() { tableAddRow(copia); }));
-  barra.appendChild(tableEditorButton(t('admin_table_of_the_row'), function() { tableRemoveRow(copia); }));
-  barra.appendChild(tableEditorButton(t('admin_table_add_col'), function() { tableAddColumn(copia); }));
-  barra.appendChild(tableEditorButton(t('admin_table_of_the_col'), function() { tableRemoveColumn(copia); }));
-  finestra.appendChild(barra);
+  var bar = document.createElement('div');
+  bar.className = 'table-editor-bar';
+  bar.appendChild(tableEditorButton(t('admin_table_add_row'), function() { tableAddRow(copyItem); }));
+  bar.appendChild(tableEditorButton(t('admin_table_of_the_row'), function() { tableRemoveRow(copyItem); }));
+  bar.appendChild(tableEditorButton(t('admin_table_add_col'), function() { tableAddColumn(copyItem); }));
+  bar.appendChild(tableEditorButton(t('admin_table_of_the_col'), function() { tableRemoveColumn(copyItem); }));
+  popup.appendChild(bar);
 
   // Save and cancel.
-  var azioni = document.createElement('div');
-  azioni.className = 'table-editor-actions';
-  var salva = tableEditorButton(t('admin_table_save'), function() {
-    blocco.innerHTML = serializeEditedTable(copia);
+  var actionsEl = document.createElement('div');
+  actionsEl.className = 'table-editor-actions';
+  var saveBtn = tableEditorButton(t('admin_table_save'), function() {
+    blockEl.innerHTML = serializeEditedTable(copyItem);
     closeTableEditor();
     // Tells Quill the document changed, so autosave and counters react.
-    istanzaQuill.update();
+    quillInstance.update();
   });
-  salva.className = 'table-editor-save';
-  var annulla = tableEditorButton(t('admin_table_cancel'), function() {
+  saveBtn.className = 'table-editor-save';
+  var cancelButton = tableEditorButton(t('admin_table_cancel'), function() {
     closeTableEditor();
   });
-  azioni.appendChild(salva);
-  azioni.appendChild(annulla);
-  finestra.appendChild(azioni);
+  actionsEl.appendChild(saveBtn);
+  actionsEl.appendChild(cancelButton);
+  popup.appendChild(actionsEl);
 
-  sfondo.appendChild(finestra);
+  backdrop.appendChild(popup);
   // A click on the dark background closes without saving.
-  sfondo.addEventListener('click', function(evento) {
-    if (evento.target === sfondo) {
+  backdrop.addEventListener('click', function(evt) {
+    if (evt.target === backdrop) {
       closeTableEditor();
     }
   });
-  document.body.appendChild(sfondo);
+  document.body.appendChild(backdrop);
 }
 
 function closeTableEditor() {
-  var sfondo = document.getElementById('table-editor-overlay');
-  if (sfondo) {
-    document.body.removeChild(sfondo);
+  var backdrop = document.getElementById('table-editor-overlay');
+  if (backdrop) {
+    document.body.removeChild(backdrop);
   }
 }
 
-function tableEditorButton(etichetta, azione) {
+function tableEditorButton(labelText, action) {
   var btn = document.createElement('button');
   btn.type = 'button';
-  btn.textContent = etichetta;
-  btn.onclick = azione;
+  btn.textContent = labelText;
+  btn.onclick = action;
   return btn;
 }
 
 // The rows of the edited table (they all belong to it: no nesting here).
-function editedTableRows(tabella) {
-  return tabella.querySelectorAll('tr');
+function editedTableRows(table) {
+  return table.querySelectorAll('tr');
 }
 
-function tableAddRow(tabella) {
-  var righe = editedTableRows(tabella);
-  if (righe.length === 0) { return; }
-  var ultima = righe[righe.length - 1];
-  var colonne = ultima.querySelectorAll('td, th').length;
-  var riga = document.createElement('tr');
-  for (var i = 0; i < colonne; i++) {
-    var cella = document.createElement('td');
-    cella.setAttribute('contenteditable', 'true');
-    riga.appendChild(cella);
+function tableAddRow(table) {
+  var rows = editedTableRows(table);
+  if (rows.length === 0) { return; }
+  var last = rows[rows.length - 1];
+  var columns = last.querySelectorAll('td, th').length;
+  var row = document.createElement('tr');
+  for (var i = 0; i < columns; i++) {
+    var cell = document.createElement('td');
+    cell.setAttribute('contenteditable', 'true');
+    row.appendChild(cell);
   }
-  ultima.parentNode.appendChild(riga);
+  last.parentNode.appendChild(row);
 }
 
-function tableRemoveRow(tabella) {
-  var righe = editedTableRows(tabella);
+function tableRemoveRow(table) {
+  var rows = editedTableRows(table);
   // The header row always stays.
-  if (righe.length <= 1) { return; }
-  var ultima = righe[righe.length - 1];
-  ultima.parentNode.removeChild(ultima);
+  if (rows.length <= 1) { return; }
+  var last = rows[rows.length - 1];
+  last.parentNode.removeChild(last);
 }
 
-function tableAddColumn(tabella) {
-  var righe = editedTableRows(tabella);
-  for (var i = 0; i < righe.length; i++) {
-    var cella;
+function tableAddColumn(table) {
+  var rows = editedTableRows(table);
+  for (var i = 0; i < rows.length; i++) {
+    var cell;
     if (i === 0) {
-      cella = document.createElement('th');
+      cell = document.createElement('th');
     } else {
-      cella = document.createElement('td');
+      cell = document.createElement('td');
     }
-    cella.setAttribute('contenteditable', 'true');
-    righe[i].appendChild(cella);
+    cell.setAttribute('contenteditable', 'true');
+    rows[i].appendChild(cell);
   }
 }
 
-function tableRemoveColumn(tabella) {
-  var righe = editedTableRows(tabella);
-  for (var i = 0; i < righe.length; i++) {
-    var celle = righe[i].querySelectorAll('td, th');
+function tableRemoveColumn(table) {
+  var rows = editedTableRows(table);
+  for (var i = 0; i < rows.length; i++) {
+    var cells = rows[i].querySelectorAll('td, th');
     // At least one column always stays.
-    if (celle.length <= 1) { return; }
+    if (cells.length <= 1) { return; }
   }
-  for (var j = 0; j < righe.length; j++) {
-    var proprie = righe[j].querySelectorAll('td, th');
-    righe[j].removeChild(proprie[proprie.length - 1]);
+  for (var j = 0; j < rows.length; j++) {
+    var own = rows[j].querySelectorAll('td, th');
+    rows[j].removeChild(own[own.length - 1]);
   }
 }
 
 // Rebuilds clean table HTML from the edited copy, with the same rules
 // used when pasting: text and images survive, styling does not.
-function serializeEditedTable(tabella) {
-  var risultato = '<table class="article-table"><tbody>';
-  var righe = editedTableRows(tabella);
-  for (var i = 0; i < righe.length; i++) {
-    risultato = risultato + '<tr>';
-    var celle = righe[i].querySelectorAll('td, th');
-    for (var j = 0; j < celle.length; j++) {
-      var contenuto = buildCleanCell(celle[j]);
+function serializeEditedTable(table) {
+  var resultValue = '<table class="article-table"><tbody>';
+  var rows = editedTableRows(table);
+  for (var i = 0; i < rows.length; i++) {
+    resultValue = resultValue + '<tr>';
+    var cells = rows[i].querySelectorAll('td, th');
+    for (var j = 0; j < cells.length; j++) {
+      var contentValue = buildCleanCell(cells[j]);
       if (i === 0) {
-        risultato = risultato + '<th' + mergeAttributes(celle[j]) + '>' + contenuto + '</th>';
+        resultValue = resultValue + '<th' + mergeAttributes(cells[j]) + '>' + contentValue + '</th>';
       } else {
-        risultato = risultato + '<td' + mergeAttributes(celle[j]) + '>' + contenuto + '</td>';
+        resultValue = resultValue + '<td' + mergeAttributes(cells[j]) + '>' + contentValue + '</td>';
       }
     }
-    risultato = risultato + '</tr>';
+    resultValue = resultValue + '</tr>';
   }
-  risultato = risultato + '</tbody></table>';
-  return risultato;
+  resultValue = resultValue + '</tbody></table>';
+  return resultValue;
 }
 
 // Inserts an empty table created by the user (rows x columns of their choice).
 function insertTable() {
   if (!PB_MAIN_QUILL) { return; }
-  var righe = prompt(t('js_table_how_many_rows'), '3');
-  if (righe === null) { return; }
-  var colonne = prompt(t('js_table_how_many_cols'), '3');
-  if (colonne === null) { return; }
-  var numRighe = parseInt(righe, 10);
-  var numColonne = parseInt(colonne, 10);
-  if (isNaN(numRighe) || isNaN(numColonne)) { return; }
-  if (numRighe < 1 || numColonne < 1) { return; }
+  var rows = prompt(t('js_table_how_many_rows'), '3');
+  if (rows === null) { return; }
+  var columns = prompt(t('js_table_how_many_cols'), '3');
+  if (columns === null) { return; }
+  var numRows = parseInt(rows, 10);
+  var numColumns = parseInt(columns, 10);
+  if (isNaN(numRows) || isNaN(numColumns)) { return; }
+  if (numRows < 1 || numColumns < 1) { return; }
 
   var html = '<table class="article-table"><tbody>';
-  for (var i = 0; i < numRighe; i++) {
+  for (var i = 0; i < numRows; i++) {
     html = html + '<tr>';
-    for (var j = 0; j < numColonne; j++) {
+    for (var j = 0; j < numColumns; j++) {
       if (i === 0) {
         html = html + '<th>' + escapeCellText(t('js_table_header_cell')) + '</th>';
       } else {
@@ -1885,15 +1885,15 @@ function insertTable() {
   // matcher: that matcher exists to interpret Word's HTML, where a table
   // may really be page layout. A table the author asked for is always a
   // real table, even with a single row.
-  var posizione = PB_MAIN_QUILL.getSelection(true);
-  PB_MAIN_QUILL.insertEmbed(posizione.index, 'rawHTML', html, Quill.sources.USER);
+  var placement = PB_MAIN_QUILL.getSelection(true);
+  PB_MAIN_QUILL.insertEmbed(placement.index, 'rawHTML', html, Quill.sources.USER);
 }
 
 /* --- Admin interface language -------------------------------------------- */
 
 // Changes the language of the administration interface and reloads.
-function changeAdminLanguage(lingua) {
-  pbPostJson('/admin-language', { language: lingua })
+function changeAdminLanguage(lang) {
+  pbPostJson('/admin-language', { language: lang })
     .then(function() { window.location.reload(); });
 }
 
@@ -1902,31 +1902,31 @@ function changeAdminLanguage(lingua) {
 // Shows the rows that match both the typed text and the chosen status.
 // Hidden rows get the hidden attribute, so sorting can keep moving them.
 function filterArticles() {
-  var termine = document.getElementById('search-box-admin').value.toLowerCase().trim();
-  var scelto = document.querySelector('#filter-state [aria-pressed="true"]');
-  var stato = scelto ? scelto.getAttribute('data-filter') : 'all';
-  var carte = document.querySelectorAll('.article-card');
-  var visibili = 0;
-  for (var i = 0; i < carte.length; i++) {
-    var titolo = carte[i].getAttribute('data-title');
-    var statoOk = stato === 'all' || carte[i].getAttribute('data-state') === stato;
-    if (statoOk && titolo.indexOf(termine) !== -1) {
-      carte[i].hidden = false;
-      visibili = visibili + 1;
+  var term = document.getElementById('search-box-admin').value.toLowerCase().trim();
+  var chosen = document.querySelector('#filter-state [aria-pressed="true"]');
+  var state = chosen ? chosen.getAttribute('data-filter') : 'all';
+  var cardList = document.querySelectorAll('.article-card');
+  var visibleOnes = 0;
+  for (var i = 0; i < cardList.length; i++) {
+    var titleText = cardList[i].getAttribute('data-title');
+    var stateOk = state === 'all' || cardList[i].getAttribute('data-state') === state;
+    if (stateOk && titleText.indexOf(term) !== -1) {
+      cardList[i].hidden = false;
+      visibleOnes = visibleOnes + 1;
     } else {
-      carte[i].hidden = true;
+      cardList[i].hidden = true;
     }
   }
   // With no article at all the list already says so: the message is for a
   // search or a filter that leaves nothing.
-  document.getElementById('no-result').hidden = visibili > 0 || carte.length === 0;
+  document.getElementById('no-result').hidden = visibleOnes > 0 || cardList.length === 0;
 }
 
 // The All / Published / Drafts buttons: one pressed at a time.
-function filterByStatus(pulsante) {
-  var gruppo = pulsante.parentNode.querySelectorAll('.segment');
-  for (var i = 0; i < gruppo.length; i++) {
-    gruppo[i].setAttribute('aria-pressed', gruppo[i] === pulsante ? 'true' : 'false');
+function filterByStatus(buttonEl) {
+  var group = buttonEl.parentNode.querySelectorAll('.segment');
+  for (var i = 0; i < group.length; i++) {
+    group[i].setAttribute('aria-pressed', group[i] === buttonEl ? 'true' : 'false');
   }
   filterArticles();
 }
@@ -1934,64 +1934,64 @@ function filterByStatus(pulsante) {
 /* --- Menus: the "..." of each article and the phone's "More" ------------- */
 
 // Opens or closes the small menu of an article row. Only one stays open.
-function toggleRowMenu(pulsante) {
-  var menu = document.getElementById(pulsante.getAttribute('aria-controls'));
-  var apri = pulsante.getAttribute('aria-expanded') !== 'true';
+function toggleRowMenu(buttonEl) {
+  var menu = document.getElementById(buttonEl.getAttribute('aria-controls'));
+  var openIt = buttonEl.getAttribute('aria-expanded') !== 'true';
   closeRowMenus();
-  if (!apri) { return; }
-  pulsante.setAttribute('aria-expanded', 'true');
+  if (!openIt) { return; }
+  buttonEl.setAttribute('aria-expanded', 'true');
   // The open menu has to cover the buttons of the rows below it.
-  pulsante.parentNode.classList.add('open');
+  buttonEl.parentNode.classList.add('open');
   menu.hidden = false;
   // Near the bottom of the window - or of the phone's bottom bar, which
   // would cover it - the menu opens upwards.
-  var fondo = window.innerHeight;
-  var barra = document.querySelector('.bar-bottom');
-  if (barra && barra.offsetHeight > 0) {
-    fondo = barra.getBoundingClientRect().top;
+  var bottomEdge = window.innerHeight;
+  var bar = document.querySelector('.bar-bottom');
+  if (bar && bar.offsetHeight > 0) {
+    bottomEdge = bar.getBoundingClientRect().top;
   }
-  var spazioSotto = fondo - pulsante.getBoundingClientRect().bottom;
-  menu.classList.toggle('toward-top', spazioSotto < menu.offsetHeight + 16);
+  var spaceBelow = bottomEdge - buttonEl.getBoundingClientRect().bottom;
+  menu.classList.toggle('toward-top', spaceBelow < menu.offsetHeight + 16);
   menu.querySelector('[role="menuitem"]').focus();
 }
 
-// Closes every open row menu; with ritornaFuoco, focus goes back to the
+// Closes every open row menu; with returnFocus, focus goes back to the
 // button that opened it, as after Esc.
-function closeRowMenus(ritornaFuoco) {
-  var aperti = document.querySelectorAll('.row-menu [aria-expanded="true"]');
-  for (var i = 0; i < aperti.length; i++) {
-    aperti[i].setAttribute('aria-expanded', 'false');
-    aperti[i].parentNode.classList.remove('open');
-    document.getElementById(aperti[i].getAttribute('aria-controls')).hidden = true;
-    if (ritornaFuoco) { aperti[i].focus(); }
+function closeRowMenus(returnFocus) {
+  var openedOnes = document.querySelectorAll('.row-menu [aria-expanded="true"]');
+  for (var i = 0; i < openedOnes.length; i++) {
+    openedOnes[i].setAttribute('aria-expanded', 'false');
+    openedOnes[i].parentNode.classList.remove('open');
+    document.getElementById(openedOnes[i].getAttribute('aria-controls')).hidden = true;
+    if (returnFocus) { openedOnes[i].focus(); }
   }
 }
 
 // On a phone the side menu becomes a sheet that rises above the bottom bar.
 // Called with no argument it switches; with true or false it opens or closes.
-function toggleAdminMenu(apri) {
+function toggleAdminMenu(openIt) {
   var menu = document.getElementById('menu-admin');
-  var pulsante = document.getElementById('bar-other');
-  if (!menu || !pulsante) { return; }
-  if (apri === undefined) {
-    apri = !menu.classList.contains('open');
+  var buttonEl = document.getElementById('bar-other');
+  if (!menu || !buttonEl) { return; }
+  if (openIt === undefined) {
+    openIt = !menu.classList.contains('open');
   }
-  menu.classList.toggle('open', apri);
-  document.getElementById('menu-veil').hidden = !apri;
-  pulsante.setAttribute('aria-expanded', apri ? 'true' : 'false');
-  if (apri) {
-    var prima = menu.querySelector('.menu-items .item');
-    if (prima) { prima.focus(); }
+  menu.classList.toggle('open', openIt);
+  document.getElementById('menu-veil').hidden = !openIt;
+  buttonEl.setAttribute('aria-expanded', openIt ? 'true' : 'false');
+  if (openIt) {
+    var before = menu.querySelector('.menu-items .item');
+    if (before) { before.focus(); }
   }
 }
 
-document.addEventListener('click', function(evento) {
-  if (!evento.target.closest('.row-menu')) { closeRowMenus(); }
+document.addEventListener('click', function(evt) {
+  if (!evt.target.closest('.row-menu')) { closeRowMenus(); }
 });
 
-document.addEventListener('keydown', function(evento) {
-  var menu = evento.target.closest ? evento.target.closest('.menu-dropdown') : null;
-  if (evento.key === 'Escape') {
+document.addEventListener('keydown', function(evt) {
+  var menu = evt.target.closest ? evt.target.closest('.menu-dropdown') : null;
+  if (evt.key === 'Escape') {
     if (document.querySelector('.row-menu [aria-expanded="true"]')) {
       closeRowMenus(true);
     } else if (document.querySelector('.menu.open')) {
@@ -2002,56 +2002,56 @@ document.addEventListener('keydown', function(evento) {
   }
   if (!menu) { return; }
   // Arrows move between the items of a row menu; Tab leaves it closed.
-  var voci = Array.prototype.slice.call(menu.querySelectorAll('[role="menuitem"]'));
-  var posizione = voci.indexOf(evento.target);
-  if (evento.key === 'ArrowDown' || evento.key === 'ArrowUp') {
-    evento.preventDefault();
-    var passo = evento.key === 'ArrowDown' ? 1 : -1;
-    voci[(posizione + passo + voci.length) % voci.length].focus();
-  } else if (evento.key === 'Home' || evento.key === 'End') {
-    evento.preventDefault();
-    voci[evento.key === 'Home' ? 0 : voci.length - 1].focus();
-  } else if (evento.key === 'Tab') {
+  var entries = Array.prototype.slice.call(menu.querySelectorAll('[role="menuitem"]'));
+  var placement = entries.indexOf(evt.target);
+  if (evt.key === 'ArrowDown' || evt.key === 'ArrowUp') {
+    evt.preventDefault();
+    var step = evt.key === 'ArrowDown' ? 1 : -1;
+    entries[(placement + step + entries.length) % entries.length].focus();
+  } else if (evt.key === 'Home' || evt.key === 'End') {
+    evt.preventDefault();
+    entries[evt.key === 'Home' ? 0 : entries.length - 1].focus();
+  } else if (evt.key === 'Tab') {
     closeRowMenus(true);
   }
 });
 
 // Rebuilds the static site.
-function rebuildSite(pulsante) {
-  pbBusy(pulsante, true);
+function rebuildSite(buttonEl) {
+  pbBusy(buttonEl, true);
   pbPostJson('/rebuild', {})
     .then(function(res) {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       pbToast(t('js_site_rebuilt').replace('{n}', res.articles), 'success');
     })
     .catch(function() {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       pbToast(t('js_site_rebuilt_error'), 'danger');
     });
 }
 
 // Changes an article's status (published/draft) and reloads the page.
-function changeStatus(pulsante, slug, nuovoStato) {
-  pbBusy(pulsante, true);
-  pbPostJson('/toggle-status', { slug: slug, status: nuovoStato })
+function changeStatus(buttonEl, slug, newState) {
+  pbBusy(buttonEl, true);
+  pbPostJson('/toggle-status', { slug: slug, status: newState })
     .then(function(res) {
       if (res.ok === true) {
         window.location.reload();
       } else {
-        pbBusy(pulsante, false);
+        pbBusy(buttonEl, false);
         pbToast(t('js_status_change_error'), 'danger');
       }
     })
     .catch(function() {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       pbToast(t('js_status_change_error'), 'danger');
     });
 }
 
 // Deletes an article after confirmation, then reloads the page.
-function deleteArticle(slug, titolo) {
+function deleteArticle(slug, titleText) {
   pbConfirm(t('js_delete_title'),
-            t('js_delete_body').replace('{title}', titolo),
+            t('js_delete_body').replace('{title}', titleText),
             t('admin_delete'), 'danger',
             function() {
     pbPostJson('/delete', { slug: slug })
@@ -2092,41 +2092,41 @@ function updatePreview() {
   if (!PB_MAIN_QUILL) {
     return;
   }
-  var contenuto = PB_MAIN_QUILL.root.innerHTML;
-  var pagina = '<!DOCTYPE html><html><head>';
-  pagina = pagina + '<meta charset="utf-8">';
-  pagina = pagina + '<link rel="stylesheet" href="/common.css">';
-  pagina = pagina + '<link rel="stylesheet" href="/style.css">';
+  var contentValue = PB_MAIN_QUILL.root.innerHTML;
+  var page = '<!DOCTYPE html><html><head>';
+  page = page + '<meta charset="utf-8">';
+  page = page + '<link rel="stylesheet" href="/common.css">';
+  page = page + '<link rel="stylesheet" href="/style.css">';
 
   if (pbPage('preview_kind', '') === 'article') {
-    var titolo = document.getElementById('title').value;
-    pagina = pagina + '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">';
-    pagina = pagina + '</head><body>';
-    pagina = pagina + '<article id="content" class="post">';
-    pagina = pagina + '<h1></h1>';
-    pagina = pagina + contenuto;
-    pagina = pagina + '</article>';
+    var titleText = document.getElementById('title').value;
+    page = page + '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">';
+    page = page + '</head><body>';
+    page = page + '<article id="content" class="post">';
+    page = page + '<h1></h1>';
+    page = page + contentValue;
+    page = page + '</article>';
     // We load highlight.js inside the preview to colour the code here too.
-    pagina = pagina + '<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"><\/script>';
-    pagina = pagina + '<script>document.querySelectorAll("pre.ql-syntax").forEach(function(b){hljs.highlightElement(b);});<\/script>';
-    pagina = pagina + '</body></html>';
+    page = page + '<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"><\/script>';
+    page = page + '<script>document.querySelectorAll("pre.ql-syntax").forEach(function(b){hljs.highlightElement(b);});<\/script>';
+    page = page + '</body></html>';
   } else {
-    pagina = pagina + '</head><body>';
-    pagina = pagina + '<section class="home-intro">';
-    pagina = pagina + contenuto;
-    pagina = pagina + '</section></body></html>';
+    page = page + '</head><body>';
+    page = page + '<section class="home-intro">';
+    page = page + contentValue;
+    page = page + '</section></body></html>';
   }
 
-  var documento = frame.contentDocument;
-  documento.open();
-  documento.write(pagina);
-  documento.close();
+  var docFile = frame.contentDocument;
+  docFile.open();
+  docFile.write(page);
+  docFile.close();
   // The article title is written as text, never as HTML: a title with a
   // "<" in it must not be able to inject markup into the preview.
   if (pbPage('preview_kind', '') === 'article') {
-    var intestazione = documento.querySelector('article.post h1');
-    if (intestazione) {
-      intestazione.textContent = document.getElementById('title').value;
+    var heading = docFile.querySelector('article.post h1');
+    if (heading) {
+      heading.textContent = document.getElementById('title').value;
     }
   }
 }
@@ -2134,7 +2134,7 @@ function updatePreview() {
 /* --- The article editor page --------------------------------------------- */
 
 // The toolbar of the full article editor.
-var TOOLBAR_ARTICOLO = [
+var ARTICLE_TOOLBAR = [
   [{ font: [] }, { size: ['small', false, 'large', 'huge'] }],
   [{ header: [1, 2, 3, 4, false] }],
   ['bold', 'italic', 'underline', 'strike'],
@@ -2195,18 +2195,18 @@ var quillEn = null;
 // The slug the article is currently saved with on disk. It is updated after
 // every save (including the one from the EN preview), so that a later slug
 // change does not leave orphan files.
-var slugOriginale = '';
+var originalSlug = '';
 
 // Whether the editor holds changes that are not on disk yet. It drives three
 // things: the warning when you leave the page, whether the autosave has any
 // work to do, and the "Unsaved changes" line under the buttons.
 var editorDirty = false;
 // "draft" or "published", as saved. The buttons of the sidebar follow it.
-var statoArticolo = 'draft';
+var articleState = 'draft';
 // Set while a save is in flight, so the autosave and a manual save cannot
 // overlap and race each other's writes.
-var salvataggioInCorso = false;
-var timerAutosalvataggio = null;
+var savingNow = false;
+var autosaveTimer = null;
 
 // How often the autosave runs, in milliseconds.
 var AUTOSAVE_INTERVAL = 60000;
@@ -2224,7 +2224,7 @@ function initEditorPage() {
       // selected table. Every handler falls back to Quill's own behaviour
       // when the selection is ordinary text.
       toolbar: {
-        container: TOOLBAR_ARTICOLO,
+        container: ARTICLE_TOOLBAR,
         handlers: tableAwareToolbarHandlers()
       }
     }
@@ -2246,7 +2246,7 @@ function initEditorPage() {
   // can review and correct it before confirming it.
   quillEn = new Quill('#editor-en', {
     theme: 'snow',
-    modules: { blotFormatter: {}, syntax: true, toolbar: TOOLBAR_ARTICOLO }
+    modules: { blotFormatter: {}, syntax: true, toolbar: ARTICLE_TOOLBAR }
   });
   attachImageOverlay(quillEn);
   handlePastedImages(quillEn, null);
@@ -2261,8 +2261,8 @@ function initEditorPage() {
   quillEn.update(Quill.sources.SILENT);
   document.getElementById('translation_authorized').checked = pbPage('translation_authorized', false);
   document.getElementById('translation_confirmed').checked = pbPage('translation_confirmed', false);
-  slugOriginale = pbPage('slug', '');
-  statoArticolo = pbPage('status', 'draft');
+  originalSlug = pbPage('slug', '');
+  articleState = pbPage('status', 'draft');
   document.getElementById('publish_at').value = localInputValue(pbPage('publish_at', ''));
 
   updateTranslationSection();
@@ -2291,15 +2291,15 @@ function initEditorPage() {
 
 // Every field of the form marks the article as changed when it is touched.
 function watchEditorFields() {
-  var campi = ['title', 'slug', 'tags', 'series', 'series_number', 'kind', 'lab_of',
+  var fields = ['title', 'slug', 'tags', 'series', 'series_number', 'kind', 'lab_of',
                'repo_url', 'stack', 'run_steps', 'original_url', 'original_canonical', 'image', 'description',
                'reader_preview', 'title_en', 'description_en', 'preview_en',
                'translation_authorized', 'translation_confirmed'];
-  for (var i = 0; i < campi.length; i++) {
-    var elemento = document.getElementById(campi[i]);
-    if (!elemento) { continue; }
-    elemento.addEventListener('input', markEditorDirty);
-    elemento.addEventListener('change', markEditorDirty);
+  for (var i = 0; i < fields.length; i++) {
+    var element = document.getElementById(fields[i]);
+    if (!element) { continue; }
+    element.addEventListener('input', markEditorDirty);
+    element.addEventListener('change', markEditorDirty);
   }
 }
 
@@ -2308,9 +2308,9 @@ function watchEditorFields() {
 function markEditorDirty() {
   editorDirty = true;
   updateGroupSummaries();
-  var riga = document.getElementById('autosave-status');
-  if (riga && !riga.classList.contains('pb-autosave-error')) {
-    riga.textContent = t('js_changes_made_from_to_save');
+  var row = document.getElementById('autosave-status');
+  if (row && !row.classList.contains('pb-autosave-error')) {
+    row.textContent = t('js_changes_made_from_to_save');
   }
 }
 
@@ -2322,10 +2322,10 @@ function markEditorClean() {
 // wording and ignore ours, but the event still has to be cancelled for the
 // dialog to appear at all.
 function installUnsavedChangesGuard() {
-  window.addEventListener('beforeunload', function(evento) {
+  window.addEventListener('beforeunload', function(evt) {
     if (!editorDirty) { return undefined; }
-    evento.preventDefault();
-    evento.returnValue = t('js_unsaved_changes');
+    evt.preventDefault();
+    evt.returnValue = t('js_unsaved_changes');
     return t('js_unsaved_changes');
   });
 }
@@ -2334,13 +2334,13 @@ function installUnsavedChangesGuard() {
 // the muscle memory of anyone who has used a word processor expects: a
 // draft stays a draft, a published article is updated. It never publishes.
 function installSaveShortcut() {
-  document.addEventListener('keydown', function(evento) {
-    var modificatore = evento.ctrlKey || evento.metaKey;
-    if (!modificatore || evento.key.toLowerCase() !== 's') { return; }
-    evento.preventDefault();
-    if (statoArticolo === 'published') {
+  document.addEventListener('keydown', function(evt) {
+    var modifier = evt.ctrlKey || evt.metaKey;
+    if (!modifier || evt.key.toLowerCase() !== 's') { return; }
+    evt.preventDefault();
+    if (articleState === 'published') {
       updateArticle(document.getElementById('btn-update'));
-    } else if (statoArticolo === 'scheduled') {
+    } else if (articleState === 'scheduled') {
       saveScheduled(document.getElementById('btn-save-scheduled'));
     } else {
       saveDraft(document.getElementById('btn-save-draft'));
@@ -2355,25 +2355,25 @@ function installSaveShortcut() {
 // autosaving a published article would push half-written edits live every
 // minute; on a draft there is no public page to spoil.
 function startAutosave() {
-  if (timerAutosalvataggio !== null) {
-    clearInterval(timerAutosalvataggio);
+  if (autosaveTimer !== null) {
+    clearInterval(autosaveTimer);
   }
-  timerAutosalvataggio = setInterval(autosaveDraft, AUTOSAVE_INTERVAL);
+  autosaveTimer = setInterval(autosaveDraft, AUTOSAVE_INTERVAL);
 }
 
 function autosaveDraft() {
-  if (!editorDirty || salvataggioInCorso) { return; }
-  if (statoArticolo !== 'draft') { return; }
+  if (!editorDirty || savingNow) { return; }
+  if (articleState !== 'draft') { return; }
   if (document.getElementById('title').value.trim() === '') {
     pbStatus('autosave-status', t('js_autosave_needs_title'));
     return;
   }
 
-  salvataggioInCorso = true;
+  savingNow = true;
   pbStatus('autosave-status', t('js_autosaving'));
   pbPostJson('/save', articleData('draft'))
     .then(function(res) {
-      salvataggioInCorso = false;
+      savingNow = false;
       if (res.ok) {
         applySavedSlug(res);
         markEditorClean();
@@ -2383,73 +2383,73 @@ function autosaveDraft() {
       }
     })
     .catch(function() {
-      salvataggioInCorso = false;
+      savingNow = false;
       setAutosaveIndicator(t('js_autosave_failed'), true);
     });
 }
 
-function setAutosaveIndicator(testo, errore) {
-  var elemento = document.getElementById('autosave-status');
-  if (!elemento) { return; }
-  elemento.textContent = testo;
-  if (errore) {
-    elemento.classList.add('pb-autosave-error');
+function setAutosaveIndicator(textValue, err) {
+  var element = document.getElementById('autosave-status');
+  if (!element) { return; }
+  element.textContent = textValue;
+  if (err) {
+    element.classList.add('pb-autosave-error');
   } else {
-    elemento.classList.remove('pb-autosave-error');
+    element.classList.remove('pb-autosave-error');
   }
 }
 
 // The current time as HH:MM, for the "saved at" indicator.
 function currentTime() {
-  var adesso = new Date();
-  var ore = String(adesso.getHours());
-  var minuti = String(adesso.getMinutes());
+  var nowDate = new Date();
+  var ore = String(nowDate.getHours());
+  var minutes = String(nowDate.getMinutes());
   if (ore.length < 2) { ore = '0' + ore; }
-  if (minuti.length < 2) { minuti = '0' + minuti; }
-  return ore + ':' + minuti;
+  if (minutes.length < 2) { minutes = '0' + minutes; }
+  return ore + ':' + minutes;
 }
 
 // Character counter for the SEO description, warning about Google's limit.
 function updateDescriptionCounter() {
-  var campo = document.getElementById('description');
-  var contatore = document.getElementById('description-counter');
-  if (!campo || !contatore) { return; }
-  var lunghezza = campo.value.length;
-  var messaggio = '';
+  var fieldEl = document.getElementById('description');
+  var counter = document.getElementById('description-counter');
+  if (!fieldEl || !counter) { return; }
+  var len = fieldEl.value.length;
+  var message = '';
   // Google shows about 120-160 characters: we flag when you leave the ideal range.
-  if (lunghezza === 0) {
-    messaggio = t('js_desc_counter_empty');
-  } else if (lunghezza > 160) {
-    messaggio = lunghezza + ' ' + t('js_chars_unit') + ' - ' + t('js_chars_too_long_google');
-  } else if (lunghezza < 50) {
-    messaggio = lunghezza + ' ' + t('js_chars_unit') + ' - ' + t('js_chars_too_short_seo');
+  if (len === 0) {
+    message = t('js_desc_counter_empty');
+  } else if (len > 160) {
+    message = len + ' ' + t('js_chars_unit') + ' - ' + t('js_chars_too_long_google');
+  } else if (len < 50) {
+    message = len + ' ' + t('js_chars_unit') + ' - ' + t('js_chars_too_short_seo');
   } else {
-    messaggio = lunghezza + ' ' + t('js_chars_unit') + ' - ' + t('js_chars_ideal_length');
+    message = len + ' ' + t('js_chars_unit') + ' - ' + t('js_chars_ideal_length');
   }
-  contatore.textContent = messaggio;
+  counter.textContent = message;
 }
 
 // Character counter for the preview meant for readers.
 function updatePreviewCounter() {
-  var campo = document.getElementById('reader_preview');
-  var contatore = document.getElementById('preview-counter');
-  if (!campo || !contatore) { return; }
-  var lunghezza = campo.value.length;
-  if (lunghezza === 0) {
-    contatore.textContent = t('js_preview_counter_empty');
+  var fieldEl = document.getElementById('reader_preview');
+  var counter = document.getElementById('preview-counter');
+  if (!fieldEl || !counter) { return; }
+  var len = fieldEl.value.length;
+  if (len === 0) {
+    counter.textContent = t('js_preview_counter_empty');
   } else {
-    contatore.textContent = lunghezza + ' ' + t('js_chars_unit');
+    counter.textContent = len + ' ' + t('js_chars_unit');
   }
 }
 
 // Asks the AI to propose an SEO description from the article content.
 // The author sees the proposal in the textarea and can edit or rewrite it.
-function suggestDescription(pulsante) {
+function suggestDescription(buttonEl) {
   if (quill.getText().trim() === '') {
     pbStatus('description-status', t('js_write_article_content_first'));
     return;
   }
-  pbBusy(pulsante, true);
+  pbBusy(buttonEl, true);
   pbStatus('description-status', t('js_generating'));
 
   pbPostJson('/generate-description', {
@@ -2457,7 +2457,7 @@ function suggestDescription(pulsante) {
     title: document.getElementById('title').value
   })
   .then(function(res) {
-    pbBusy(pulsante, false);
+    pbBusy(buttonEl, false);
     if (res.ok === true) {
       document.getElementById('description').value = res.description;
       updateDescriptionCounter();
@@ -2469,7 +2469,7 @@ function suggestDescription(pulsante) {
     }
   })
   .catch(function() {
-    pbBusy(pulsante, false);
+    pbBusy(buttonEl, false);
     pbStatus('description-status', '');
     pbToast(t('js_net_error_generation'), 'danger');
   });
@@ -2477,12 +2477,12 @@ function suggestDescription(pulsante) {
 
 // Asks the AI to write a narrative preview for readers (longer and more
 // descriptive than the SEO meta description). The author can then edit it.
-function generatePreview(pulsante) {
+function generatePreview(buttonEl) {
   if (quill.getText().trim() === '') {
     pbStatus('preview-status', t('js_write_article_content_first'));
     return;
   }
-  pbBusy(pulsante, true);
+  pbBusy(buttonEl, true);
   pbStatus('preview-status', t('js_generating'));
 
   pbPostJson('/generate-preview', {
@@ -2490,7 +2490,7 @@ function generatePreview(pulsante) {
     title: document.getElementById('title').value
   })
   .then(function(res) {
-    pbBusy(pulsante, false);
+    pbBusy(buttonEl, false);
     if (res.ok === true) {
       document.getElementById('reader_preview').value = res.preview;
       updatePreviewCounter();
@@ -2502,7 +2502,7 @@ function generatePreview(pulsante) {
     }
   })
   .catch(function() {
-    pbBusy(pulsante, false);
+    pbBusy(buttonEl, false);
     pbStatus('preview-status', '');
     pbToast(t('js_net_error_generation'), 'danger');
   });
@@ -2514,7 +2514,7 @@ function generatePreview(pulsante) {
 // The results are rendered with textContent only: nothing coming from the
 // model is ever inserted as HTML.
 function analyzeSeo() {
-  var pannello = document.getElementById('seo-results');
+  var panel = document.getElementById('seo-results');
 
   if (quill.getText().trim() === '') {
     pbStatus('seo-status', t('js_write_article_content_first'));
@@ -2522,225 +2522,225 @@ function analyzeSeo() {
   }
 
   // The analysis needs the slug to build the article URL for the backlink.
-  var slugCorrente = document.getElementById('slug').value.trim();
-  if (slugCorrente === '') {
-    slugCorrente = slugOriginale;
+  var currentSlug = document.getElementById('slug').value.trim();
+  if (currentSlug === '') {
+    currentSlug = originalSlug;
   }
-  if (slugCorrente === '') {
+  if (currentSlug === '') {
     pbStatus('seo-status', t('js_seo_save_first'));
     return;
   }
 
-  var pulsante = document.getElementById('seo-analyze-btn');
-  pbBusy(pulsante, true);
+  var buttonEl = document.getElementById('seo-analyze-btn');
+  pbBusy(buttonEl, true);
   pbStatus('seo-status', t('js_seo_analyzing'));
-  pannello.style.display = 'none';
-  pannello.textContent = '';
+  panel.style.display = 'none';
+  panel.textContent = '';
 
   pbPostJson('/analyze-seo', {
     content: quill.root.innerHTML,
     title: document.getElementById('title').value,
-    slug: slugCorrente,
+    slug: currentSlug,
     tags: document.getElementById('tags').value,
     description: document.getElementById('description').value
   })
   .then(function(res) {
-    pbBusy(pulsante, false);
+    pbBusy(buttonEl, false);
     if (res.ok === true) {
       pbStatus('seo-status', t('js_seo_done'));
-      renderSeoResults(pannello, res.analysis, res.article_url);
-      pannello.style.display = 'block';
+      renderSeoResults(panel, res.analysis, res.article_url);
+      panel.style.display = 'block';
     } else {
       pbStatus('seo-status', '');
       pbToast(t('js_error_prefix') + res.error, 'danger');
     }
   })
   .catch(function() {
-    pbBusy(pulsante, false);
+    pbBusy(buttonEl, false);
     pbStatus('seo-status', '');
     pbToast(t('js_net_error_generation'), 'danger');
   });
 }
 
 // A section title inside the results panel.
-function seoHeading(testo) {
+function seoHeading(textValue) {
   var h = document.createElement('div');
   h.className = 'seo-heading';
-  h.textContent = testo;
+  h.textContent = textValue;
   return h;
 }
 
 // A row of text with a small "copy" button next to it.
-function seoCopyRow(testo) {
-  var riga = document.createElement('div');
-  riga.className = 'seo-row';
+function seoCopyRow(textValue) {
+  var row = document.createElement('div');
+  row.className = 'seo-row';
   var span = document.createElement('span');
-  span.textContent = testo;
+  span.textContent = textValue;
   var btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'seo-copy';
   btn.textContent = t('seo_copy');
-  btn.onclick = function() { copyToClipboard(testo, btn); };
-  riga.appendChild(span);
-  riga.appendChild(btn);
-  return riga;
+  btn.onclick = function() { copyToClipboard(textValue, btn); };
+  row.appendChild(span);
+  row.appendChild(btn);
+  return row;
 }
 
 // Copies a text to the clipboard and gives feedback on the button.
-function copyToClipboard(testo, bottone) {
-  var conferma = function() {
-    var originale = bottone.textContent;
-    bottone.textContent = t('seo_copied');
-    setTimeout(function() { bottone.textContent = originale; }, 1200);
+function copyToClipboard(textValue, btnEl) {
+  var confirmButton = function() {
+    var original = btnEl.textContent;
+    btnEl.textContent = t('seo_copied');
+    setTimeout(function() { btnEl.textContent = original; }, 1200);
   };
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(testo).then(conferma);
+    navigator.clipboard.writeText(textValue).then(confirmButton);
   } else {
     // Fallback for older browsers or non-HTTPS contexts.
     var area = document.createElement('textarea');
-    area.value = testo;
+    area.value = textValue;
     document.body.appendChild(area);
     area.select();
     document.execCommand('copy');
     document.body.removeChild(area);
-    conferma();
+    confirmButton();
   }
 }
 
 // Renders the analysis into the panel. Every field is optional: the model
 // may omit some keys, and the panel simply skips the missing sections.
-function renderSeoResults(pannello, analisi, urlArticolo) {
-  if (!analisi) { return; }
+function renderSeoResults(panel, analysis, articleUrl) {
+  if (!analysis) { return; }
 
   // The exact URL to use as the backlink target on the external site.
-  pannello.appendChild(seoHeading(t('seo_backlink_target')));
-  pannello.appendChild(seoCopyRow(urlArticolo));
+  panel.appendChild(seoHeading(t('seo_backlink_target')));
+  panel.appendChild(seoCopyRow(articleUrl));
 
-  var liste = [
+  var lists = [
     ['primary_keywords', t('seo_primary_keywords')],
     ['secondary_keywords', t('seo_secondary_keywords')],
     ['title_variants', t('seo_title_variants')],
     ['anchor_texts', t('seo_anchor_texts')]
   ];
-  for (var i = 0; i < liste.length; i++) {
-    var chiave = liste[i][0];
-    var titolo = liste[i][1];
-    var valori = analisi[chiave];
-    if (valori && valori.length > 0) {
-      pannello.appendChild(seoHeading(titolo));
-      for (var j = 0; j < valori.length; j++) {
-        pannello.appendChild(seoCopyRow(String(valori[j])));
+  for (var i = 0; i < lists.length; i++) {
+    var key = lists[i][0];
+    var titleText = lists[i][1];
+    var values = analysis[key];
+    if (values && values.length > 0) {
+      panel.appendChild(seoHeading(titleText));
+      for (var j = 0; j < values.length; j++) {
+        panel.appendChild(seoCopyRow(String(values[j])));
       }
     }
   }
 
   // Suggested tags: shown as text, with a button applying them to the field.
-  var tagValori = analisi['suggested_tags'];
-  if (tagValori && tagValori.length > 0) {
-    pannello.appendChild(seoHeading(t('seo_suggested_tags')));
-    var tagTesto = tagValori.join(', ');
-    var rigaTag = seoCopyRow(tagTesto);
+  var tagValues = analysis['suggested_tags'];
+  if (tagValues && tagValues.length > 0) {
+    panel.appendChild(seoHeading(t('seo_suggested_tags')));
+    var textTag = tagValues.join(', ');
+    var tagRow = seoCopyRow(textTag);
     var btnTag = document.createElement('button');
     btnTag.type = 'button';
     btnTag.className = 'seo-copy';
     btnTag.textContent = t('seo_apply_tags');
     btnTag.onclick = function() {
-      document.getElementById('tags').value = tagTesto;
+      document.getElementById('tags').value = textTag;
     };
-    rigaTag.appendChild(btnTag);
-    pannello.appendChild(rigaTag);
+    tagRow.appendChild(btnTag);
+    panel.appendChild(tagRow);
   }
 
   // The model's opinion on the current meta description.
-  if (analisi['meta_description_review']) {
-    pannello.appendChild(seoHeading(t('seo_meta_review')));
-    var giudizio = document.createElement('div');
-    giudizio.className = 'seo-text';
-    giudizio.textContent = String(analisi['meta_description_review']);
-    pannello.appendChild(giudizio);
+  if (analysis['meta_description_review']) {
+    panel.appendChild(seoHeading(t('seo_meta_review')));
+    var verdict = document.createElement('div');
+    verdict.className = 'seo-text';
+    verdict.textContent = String(analysis['meta_description_review']);
+    panel.appendChild(verdict);
   }
 
   // Internal links: slug plus the suggested anchor text.
-  var interni = analisi['internal_links'];
-  if (interni && interni.length > 0) {
-    pannello.appendChild(seoHeading(t('seo_internal_links')));
-    for (var k = 0; k < interni.length; k++) {
-      var voce = interni[k];
-      if (voce && voce.slug) {
+  var internal = analysis['internal_links'];
+  if (internal && internal.length > 0) {
+    panel.appendChild(seoHeading(t('seo_internal_links')));
+    for (var k = 0; k < internal.length; k++) {
+      var entryEl = internal[k];
+      if (entryEl && entryEl.slug) {
         var anchor = '';
-        if (voce.anchor) { anchor = String(voce.anchor); }
-        pannello.appendChild(seoCopyRow(anchor + '  ->  /posts/' + String(voce.slug) + '.html'));
+        if (entryEl.anchor) { anchor = String(entryEl.anchor); }
+        panel.appendChild(seoCopyRow(anchor + '  ->  /posts/' + String(entryEl.slug) + '.html'));
       }
     }
   }
 
   // FAQ suggested for AI answer engines: ready to paste at the end of
   // the article (AI crawlers favour explicit question/answer blocks).
-  var faq = analisi['faq'];
+  var faq = analysis['faq'];
   if (faq && faq.length > 0) {
-    pannello.appendChild(seoHeading(t('seo_faq')));
+    panel.appendChild(seoHeading(t('seo_faq')));
     for (var f = 0; f < faq.length; f++) {
       if (faq[f] && faq[f].question) {
-        var blocco = document.createElement('div');
-        blocco.className = 'seo-text';
-        var domanda = document.createElement('strong');
-        domanda.textContent = String(faq[f].question);
-        blocco.appendChild(domanda);
-        blocco.appendChild(document.createElement('br'));
-        blocco.appendChild(document.createTextNode(String(faq[f].answer || '')));
-        pannello.appendChild(blocco);
+        var blockEl = document.createElement('div');
+        blockEl.className = 'seo-text';
+        var question = document.createElement('strong');
+        question.textContent = String(faq[f].question);
+        blockEl.appendChild(question);
+        blockEl.appendChild(document.createElement('br'));
+        blockEl.appendChild(document.createTextNode(String(faq[f].answer || '')));
+        panel.appendChild(blockEl);
       }
     }
   }
 
   // Concrete AI-SEO advice for this specific article.
-  var consigli = analisi['ai_seo_tips'];
-  if (consigli && consigli.length > 0) {
-    pannello.appendChild(seoHeading(t('seo_ai_tips')));
-    for (var c = 0; c < consigli.length; c++) {
+  var tips = analysis['ai_seo_tips'];
+  if (tips && tips.length > 0) {
+    panel.appendChild(seoHeading(t('seo_ai_tips')));
+    for (var c = 0; c < tips.length; c++) {
       var tip = document.createElement('div');
       tip.className = 'seo-text';
-      tip.textContent = '\u2022 ' + String(consigli[c]);
-      pannello.appendChild(tip);
+      tip.textContent = '\u2022 ' + String(tips[c]);
+      panel.appendChild(tip);
     }
   }
 }
 
 // Shows or hides the translation block based on the authorisation flag.
 function updateTranslationSection() {
-  var autorizzata = document.getElementById('translation_authorized').checked;
-  var blocco = document.getElementById('translation-block');
-  if (autorizzata) {
-    blocco.style.display = 'block';
+  var authorized = document.getElementById('translation_authorized').checked;
+  var blockEl = document.getElementById('translation-block');
+  if (authorized) {
+    blockEl.style.display = 'block';
   } else {
-    blocco.style.display = 'none';
+    blockEl.style.display = 'none';
   }
 }
 
 // Asks the server to translate title, description and content into English.
 // The calls happen in the backend, where the API keys are safe.
-function translateArticle(pulsante) {
-  pbBusy(pulsante, true);
+function translateArticle(buttonEl) {
+  pbBusy(buttonEl, true);
   pbStatus('translation-status', t('js_translating'));
   // The three pieces are translated one after the other; the button comes
   // back to life when the last one lands.
-  var quandoFinito = function() { pbBusy(pulsante, false); };
+  var onFinished = function() { pbBusy(buttonEl, false); };
 
   // We take the Italian texts to translate.
-  var titoloIt = document.getElementById('title').value;
-  var descrizioneIt = document.getElementById('description').value;
-  var contenutoIt = quill.root.innerHTML;
+  var titleIt = document.getElementById('title').value;
+  var descriptionIt = document.getElementById('description').value;
+  var contentIt = quill.root.innerHTML;
 
   // We translate the three pieces one after the other.
-  translatePiece(titoloIt, function(titoloTradotto) {
-    document.getElementById('title_en').value = titoloTradotto;
-    translatePiece(descrizioneIt, function(descrizioneTradotta) {
-      document.getElementById('description_en').value = descrizioneTradotta;
-      translatePiece(contenutoIt, function(contenutoTradotto, mediaRimesse) {
-        quillEn.root.innerHTML = contenutoTradotto;
+  translatePiece(titleIt, function(translatedTitle) {
+    document.getElementById('title_en').value = translatedTitle;
+    translatePiece(descriptionIt, function(translatedDescription) {
+      document.getElementById('description_en').value = translatedDescription;
+      translatePiece(contentIt, function(translatedContent, restoredMedia) {
+        quillEn.root.innerHTML = translatedContent;
         markEditorDirty();
-        pbStatus('translation-status', avvisoMedia(t('js_translated_review'), mediaRimesse));
-        quandoFinito();
+        pbStatus('translation-status', mediaNotice(t('js_translated_review'), restoredMedia));
+        onFinished();
       });
     });
   });
@@ -2751,52 +2751,52 @@ function translateArticle(pulsante) {
 // too, the server still puts the image back, but no longer where it was - so
 // the editor says how many need a second look instead of letting the author
 // find out from a reader.
-function avvisoMedia(messaggio, quante) {
-  if (!quante || quante < 1) { return messaggio; }
-  return messaggio + t('js_media_recovered').replace('{n}', String(quante));
+function mediaNotice(message, howMany) {
+  if (!howMany || howMany < 1) { return message; }
+  return message + t('js_media_recovered').replace('{n}', String(howMany));
 }
 
 // Translates a single piece of text by calling the backend.
-function translatePiece(testo, quandoFinito) {
-  if (testo === null || testo.trim() === '') {
-    quandoFinito('');
+function translatePiece(textValue, onFinished) {
+  if (textValue === null || textValue.trim() === '') {
+    onFinished('');
     return;
   }
-  pbPostJson('/translate', { text: testo })
+  pbPostJson('/translate', { text: textValue })
     .then(function(res) {
       if (res.ok === true) {
-        quandoFinito(res.text, res.media_recovered || 0);
+        onFinished(res.text, res.media_recovered || 0);
       } else {
         pbStatus('translation-status',
           t('js_error_prefix') + res.error + t('js_check_api_key'));
-        quandoFinito('');
+        onFinished('');
       }
     })
     .catch(function() {
       pbStatus('translation-status', t('js_net_error_translation'));
-      quandoFinito('');
+      onFinished('');
     });
 }
 
 // The site's snippets on this article, read from the checkboxes: a
-// "selected articles" one counts when ticked (tipo "optin"), one that goes on
-// every article counts when unticked (tipo "sempre"), as switched off here.
+// "selected articles" one counts when ticked (kind "optin"), one that goes on
+// every article counts when unticked (kind "always"), as switched off here.
 // The editor only lists the snippets that are active in the Settings, so the
 // ids the article already had for the others are kept as they were: the day
 // one of them is switched back on, the article's choice is still there.
-function articleCodeIds(tipo, spuntate, salvati) {
-  var caselle = document.querySelectorAll('.code-article');
-  var mostrati = {};
+function articleCodeIds(kindValue, ticked, savedOnes) {
+  var checkboxes = document.querySelectorAll('.code-article');
+  var shownItems = {};
   var ids = [];
-  for (var i = 0; i < caselle.length; i++) {
-    mostrati[caselle[i].value] = true;
-    if (caselle[i].getAttribute('data-kind') === tipo && caselle[i].checked === spuntate) {
-      ids.push(caselle[i].value);
+  for (var i = 0; i < checkboxes.length; i++) {
+    shownItems[checkboxes[i].value] = true;
+    if (checkboxes[i].getAttribute('data-kind') === kindValue && checkboxes[i].checked === ticked) {
+      ids.push(checkboxes[i].value);
     }
   }
-  for (var j = 0; j < salvati.length; j++) {
-    if (!mostrati[salvati[j]] && ids.indexOf(salvati[j]) === -1) {
-      ids.push(salvati[j]);
+  for (var j = 0; j < savedOnes.length; j++) {
+    if (!shownItems[savedOnes[j]] && ids.indexOf(savedOnes[j]) === -1) {
+      ids.push(savedOnes[j]);
     }
   }
   return ids;
@@ -2813,8 +2813,8 @@ function addOwnCode() {
 }
 
 // Collects every form field into a single article object, for a save or a
-// preview. stato is the status to save with; without it, the current one.
-function articleData(stato) {
+// preview. state is the status to save with; without it, the current one.
+function articleData(state) {
   return {
     title: document.getElementById('title').value,
     slug: document.getElementById('slug').value,
@@ -2832,13 +2832,13 @@ function articleData(stato) {
     original_url: document.getElementById('original_url').value,
     original_canonical: document.getElementById('original_canonical').checked,
     image: document.getElementById('image').value,
-    status: stato || statoArticolo,
+    status: state || articleState,
     // The moment a scheduled article goes out, in UTC; ignored otherwise.
-    publish_at: (stato || statoArticolo) === 'scheduled' ? scheduledMoment() : '',
+    publish_at: (state || articleState) === 'scheduled' ? scheduledMoment() : '',
     notify_subscribers: notifySubscribers(),
-    original_slug: slugOriginale,
+    original_slug: originalSlug,
     custom_code_ids: articleCodeIds('optin', true, pbPage('custom_code_ids', [])),
-    custom_code_off_ids: articleCodeIds('sempre', false, pbPage('custom_code_off_ids', [])),
+    custom_code_off_ids: articleCodeIds('always', false, pbPage('custom_code_off_ids', [])),
     custom_code: customCodeData(document.getElementById('list-box-code-own'), 'art'),
     // Fields of the English version.
     title_en: document.getElementById('title_en').value,
@@ -2856,29 +2856,29 @@ function articleData(stato) {
 // wanted already belonged to another article, the server picked a free one
 // and says so: the author has to know the page is not where they expected.
 function applySavedSlug(res) {
-  slugOriginale = res.slug;
-  var campo = document.getElementById('slug');
-  if (campo) { campo.value = res.slug; }
+  originalSlug = res.slug;
+  var fieldEl = document.getElementById('slug');
+  if (fieldEl) { fieldEl.value = res.slug; }
   if (res.notice) { pbToast(res.notice, 'warning'); }
 }
 
 // The panel at the top of the sidebar shows the buttons of the state the
 // article is in, and where the published page lives.
-function updateStatePanel(indirizzo) {
+function updateStatePanel(address) {
   // A saved article has versions to look at.
-  if (slugOriginale !== '') {
-    var versioni = document.querySelectorAll('#btn-versions, #versions-help');
-    for (var v = 0; v < versioni.length; v++) { versioni[v].hidden = false; }
+  if (originalSlug !== '') {
+    var versions = document.querySelectorAll('#btn-versions, #versions-help');
+    for (var v = 0; v < versions.length; v++) { versions[v].hidden = false; }
   }
-  var pannello = document.getElementById('panel-publish');
-  if (pannello) { pannello.setAttribute('data-state', statoArticolo); }
-  var quando = document.getElementById('scheduled-when');
-  if (quando && statoArticolo === 'scheduled') {
-    quando.textContent = t('admin_goes_out_the').replace('{date}', formatMoment(scheduledMoment()));
+  var panel = document.getElementById('panel-publish');
+  if (panel) { panel.setAttribute('data-state', articleState); }
+  var when = document.getElementById('scheduled-when');
+  if (when && articleState === 'scheduled') {
+    when.textContent = t('admin_goes_out_the').replace('{date}', formatMoment(scheduledMoment()));
   }
   toggleScheduleForm(null, false);
   var link = document.getElementById('link-online');
-  if (link && indirizzo) { link.setAttribute('href', indirizzo); }
+  if (link && address) { link.setAttribute('href', address); }
   updateShareLinks();
 }
 
@@ -2887,19 +2887,19 @@ function updateStatePanel(indirizzo) {
 function updateShareLinks() {
   var online = document.getElementById('link-online');
   if (!online) { return; }
-  var percorso = online.getAttribute('href') || '';
-  if (percorso.indexOf('http') !== 0) { percorso = pbPage('public_base', '') + percorso; }
-  var indirizzo = encodeURIComponent(percorso);
-  var titolo = encodeURIComponent(document.getElementById('title').value.trim());
-  var destinazioni = {
-    'share-linkedin': 'https://www.linkedin.com/sharing/share-offsite/?url=' + indirizzo,
-    'share-hn': 'https://news.ycombinator.com/submitlink?u=' + indirizzo + '&t=' + titolo,
-    'share-reddit': 'https://www.reddit.com/submit?url=' + indirizzo + '&title=' + titolo,
-    'share-x': 'https://twitter.com/intent/tweet?url=' + indirizzo + '&text=' + titolo
+  var path = online.getAttribute('href') || '';
+  if (path.indexOf('http') !== 0) { path = pbPage('public_base', '') + path; }
+  var address = encodeURIComponent(path);
+  var titleText = encodeURIComponent(document.getElementById('title').value.trim());
+  var destinations = {
+    'share-linkedin': 'https://www.linkedin.com/sharing/share-offsite/?url=' + address,
+    'share-hn': 'https://news.ycombinator.com/submitlink?u=' + address + '&t=' + titleText,
+    'share-reddit': 'https://www.reddit.com/submit?url=' + address + '&title=' + titleText,
+    'share-x': 'https://twitter.com/intent/tweet?url=' + address + '&text=' + titleText
   };
-  for (var id in destinazioni) {
-    var voce = document.getElementById(id);
-    if (voce) { voce.setAttribute('href', destinazioni[id]); }
+  for (var id in destinations) {
+    var entryEl = document.getElementById(id);
+    if (entryEl) { entryEl.setAttribute('href', destinations[id]); }
   }
 }
 
@@ -2908,8 +2908,8 @@ function updateShareLinks() {
 // changes go online) or taken back to the drafts. Every one of them is a
 // save with a status: what changes is the status and what the author is told.
 
-function saveDraft(pulsante) {
-  saveWithStatus('draft', pulsante, t('js_draft_saved_f'));
+function saveDraft(buttonEl) {
+  saveWithStatus('draft', buttonEl, t('js_draft_saved_f'));
 }
 
 /* --- Scheduled publishing -------------------------------------------------- */
@@ -2917,26 +2917,26 @@ function saveDraft(pulsante) {
 // The field holds the author's local time ("2026-10-04T09:00"); the server
 // keeps the moment in UTC. These two convert between them.
 function scheduledMoment() {
-  var valore = document.getElementById('publish_at').value;
-  if (!valore) { return ''; }
-  var momento = new Date(valore);
-  return isNaN(momento.getTime()) ? '' : momento.toISOString();
+  var val = document.getElementById('publish_at').value;
+  if (!val) { return ''; }
+  var moment = new Date(val);
+  return isNaN(moment.getTime()) ? '' : moment.toISOString();
 }
 
 function localInputValue(iso) {
   if (!iso) { return ''; }
-  var momento = new Date(iso);
-  if (isNaN(momento.getTime())) { return ''; }
+  var moment = new Date(iso);
+  if (isNaN(moment.getTime())) { return ''; }
   var due = function(n) { return (n < 10 ? '0' : '') + n; };
-  return momento.getFullYear() + '-' + due(momento.getMonth() + 1) + '-' + due(momento.getDate()) +
-    'T' + due(momento.getHours()) + ':' + due(momento.getMinutes());
+  return moment.getFullYear() + '-' + due(moment.getMonth() + 1) + '-' + due(moment.getDate()) +
+    'T' + due(moment.getHours()) + ':' + due(moment.getMinutes());
 }
 
 // "saturday 4 october, 09:00", in the language of the administration.
 function formatMoment(iso) {
-  var momento = new Date(iso);
-  if (isNaN(momento.getTime())) { return iso; }
-  return momento.toLocaleString(document.documentElement.lang || undefined, {
+  var moment = new Date(iso);
+  if (isNaN(moment.getTime())) { return iso; }
+  return moment.toLocaleString(document.documentElement.lang || undefined, {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     hour: '2-digit', minute: '2-digit'
   });
@@ -2944,8 +2944,8 @@ function formatMoment(iso) {
 
 // Every <time class="now-local"> written by the server shows UTC; here it
 // becomes the reader's own time.
-function localizeMoments(radice) {
-  var tempi = (radice || document).querySelectorAll('time.now-local');
+function localizeMoments(root) {
+  var tempi = (root || document).querySelectorAll('time.now-local');
   for (var i = 0; i < tempi.length; i++) {
     tempi[i].textContent = formatMoment(tempi[i].getAttribute('datetime'));
   }
@@ -2954,120 +2954,120 @@ document.addEventListener('DOMContentLoaded', function() { localizeMoments(); })
 
 // Opens or closes the little form with the date and time. With no button
 // (null) it is closed, as after a save.
-function toggleScheduleForm(pulsante, apri) {
+function toggleScheduleForm(buttonEl, openIt) {
   var modulo = document.getElementById('schedule-form');
   if (!modulo) { return; }
-  if (apri === undefined) { apri = modulo.hidden; }
-  modulo.hidden = !apri;
-  var pulsanti = document.querySelectorAll('[aria-controls="schedule-form"]');
-  for (var i = 0; i < pulsanti.length; i++) {
-    pulsanti[i].setAttribute('aria-expanded', apri ? 'true' : 'false');
+  if (openIt === undefined) { openIt = modulo.hidden; }
+  modulo.hidden = !openIt;
+  var buttons = document.querySelectorAll('[aria-controls="schedule-form"]');
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].setAttribute('aria-expanded', openIt ? 'true' : 'false');
   }
-  var campo = document.getElementById('publish_at');
-  if (apri) {
-    if (!campo.value) {
+  var fieldEl = document.getElementById('publish_at');
+  if (openIt) {
+    if (!fieldEl.value) {
       // Tomorrow at nine is a sensible first proposal.
-      var domani = new Date();
-      domani.setDate(domani.getDate() + 1);
-      domani.setHours(9, 0, 0, 0);
-      campo.value = localInputValue(domani.toISOString());
+      var tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 0, 0, 0);
+      fieldEl.value = localInputValue(tomorrow.toISOString());
     }
-    campo.focus();
+    fieldEl.focus();
   }
 }
 
-function scheduleArticle(pulsante) {
-  var titolo = document.getElementById('title').value.trim();
-  if (titolo === '') {
+function scheduleArticle(buttonEl) {
+  var titleText = document.getElementById('title').value.trim();
+  if (titleText === '') {
     pbToast(t('js_title_for_to_publish'), 'warning');
     document.getElementById('title').focus();
     return;
   }
-  var momento = scheduledMoment();
-  if (momento === '' || new Date(momento).getTime() <= Date.now()) {
+  var moment = scheduledMoment();
+  if (moment === '' || new Date(moment).getTime() <= Date.now()) {
     pbToast(t('js_schedule_data'), 'warning');
     document.getElementById('publish_at').focus();
     return;
   }
-  var quando = formatMoment(momento);
+  var when = formatMoment(moment);
   pbConfirm(t('js_schedule_title'),
-            t('js_schedule_body').replace('{title}', titolo).replace('{date}', quando),
+            t('js_schedule_body').replace('{title}', titleText).replace('{date}', when),
             t('admin_schedule_confirm'), 'primary', function() {
-    saveWithStatus('scheduled', pulsante, t('js_scheduled').replace('{date}', quando));
+    saveWithStatus('scheduled', buttonEl, t('js_scheduled').replace('{date}', when));
   });
 }
 
-function saveScheduled(pulsante) {
-  saveWithStatus('scheduled', pulsante, t('js_changes_made_saved_pl'));
+function saveScheduled(buttonEl) {
+  saveWithStatus('scheduled', buttonEl, t('js_changes_made_saved_pl'));
 }
 
-function publishNow(pulsante) {
-  publishArticle(pulsante);
+function publishNow(buttonEl) {
+  publishArticle(buttonEl);
 }
 
-function cancelSchedule(pulsante) {
-  saveWithStatus('draft', pulsante, t('js_scheduling_cancelled'));
+function cancelSchedule(buttonEl) {
+  saveWithStatus('draft', buttonEl, t('js_scheduling_cancelled'));
 }
 
-function updateArticle(pulsante) {
-  saveWithStatus('published', pulsante, t('js_updated'));
+function updateArticle(buttonEl) {
+  saveWithStatus('published', buttonEl, t('js_updated'));
 }
 
 // Publishing puts the article on the homepage and in the RSS feed, where a
 // feed reader may pick it up within minutes: it asks first.
-function publishArticle(pulsante) {
-  var titolo = document.getElementById('title').value.trim();
-  if (titolo === '') {
+function publishArticle(buttonEl) {
+  var titleText = document.getElementById('title').value.trim();
+  if (titleText === '') {
     pbToast(t('js_title_for_to_publish'), 'warning');
     document.getElementById('title').focus();
     return;
   }
-  pbConfirm(t('js_publish_title'), t('js_publish_body').replace('{title}', titolo),
+  pbConfirm(t('js_publish_title'), t('js_publish_body').replace('{title}', titleText),
             t('admin_publish'), 'primary', function() {
-    saveWithStatus('published', pulsante, t('js_published'));
+    saveWithStatus('published', buttonEl, t('js_published'));
   });
 }
 
-function unpublishArticle(pulsante) {
-  var titolo = document.getElementById('title').value.trim();
-  pbConfirm(t('js_withdraw_title'), t('js_withdraw_body').replace('{title}', titolo),
+function unpublishArticle(buttonEl) {
+  var titleText = document.getElementById('title').value.trim();
+  pbConfirm(t('js_withdraw_title'), t('js_withdraw_body').replace('{title}', titleText),
             t('admin_withdraw'), 'danger', function() {
-    saveWithStatus('draft', pulsante, t('js_withdrawn'));
+    saveWithStatus('draft', buttonEl, t('js_withdrawn'));
   });
 }
 
-function saveWithStatus(stato, pulsante, messaggio) {
-  if (salvataggioInCorso) { return; }
-  salvataggioInCorso = true;
-  pbBusy(pulsante, true);
+function saveWithStatus(state, buttonEl, message) {
+  if (savingNow) { return; }
+  savingNow = true;
+  pbBusy(buttonEl, true);
 
-  pbPostJson('/save', articleData(stato))
+  pbPostJson('/save', articleData(state))
     .then(function(res) {
-      salvataggioInCorso = false;
-      pbBusy(pulsante, false);
+      savingNow = false;
+      pbBusy(buttonEl, false);
       if (!res.ok) {
         pbToast(t('js_save_error') + ' ' + res.error, 'danger');
         return;
       }
       applySavedSlug(res);
-      statoArticolo = stato;
+      articleState = state;
       updateStatePanel(res.url);
       markEditorClean();
-      var ora = t('js_autosaved_at');
-      if (stato === 'published') { ora = t('js_updated_at'); }
-      if (stato === 'scheduled') { ora = t('js_saved_at'); }
-      setAutosaveIndicator(ora.replace('{time}', currentTime()), false);
+      var nowTime = t('js_autosaved_at');
+      if (state === 'published') { nowTime = t('js_updated_at'); }
+      if (state === 'scheduled') { nowTime = t('js_saved_at'); }
+      setAutosaveIndicator(nowTime.replace('{time}', currentTime()), false);
       // The address bar still says "new article" after the first save of a
       // new one; correcting it means a reload would reopen the right article.
       if (window.history && window.history.replaceState) {
         window.history.replaceState(null, '',
           '/edit?slug=' + encodeURIComponent(res.slug));
       }
-      pbToast(messaggio, 'success');
+      pbToast(message, 'success');
     })
     .catch(function() {
-      salvataggioInCorso = false;
-      pbBusy(pulsante, false);
+      savingNow = false;
+      pbBusy(buttonEl, false);
       pbToast(t('js_save_error'), 'danger');
     });
 }
@@ -3078,22 +3078,22 @@ function saveWithStatus(stato, pulsante, messaggio) {
 // nothing: the fields travel in a form posted to /preview, which answers
 // with the public page. Saving first, as the preview of the translation used
 // to, would put the half-done changes of a published article online.
-function previewArticle(lingua) {
+function previewArticle(lang) {
   var modulo = document.createElement('form');
   modulo.method = 'post';
   modulo.action = '/preview';
   modulo.target = '_blank';
-  var campi = {
+  var fields = {
     csrf_token: window.PB_CSRF,
-    language: lingua || pbPage('main_language', 'it'),
+    language: lang || pbPage('main_language', 'it'),
     data: JSON.stringify(articleData())
   };
-  for (var nome in campi) {
-    var campo = document.createElement('input');
-    campo.type = 'hidden';
-    campo.name = nome;
-    campo.value = campi[nome];
-    modulo.appendChild(campo);
+  for (var itemName in fields) {
+    var fieldEl = document.createElement('input');
+    fieldEl.type = 'hidden';
+    fieldEl.name = itemName;
+    fieldEl.value = fields[itemName];
+    modulo.appendChild(fieldEl);
   }
   document.body.appendChild(modulo);
   modulo.submit();
@@ -3105,14 +3105,14 @@ function previewTranslation() {
 }
 
 function deleteItem() {
-  var titolo = document.getElementById('title').value;
+  var titleText = document.getElementById('title').value;
   pbConfirm(t('js_delete_title'),
-            t('js_delete_body').replace('{title}', titolo),
+            t('js_delete_body').replace('{title}', titleText),
             t('admin_delete'), 'danger',
             function() {
-    // slugOriginale, not the slug the page was opened with: after a rename
+    // originalSlug, not the slug the page was opened with: after a rename
     // the old address no longer exists, and deleting it would delete nothing.
-    pbPostJson('/delete', { slug: slugOriginale })
+    pbPostJson('/delete', { slug: originalSlug })
       .then(function(res) {
         if (res.ok) {
           // The article is gone, so there is nothing left to warn about.
@@ -3133,7 +3133,7 @@ var quillHomeEn = null;
 var quillBio = null;
 var quillBioEn = null;
 var editorCard = [];
-var configRawIniziale = '';
+var initialRawConfig = '';
 
 function initConfigPage() {
   registerBlotFormatter();
@@ -3162,18 +3162,18 @@ function initConfigPage() {
   handlePastedImages(quillHomeEn, null);
 
   // We create a WYSIWYG editor (Quill) for each homepage card.
-  var contenutiCard = pbPage('card_contents', []);
+  var cardContents = pbPage('card_contents', []);
   editorCard = [];
-  for (var c = 0; c < contenutiCard.length; c++) {
-    var editorCardSingolo = new Quill('#card-editor-' + c, {
+  for (var c = 0; c < cardContents.length; c++) {
+    var singleCardEditor = new Quill('#card-editor-' + c, {
       theme: 'snow',
       modules: { blotFormatter: {}, toolbar: TOOLBAR_CARD }
     });
-    editorCardSingolo.root.innerHTML = contenutiCard[c];
-    editorCardSingolo.update(Quill.sources.SILENT);
-    attachImageOverlay(editorCardSingolo);
-    handlePastedImages(editorCardSingolo, null);
-    editorCard.push(editorCardSingolo);
+    singleCardEditor.root.innerHTML = cardContents[c];
+    singleCardEditor.update(Quill.sources.SILENT);
+    attachImageOverlay(singleCardEditor);
+    handlePastedImages(singleCardEditor, null);
+    editorCard.push(singleCardEditor);
   }
 
   // The biography: the whole text, and its translation.
@@ -3194,8 +3194,8 @@ function initConfigPage() {
   attachImageOverlay(quillBioEn);
   handlePastedImages(quillBioEn, null);
   updateBioPhotoPreview();
-  var progetti = document.querySelectorAll('#list-box-projects .project-config');
-  for (var pr = 0; pr < progetti.length; pr++) { updateProjectPreview(progetti[pr]); }
+  var projectList = document.querySelectorAll('#list-box-projects .project-config');
+  for (var pr = 0; pr < projectList.length; pr++) { updateProjectPreview(projectList[pr]); }
 
   applyToolbarTooltips();
 
@@ -3208,18 +3208,18 @@ function initConfigPage() {
   updateCustomCodeNote();
   watchCodeList(document.getElementById('list-box-code'), null);
   // Enter in a field of the templates creates the code, as a form would.
-  document.getElementById('template-fields').addEventListener('keydown', function(evento) {
-    if (evento.key === 'Enter') {
-      evento.preventDefault();
+  document.getElementById('template-fields').addEventListener('keydown', function(evt) {
+    if (evt.key === 'Enter') {
+      evt.preventDefault();
       createCodeFromTemplate();
     }
   });
-  versioneConsensoSalvata = pbPage('consent_version', 1);
-  versioneConsenso = versioneConsensoSalvata;
+  savedConsentVersion = pbPage('consent_version', 1);
+  consentVersion = savedConsentVersion;
 
   // --- Advanced config.json editor ---
-  configRawIniziale = pbPage('config_raw', '');
-  document.getElementById('config-raw').value = configRawIniziale;
+  initialRawConfig = pbPage('config_raw', '');
+  document.getElementById('config-raw').value = initialRawConfig;
 
   labelQuillEditors();
   watchConfigChanges();
@@ -3232,13 +3232,13 @@ function initConfigPage() {
 // Quill writes into a div of its own: the name and the help the template
 // gave the editor's box go onto that div, where screen readers look.
 function labelQuillEditors() {
-  var scatole = document.querySelectorAll('.ql-container');
-  for (var i = 0; i < scatole.length; i++) {
-    var area = scatole[i].querySelector('.ql-editor');
-    var attributi = ['aria-labelledby', 'aria-describedby'];
-    for (var j = 0; j < attributi.length; j++) {
-      var valore = scatole[i].getAttribute(attributi[j]);
-      if (valore) { area.setAttribute(attributi[j], valore); }
+  var boxes = document.querySelectorAll('.ql-container');
+  for (var i = 0; i < boxes.length; i++) {
+    var area = boxes[i].querySelector('.ql-editor');
+    var attrs = ['aria-labelledby', 'aria-describedby'];
+    for (var j = 0; j < attrs.length; j++) {
+      var val = boxes[i].getAttribute(attrs[j]);
+      if (val) { area.setAttribute(attrs[j], val); }
     }
     area.setAttribute('role', 'textbox');
     area.setAttribute('aria-multiline', 'true');
@@ -3256,42 +3256,42 @@ var LEGACY_SECTION_HASHES = {
 
 // Shows the section named in the address (#site, #home...). With none, or
 // with #list, the panel of all the sections shows, on a computer as on a
-// phone. After a click (spostaFuoco) the focus moves to the title of what
+// phone. After a click (moveFocus) the focus moves to the title of what
 // is now on screen, so a screen reader starts from there.
-function showConfigSection(spostaFuoco) {
-  var richiesta = window.location.hash.replace('#', '');
-  if (LEGACY_SECTION_HASHES[richiesta]) {
-    richiesta = LEGACY_SECTION_HASHES[richiesta];
-    history.replaceState(null, '', '#' + richiesta);
+function showConfigSection(moveFocus) {
+  var request = window.location.hash.replace('#', '');
+  if (LEGACY_SECTION_HASHES[request]) {
+    request = LEGACY_SECTION_HASHES[request];
+    history.replaceState(null, '', '#' + request);
   }
-  var sezioni = document.querySelectorAll('.settings .section');
-  var trovata = null;
-  for (var i = 0; i < sezioni.length; i++) {
-    if (sezioni[i].getAttribute('data-section') === richiesta) { trovata = sezioni[i]; }
+  var sections = document.querySelectorAll('.settings .section');
+  var foundOne = null;
+  for (var i = 0; i < sections.length; i++) {
+    if (sections[i].getAttribute('data-section') === request) { foundOne = sections[i]; }
   }
-  for (var j = 0; j < sezioni.length; j++) {
-    sezioni[j].hidden = sezioni[j] !== trovata;
+  for (var j = 0; j < sections.length; j++) {
+    sections[j].hidden = sections[j] !== foundOne;
   }
-  document.getElementById('section-list').hidden = trovata !== null;
+  document.getElementById('section-list').hidden = foundOne !== null;
 
-  var chiave = trovata ? trovata.getAttribute('data-section') : 'list';
-  document.getElementById('settings').setAttribute('data-section', chiave);
+  var key = foundOne ? foundOne.getAttribute('data-section') : 'list';
+  document.getElementById('settings').setAttribute('data-section', key);
   // A photo uploaded or a translation filled in writes into a field without
   // the input event: looking again on every visit keeps the colours right.
   markFilledFields();
   updateSaveBar();
 
-  if (trovata !== null) {
+  if (foundOne !== null) {
     // CodeMirror measures itself when created: inside a hidden section it
     // measured nothing, so it has to look again now that it can be seen.
-    var codici = trovata.querySelectorAll('.CodeMirror');
-    for (var c = 0; c < codici.length; c++) { codici[c].CodeMirror.refresh(); }
+    var codes = foundOne.querySelectorAll('.CodeMirror');
+    for (var c = 0; c < codes.length; c++) { codes[c].CodeMirror.refresh(); }
   }
-  if (spostaFuoco) {
+  if (moveFocus) {
     window.scrollTo(0, 0);
-    var titolo = trovata ? trovata.querySelector('h1') : document.getElementById('sections-list-title');
-    titolo.setAttribute('tabindex', '-1');
-    titolo.focus({ preventScroll: true });
+    var titleText = foundOne ? foundOne.querySelector('h1') : document.getElementById('sections-list-title');
+    titleText.setAttribute('tabindex', '-1');
+    titleText.focus({ preventScroll: true });
   }
 }
 
@@ -3302,31 +3302,31 @@ function showConfigSection(spostaFuoco) {
 // (select) always hold a value and are left alone; ticked boxes are
 // coloured by the CSS on their own. The search box and the raw
 // config.json are tools, not settings.
-var CAMPI_DA_SEGNARE = 'input[type="text"], input[type="url"], input[type="email"], ' +
+var FIELDS_TO_MARK = 'input[type="text"], input[type="url"], input[type="email"], ' +
                        'input[type="number"], input[type="password"], input:not([type]), textarea';
 
-function markFilled(campo) {
-  if (!campo.matches || !campo.matches(CAMPI_DA_SEGNARE)) { return; }
-  if (campo.closest('#code-templates') || campo.id === 'search-settings' || campo.id === 'config-raw') {
+function markFilled(fieldEl) {
+  if (!fieldEl.matches || !fieldEl.matches(FIELDS_TO_MARK)) { return; }
+  if (fieldEl.closest('#code-templates') || fieldEl.id === 'search-settings' || fieldEl.id === 'config-raw') {
     return;
   }
-  campo.classList.toggle('filled', campo.value.trim() !== '');
+  fieldEl.classList.toggle('filled', fieldEl.value.trim() !== '');
 }
 
 function markFilledFields() {
-  var campi = document.querySelectorAll('#settings .section :is(' + CAMPI_DA_SEGNARE + ')');
-  for (var i = 0; i < campi.length; i++) { markFilled(campi[i]); }
+  var fields = document.querySelectorAll('#settings .section :is(' + FIELDS_TO_MARK + ')');
+  for (var i = 0; i < fields.length; i++) { markFilled(fields[i]); }
 }
 
 function watchFilledFields() {
-  var pagina = document.getElementById('settings');
-  pagina.addEventListener('input', function(evento) { markFilled(evento.target); });
-  pagina.addEventListener('change', function(evento) { markFilled(evento.target); });
+  var page = document.getElementById('settings');
+  page.addEventListener('input', function(evt) { markFilled(evt.target); });
+  page.addEventListener('change', function(evt) { markFilled(evt.target); });
   // Cards of code and projects added on the page bring fields of their own.
-  var liste = ['list-box-code', 'list-box-projects'];
-  for (var i = 0; i < liste.length; i++) {
+  var lists = ['list-box-code', 'list-box-projects'];
+  for (var i = 0; i < lists.length; i++) {
     new MutationObserver(markFilledFields)
-      .observe(document.getElementById(liste[i]), { childList: true });
+      .observe(document.getElementById(lists[i]), { childList: true });
   }
   markFilledFields();
 }
@@ -3334,8 +3334,8 @@ function watchFilledFields() {
 /* --- Settings: searching the panel ------------------------------------------ */
 
 // Lower case and without accents, so "pubblicità" is found by "pubblicita".
-function normalizeSearch(testo) {
-  return testo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function normalizeSearch(textValue) {
+  return textValue.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
 // Each card is found by its name, its description and its keywords, and
@@ -3343,37 +3343,37 @@ function normalizeSearch(testo) {
 // fields. Someone who types "smtp" or "giscus" finds the right card even
 // though neither word is on it.
 function indexSettingsSearch() {
-  var schede = document.querySelectorAll('.card-setting');
-  for (var i = 0; i < schede.length; i++) {
-    var sezione = document.getElementById('section-' + schede[i].getAttribute('data-section'));
-    var parole = [schede[i].textContent, schede[i].getAttribute('data-search') || ''];
-    if (sezione) {
-      var nomi = sezione.querySelectorAll('h1, h2, label, .field-title');
-      for (var j = 0; j < nomi.length; j++) { parole.push(nomi[j].textContent); }
+  var cardSet = document.querySelectorAll('.card-setting');
+  for (var i = 0; i < cardSet.length; i++) {
+    var section = document.getElementById('section-' + cardSet[i].getAttribute('data-section'));
+    var words = [cardSet[i].textContent, cardSet[i].getAttribute('data-search') || ''];
+    if (section) {
+      var nameList = section.querySelectorAll('h1, h2, label, .field-title');
+      for (var j = 0; j < nameList.length; j++) { words.push(nameList[j].textContent); }
     }
-    schede[i].setAttribute('data-index', normalizeSearch(parole.join(' ')));
+    cardSet[i].setAttribute('data-index', normalizeSearch(words.join(' ')));
   }
 }
 
 // Every word typed has to be somewhere in a card's index for it to stay.
 function filterSettings() {
-  var parole = normalizeSearch(document.getElementById('search-settings').value)
+  var words = normalizeSearch(document.getElementById('search-settings').value)
     .split(/\s+/).filter(function(p) { return p !== ''; });
-  var visibili = 0;
-  var gruppi = document.querySelectorAll('.panel-group');
-  for (var g = 0; g < gruppi.length; g++) {
-    var nelGruppo = 0;
-    var schede = gruppi[g].querySelectorAll('.card-setting');
-    for (var i = 0; i < schede.length; i++) {
-      var indice = schede[i].getAttribute('data-index') || '';
-      var tiene = parole.every(function(p) { return indice.indexOf(p) !== -1; });
-      schede[i].parentNode.hidden = !tiene;
-      if (tiene) { nelGruppo++; }
+  var visibleOnes = 0;
+  var groups = document.querySelectorAll('.panel-group');
+  for (var g = 0; g < groups.length; g++) {
+    var inGroup = 0;
+    var cardSet = groups[g].querySelectorAll('.card-setting');
+    for (var i = 0; i < cardSet.length; i++) {
+      var idx = cardSet[i].getAttribute('data-index') || '';
+      var keeps = words.every(function(p) { return idx.indexOf(p) !== -1; });
+      cardSet[i].parentNode.hidden = !keeps;
+      if (keeps) { inGroup++; }
     }
-    gruppi[g].hidden = nelGruppo === 0;
-    visibili += nelGruppo;
+    groups[g].hidden = inGroup === 0;
+    visibleOnes += inGroup;
   }
-  document.getElementById('panel-none').hidden = visibili > 0;
+  document.getElementById('panel-none').hidden = visibleOnes > 0;
 }
 
 // After a save the states on the cards are old: the page asks the server
@@ -3381,18 +3381,18 @@ function filterSettings() {
 // the search. A failure leaves the old cards; the next visit is right.
 function refreshSettingsPanel() {
   fetch('/config', { credentials: 'same-origin' })
-    .then(function(risposta) { return risposta.ok ? risposta.text() : Promise.reject(); })
-    .then(function(testo) {
-      var nuovo = new DOMParser().parseFromString(testo, 'text/html').getElementById('panel-groups');
-      if (!nuovo) { return; }
-      document.getElementById('panel-groups').innerHTML = nuovo.innerHTML;
+    .then(function(reply) { return reply.ok ? reply.text() : Promise.reject(); })
+    .then(function(textValue) {
+      var newValue = new DOMParser().parseFromString(textValue, 'text/html').getElementById('panel-groups');
+      if (!newValue) { return; }
+      document.getElementById('panel-groups').innerHTML = newValue.innerHTML;
       // The warnings at the top of each section are old too.
-      var avvisi = document.querySelectorAll('.section-notices');
-      for (var i = 0; i < avvisi.length; i++) {
-        var fresco = nuovo.ownerDocument.getElementById(avvisi[i].id);
+      var notices = document.querySelectorAll('.section-notices');
+      for (var i = 0; i < notices.length; i++) {
+        var fresco = newValue.ownerDocument.getElementById(notices[i].id);
         if (fresco) {
-          avvisi[i].innerHTML = fresco.innerHTML;
-          avvisi[i].hidden = fresco.hidden;
+          notices[i].innerHTML = fresco.innerHTML;
+          notices[i].hidden = fresco.hidden;
         }
       }
       indexSettingsSearch();
@@ -3403,19 +3403,19 @@ function refreshSettingsPanel() {
 
 /* --- Settings: unsaved changes ------------------------------------------- */
 
-var configModificata = false;
+var configChanged = false;
 
 // Every field of the sections counts, except the hand-edited config.json,
 // which has its own button, and the template chooser, which only prepares
 // a card. Adding or removing a card of code counts too.
 function watchConfigChanges() {
-  var pagina = document.getElementById('settings');
-  var segna = function(evento) {
-    if (evento.target.closest('#section-advanced, #code-templates')) { return; }
+  var page = document.getElementById('settings');
+  var mark = function(evt) {
+    if (evt.target.closest('#section-advanced, #code-templates')) { return; }
     markConfigDirty();
   };
-  pagina.addEventListener('input', segna);
-  pagina.addEventListener('change', segna);
+  page.addEventListener('input', mark);
+  page.addEventListener('change', mark);
   var editors = [quillHome, quillHomeEn, quillBio, quillBioEn].concat(editorCard);
   for (var i = 0; i < editors.length; i++) {
     editors[i].on('text-change', markConfigDirty);
@@ -3426,17 +3426,17 @@ function watchConfigChanges() {
   new MutationObserver(markConfigDirty)
     .observe(document.getElementById('list-box-projects'), { childList: true });
 
-  window.addEventListener('beforeunload', function(evento) {
-    if (!configModificata) { return undefined; }
-    evento.preventDefault();
-    evento.returnValue = t('js_settings_page_not_saved_pl');
+  window.addEventListener('beforeunload', function(evt) {
+    if (!configChanged) { return undefined; }
+    evt.preventDefault();
+    evt.returnValue = t('js_settings_page_not_saved_pl');
     return t('js_settings_page_not_saved_pl');
   });
 }
 
 function markConfigDirty() {
-  if (configModificata) { return; }
-  configModificata = true;
+  if (configChanged) { return; }
+  configChanged = true;
   updateSaveBar();
 }
 
@@ -3444,59 +3444,59 @@ function markConfigDirty() {
 // is nothing to save - the list of sections, the raw config.json with its
 // own button - it only shows up once something has changed.
 function updateSaveBar() {
-  var barra = document.getElementById('bar-save');
-  var sezione = document.getElementById('settings').getAttribute('data-section');
-  barra.hidden = !configModificata && (sezione === 'advanced' || sezione === 'list');
-  barra.classList.toggle('modified', configModificata);
-  document.getElementById('cancel-changes-made').hidden = !configModificata;
-  document.getElementById('save-note').hidden = configModificata;
+  var bar = document.getElementById('bar-save');
+  var section = document.getElementById('settings').getAttribute('data-section');
+  bar.hidden = !configChanged && (section === 'advanced' || section === 'list');
+  bar.classList.toggle('modified', configChanged);
+  document.getElementById('cancel-changes-made').hidden = !configChanged;
+  document.getElementById('save-note').hidden = configChanged;
   document.getElementById('save-status').textContent =
-    configModificata ? t('js_changes_made_from_to_save') : '';
+    configChanged ? t('js_changes_made_from_to_save') : '';
 }
 
 // Throws the changes away by loading the page again, as it was saved.
 function discardConfigChanges() {
   pbConfirm(t('js_cancel_changes_made_title'), t('js_cancel_changes_made_body'),
             t('admin_cancel_changes_made'), 'danger', function() {
-    configModificata = false;
+    configChanged = false;
     window.location.reload();
   });
 }
 
 // Translates the home introduction from Italian to English with AI.
-function translateHome(pulsante) {
-  translateEditorInto(pulsante, quillHome, quillHomeEn, 'home-en-status');
+function translateHome(buttonEl) {
+  translateEditorInto(buttonEl, quillHome, quillHomeEn, 'home-en-status');
 }
 
 // Translates the biography the same way.
-function translateBiography(pulsante) {
-  translateEditorInto(pulsante, quillBio, quillBioEn, 'bio-en-status');
+function translateBiography(buttonEl) {
+  translateEditorInto(buttonEl, quillBio, quillBioEn, 'bio-en-status');
 }
 
 // Sends the text of one editor to the translation service and puts the
 // result into the other one.
-function translateEditorInto(pulsante, origine, destinazione, idStato) {
-  if (origine.getText().trim() === '') {
-    pbStatus(idStato, t('js_write_intro_first'));
+function translateEditorInto(buttonEl, sourceValue, destination, stateId) {
+  if (sourceValue.getText().trim() === '') {
+    pbStatus(stateId, t('js_write_intro_first'));
     return;
   }
-  pbBusy(pulsante, true);
-  pbStatus(idStato, t('js_translating'));
+  pbBusy(buttonEl, true);
+  pbStatus(stateId, t('js_translating'));
 
-  pbPostJson('/translate', { text: origine.root.innerHTML })
+  pbPostJson('/translate', { text: sourceValue.root.innerHTML })
     .then(function(res) {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       if (res.ok === true) {
-        destinazione.root.innerHTML = res.text;
-        pbStatus(idStato,
-          avvisoMedia(t('js_translated_home'), res.media_recovered || 0));
+        destination.root.innerHTML = res.text;
+        pbStatus(stateId,
+          mediaNotice(t('js_translated_home'), res.media_recovered || 0));
       } else {
-        pbStatus(idStato, t('js_error_prefix') + res.error);
+        pbStatus(stateId, t('js_error_prefix') + res.error);
       }
     })
     .catch(function() {
-      pbBusy(pulsante, false);
-      pbStatus(idStato, '');
+      pbBusy(buttonEl, false);
+      pbStatus(stateId, '');
       pbToast(t('js_net_error_translation'), 'danger');
     });
 }
@@ -3504,41 +3504,41 @@ function translateEditorInto(pulsante, origine, destinazione, idStato) {
 // The subtitle, the role and the bio, translated in one go into the fields
 // of the other language. Each is a request of its own, one after the
 // other, so a failure leaves the others as they were.
-function translateSiteTexts(pulsante) {
-  var coppie = [['subtitle', 'subtitle_en'], ['seo_author_role', 'seo_author_role_en'],
+function translateSiteTexts(buttonEl) {
+  var pairs = [['subtitle', 'subtitle_en'], ['seo_author_role', 'seo_author_role_en'],
                 ['seo_author_bio', 'seo_author_bio_en']];
-  var daFare = coppie.filter(function(c) { return document.getElementById(c[0]).value.trim() !== ''; });
-  if (daFare.length === 0) {
+  var toDo = pairs.filter(function(c) { return document.getElementById(c[0]).value.trim() !== ''; });
+  if (toDo.length === 0) {
     pbStatus('site-en-status', t('js_write_site_texts_first'));
     return;
   }
-  pbBusy(pulsante, true);
+  pbBusy(buttonEl, true);
   pbStatus('site-en-status', t('js_translating'));
-  var prossima = function(indice) {
-    if (indice >= daFare.length) {
-      pbBusy(pulsante, false);
+  var nextOne = function(idx) {
+    if (idx >= toDo.length) {
+      pbBusy(buttonEl, false);
       pbStatus('site-en-status', t('js_translated_site_texts'));
       markFilledFields();
       markConfigDirty();
       return;
     }
-    pbPostJson('/translate', { text: document.getElementById(daFare[indice][0]).value.trim() })
+    pbPostJson('/translate', { text: document.getElementById(toDo[idx][0]).value.trim() })
       .then(function(res) {
         if (res.ok !== true) {
-          pbBusy(pulsante, false);
+          pbBusy(buttonEl, false);
           pbStatus('site-en-status', t('js_error_prefix') + res.error);
           return;
         }
-        document.getElementById(daFare[indice][1]).value = res.text.trim();
-        prossima(indice + 1);
+        document.getElementById(toDo[idx][1]).value = res.text.trim();
+        nextOne(idx + 1);
       })
       .catch(function() {
-        pbBusy(pulsante, false);
+        pbBusy(buttonEl, false);
         pbStatus('site-en-status', '');
         pbToast(t('js_net_error_translation'), 'danger');
       });
   };
-  prossima(0);
+  nextOne(0);
 }
 
 /* --- Updates ------------------------------------------------------------- */
@@ -3546,59 +3546,59 @@ function translateSiteTexts(pulsante) {
 // The dashboard says so when an update is waiting. The server asks GitHub
 // at most twice a day, so opening the dashboard costs nothing most times.
 function showUpdateNotice() {
-  var avviso = document.getElementById('notice-update-notice');
-  if (!avviso) { return; }
+  var notice = document.getElementById('notice-update-notice');
+  if (!notice) { return; }
   fetch('/updates-status', { credentials: 'same-origin', cache: 'no-store' })
-    .then(function(risposta) { return risposta.json(); })
-    .then(function(stato) {
-      if (stato.available === true) {
-        document.getElementById('notice-update-notice-text').textContent = stato.message;
-        avviso.hidden = false;
+    .then(function(reply) { return reply.json(); })
+    .then(function(state) {
+      if (state.available === true) {
+        document.getElementById('notice-update-notice-text').textContent = state.message;
+        notice.hidden = false;
       }
     })
     .catch(function() { });
 }
 
-function checkUpdates(forza) {
-  var riga = document.getElementById('updates-state');
-  riga.textContent = t('upd_checking');
-  fetch('/updates-status' + (forza ? '?force=1' : ''), { credentials: 'same-origin', cache: 'no-store' })
-    .then(function(risposta) { return risposta.json(); })
-    .then(function(stato) {
-      riga.textContent = stato.message;
-      var elenco = document.getElementById('updates-news');
-      elenco.innerHTML = '';
-      (stato.news || []).forEach(function(riga) {
-        var voce = document.createElement('li');
-        voce.textContent = riga;
-        elenco.appendChild(voce);
+function checkUpdates(force) {
+  var row = document.getElementById('updates-state');
+  row.textContent = t('upd_checking');
+  fetch('/updates-status' + (force ? '?force=1' : ''), { credentials: 'same-origin', cache: 'no-store' })
+    .then(function(reply) { return reply.json(); })
+    .then(function(state) {
+      row.textContent = state.message;
+      var listEl = document.getElementById('updates-news');
+      listEl.innerHTML = '';
+      (state.news || []).forEach(function(row) {
+        var entryEl = document.createElement('li');
+        entryEl.textContent = row;
+        listEl.appendChild(entryEl);
       });
-      elenco.hidden = !stato.news || stato.news.length === 0;
-      document.getElementById('update-now').hidden = stato.can_update !== true;
-      document.getElementById('update-help').hidden = stato.can_update !== true;
-      document.getElementById('updates-instructions').hidden = stato.instructions !== true;
+      listEl.hidden = !state.news || state.news.length === 0;
+      document.getElementById('update-now').hidden = state.can_update !== true;
+      document.getElementById('update-help').hidden = state.can_update !== true;
+      document.getElementById('updates-instructions').hidden = state.instructions !== true;
     })
-    .catch(function() { riga.textContent = ''; });
+    .catch(function() { row.textContent = ''; });
 }
 
-function installUpdate(pulsante) {
+function installUpdate(buttonEl) {
   pbConfirm(t('upd_confirm_title'), t('upd_confirm_body'), t('admin_update_now'), 'primary', function() {
-    var riga = document.getElementById('updates-state');
-    pbBusy(pulsante, true);
-    riga.textContent = t('upd_installation');
+    var row = document.getElementById('updates-state');
+    pbBusy(buttonEl, true);
+    row.textContent = t('upd_installation');
     pbPostJson('/update', {})
-      .then(function(esito) {
-        if (esito.ok !== true) {
-          pbBusy(pulsante, false);
-          riga.textContent = esito.error;
+      .then(function(outcome) {
+        if (outcome.ok !== true) {
+          pbBusy(buttonEl, false);
+          row.textContent = outcome.error;
           return;
         }
-        riga.textContent = t('upd_restarting');
+        row.textContent = t('upd_restarting');
         waitForRestart();
       })
       .catch(function() {
-        pbBusy(pulsante, false);
-        riga.textContent = t('upd_offline');
+        pbBusy(buttonEl, false);
+        row.textContent = t('upd_offline');
       });
   });
 }
@@ -3607,127 +3607,127 @@ function installUpdate(pulsante) {
 // wait a little, then knock until it opens. Sessions live in memory, so
 // the new process asks for the password again.
 function waitForRestart() {
-  var tentativi = 0;
-  var bussa = function() {
-    tentativi++;
+  var attempts = 0;
+  var knock = function() {
+    attempts++;
     fetch('/pyblog-ping', { cache: 'no-store' })
-      .then(function(risposta) {
-        if (!risposta.ok) { return Promise.reject(); }
+      .then(function(reply) {
+        if (!reply.ok) { return Promise.reject(); }
         document.getElementById('updates-state').textContent = t('upd_restarted');
         setTimeout(function() { window.location.href = '/login'; }, 1500);
       })
       .catch(function() {
-        if (tentativi < 60) { setTimeout(bussa, 1500); }
+        if (attempts < 60) { setTimeout(knock, 1500); }
       });
   };
-  setTimeout(bussa, 4000);
+  setTimeout(knock, 4000);
 }
 
-function setAutomaticCheck(casella) {
-  pbPostJson('/updates-auto', { on: casella.checked })
-    .then(function(esito) { casella.checked = esito.auto === true; })
-    .catch(function() { casella.checked = !casella.checked; });
+function setAutomaticCheck(checkbox) {
+  pbPostJson('/updates-auto', { on: checkbox.checked })
+    .then(function(outcome) { checkbox.checked = outcome.auto === true; })
+    .catch(function() { checkbox.checked = !checkbox.checked; });
 }
 
 /* --- The media library ---------------------------------------------------- */
 
 // The filter buttons and the search work together: a card stays when it
 // matches both.
-function filterMedia(pulsante) {
-  if (pulsante) {
-    var bottoni = document.querySelectorAll('#filter-media .segment');
-    for (var i = 0; i < bottoni.length; i++) {
-      bottoni[i].setAttribute('aria-pressed', bottoni[i] === pulsante ? 'true' : 'false');
+function filterMedia(buttonEl) {
+  if (buttonEl) {
+    var btns = document.querySelectorAll('#filter-media .segment');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', btns[i] === buttonEl ? 'true' : 'false');
     }
   }
-  var scelto = document.querySelector('#filter-media .segment[aria-pressed="true"]');
-  var filtro = scelto ? scelto.getAttribute('data-filter') : 'all';
-  var testo = document.getElementById('search-media').value.trim().toLowerCase();
-  var schede = document.querySelectorAll('.media-card');
-  var visibili = 0;
-  for (var j = 0; j < schede.length; j++) {
-    var tiene = (filtro === 'all' || schede[j].getAttribute('data-used') === filtro)
-      && schede[j].getAttribute('data-name').indexOf(testo) !== -1;
-    schede[j].hidden = !tiene;
-    if (tiene) { visibili++; }
+  var chosen = document.querySelector('#filter-media .segment[aria-pressed="true"]');
+  var filterValue = chosen ? chosen.getAttribute('data-filter') : 'all';
+  var textValue = document.getElementById('search-media').value.trim().toLowerCase();
+  var cardSet = document.querySelectorAll('.media-card');
+  var visibleOnes = 0;
+  for (var j = 0; j < cardSet.length; j++) {
+    var keeps = (filterValue === 'all' || cardSet[j].getAttribute('data-used') === filterValue)
+      && cardSet[j].getAttribute('data-name').indexOf(textValue) !== -1;
+    cardSet[j].hidden = !keeps;
+    if (keeps) { visibleOnes++; }
   }
-  document.getElementById('media-library-no-result').hidden = visibili > 0 || schede.length === 0;
+  document.getElementById('media-library-no-result').hidden = visibleOnes > 0 || cardSet.length === 0;
 }
 
-function copyMediaAddress(indirizzo) {
-  var fatto = function() { pbToast(t('js_media_copied'), 'success'); };
+function copyMediaAddress(address) {
+  var done = function() { pbToast(t('js_media_copied'), 'success'); };
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(indirizzo).then(fatto, function() { window.prompt('', indirizzo); });
+    navigator.clipboard.writeText(address).then(done, function() { window.prompt('', address); });
   } else {
-    window.prompt('', indirizzo);
+    window.prompt('', address);
   }
 }
 
-function sendMediaDeletion(pulsante, nomi) {
-  pbBusy(pulsante, true);
-  pbPostJson('/media-library-delete', { names: nomi })
-    .then(function(esito) {
-      if (esito.ok !== true) {
-        pbBusy(pulsante, false);
-        pbToast(t('js_error_prefix') + esito.error, 'danger');
+function sendMediaDeletion(buttonEl, nameList) {
+  pbBusy(buttonEl, true);
+  pbPostJson('/media-library-delete', { names: nameList })
+    .then(function(outcome) {
+      if (outcome.ok !== true) {
+        pbBusy(buttonEl, false);
+        pbToast(t('js_error_prefix') + outcome.error, 'danger');
         return;
       }
       window.location.reload();
     })
     .catch(function() {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       pbToast(t('admin_failure_saving'), 'danger');
     });
 }
 
-function deleteMedia(pulsante, nome, usi) {
-  var corpo = usi > 0 ? t('js_media_delete_used').replace('{n}', usi) : t('js_media_delete_body');
-  pbConfirm(t('js_media_delete_title'), nome + '\n\n' + corpo, t('admin_delete'), 'danger',
-            function() { sendMediaDeletion(pulsante, [nome]); });
+function deleteMedia(buttonEl, itemName, uses) {
+  var bodyEl = uses > 0 ? t('js_media_delete_used').replace('{n}', uses) : t('js_media_delete_body');
+  pbConfirm(t('js_media_delete_title'), itemName + '\n\n' + bodyEl, t('admin_delete'), 'danger',
+            function() { sendMediaDeletion(buttonEl, [itemName]); });
 }
 
-function deleteUnusedMedia(pulsante) {
-  var schede = document.querySelectorAll('.media-card[data-used="0"]');
-  var nomi = [];
-  for (var i = 0; i < schede.length; i++) {
-    nomi.push(schede[i].querySelector('.media-name').textContent);
+function deleteUnusedMedia(buttonEl) {
+  var cardSet = document.querySelectorAll('.media-card[data-used="0"]');
+  var nameList = [];
+  for (var i = 0; i < cardSet.length; i++) {
+    nameList.push(cardSet[i].querySelector('.media-name').textContent);
   }
-  if (nomi.length === 0) { return; }
-  pbConfirm(t('js_media_delete_title'), t('js_media_cleanup_body').replace('{n}', nomi.length),
-            t('admin_delete'), 'danger', function() { sendMediaDeletion(pulsante, nomi); });
+  if (nameList.length === 0) { return; }
+  pbConfirm(t('js_media_delete_title'), t('js_media_cleanup_body').replace('{n}', nameList.length),
+            t('admin_delete'), 'danger', function() { sendMediaDeletion(buttonEl, nameList); });
 }
 
 // The files go one after the other, through the same door as the editor:
 // the same checks, and pictures shrunk in the browser first.
-function uploadToLibrary(campo) {
-  var file = Array.prototype.slice.call(campo.files);
-  campo.value = '';
-  var pulsante = document.getElementById('media-library-upload');
-  var caricati = 0;
-  var prossimo = function(indice) {
-    if (indice >= file.length) {
-      pbBusy(pulsante, false);
-      if (caricati > 0) { window.location.reload(); }
+function uploadToLibrary(fieldEl) {
+  var file = Array.prototype.slice.call(fieldEl.files);
+  fieldEl.value = '';
+  var buttonEl = document.getElementById('media-library-upload');
+  var loaded = 0;
+  var nextItem = function(idx) {
+    if (idx >= file.length) {
+      pbBusy(buttonEl, false);
+      if (loaded > 0) { window.location.reload(); }
       return;
     }
-    var scelto = file[indice];
-    var video = scelto.type.indexOf('video/') === 0;
-    if (!fileFitsLimit(scelto, video ? pbPage('max_video_mb', 100) : pbPage('max_image_mb', 10))) {
-      prossimo(indice + 1);
+    var chosen = file[idx];
+    var video = chosen.type.indexOf('video/') === 0;
+    if (!fileFitsLimit(chosen, video ? pbPage('max_video_mb', 100) : pbPage('max_image_mb', 10))) {
+      nextItem(idx + 1);
       return;
     }
-    pbStatus('media-library-state', t('js_media_uploading').replace('{i}', indice + 1).replace('{n}', file.length));
-    var pronto = video ? Promise.resolve(scelto) : resizeImageBeforeUpload(scelto, pbPage('max_image_width', 1600));
+    pbStatus('media-library-state', t('js_media_uploading').replace('{i}', idx + 1).replace('{n}', file.length));
+    var pronto = video ? Promise.resolve(chosen) : resizeImageBeforeUpload(chosen, pbPage('max_image_width', 1600));
     pronto
-      .then(function(daInviare) { return inviaFile(daInviare, 'media-library-state'); })
-      .then(function(indirizzo) {
-        if (indirizzo) { caricati++; }
-        prossimo(indice + 1);
+      .then(function(toSend) { return sendFile(toSend, 'media-library-state'); })
+      .then(function(address) {
+        if (address) { loaded++; }
+        nextItem(idx + 1);
       });
   };
   if (file.length > 0) {
-    pbBusy(pulsante, true);
-    prossimo(0);
+    pbBusy(buttonEl, true);
+    nextItem(0);
   }
 }
 
@@ -3735,57 +3735,57 @@ function uploadToLibrary(campo) {
 
 // The archive goes as it is, not inside a form: with videos it can weigh
 // hundreds of megabytes, and the server writes it straight to a file.
-function restoreBackup(pulsante) {
-  var campo = document.getElementById('file-restoring');
-  if (!campo.files || campo.files.length === 0) {
+function restoreBackup(buttonEl) {
+  var fieldEl = document.getElementById('file-restoring');
+  if (!fieldEl.files || fieldEl.files.length === 0) {
     pbStatus('restoring-state', t('js_choose_backup'));
     return;
   }
-  var file = campo.files[0];
+  var file = fieldEl.files[0];
   pbConfirm(t('js_restoring_title'), t('js_restoring_body'), t('js_restoring_confirm'),
             'danger', function() {
-    pbBusy(pulsante, true);
+    pbBusy(buttonEl, true);
     pbStatus('restoring-state', t('js_restoring_in_progress'));
     pbFetch('/restore', { method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file })
-      .then(function(risposta) { return risposta.json(); })
-      .then(function(esito) { showRestoreResult(pulsante, esito); })
+      .then(function(reply) { return reply.json(); })
+      .then(function(outcome) { showRestoreResult(buttonEl, outcome); })
       .catch(function() {
-        pbBusy(pulsante, false);
+        pbBusy(buttonEl, false);
         pbStatus('restoring-state', '');
-        pbToast(t('js_restoring_failure_rete'), 'danger');
+        pbToast(t('js_restoring_failure_network'), 'danger');
       });
   });
 }
 
 // One of the automatic backups, to undo a restore.
-function restoreAutomatic(pulsante, nome) {
+function restoreAutomatic(buttonEl, itemName) {
   pbConfirm(t('js_restoring_title'), t('js_restoring_automatic_body'), t('js_restoring_confirm'),
             'danger', function() {
-    pbBusy(pulsante, true);
+    pbBusy(buttonEl, true);
     pbStatus('restoring-state', t('js_restoring_in_progress'));
-    pbPostJson('/restore-automatic', { file: nome })
-      .then(function(esito) { showRestoreResult(pulsante, esito); })
+    pbPostJson('/restore-automatic', { file: itemName })
+      .then(function(outcome) { showRestoreResult(buttonEl, outcome); })
       .catch(function() {
-        pbBusy(pulsante, false);
+        pbBusy(buttonEl, false);
         pbStatus('restoring-state', '');
-        pbToast(t('js_restoring_failure_rete'), 'danger');
+        pbToast(t('js_restoring_failure_network'), 'danger');
       });
   });
 }
 
-function showRestoreResult(pulsante, esito) {
-  pbBusy(pulsante, false);
+function showRestoreResult(buttonEl, outcome) {
+  pbBusy(buttonEl, false);
   pbStatus('restoring-state', '');
-  if (!esito || esito.ok !== true) {
-    pbToast(t('js_error_prefix') + (esito && esito.error ? esito.error : ''), 'danger');
+  if (!outcome || outcome.ok !== true) {
+    pbToast(t('js_error_prefix') + (outcome && outcome.error ? outcome.error : ''), 'danger');
     return;
   }
-  var testo = t('js_restoring_made').replace('{a}', esito.articles).replace('{m}', esito.media);
-  if (esito.ignored && esito.ignored.length > 0) {
-    testo = testo + ' ' + t('js_restoring_ignored').replace('{n}', esito.ignored.length);
+  var textValue = t('js_restoring_made').replace('{a}', outcome.articles).replace('{m}', outcome.media);
+  if (outcome.ignored && outcome.ignored.length > 0) {
+    textValue = textValue + ' ' + t('js_restoring_ignored').replace('{n}', outcome.ignored.length);
   }
-  pbStatus('restoring-state', testo);
-  pbToast(testo, 'success');
+  pbStatus('restoring-state', textValue);
+  pbToast(textValue, 'success');
   // The list of automatic backups has one more: the page shows it.
   setTimeout(function() { window.location.reload(); }, 2500);
 }
@@ -3793,16 +3793,16 @@ function showRestoreResult(pulsante, esito) {
 /* --- Settings: the biography's photo ------------------------------------- */
 
 function updateBioPhotoPreview() {
-  var indirizzo = document.getElementById('bio_photo').value.trim();
-  var anteprima = document.getElementById('bio-photo-preview');
-  document.getElementById('bio-photo-remove').hidden = indirizzo === '';
-  if (indirizzo === '') {
-    anteprima.removeAttribute('src');
-    anteprima.hidden = true;
+  var address = document.getElementById('bio_photo').value.trim();
+  var previewEl = document.getElementById('bio-photo-preview');
+  document.getElementById('bio-photo-remove').hidden = address === '';
+  if (address === '') {
+    previewEl.removeAttribute('src');
+    previewEl.hidden = true;
     return;
   }
-  anteprima.src = indirizzo;
-  anteprima.hidden = false;
+  previewEl.src = address;
+  previewEl.hidden = false;
 }
 
 function uploadBioPhoto() {
@@ -3830,8 +3830,8 @@ function removeBioPhoto() {
 // A new project starts as the blank card of the template, at the end of the
 // list, with the cursor on its name.
 function addProject() {
-  var modello = document.getElementById('project-template');
-  var card = modello.content.firstElementChild.cloneNode(true);
+  var template = document.getElementById('project-template');
+  var card = template.content.firstElementChild.cloneNode(true);
   document.getElementById('list-box-projects').appendChild(card);
   updateProjectsNote();
   card.querySelector('.project-name').focus();
@@ -3839,21 +3839,21 @@ function addProject() {
 
 // Moves a project one place up or down: the order of the list is the order
 // on the homepage. The focus stays on the button that was pressed.
-function moveProject(pulsante, passo) {
-  var card = pulsante.closest('.project-config');
-  var lista = card.parentNode;
-  if (passo < 0 && card.previousElementSibling) {
-    lista.insertBefore(card, card.previousElementSibling);
-  } else if (passo > 0 && card.nextElementSibling) {
-    lista.insertBefore(card.nextElementSibling, card);
+function moveProject(buttonEl, step) {
+  var card = buttonEl.closest('.project-config');
+  var itemList = card.parentNode;
+  if (step < 0 && card.previousElementSibling) {
+    itemList.insertBefore(card, card.previousElementSibling);
+  } else if (step > 0 && card.nextElementSibling) {
+    itemList.insertBefore(card.nextElementSibling, card);
   }
-  pulsante.focus();
+  buttonEl.focus();
 }
 
-function removeProject(pulsante) {
-  var card = pulsante.closest('.project-config');
-  var nome = card.querySelector('.project-name').value.trim() || t('admin_project_without_name');
-  pbConfirm(t('admin_project_delete'), nome, t('admin_project_delete'), 'danger',
+function removeProject(buttonEl) {
+  var card = buttonEl.closest('.project-config');
+  var itemName = card.querySelector('.project-name').value.trim() || t('admin_project_without_name');
+  pbConfirm(t('admin_project_delete'), itemName, t('admin_project_delete'), 'danger',
     function() {
       card.remove();
       updateProjectsNote();
@@ -3866,49 +3866,49 @@ function updateProjectsNote() {
 }
 
 // One file field serves every card: it remembers which card asked.
-var progettoInCaricamento = null;
+var projectLoading = null;
 
-function chooseProjectImage(pulsante) {
-  progettoInCaricamento = pulsante.closest('.project-config');
+function chooseProjectImage(buttonEl) {
+  projectLoading = buttonEl.closest('.project-config');
   document.getElementById('file-project').click();
 }
 
 function uploadProjectImage() {
-  var card = progettoInCaricamento;
+  var card = projectLoading;
   if (card === null) { return; }
-  var stato = card.querySelector('.project-state');
-  stato.id = 'progetto-stato-attivo';
-  uploadChosenFile('file-project', pbPage('max_image_mb', 10), 'progetto-stato-attivo',
+  var state = card.querySelector('.project-state');
+  state.id = 'project-upload-state';
+  uploadChosenFile('file-project', pbPage('max_image_mb', 10), 'project-upload-state',
                    t('js_uploading_image'))
     .then(function(url) {
-      stato.removeAttribute('id');
+      state.removeAttribute('id');
       if (url === null) { return; }
       card.querySelector('.project-picture').value = url;
       updateProjectPreview(card);
       markConfigDirty();
-      stato.textContent = t('js_image_uploaded');
+      state.textContent = t('js_image_uploaded');
     });
 }
 
 function updateProjectPreview(card) {
-  var indirizzo = card.querySelector('.project-picture').value.trim();
-  var anteprima = card.querySelector('.project-preview');
-  if (indirizzo === '') {
-    anteprima.removeAttribute('src');
-    anteprima.hidden = true;
+  var address = card.querySelector('.project-picture').value.trim();
+  var previewEl = card.querySelector('.project-preview');
+  if (address === '') {
+    previewEl.removeAttribute('src');
+    previewEl.hidden = true;
     return;
   }
-  anteprima.src = indirizzo;
-  anteprima.hidden = false;
+  previewEl.src = address;
+  previewEl.hidden = false;
 }
 
 // The projects as they are saved, in the order of the list.
 function projectsData() {
-  var carte = document.querySelectorAll('#list-box-projects .project-config');
-  var elenco = [];
-  for (var i = 0; i < carte.length; i++) {
-    var c = carte[i];
-    elenco.push({
+  var cardList = document.querySelectorAll('#list-box-projects .project-config');
+  var listEl = [];
+  for (var i = 0; i < cardList.length; i++) {
+    var c = cardList[i];
+    listEl.push({
       name: c.querySelector('.project-name').value.trim(),
       description: c.querySelector('.project-description').value.trim(),
       description_en: c.querySelector('.project-description-en').value.trim(),
@@ -3917,45 +3917,45 @@ function projectsData() {
       visible: c.querySelector('.project-visible').checked
     });
   }
-  return elenco;
+  return listEl;
 }
 
 // Shows only the field group of the chosen comment system.
 function updateCommentGroups() {
-  var scelta = document.getElementById('comments').value;
-  var gruppoGiscus = document.getElementById('group-giscus');
-  var gruppoDisqus = document.getElementById('group-disqus');
-  gruppoGiscus.classList.remove('active');
-  gruppoDisqus.classList.remove('active');
-  if (scelta === 'giscus') {
-    gruppoGiscus.classList.add('active');
+  var choiceValue = document.getElementById('comments').value;
+  var giscusGroup = document.getElementById('group-giscus');
+  var disqusGroup = document.getElementById('group-disqus');
+  giscusGroup.classList.remove('active');
+  disqusGroup.classList.remove('active');
+  if (choiceValue === 'giscus') {
+    giscusGroup.classList.add('active');
   }
-  if (scelta === 'disqus') {
-    gruppoDisqus.classList.add('active');
+  if (choiceValue === 'disqus') {
+    disqusGroup.classList.add('active');
   }
 }
 
 // Shows the licensing contact field only when the policy requires one.
 function updateAiTrainingGroup() {
-  var scelta = document.getElementById('ai_training_policy').value;
-  var gruppo = document.getElementById('group-ai-licence');
-  if (scelta === 'licensed') {
-    gruppo.style.display = 'block';
+  var choiceValue = document.getElementById('ai_training_policy').value;
+  var group = document.getElementById('group-ai-licence');
+  if (choiceValue === 'licensed') {
+    group.style.display = 'block';
   } else {
-    gruppo.style.display = 'none';
+    group.style.display = 'none';
   }
 }
 
 // Shows only the fields of the chosen translation service.
 function updateTranslationGroups() {
-  var scelta = document.getElementById('translation_service').value;
-  var gruppi = ['deepl', 'google', 'llm', 'openai', 'deepseek'];
-  for (var i = 0; i < gruppi.length; i++) {
-    var elemento = document.getElementById('group-' + gruppi[i]);
-    if (gruppi[i] === scelta) {
-      elemento.classList.add('active');
+  var choiceValue = document.getElementById('translation_service').value;
+  var groups = ['deepl', 'google', 'llm', 'openai', 'deepseek'];
+  for (var i = 0; i < groups.length; i++) {
+    var element = document.getElementById('group-' + groups[i]);
+    if (groups[i] === choiceValue) {
+      element.classList.add('active');
     } else {
-      elemento.classList.remove('active');
+      element.classList.remove('active');
     }
   }
 }
@@ -3970,30 +3970,30 @@ function updateTranslationGroups() {
 // save. The timestamp keeps them ordered and the random tail keeps two cards
 // added in the same millisecond apart. The code of an article has ids of
 // its own kind ("art-"), never mistaken for the site's.
-function newSnippetId(prefisso) {
-  var casuale = Math.floor(Math.random() * 1679616).toString(36);
-  return (prefisso || 'snip') + '-' + Date.now().toString(36) + '-' + casuale;
+function newSnippetId(prefix) {
+  var randomPart = Math.floor(Math.random() * 1679616).toString(36);
+  return (prefix || 'snip') + '-' + Date.now().toString(36) + '-' + randomPart;
 }
 
-function customCodeCards(lista) {
-  if (lista === null) { return []; }
-  return lista.querySelectorAll('.code-config');
+function customCodeCards(itemList) {
+  if (itemList === null) { return []; }
+  return itemList.querySelectorAll('.code-config');
 }
 
 // The empty-list note shows only while there are no cards at all.
 function updateCustomCodeNote() {
-  var nota = document.getElementById('code-empty-note');
-  if (nota === null) { return; }
-  nota.hidden = customCodeCards(document.getElementById('list-box-code')).length > 0;
+  var note = document.getElementById('code-empty-note');
+  if (note === null) { return; }
+  note.hidden = customCodeCards(document.getElementById('list-box-code')).length > 0;
 }
 
 // A new card, cloned from the blank one the server rendered into a
 // <template>: the markup and its translated labels live in the template file
 // and nowhere else.
-function cloneBlankCard(idModello, prefisso) {
-  var modello = document.getElementById(idModello);
-  var card = modello.content.firstElementChild.cloneNode(true);
-  card.setAttribute('data-id', newSnippetId(prefisso));
+function cloneBlankCard(templateId, prefix) {
+  var template = document.getElementById(templateId);
+  var card = template.content.firstElementChild.cloneNode(true);
+  card.setAttribute('data-id', newSnippetId(prefix));
   return card;
 }
 
@@ -4028,15 +4028,15 @@ function cardCode(card) {
   return area.value;
 }
 
-function selectedLabel(tendina) {
-  var scelta = tendina.options[tendina.selectedIndex];
-  if (!scelta) { return ''; }
-  return scelta.textContent;
+function selectedLabel(dropdown) {
+  var choiceValue = dropdown.options[dropdown.selectedIndex];
+  if (!choiceValue) { return ''; }
+  return choiceValue.textContent;
 }
 
-function consentLabel(valore) {
-  if (valore === 'statistics') { return t('consent_statistics'); }
-  if (valore === 'marketing') { return t('consent_marketing'); }
+function consentLabel(val) {
+  if (val === 'statistics') { return t('consent_statistics'); }
+  if (val === 'marketing') { return t('consent_marketing'); }
   return t('consent_necessary');
 }
 
@@ -4044,65 +4044,65 @@ function consentLabel(valore) {
 // change, in the words the server used to draw it: where the code goes, on
 // which pages, which consent it waits for.
 function updateCardSummary(card) {
-  var nome = card.querySelector('.code-name').value.trim();
-  if (nome === '') { nome = t('admin_code_without_name'); }
-  card.querySelector('.code-summary-name').textContent = nome;
+  var itemName = card.querySelector('.code-name').value.trim();
+  if (itemName === '') { itemName = t('admin_code_without_name'); }
+  card.querySelector('.code-summary-name').textContent = itemName;
 
-  var posizione = card.querySelector('.code-position');
-  var pezzi = [selectedLabel(posizione)];
-  var etichettaPunto = card.querySelector('.code-anchor-point-label-text');
-  if (posizione.value === 'anchor' && etichettaPunto && etichettaPunto.value !== '') {
-    pezzi = [etichettaPunto.value];
+  var placement = card.querySelector('.code-position');
+  var pieces = [selectedLabel(placement)];
+  var pointLabel = card.querySelector('.code-anchor-point-label-text');
+  if (placement.value === 'anchor' && pointLabel && pointLabel.value !== '') {
+    pieces = [pointLabel.value];
   }
-  var riquadroPunto = card.querySelector('.code-point');
-  if (riquadroPunto) { riquadroPunto.hidden = posizione.value !== 'anchor'; }
-  var ambito = card.querySelector('.code-scope');
-  if (ambito !== null) { pezzi.push(selectedLabel(ambito)); }
-  pezzi.push(consentLabel(card.querySelector('.code-consent').value));
-  card.querySelector('.code-summary-where').textContent = pezzi.join(' · ');
+  var pointBox = card.querySelector('.code-point');
+  if (pointBox) { pointBox.hidden = placement.value !== 'anchor'; }
+  var pageScope = card.querySelector('.code-scope');
+  if (pageScope !== null) { pieces.push(selectedLabel(pageScope)); }
+  pieces.push(consentLabel(card.querySelector('.code-consent').value));
+  card.querySelector('.code-summary-where').textContent = pieces.join(' · ');
 
-  var attivo = card.querySelector('.code-active').checked;
-  var stato = card.querySelector('.code-summary-state');
-  stato.textContent = attivo ? t('admin_code_active') : t('admin_code_off_m');
-  stato.classList.toggle('off', !attivo);
+  var isActive = card.querySelector('.code-active').checked;
+  var state = card.querySelector('.code-summary-state');
+  state.textContent = isActive ? t('admin_code_active') : t('admin_code_off_m');
+  state.classList.toggle('off', !isActive);
 }
 
 // Wires a list of cards: the summary follows the fields and the code editor
 // starts when a card opens. Listening on the list covers the cards added
 // later as well. "toggle" does not bubble, hence the capture phase.
-function watchCodeList(lista, quandoCambia) {
-  if (lista === null) { return; }
-  var aggiorna = function(evento) {
-    var card = evento.target.closest('.code-config');
+function watchCodeList(itemList, onChange) {
+  if (itemList === null) { return; }
+  var refresh = function(evt) {
+    var card = evt.target.closest('.code-config');
     if (card === null) { return; }
     updateCardSummary(card);
-    if (quandoCambia) { quandoCambia(); }
+    if (onChange) { onChange(); }
     // Choosing "a point on the page" with no point yet opens the page.
-    if (evento.type === 'change' && evento.target.classList.contains('code-position')
-        && evento.target.value === 'anchor' && card.querySelector('.code-anchor-point').value === '') {
-      openPointPicker(evento.target);
+    if (evt.type === 'change' && evt.target.classList.contains('code-position')
+        && evt.target.value === 'anchor' && card.querySelector('.code-anchor-point').value === '') {
+      openPointPicker(evt.target);
     }
   };
-  lista.addEventListener('input', aggiorna);
-  lista.addEventListener('change', aggiorna);
-  lista.addEventListener('toggle', function(evento) {
-    var card = evento.target;
+  itemList.addEventListener('input', refresh);
+  itemList.addEventListener('change', refresh);
+  itemList.addEventListener('toggle', function(evt) {
+    var card = evt.target;
     if (card.classList && card.classList.contains('code-config') && card.open) {
       startCodeEditor(card);
     }
   }, true);
-  var aperte = lista.querySelectorAll('.code-config[open]');
-  for (var i = 0; i < aperte.length; i++) {
-    startCodeEditor(aperte[i]);
+  var openOnes = itemList.querySelectorAll('.code-config[open]');
+  for (var i = 0; i < openOnes.length; i++) {
+    startCodeEditor(openOnes[i]);
   }
 }
 
-function removeCustomCode(pulsante) {
-  var card = pulsante.closest('.code-config');
+function removeCustomCode(buttonEl) {
+  var card = buttonEl.closest('.code-config');
   if (card === null) { return; }
-  var nome = card.querySelector('.code-name').value.trim();
-  if (nome === '') { nome = t('admin_code_title'); }
-  pbConfirm(t('admin_code_delete'), nome, t('admin_code_delete'), 'danger',
+  var itemName = card.querySelector('.code-name').value.trim();
+  if (itemName === '') { itemName = t('admin_code_title'); }
+  pbConfirm(t('admin_code_delete'), itemName, t('admin_code_delete'), 'danger',
     function() {
       card.remove();
       updateCustomCodeNote();
@@ -4112,15 +4112,15 @@ function removeCustomCode(pulsante) {
 
 // Reads a list of cards back into the snippets that are saved: the site's
 // into config.json, an article's into the article.
-function customCodeData(lista, prefisso) {
-  var cards = customCodeCards(lista);
-  var dati = [];
+function customCodeData(itemList, prefix) {
+  var cards = customCodeCards(itemList);
+  var payload = [];
   for (var i = 0; i < cards.length; i++) {
     var card = cards[i];
     var id = card.getAttribute('data-id');
     if (id === null || id === '') {
       // Written back on the card, so the next save sends the same id.
-      id = newSnippetId(prefisso);
+      id = newSnippetId(prefix);
       card.setAttribute('data-id', id);
     }
     var snippet = {
@@ -4131,42 +4131,42 @@ function customCodeData(lista, prefisso) {
       consent: card.querySelector('.code-consent').value,
       code: cardCode(card)
     };
-    var ambito = card.querySelector('.code-scope');
-    if (ambito !== null) { snippet.scope = ambito.value; }
+    var pageScope = card.querySelector('.code-scope');
+    if (pageScope !== null) { snippet.scope = pageScope.value; }
     // The point chosen on the page travels with the snippet even when another
     // position is picked for now: going back to it finds it again.
-    var ancora = card.querySelector('.code-anchor-point');
-    if (ancora !== null && ancora.value !== '') {
-      snippet.anchor_selector = ancora.value;
+    var anchorEl = card.querySelector('.code-anchor-point');
+    if (anchorEl !== null && anchorEl.value !== '') {
+      snippet.anchor_selector = anchorEl.value;
       snippet.anchor_where = card.querySelector('.code-anchor-point-where').value || 'after';
       snippet.anchor_label = card.querySelector('.code-anchor-point-label-text').value;
       snippet.anchor_page = card.querySelector('.code-anchor-point-page').value;
     }
-    dati.push(snippet);
+    payload.push(snippet);
   }
-  return dati;
+  return payload;
 }
 
 // --- Ready-made code for the common services ---------------------------------
 
 // The fields of a template accept the id the way people copy it: with
-// spaces around, in lower case, with or without its prefix. normalizza puts
-// it in the one shape forma checks.
+// spaces around, in lower case, with or without its prefix. normalize puts
+// it in the one shape pattern checks.
 function adsensePublisherField() {
   return {
-    etichetta: t('js_template_field_pub'),
-    esempio: 'pub-1234567890123456',
-    forma: /^pub-\d{10,20}$/,
-    normalizza: function(valore) {
-      valore = valore.toLowerCase().replace(/^ca-/, '');
-      if (/^\d+$/.test(valore)) { valore = 'pub-' + valore; }
-      return valore;
+    labelText: t('js_template_field_pub'),
+    example: 'pub-1234567890123456',
+    pattern: /^pub-\d{10,20}$/,
+    normalize: function(val) {
+      val = val.toLowerCase().replace(/^ca-/, '');
+      if (/^\d+$/.test(val)) { val = 'pub-' + val; }
+      return val;
     }
   };
 }
 
-function upperCaseId(valore) {
-  return valore.toUpperCase();
+function upperCaseId(val) {
+  return val.toUpperCase();
 }
 
 // Each service: the fields it needs and the cards it writes from them, with
@@ -4176,18 +4176,18 @@ function upperCaseId(valore) {
 function codeTemplates() {
   return {
     ga4: {
-      campi: [{ etichetta: t('js_template_field_ga4'), esempio: 'G-ABC123DEF4',
-                forma: /^G-[A-Z0-9]{4,15}$/, normalizza: upperCaseId }],
-      schede: function(valori, nome) {
-        return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'statistics', codice:
+      fields: [{ labelText: t('js_template_field_ga4'), example: 'G-ABC123DEF4',
+                pattern: /^G-[A-Z0-9]{4,15}$/, normalize: upperCaseId }],
+      cardSet: function(values, itemName) {
+        return [{ itemName: itemName, placement: 'head', pageScope: 'all', consentKind: 'statistics', snippetCode:
           '<!-- Google tag (gtag.js) -->\n' +
-          '<script async src="https://www.googletagmanager.com/gtag/js?id=' + valori[0] + '"></script>\n' +
+          '<script async src="https://www.googletagmanager.com/gtag/js?id=' + values[0] + '"></script>\n' +
           '<script>\n' +
           '  window.dataLayer = window.dataLayer || [];\n' +
           '  function gtag(){dataLayer.push(arguments);}\n' +
           "  gtag('js', new Date());\n" +
           '\n' +
-          "  gtag('config', '" + valori[0] + "');\n" +
+          "  gtag('config', '" + values[0] + "');\n" +
           '</script>' }];
       }
     },
@@ -4195,49 +4195,49 @@ function codeTemplates() {
     // <body>. It waits for the statistics consent: the tags it loads are
     // not known here, and the safe side is not to load them uninvited.
     gtm: {
-      campi: [{ etichetta: t('js_template_field_gtm'), esempio: 'GTM-ABC1234',
-                forma: /^GTM-[A-Z0-9]{4,12}$/, normalizza: upperCaseId }],
-      schede: function(valori, nome) {
+      fields: [{ labelText: t('js_template_field_gtm'), example: 'GTM-ABC1234',
+                pattern: /^GTM-[A-Z0-9]{4,12}$/, normalize: upperCaseId }],
+      cardSet: function(values, itemName) {
         return [
-          { nome: nome, posizione: 'head', ambito: 'all', consenso: 'statistics', codice:
+          { itemName: itemName, placement: 'head', pageScope: 'all', consentKind: 'statistics', snippetCode:
             '<!-- Google Tag Manager -->\n' +
             "<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':\n" +
             "new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],\n" +
             "j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=\n" +
             "'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);\n" +
-            "})(window,document,'script','dataLayer','" + valori[0] + "');</script>\n" +
+            "})(window,document,'script','dataLayer','" + values[0] + "');</script>\n" +
             '<!-- End Google Tag Manager -->' },
-          { nome: nome + ' (noscript)', posizione: 'body_start', ambito: 'all', consenso: 'statistics', codice:
+          { itemName: itemName + ' (noscript)', placement: 'body_start', pageScope: 'all', consentKind: 'statistics', snippetCode:
             '<!-- Google Tag Manager (noscript) -->\n' +
-            '<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=' + valori[0] + '"\n' +
+            '<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=' + values[0] + '"\n' +
             'height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>\n' +
             '<!-- End Google Tag Manager (noscript) -->' }
         ];
       }
     },
     adsense_auto: {
-      campi: [adsensePublisherField()],
+      fields: [adsensePublisherField()],
       adsTxt: true,
-      schede: function(valori, nome) {
-        return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'marketing', codice:
-          '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-' + valori[0] + '"\n' +
+      cardSet: function(values, itemName) {
+        return [{ itemName: itemName, placement: 'head', pageScope: 'all', consentKind: 'marketing', snippetCode:
+          '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-' + values[0] + '"\n' +
           '     crossorigin="anonymous"></script>' }];
       }
     },
     // One ad unit, in the sidebar to begin with: the place the layout keeps
     // for it. AdSense ignores its loader when the page already has one.
-    adsense_unita: {
-      campi: [adsensePublisherField(),
-              { etichetta: t('js_template_field_slot'), esempio: '1234567890', forma: /^\d{6,12}$/ }],
+    adsense_unit: {
+      fields: [adsensePublisherField(),
+              { labelText: t('js_template_field_slot'), example: '1234567890', pattern: /^\d{6,12}$/ }],
       adsTxt: true,
-      schede: function(valori, nome) {
-        return [{ nome: nome, posizione: 'sidebar', ambito: 'all', consenso: 'marketing', codice:
-          '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-' + valori[0] + '"\n' +
+      cardSet: function(values, itemName) {
+        return [{ itemName: itemName, placement: 'sidebar', pageScope: 'all', consentKind: 'marketing', snippetCode:
+          '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-' + values[0] + '"\n' +
           '     crossorigin="anonymous"></script>\n' +
           '<ins class="adsbygoogle"\n' +
           '     style="display:block"\n' +
-          '     data-ad-client="ca-' + valori[0] + '"\n' +
-          '     data-ad-slot="' + valori[1] + '"\n' +
+          '     data-ad-client="ca-' + values[0] + '"\n' +
+          '     data-ad-slot="' + values[1] + '"\n' +
           '     data-ad-format="auto"\n' +
           '     data-full-width-responsive="true"></ins>\n' +
           '<script>\n' +
@@ -4246,31 +4246,31 @@ function codeTemplates() {
       }
     },
     google_ads: {
-      campi: [{ etichetta: t('js_template_field_aw'), esempio: 'AW-123456789',
-                forma: /^AW-\d{6,12}$/,
-                normalizza: function(valore) {
-                  valore = valore.toUpperCase();
-                  if (/^\d+$/.test(valore)) { valore = 'AW-' + valore; }
-                  return valore;
+      fields: [{ labelText: t('js_template_field_aw'), example: 'AW-123456789',
+                pattern: /^AW-\d{6,12}$/,
+                normalize: function(val) {
+                  val = val.toUpperCase();
+                  if (/^\d+$/.test(val)) { val = 'AW-' + val; }
+                  return val;
                 } }],
-      schede: function(valori, nome) {
-        return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'marketing', codice:
+      cardSet: function(values, itemName) {
+        return [{ itemName: itemName, placement: 'head', pageScope: 'all', consentKind: 'marketing', snippetCode:
           '<!-- Google tag (gtag.js) -->\n' +
-          '<script async src="https://www.googletagmanager.com/gtag/js?id=' + valori[0] + '"></script>\n' +
+          '<script async src="https://www.googletagmanager.com/gtag/js?id=' + values[0] + '"></script>\n' +
           '<script>\n' +
           '  window.dataLayer = window.dataLayer || [];\n' +
           '  function gtag(){dataLayer.push(arguments);}\n' +
           "  gtag('js', new Date());\n" +
           '\n' +
-          "  gtag('config', '" + valori[0] + "');\n" +
+          "  gtag('config', '" + values[0] + "');\n" +
           '</script>' }];
       }
     },
     meta_pixel: {
-      campi: [{ etichetta: t('js_template_field_pixel'), esempio: '1234567890123456',
-                forma: /^\d{10,20}$/ }],
-      schede: function(valori, nome) {
-        return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'marketing', codice:
+      fields: [{ labelText: t('js_template_field_pixel'), example: '1234567890123456',
+                pattern: /^\d{10,20}$/ }],
+      cardSet: function(values, itemName) {
+        return [{ itemName: itemName, placement: 'head', pageScope: 'all', consentKind: 'marketing', snippetCode:
           '<!-- Meta Pixel Code -->\n' +
           '<script>\n' +
           '!function(f,b,e,v,n,t,s)\n' +
@@ -4281,27 +4281,27 @@ function codeTemplates() {
           't.src=v;s=b.getElementsByTagName(e)[0];\n' +
           "s.parentNode.insertBefore(t,s)}(window, document,'script',\n" +
           "'https://connect.facebook.net/en_US/fbevents.js');\n" +
-          "fbq('init', '" + valori[0] + "');\n" +
+          "fbq('init', '" + values[0] + "');\n" +
           "fbq('track', 'PageView');\n" +
           '</script>\n' +
           '<noscript><img height="1" width="1" style="display:none"\n' +
-          'src="https://www.facebook.com/tr?id=' + valori[0] + '&ev=PageView&noscript=1"\n' +
+          'src="https://www.facebook.com/tr?id=' + values[0] + '&ev=PageView&noscript=1"\n' +
           '/></noscript>\n' +
           '<!-- End Meta Pixel Code -->' }];
       }
     },
     clarity: {
-      campi: [{ etichetta: t('js_template_field_clarity'), esempio: 'abcd1234ef',
-                forma: /^[a-z0-9]{6,14}$/,
-                normalizza: function(valore) { return valore.toLowerCase(); } }],
-      schede: function(valori, nome) {
-        return [{ nome: nome, posizione: 'head', ambito: 'all', consenso: 'statistics', codice:
+      fields: [{ labelText: t('js_template_field_clarity'), example: 'abcd1234ef',
+                pattern: /^[a-z0-9]{6,14}$/,
+                normalize: function(val) { return val.toLowerCase(); } }],
+      cardSet: function(values, itemName) {
+        return [{ itemName: itemName, placement: 'head', pageScope: 'all', consentKind: 'statistics', snippetCode:
           '<script type="text/javascript">\n' +
           '    (function(c,l,a,r,i,t,y){\n' +
           '        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};\n' +
           '        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;\n' +
           '        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);\n' +
-          '    })(window, document, "clarity", "script", "' + valori[0] + '");\n' +
+          '    })(window, document, "clarity", "script", "' + values[0] + '");\n' +
           '</script>' }];
       }
     }
@@ -4310,9 +4310,9 @@ function codeTemplates() {
 
 // "Add code" opens the choice of templates in its place.
 function openCodeTemplates() {
-  var pannello = document.getElementById('code-templates');
-  if (pannello === null) { return; }
-  pannello.hidden = false;
+  var panel = document.getElementById('code-templates');
+  if (panel === null) { return; }
+  panel.hidden = false;
   document.getElementById('btn-add-code').hidden = true;
   updateCodeTemplateFields();
   document.getElementById('template-code').focus();
@@ -4326,37 +4326,37 @@ function closeCodeTemplates() {
 // The fields of the chosen template, built with textContent: a label is a
 // translated string, never markup.
 function updateCodeTemplateFields() {
-  var contenitore = document.getElementById('template-fields');
-  contenitore.textContent = '';
-  var modello = codeTemplates()[document.getElementById('template-code').value];
-  if (!modello) { return; }
-  for (var i = 0; i < modello.campi.length; i++) {
-    var etichetta = document.createElement('label');
-    etichetta.setAttribute('for', 'modello-campo-' + i);
-    etichetta.textContent = modello.campi[i].etichetta;
-    var campo = document.createElement('input');
-    campo.type = 'text';
-    campo.id = 'modello-campo-' + i;
-    campo.placeholder = modello.campi[i].esempio;
-    campo.spellcheck = false;
-    campo.autocomplete = 'off';
-    contenitore.appendChild(etichetta);
-    contenitore.appendChild(campo);
+  var containerEl = document.getElementById('template-fields');
+  containerEl.textContent = '';
+  var template = codeTemplates()[document.getElementById('template-code').value];
+  if (!template) { return; }
+  for (var i = 0; i < template.fields.length; i++) {
+    var labelText = document.createElement('label');
+    labelText.setAttribute('for', 'template-field-' + i);
+    labelText.textContent = template.fields[i].labelText;
+    var fieldEl = document.createElement('input');
+    fieldEl.type = 'text';
+    fieldEl.id = 'template-field-' + i;
+    fieldEl.placeholder = template.fields[i].example;
+    fieldEl.spellcheck = false;
+    fieldEl.autocomplete = 'off';
+    containerEl.appendChild(labelText);
+    containerEl.appendChild(fieldEl);
   }
 }
 
 // A card at the bottom of the Settings list, empty or filled from a template.
-function addCustomCodeCard(scheda) {
-  var lista = document.getElementById('list-box-code');
+function addCustomCodeCard(cardEl) {
+  var itemList = document.getElementById('list-box-code');
   var card = cloneBlankCard('code-template', 'snip');
-  if (scheda) {
-    card.querySelector('.code-name').value = scheda.nome;
-    card.querySelector('.code-position').value = scheda.posizione;
-    card.querySelector('.code-scope').value = scheda.ambito;
-    card.querySelector('.code-consent').value = scheda.consenso;
-    card.querySelector('.code-text').value = scheda.codice;
+  if (cardEl) {
+    card.querySelector('.code-name').value = cardEl.itemName;
+    card.querySelector('.code-position').value = cardEl.placement;
+    card.querySelector('.code-scope').value = cardEl.pageScope;
+    card.querySelector('.code-consent').value = cardEl.consentKind;
+    card.querySelector('.code-text').value = cardEl.snippetCode;
   }
-  lista.appendChild(card);
+  itemList.appendChild(card);
   updateCardSummary(card);
   updateCustomCodeNote();
   startCodeEditor(card);
@@ -4364,65 +4364,65 @@ function addCustomCodeCard(scheda) {
 }
 
 // Adds a line to ads.txt unless it is there already. Says whether it did.
-function addAdsTxtLine(riga) {
-  var campo = document.getElementById('ads_txt');
-  if (campo === null) { return false; }
-  var righe = campo.value.split('\n');
-  for (var i = 0; i < righe.length; i++) {
-    if (righe[i].replace(/\s+/g, '').toLowerCase() === riga.replace(/\s+/g, '').toLowerCase()) {
+function addAdsTxtLine(row) {
+  var fieldEl = document.getElementById('ads_txt');
+  if (fieldEl === null) { return false; }
+  var rows = fieldEl.value.split('\n');
+  for (var i = 0; i < rows.length; i++) {
+    if (rows[i].replace(/\s+/g, '').toLowerCase() === row.replace(/\s+/g, '').toLowerCase()) {
       return false;
     }
   }
-  var testo = campo.value.replace(/\s+$/, '');
-  campo.value = (testo === '' ? '' : testo + '\n') + riga;
+  var textValue = fieldEl.value.replace(/\s+$/, '');
+  fieldEl.value = (textValue === '' ? '' : textValue + '\n') + row;
   return true;
 }
 
 function createCodeFromTemplate() {
-  var tendina = document.getElementById('template-code');
-  var scelta = tendina.value;
-  if (scelta === 'libero') {
-    var vuota = addCustomCodeCard(null);
+  var dropdown = document.getElementById('template-code');
+  var choiceValue = dropdown.value;
+  if (choiceValue === 'free') {
+    var empty = addCustomCodeCard(null);
     closeCodeTemplates();
-    vuota.querySelector('.code-name').focus();
+    empty.querySelector('.code-name').focus();
     return;
   }
 
   // Two Google Analytics on the same page count every visit twice.
-  if (scelta === 'ga4' && document.getElementById('analytics_id').value.trim() !== '') {
+  if (choiceValue === 'ga4' && document.getElementById('analytics_id').value.trim() !== '') {
     pbToast(t('js_template_ga4_double'), 'warning');
     return;
   }
 
-  var modello = codeTemplates()[scelta];
-  var valori = [];
-  for (var i = 0; i < modello.campi.length; i++) {
-    var definizione = modello.campi[i];
-    var campo = document.getElementById('modello-campo-' + i);
-    var valore = campo.value.replace(/\s+/g, '');
-    if (definizione.normalizza) { valore = definizione.normalizza(valore); }
-    if (!definizione.forma.test(valore)) {
-      pbToast(t('js_template_not_valid').replace('{campo}', definizione.etichetta)
-                                        .replace('{esempio}', definizione.esempio), 'warning');
-      campo.focus();
+  var template = codeTemplates()[choiceValue];
+  var values = [];
+  for (var i = 0; i < template.fields.length; i++) {
+    var definition = template.fields[i];
+    var fieldEl = document.getElementById('template-field-' + i);
+    var val = fieldEl.value.replace(/\s+/g, '');
+    if (definition.normalize) { val = definition.normalize(val); }
+    if (!definition.pattern.test(val)) {
+      pbToast(t('js_template_not_valid').replace('{field}', definition.labelText)
+                                        .replace('{example}', definition.example), 'warning');
+      fieldEl.focus();
       return;
     }
-    valori.push(valore);
+    values.push(val);
   }
 
-  var schede = modello.schede(valori, selectedLabel(tendina));
-  var prima = null;
-  for (var s = 0; s < schede.length; s++) {
-    var card = addCustomCodeCard(schede[s]);
-    if (prima === null) { prima = card; }
+  var cardSet = template.cardSet(values, selectedLabel(dropdown));
+  var before = null;
+  for (var s = 0; s < cardSet.length; s++) {
+    var card = addCustomCodeCard(cardSet[s]);
+    if (before === null) { before = card; }
   }
-  var messaggio = t('js_template_created');
-  if (modello.adsTxt && addAdsTxtLine('google.com, ' + valori[0] + ', DIRECT, f08c47fec0942fa0')) {
-    messaggio = messaggio + '\n' + t('js_template_ads_txt');
+  var message = t('js_template_created');
+  if (template.adsTxt && addAdsTxtLine('google.com, ' + values[0] + ', DIRECT, f08c47fec0942fa0')) {
+    message = message + '\n' + t('js_template_ads_txt');
   }
   closeCodeTemplates();
-  prima.scrollIntoView({ block: 'center' });
-  pbToast(messaggio, 'success');
+  before.scrollIntoView({ block: 'center' });
+  pbToast(message, 'success');
 }
 
 // --- Consent banner -------------------------------------------------------------
@@ -4430,99 +4430,99 @@ function createCodeFromTemplate() {
 // The consent version as saved, and the one the next save will send. "Ask
 // everyone again" raises it by one; a visitor whose choice was made under an
 // older number sees the banner again.
-var versioneConsensoSalvata = 1;
-var versioneConsenso = 1;
+var savedConsentVersion = 1;
+var consentVersion = 1;
 
 function renewConsent() {
-  versioneConsenso = versioneConsensoSalvata + 1;
+  consentVersion = savedConsentVersion + 1;
   markConfigDirty();
   pbToast(t('js_consent_renewed'), 'success');
 }
 
 // The admin address as last saved, and the one to go to after a save that
 // moved the administration.
-var adminUrlSalvato = null;
-var adminDaRaggiungere = '';
+var savedAdminUrl = null;
+var adminToReach = '';
 
 // A new address for the administration is checked before anything is
 // saved: the server makes sure the address leads to this very editor,
 // otherwise the author would be sent to a page that does not exist. Then
 // the author confirms the move.
-function checkAdminAddress(pulsante, indirizzo) {
+function checkAdminAddress(buttonEl, address) {
   var continua = function() {
-    pulsante.dataset.adminVerificato = '1';
-    saveConfig(pulsante);
+    buttonEl.dataset.adminVerified = '1';
+    saveConfig(buttonEl);
   };
-  if (indirizzo === '' || indirizzo === window.location.origin) {
+  if (address === '' || address === window.location.origin) {
     continua();
     return;
   }
-  if (!/^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?$/.test(indirizzo)) {
+  if (!/^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?$/.test(address)) {
     pbToast(t('js_admin_url_not_valid'), 'danger');
     return;
   }
-  pbBusy(pulsante, true);
-  pbPostJson('/check-admin-address', { url: indirizzo })
-    .then(function(dati) {
-      pbBusy(pulsante, false);
-      if (!dati || dati.ok !== true || dati.reaches !== true) { return Promise.reject(); }
+  pbBusy(buttonEl, true);
+  pbPostJson('/check-admin-address', { url: address })
+    .then(function(payload) {
+      pbBusy(buttonEl, false);
+      if (!payload || payload.ok !== true || payload.reaches !== true) { return Promise.reject(); }
       pbConfirm(t('js_admin_url_confirm_title'),
-                t('js_admin_url_confirm_body').replace('{indirizzo}', indirizzo),
+                t('js_admin_url_confirm_body').replace('{address}', address),
                 t('js_admin_url_confirm'), 'primary', function() {
-        adminDaRaggiungere = indirizzo;
+        adminToReach = address;
         continua();
       });
     })
     .catch(function() {
-      pbBusy(pulsante, false);
-      pbToast(t('js_admin_url_unreachable').replace('{indirizzo}', indirizzo), 'danger');
+      pbBusy(buttonEl, false);
+      pbToast(t('js_admin_url_unreachable').replace('{address}', address), 'danger');
     });
 }
 
-function saveConfig(pulsante) {
-  if (adminUrlSalvato === null) { adminUrlSalvato = pbPage('admin_url', ''); }
-  var indirizzoAdmin = document.getElementById('admin_url').value.trim().replace(/\/+$/, '');
-  if (indirizzoAdmin !== adminUrlSalvato && !pulsante.dataset.adminVerificato) {
-    checkAdminAddress(pulsante, indirizzoAdmin);
+function saveConfig(buttonEl) {
+  if (savedAdminUrl === null) { savedAdminUrl = pbPage('admin_url', ''); }
+  var adminAddress = document.getElementById('admin_url').value.trim().replace(/\/+$/, '');
+  if (adminAddress !== savedAdminUrl && !buttonEl.dataset.adminVerified) {
+    checkAdminAddress(buttonEl, adminAddress);
     return;
   }
-  delete pulsante.dataset.adminVerificato;
+  delete buttonEl.dataset.adminVerified;
   // We collect the data of the homepage cards.
-  var cardElementi = document.querySelectorAll('.card-config');
-  var cardDati = [];
-  for (var i = 0; i < cardElementi.length; i++) {
-    var elemento = cardElementi[i];
-    var attiva = elemento.querySelector('.card-active').checked;
-    var titolo = elemento.querySelector('.card-title').value;
+  var cardElements = document.querySelectorAll('.card-config');
+  var cardData = [];
+  for (var i = 0; i < cardElements.length; i++) {
+    var element = cardElements[i];
+    var activate = element.querySelector('.card-active').checked;
+    var titleText = element.querySelector('.card-title').value;
     // The content comes from the Quill editor matching this card.
-    var contenuto = editorCard[i].root.innerHTML;
-    cardDati.push({ active: attiva, title: titolo, content: contenuto });
+    var contentValue = editorCard[i].root.innerHTML;
+    cardData.push({ active: activate, title: titleText, content: contentValue });
   }
 
   // Social profiles: from the textarea, one line per profile (blank lines excluded).
-  var righeProfili = document.getElementById('seo_profiles').value.split('\n');
-  var profiliSocial = [];
-  for (var p = 0; p < righeProfili.length; p++) {
-    var rigaProfilo = righeProfili[p].trim();
-    if (rigaProfilo !== '') {
-      profiliSocial.push(rigaProfilo);
+  var profileRows = document.getElementById('seo_profiles').value.split('\n');
+  var socialProfiles = [];
+  for (var p = 0; p < profileRows.length; p++) {
+    var profileRow = profileRows[p].trim();
+    if (profileRow !== '') {
+      socialProfiles.push(profileRow);
     }
   }
 
   // How many words of each article the lists show when it has no preview.
-  var paroleAnteprima = parseInt(document.getElementById('home_excerpt_words').value, 10);
-  if (isNaN(paroleAnteprima) || paroleAnteprima < 10) {
-    paroleAnteprima = 40;
+  var previewWords = parseInt(document.getElementById('home_excerpt_words').value, 10);
+  if (isNaN(previewWords) || previewWords < 10) {
+    previewWords = 40;
   }
 
-  var articoliPerPagina = parseInt(document.getElementById('articles_for_page').value, 10);
-  if (isNaN(articoliPerPagina) || articoliPerPagina < 0) {
-    articoliPerPagina = 10;
+  var articlesPerPage = parseInt(document.getElementById('articles_for_page').value, 10);
+  if (isNaN(articlesPerPage) || articlesPerPage < 0) {
+    articlesPerPage = 10;
   }
   // 0 means "never scale down"; anything unreadable keeps the usual 1600.
-  var larghezzaImmagini = parseInt(document.getElementById('max_image_width').value, 10);
-  if (isNaN(larghezzaImmagini) || larghezzaImmagini < 0) {
-    larghezzaImmagini = 1600;
+  var imagesWidth = parseInt(document.getElementById('max_image_width').value, 10);
+  if (isNaN(imagesWidth) || imagesWidth < 0) {
+    imagesWidth = 1600;
   }
 
   var config = {
@@ -4531,18 +4531,18 @@ function saveConfig(pulsante) {
     subtitle_en: document.getElementById('subtitle_en').value.trim(),
     author: document.getElementById('author').value,
     base_url: document.getElementById('base_url').value,
-    admin_url: indirizzoAdmin,
+    admin_url: adminAddress,
     analytics_id: document.getElementById('analytics_id').value.trim(),
     umami_url: document.getElementById('umami_url').value.trim(),
     umami_website_id: document.getElementById('umami_website_id').value.trim(),
     language: document.getElementById('language').value,
     home_intro_position: document.getElementById('home_intro_position').value,
-    home_excerpt_words: paroleAnteprima,
-    articles_per_page: articoliPerPagina,
+    home_excerpt_words: previewWords,
+    articles_per_page: articlesPerPage,
     home_featured: document.getElementById('home_featured').checked,
     article_cover: document.getElementById('article_cover').checked,
     share_buttons: document.getElementById('share_buttons').checked,
-    max_image_width: larghezzaImmagini,
+    max_image_width: imagesWidth,
     seo: {
       author_url: document.getElementById('seo_author_url').value.trim(),
       author_image: document.getElementById('seo_author_image').value.trim(),
@@ -4550,7 +4550,7 @@ function saveConfig(pulsante) {
       author_bio: document.getElementById('seo_author_bio').value.trim(),
       author_role_en: document.getElementById('seo_author_role_en').value.trim(),
       author_bio_en: document.getElementById('seo_author_bio_en').value.trim(),
-      social_profiles: profiliSocial,
+      social_profiles: socialProfiles,
       logo: document.getElementById('seo_logo').value.trim(),
       twitter_site: document.getElementById('seo_twitter').value.trim(),
       favicon: document.getElementById('seo_favicon').value.trim(),
@@ -4580,7 +4580,7 @@ function saveConfig(pulsante) {
       text: document.getElementById('work_text').value.trim(),
       text_en: document.getElementById('work_text_en').value.trim()
     },
-    home_cards: cardDati,
+    home_cards: cardData,
     custom_code: customCodeData(document.getElementById('list-box-code'), 'snip'),
     ads_txt: document.getElementById('ads_txt').value.trim(),
     consent: {
@@ -4588,7 +4588,7 @@ function saveConfig(pulsante) {
       text: document.getElementById('consent_text').value.trim(),
       text_en: document.getElementById('consent_text_en').value.trim(),
       privacy_url: document.getElementById('consent_privacy_url').value.trim(),
-      version: versioneConsenso
+      version: consentVersion
     },
     comments: document.getElementById('comments').value,
     giscus: {
@@ -4621,19 +4621,19 @@ function saveConfig(pulsante) {
     }
   };
 
-  pbBusy(pulsante, true);
+  pbBusy(buttonEl, true);
   pbStatus('save-status', t('admin_saving'));
   pbPostJson('/save-config', config)
     .then(function(res) {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       if (res.ok === true) {
-        versioneConsensoSalvata = config.consent.version;
-        configModificata = false;
+        savedConsentVersion = config.consent.version;
+        configChanged = false;
         pbToast(t('admin_config_saved_f'), 'success');
-        adminUrlSalvato = config.admin_url;
-        if (adminDaRaggiungere !== '') {
+        savedAdminUrl = config.admin_url;
+        if (adminToReach !== '') {
           // The administration now answers only there.
-          window.location.href = adminDaRaggiungere + '/login';
+          window.location.href = adminToReach + '/login';
           return;
         }
         refreshSettingsPanel();
@@ -4643,7 +4643,7 @@ function saveConfig(pulsante) {
       updateSaveBar();
     })
     .catch(function() {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       updateSaveBar();
       pbToast(t('admin_failure_saving'), 'danger');
     });
@@ -4651,39 +4651,39 @@ function saveConfig(pulsante) {
 
 // Puts the original config back into the textarea (discards unsaved changes).
 function restoreRawConfig() {
-  document.getElementById('config-raw').value = configRawIniziale;
+  document.getElementById('config-raw').value = initialRawConfig;
   pbStatus('config-raw-status', '');
 }
 
 // Saves the hand-edited config.json, after server-side validation.
-function saveRawConfig(pulsante) {
-  var contenuto = document.getElementById('config-raw').value;
+function saveRawConfig(buttonEl) {
+  var contentValue = document.getElementById('config-raw').value;
 
   // Preliminary browser-side check: warns immediately if the JSON is broken.
   try {
-    JSON.parse(contenuto);
+    JSON.parse(contentValue);
   } catch (e) {
     pbToast(t('err_invalid_json_prefix') + e.message, 'danger');
     return;
   }
 
-  pbBusy(pulsante, true);
+  pbBusy(buttonEl, true);
   pbStatus('config-raw-status', t('admin_saving'));
-  pbPostJson('/save-config-raw', { content: contenuto })
+  pbPostJson('/save-config-raw', { content: contentValue })
     .then(function(res) {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       pbStatus('config-raw-status', '');
       if (res.ok === true) {
         pbToast(t('admin_config_raw_saved_f'), 'success');
         // We update the "original" reference to the newly saved content.
-        configRawIniziale = contenuto;
+        initialRawConfig = contentValue;
         refreshSettingsPanel();
       } else {
         pbToast(t('js_error_prefix') + res.error, 'danger');
       }
     })
     .catch(function() {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       pbStatus('config-raw-status', '');
       pbToast(t('admin_failure_saving'), 'danger');
     });
@@ -4693,14 +4693,14 @@ function saveRawConfig(pulsante) {
 
 // Each admin template declares which page it is; we run only its init.
 document.addEventListener('DOMContentLoaded', function() {
-  var pagina = pbPage('page', '');
-  if (pagina === 'editor') {
+  var page = pbPage('page', '');
+  if (page === 'editor') {
     initEditorPage();
-  } else if (pagina === 'config') {
+  } else if (page === 'config') {
     initConfigPage();
-  } else if (pagina === 'dashboard') {
+  } else if (page === 'dashboard') {
     showUpdateNotice();
-  } else if (pagina === 'updates') {
+  } else if (page === 'updates') {
     checkUpdates(false);
   }
 });
@@ -4710,41 +4710,41 @@ document.addEventListener('DOMContentLoaded', function() {
 // Reorders the article cards in place. Sorting in the browser keeps the page
 // static: no reload, no round trip, and the search filter stays applied.
 function sortArticles() {
-  var scelta = document.getElementById('sort-articles').value;
-  var contenitore = document.getElementById('list-articles');
-  if (!contenitore) { return; }
+  var choiceValue = document.getElementById('sort-articles').value;
+  var containerEl = document.getElementById('list-articles');
+  if (!containerEl) { return; }
 
-  var carte = [];
-  var elementi = contenitore.querySelectorAll('.article-card');
-  for (var i = 0; i < elementi.length; i++) {
-    carte.push(elementi[i]);
+  var cardList = [];
+  var elements = containerEl.querySelectorAll('.article-card');
+  for (var i = 0; i < elements.length; i++) {
+    cardList.push(elements[i]);
   }
 
-  carte.sort(function(a, b) {
-    if (scelta === 'titolo') {
+  cardList.sort(function(a, b) {
+    if (choiceValue === 'title') {
       return a.getAttribute('data-title').localeCompare(b.getAttribute('data-title'));
     }
-    if (scelta === 'stato') {
+    if (choiceValue === 'state') {
       // Drafts first, then the scheduled ones, then the published ones.
-      var ordine = { '0': 0, 's': 1, '1': 2 };
-      var statoA = ordine[a.getAttribute('data-state')];
-      var statoB = ordine[b.getAttribute('data-state')];
-      if (statoA !== statoB) {
-        return statoA - statoB;
+      var order = { '0': 0, 's': 1, '1': 2 };
+      var stateA = order[a.getAttribute('data-state')];
+      var stateB = order[b.getAttribute('data-state')];
+      if (stateA !== stateB) {
+        return stateA - stateB;
       }
       // Within one status, the newest first: the same order as the default.
       return b.getAttribute('data-date').localeCompare(a.getAttribute('data-date'));
     }
     var dataA = a.getAttribute('data-date');
     var dataB = b.getAttribute('data-date');
-    if (scelta === 'vecchi') {
+    if (choiceValue === 'oldest') {
       return dataA.localeCompare(dataB);
     }
     return dataB.localeCompare(dataA);
   });
 
-  for (var j = 0; j < carte.length; j++) {
-    contenitore.appendChild(carte[j]);
+  for (var j = 0; j < cardList.length; j++) {
+    containerEl.appendChild(cardList[j]);
   }
 }
 
@@ -4759,62 +4759,62 @@ function sortArticles() {
 // names the block in a way every page of that kind shares: "the third
 // paragraph of the text", not "this paragraph of this article".
 
-var puntoScheda = null;      // the card the window is choosing for
-var puntoBlocchi = [];       // the blocks of the page on show
-var puntoScelto = null;      // the block chosen, or null
+var pointCard = null;      // the card the window is choosing for
+var blockPoints = [];       // the blocks of the page on show
+var chosenPoint = null;      // the block chosen, or null
 
 // The containers whose children can be chosen, from the outside in.
-var PUNTO_CONTENITORI = ['body', '.layout-columns', 'main', '.column-main',
+var POINT_CONTAINERS = ['body', '.layout-columns', 'main', '.column-main',
   'article.post', '.post-content', '.articles-section', '.articles-list',
   '.bar-side'];
 
-function puntoT(chiave, valori) {
-  var testo = t(chiave);
-  for (var nome in (valori || {})) { testo = testo.replace('{' + nome + '}', valori[nome]); }
-  return testo;
+function pointT(key, values) {
+  var textValue = t(key);
+  for (var itemName in (values || {})) { textValue = textValue.replace('{' + itemName + '}', values[itemName]); }
+  return textValue;
 }
 
-function openPointPicker(origine) {
-  puntoScheda = origine.closest('.code-config');
-  var finestra = pointPickerWindow();
-  var scelta = document.getElementById('sp-page');
-  scelta.innerHTML = '';
-  var avviso = document.getElementById('sp-notice');
-  avviso.textContent = '';
+function openPointPicker(sourceValue) {
+  pointCard = sourceValue.closest('.code-config');
+  var popup = pointPickerWindow();
+  var choiceValue = document.getElementById('sp-page');
+  choiceValue.innerHTML = '';
+  var notice = document.getElementById('sp-notice');
+  notice.textContent = '';
   var nellEditor = pbPage('page', '') === 'editor';
-  var opzioni = [];
+  var options = [];
   if (nellEditor) {
     var slug = pbPage('slug', '');
     if (slug === '') {
-      avviso.textContent = t('js_sp_save_first_one');
+      notice.textContent = t('js_sp_save_first_one');
     } else {
-      opzioni.push({ valore: slug, testo: puntoT('js_sp_article', { title: document.getElementById('title').value }) });
+      options.push({ val: slug, textValue: pointT('js_sp_article', { title: document.getElementById('title').value }) });
     }
   } else {
-    opzioni.push({ valore: '', testo: t('js_sp_home') });
-    var articoli = pbPage('articoli_punto', []);
-    for (var i = 0; i < articoli.length; i++) {
-      opzioni.push({ valore: articoli[i].slug, testo: puntoT('js_sp_article', { title: articoli[i].title }) });
+    options.push({ val: '', textValue: t('js_sp_home') });
+    var articleList = pbPage('articles_for_point', []);
+    for (var i = 0; i < articleList.length; i++) {
+      options.push({ val: articleList[i].slug, textValue: pointT('js_sp_article', { title: articleList[i].title }) });
     }
-    if (articoli.length === 0) { avviso.textContent = t('js_sp_no_one_article'); }
+    if (articleList.length === 0) { notice.textContent = t('js_sp_no_one_article'); }
   }
-  for (var j = 0; j < opzioni.length; j++) {
+  for (var j = 0; j < options.length; j++) {
     var o = document.createElement('option');
-    o.value = opzioni[j].valore;
-    o.textContent = opzioni[j].testo;
-    scelta.appendChild(o);
+    o.value = options[j].val;
+    o.textContent = options[j].textValue;
+    choiceValue.appendChild(o);
   }
   // Start from the page the point was chosen on, or the one the scope suggests.
-  var paginaSalvata = puntoScheda.querySelector('.code-anchor-point-page').value;
-  var ambito = puntoScheda.querySelector('.code-scope');
-  var preferisciArticolo = paginaSalvata === 'article' ||
-    (paginaSalvata === '' && ambito !== null && ['articles', 'optin'].indexOf(ambito.value) !== -1);
-  if (!nellEditor && preferisciArticolo && scelta.options.length > 1) { scelta.selectedIndex = 1; }
-  var dove = puntoScheda.querySelector('.code-anchor-point-where').value || 'after';
-  document.querySelector('input[name="sp-where"][value="' + dove + '"]').checked = true;
+  var savedPage = pointCard.querySelector('.code-anchor-point-page').value;
+  var pageScope = pointCard.querySelector('.code-scope');
+  var preferArticle = savedPage === 'article' ||
+    (savedPage === '' && pageScope !== null && ['articles', 'optin'].indexOf(pageScope.value) !== -1);
+  if (!nellEditor && preferArticle && choiceValue.options.length > 1) { choiceValue.selectedIndex = 1; }
+  var where = pointCard.querySelector('.code-anchor-point-where').value || 'after';
+  document.querySelector('input[name="sp-where"][value="' + where + '"]').checked = true;
   document.getElementById('sp-confirm').disabled = true;
-  if (!finestra.open) { finestra.showModal(); }
-  if (scelta.options.length > 0) {
+  if (!popup.open) { popup.showModal(); }
+  if (choiceValue.options.length > 0) {
     loadPointPage();
   } else {
     document.getElementById('sp-iframe').removeAttribute('src');
@@ -4823,13 +4823,13 @@ function openPointPicker(origine) {
 
 // The window is built once, the first time it is needed.
 function pointPickerWindow() {
-  var finestra = document.getElementById('choice-point');
-  if (finestra) { return finestra; }
-  finestra = document.createElement('dialog');
-  finestra.id = 'choice-point';
-  finestra.className = 'choice-point';
-  finestra.setAttribute('aria-labelledby', 'sp-title');
-  finestra.innerHTML =
+  var popup = document.getElementById('choice-point');
+  if (popup) { return popup; }
+  popup = document.createElement('dialog');
+  popup.id = 'choice-point';
+  popup.className = 'choice-point';
+  popup.setAttribute('aria-labelledby', 'sp-title');
+  popup.innerHTML =
     '<div class="sp-header">' +
       '<div class="sp-header-text"><h2 id="sp-title"></h2><p class="help" id="sp-instructions"></p></div>' +
       '<div class="field sp-field-page"><label for="sp-page"></label><select class="field-input" id="sp-page"></select></div>' +
@@ -4847,37 +4847,37 @@ function pointPickerWindow() {
         '<button type="button" class="button button-primary" id="sp-confirm" disabled></button>' +
       '</div>' +
     '</div>';
-  document.body.appendChild(finestra);
+  document.body.appendChild(popup);
   document.getElementById('sp-title').textContent = t('js_sp_title');
   document.getElementById('sp-instructions').textContent = t('js_sp_instructions');
-  finestra.querySelector('label[for="sp-page"]').textContent = t('js_sp_page');
-  finestra.querySelector('label[for="sp-list"]').textContent = t('js_sp_point');
-  finestra.querySelector('.sp-where legend').textContent = t('js_sp_where');
-  var etichette = finestra.querySelectorAll('.sp-where span');
-  etichette[0].textContent = t('js_pd_first_one');
-  etichette[1].textContent = t('js_pd_after');
+  popup.querySelector('label[for="sp-page"]').textContent = t('js_sp_page');
+  popup.querySelector('label[for="sp-list"]').textContent = t('js_sp_point');
+  popup.querySelector('.sp-where legend').textContent = t('js_sp_where');
+  var labels = popup.querySelectorAll('.sp-where span');
+  labels[0].textContent = t('js_pd_first_one');
+  labels[1].textContent = t('js_pd_after');
   document.getElementById('sp-cancel').textContent = t('admin_cancel');
   document.getElementById('sp-confirm').textContent = t('js_sp_put');
   document.getElementById('sp-iframe').title = t('js_sp_title');
 
   document.getElementById('sp-page').addEventListener('change', loadPointPage);
   document.getElementById('sp-list').addEventListener('change', function() {
-    var indice = parseInt(this.value, 10);
-    choosePointBlock(isNaN(indice) ? null : puntoBlocchi[indice], true);
+    var idx = parseInt(this.value, 10);
+    choosePointBlock(isNaN(idx) ? null : blockPoints[idx], true);
   });
-  var radio = finestra.querySelectorAll('input[name="sp-where"]');
+  var radio = popup.querySelectorAll('input[name="sp-where"]');
   for (var i = 0; i < radio.length; i++) {
     radio[i].addEventListener('change', drawPointMark);
   }
-  document.getElementById('sp-cancel').addEventListener('click', function() { finestra.close(); });
+  document.getElementById('sp-cancel').addEventListener('click', function() { popup.close(); });
   document.getElementById('sp-confirm').addEventListener('click', confirmPoint);
   document.getElementById('sp-iframe').addEventListener('load', preparePointPage);
-  return finestra;
+  return popup;
 }
 
 function loadPointPage() {
-  puntoBlocchi = [];
-  puntoScelto = null;
+  blockPoints = [];
+  chosenPoint = null;
   document.getElementById('sp-list').innerHTML = '';
   document.getElementById('sp-confirm').disabled = true;
   var slug = document.getElementById('sp-page').value;
@@ -4892,99 +4892,99 @@ function preparePointPage() {
   if (!doc || !doc.body) { return; }
   var stile = doc.createElement('style');
   stile.textContent =
-    '.pb-sp-sopra { outline:2px dashed #0066cc !important; outline-offset:3px; cursor:pointer !important; }' +
-    '.pb-sp-scelto { outline:3px solid #0066cc !important; outline-offset:3px; }' +
-    '.pb-sp-segno { margin:8px 0; padding:10px 14px; border:2px dashed #0066cc; border-radius:8px;' +
+    '.pb-sp-hover { outline:2px dashed #0066cc !important; outline-offset:3px; cursor:pointer !important; }' +
+    '.pb-sp-chosen { outline:3px solid #0066cc !important; outline-offset:3px; }' +
+    '.pb-sp-sign { margin:8px 0; padding:10px 14px; border:2px dashed #0066cc; border-radius:8px;' +
     ' background:#e8f1fb; color:#0057ad; font:600 14px/1.4 system-ui, sans-serif; text-align:center; }';
   doc.head.appendChild(stile);
 
-  puntoBlocchi = pointBlocksOf(doc);
-  var elenco = document.getElementById('sp-list');
-  elenco.innerHTML = '';
-  var vuota = document.createElement('option');
-  vuota.value = '';
-  vuota.textContent = t('js_sp_choose');
-  elenco.appendChild(vuota);
-  for (var i = 0; i < puntoBlocchi.length; i++) {
+  blockPoints = pointBlocksOf(doc);
+  var listEl = document.getElementById('sp-list');
+  listEl.innerHTML = '';
+  var empty = document.createElement('option');
+  empty.value = '';
+  empty.textContent = t('js_sp_choose');
+  listEl.appendChild(empty);
+  for (var i = 0; i < blockPoints.length; i++) {
     var o = document.createElement('option');
     o.value = String(i);
-    o.textContent = describeBlock(puntoBlocchi[i]);
-    elenco.appendChild(o);
+    o.textContent = describeBlock(blockPoints[i]);
+    listEl.appendChild(o);
   }
 
-  var sopra = null;
-  doc.addEventListener('mouseover', function(evento) {
-    var blocco = pointBlockFrom(evento.target);
-    if (sopra && sopra !== blocco) { sopra.classList.remove('pb-sp-sopra'); }
-    sopra = blocco;
-    if (blocco) { blocco.classList.add('pb-sp-sopra'); }
+  var above = null;
+  doc.addEventListener('mouseover', function(evt) {
+    var blockEl = pointBlockFrom(evt.target);
+    if (above && above !== blockEl) { above.classList.remove('pb-sp-hover'); }
+    above = blockEl;
+    if (blockEl) { blockEl.classList.add('pb-sp-hover'); }
   });
-  doc.addEventListener('click', function(evento) {
-    evento.preventDefault();
-    evento.stopPropagation();
-    var blocco = pointBlockFrom(evento.target);
-    if (blocco) { choosePointBlock(blocco, false); }
+  doc.addEventListener('click', function(evt) {
+    evt.preventDefault();
+    evt.stopPropagation();
+    var blockEl = pointBlockFrom(evt.target);
+    if (blockEl) { choosePointBlock(blockEl, false); }
   }, true);
-  doc.addEventListener('submit', function(evento) { evento.preventDefault(); }, true);
+  doc.addEventListener('submit', function(evt) { evt.preventDefault(); }, true);
 
   // A point already saved is found again, when this page has it.
-  var salvato = puntoScheda ? puntoScheda.querySelector('.code-anchor-point').value : '';
-  if (salvato !== '') {
-    var trovato = null;
-    try { trovato = doc.querySelector(salvato); } catch (e) { trovato = null; }
-    if (trovato && puntoBlocchi.indexOf(trovato) !== -1) { choosePointBlock(trovato, true); }
+  var savedValue = pointCard ? pointCard.querySelector('.code-anchor-point').value : '';
+  if (savedValue !== '') {
+    var found = null;
+    try { found = doc.querySelector(savedValue); } catch (e) { found = null; }
+    if (found && blockPoints.indexOf(found) !== -1) { choosePointBlock(found, true); }
   }
 }
 
 // The blocks that can be chosen: the children of the main containers that
 // have a size, in the order of the page.
 function pointBlocksOf(doc) {
-  var blocchi = [];
-  for (var i = 0; i < PUNTO_CONTENITORI.length; i++) {
-    var contenitori = doc.querySelectorAll(PUNTO_CONTENITORI[i]);
-    for (var c = 0; c < contenitori.length; c++) {
-      var figli = contenitori[c].children;
-      for (var f = 0; f < figli.length; f++) {
-        var el = figli[f];
-        var nome = el.tagName.toLowerCase();
-        if (['script', 'style', 'template', 'link', 'meta', 'dialog'].indexOf(nome) !== -1) { continue; }
-        if (el.classList.contains('skip-to-content') || el.classList.contains('pb-sp-segno')) { continue; }
+  var blocks = [];
+  for (var i = 0; i < POINT_CONTAINERS.length; i++) {
+    var containers = doc.querySelectorAll(POINT_CONTAINERS[i]);
+    for (var c = 0; c < containers.length; c++) {
+      var childItems = containers[c].children;
+      for (var f = 0; f < childItems.length; f++) {
+        var el = childItems[f];
+        var itemName = el.tagName.toLowerCase();
+        if (['script', 'style', 'template', 'link', 'meta', 'dialog'].indexOf(itemName) !== -1) { continue; }
+        if (el.classList.contains('skip-to-content') || el.classList.contains('pb-sp-sign')) { continue; }
         if (el.id === 'pb-consent') { continue; }
         // The containers themselves are not chosen: their children are.
-        var eContenitore = false;
-        for (var k = 0; k < PUNTO_CONTENITORI.length; k++) {
-          if (el.matches(PUNTO_CONTENITORI[k])) { eContenitore = true; }
+        var isContainer = false;
+        for (var k = 0; k < POINT_CONTAINERS.length; k++) {
+          if (el.matches(POINT_CONTAINERS[k])) { isContainer = true; }
         }
-        if (eContenitore) { continue; }
+        if (isContainer) { continue; }
         var r = el.getBoundingClientRect();
         if (r.width === 0 || r.height === 0) { continue; }
-        if (blocchi.indexOf(el) === -1) { blocchi.push(el); }
+        if (blocks.indexOf(el) === -1) { blocks.push(el); }
       }
     }
   }
-  blocchi.sort(function(a, b) {
+  blocks.sort(function(a, b) {
     return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
   });
-  return blocchi;
+  return blocks;
 }
 
-function pointBlockFrom(nodo) {
-  while (nodo && nodo.nodeType === 1) {
-    if (puntoBlocchi.indexOf(nodo) !== -1) { return nodo; }
-    nodo = nodo.parentElement;
+function pointBlockFrom(node) {
+  while (node && node.nodeType === 1) {
+    if (blockPoints.indexOf(node) !== -1) { return node; }
+    node = node.parentElement;
   }
   return null;
 }
 
-function choosePointBlock(blocco, scorri) {
-  var precedente = puntoScelto;
-  if (precedente) { precedente.classList.remove('pb-sp-scelto'); }
-  puntoScelto = blocco;
-  document.getElementById('sp-confirm').disabled = blocco === null;
-  document.getElementById('sp-list').value = blocco ? String(puntoBlocchi.indexOf(blocco)) : '';
-  if (blocco) {
-    blocco.classList.add('pb-sp-scelto');
-    if (scorri) { blocco.scrollIntoView({ block: 'center' }); }
+function choosePointBlock(blockEl, scrollAlong) {
+  var previous = chosenPoint;
+  if (previous) { previous.classList.remove('pb-sp-chosen'); }
+  chosenPoint = blockEl;
+  document.getElementById('sp-confirm').disabled = blockEl === null;
+  document.getElementById('sp-list').value = blockEl ? String(blockPoints.indexOf(blockEl)) : '';
+  if (blockEl) {
+    blockEl.classList.add('pb-sp-chosen');
+    if (scrollAlong) { blockEl.scrollIntoView({ block: 'center' }); }
   }
   drawPointMark();
 }
@@ -4993,23 +4993,23 @@ function choosePointBlock(blocco, scorri) {
 function drawPointMark() {
   var doc = document.getElementById('sp-iframe').contentDocument;
   if (!doc) { return; }
-  var vecchio = doc.querySelector('.pb-sp-segno');
-  if (vecchio) { vecchio.parentNode.removeChild(vecchio); }
-  if (!puntoScelto) { return; }
-  var segno = doc.createElement('div');
-  segno.className = 'pb-sp-segno';
-  var nome = puntoScheda ? puntoScheda.querySelector('.code-name').value.trim() : '';
-  segno.textContent = puntoT('js_sp_here', { name: nome || t('admin_code_without_name') });
+  var oldValue = doc.querySelector('.pb-sp-sign');
+  if (oldValue) { oldValue.parentNode.removeChild(oldValue); }
+  if (!chosenPoint) { return; }
+  var sign = doc.createElement('div');
+  sign.className = 'pb-sp-sign';
+  var itemName = pointCard ? pointCard.querySelector('.code-name').value.trim() : '';
+  sign.textContent = pointT('js_sp_here', { name: itemName || t('admin_code_without_name') });
   if (pointSide() === 'before') {
-    puntoScelto.parentNode.insertBefore(segno, puntoScelto);
+    chosenPoint.parentNode.insertBefore(sign, chosenPoint);
   } else {
-    puntoScelto.parentNode.insertBefore(segno, puntoScelto.nextSibling);
+    chosenPoint.parentNode.insertBefore(sign, chosenPoint.nextSibling);
   }
 }
 
 function pointSide() {
-  var scelto = document.querySelector('input[name="sp-where"]:checked');
-  return scelto ? scelto.value : 'after';
+  var chosen = document.querySelector('input[name="sp-where"]:checked');
+  return chosen ? chosen.value : 'after';
 }
 
 // A selector that names the block the same way on every page of its kind:
@@ -5017,58 +5017,58 @@ function pointSide() {
 // elements of the same tag inside such a parent.
 function pointSelector(el) {
   var doc = el.ownerDocument;
-  var nome = el.tagName.toLowerCase();
-  if (nome === 'body') { return 'body'; }
+  var itemName = el.tagName.toLowerCase();
+  if (itemName === 'body') { return 'body'; }
   if (el.id && el.id !== 'content' && doc.querySelectorAll('#' + CSS.escape(el.id)).length === 1) {
     return '#' + CSS.escape(el.id);
   }
   for (var i = 0; i < el.classList.length; i++) {
-    var classe = el.classList[i];
-    if (classe.indexOf('pb-sp-') === 0) { continue; }
-    var candidato = nome + '.' + CSS.escape(classe);
-    if (doc.querySelectorAll(candidato).length === 1) { return candidato; }
+    var cls = el.classList[i];
+    if (cls.indexOf('pb-sp-') === 0) { continue; }
+    var candidate = itemName + '.' + CSS.escape(cls);
+    if (doc.querySelectorAll(candidate).length === 1) { return candidate; }
   }
-  var posto = 1;
-  for (var fratello = el.previousElementSibling; fratello; fratello = fratello.previousElementSibling) {
-    if (fratello.tagName === el.tagName && !fratello.classList.contains('pb-sp-segno')) { posto++; }
+  var spot = 1;
+  for (var sibling = el.previousElementSibling; sibling; sibling = sibling.previousElementSibling) {
+    if (sibling.tagName === el.tagName && !sibling.classList.contains('pb-sp-sign')) { spot++; }
   }
-  return pointSelector(el.parentElement) + ' > ' + nome + ':nth-of-type(' + posto + ')';
+  return pointSelector(el.parentElement) + ' > ' + itemName + ':nth-of-type(' + spot + ')';
 }
 
 // The place of an element among the ones of its tag in its parent.
 function pointOrdinal(el) {
-  var posto = 1;
+  var spot = 1;
   for (var f = el.previousElementSibling; f; f = f.previousElementSibling) {
-    if (f.tagName === el.tagName && !f.classList.contains('pb-sp-segno')) { posto++; }
+    if (f.tagName === el.tagName && !f.classList.contains('pb-sp-sign')) { spot++; }
   }
-  return posto;
+  return spot;
 }
 
 // A name for a block that the author recognises on any page of its kind.
 function describeBlock(el) {
   var c = el.classList;
-  var nome = el.tagName.toLowerCase();
-  var genitore = el.parentElement;
-  if (nome === 'header') { return t('js_pd_masthead'); }
-  if (nome === 'footer') { return t('js_pd_foot'); }
+  var itemName = el.tagName.toLowerCase();
+  var parentEl = el.parentElement;
+  if (itemName === 'header') { return t('js_pd_masthead'); }
+  if (itemName === 'footer') { return t('js_pd_foot'); }
   if (c.contains('bar-topics')) { return t('js_pd_topics'); }
   if (c.contains('home-intro')) { return t('js_pd_introduction'); }
   if (c.contains('home-biography')) { return t('js_pd_biography'); }
-  if (c.contains('home-progetti')) { return t('js_pd_projects'); }
+  if (c.contains('home-projects')) { return t('js_pd_projects'); }
   if (c.contains('articles-section')) { return t('js_pd_list'); }
   if (c.contains('articles-head')) { return t('js_pd_masthead_area_list'); }
-  if (c.contains('art-row')) { return puntoT('js_pd_article_n', { n: pointOrdinal(el) }); }
+  if (c.contains('art-row')) { return pointT('js_pd_article_n', { n: pointOrdinal(el) }); }
   if (c.contains('pagination')) { return t('js_pd_pagination'); }
   if (c.contains('box')) {
-    var titolo = el.querySelector('.box-title');
-    if (titolo && titolo.textContent.trim() !== '') {
-      return puntoT('js_pd_box', { title: titolo.textContent.trim() });
+    var titleText = el.querySelector('.box-title');
+    if (titleText && titleText.textContent.trim() !== '') {
+      return pointT('js_pd_box', { title: titleText.textContent.trim() });
     }
-    return puntoT('js_pd_box_n', { n: pointOrdinal(el) });
+    return pointT('js_pd_box_n', { n: pointOrdinal(el) });
   }
   if (c.contains('language-switcher')) { return t('js_pd_languages'); }
   if (c.contains('breadcrumbs')) { return t('js_pd_path'); }
-  if (nome === 'h1') { return t('js_pd_title'); }
+  if (itemName === 'h1') { return t('js_pd_title'); }
   if (c.contains('meta')) { return t('js_pd_meta'); }
   if (c.contains('article-cover')) { return t('js_pd_cover'); }
   if (c.contains('toc-phone')) { return t('js_pd_toc_index'); }
@@ -5078,43 +5078,43 @@ function describeBlock(el) {
   if (c.contains('post-back')) { return t('js_pd_return'); }
   if (c.contains('related-articles')) { return t('js_pd_related'); }
   if (c.contains('comments')) { return t('js_pd_comments'); }
-  if (genitore && genitore.classList.contains('post-content')) {
+  if (parentEl && parentEl.classList.contains('post-content')) {
     var n = pointOrdinal(el);
-    if (nome === 'p') {
-      if (el.querySelector('img') && el.textContent.trim() === '') { return puntoT('js_pd_picture', { n: n }); }
-      return puntoT('js_pd_paragraph', { n: n });
+    if (itemName === 'p') {
+      if (el.querySelector('img') && el.textContent.trim() === '') { return pointT('js_pd_picture', { n: n }); }
+      return pointT('js_pd_paragraph', { n: n });
     }
-    if (/^h[2-6]$/.test(nome)) {
-      var testo = el.textContent.trim();
-      if (testo.length > 40) { testo = testo.slice(0, 40) + '…'; }
-      return puntoT('js_pd_small_heading', { n: n, text: testo });
+    if (/^h[2-6]$/.test(itemName)) {
+      var textValue = el.textContent.trim();
+      if (textValue.length > 40) { textValue = textValue.slice(0, 40) + '…'; }
+      return pointT('js_pd_small_heading', { n: n, text: textValue });
     }
-    if (nome === 'ul' || nome === 'ol') { return puntoT('js_pd_list_text', { n: n }); }
-    if (nome === 'figure' || nome === 'img') { return puntoT('js_pd_picture', { n: n }); }
-    if (nome === 'pre') { return puntoT('js_pd_code', { n: n }); }
-    if (nome === 'blockquote') { return puntoT('js_pd_quote', { n: n }); }
-    if (nome === 'table') { return puntoT('js_pd_table', { n: n }); }
+    if (itemName === 'ul' || itemName === 'ol') { return pointT('js_pd_list_text', { n: n }); }
+    if (itemName === 'figure' || itemName === 'img') { return pointT('js_pd_picture', { n: n }); }
+    if (itemName === 'pre') { return pointT('js_pd_code', { n: n }); }
+    if (itemName === 'blockquote') { return pointT('js_pd_quote', { n: n }); }
+    if (itemName === 'table') { return pointT('js_pd_table', { n: n }); }
   }
-  return puntoT('js_pd_lock', { n: pointOrdinal(el), tag: nome });
+  return pointT('js_pd_lock', { n: pointOrdinal(el), tag: itemName });
 }
 
 // "Put it here": the card gets the point, its summary says where, and the
 // form knows something changed.
 function confirmPoint() {
-  if (!puntoScelto || !puntoScheda) { return; }
-  var lato = pointSide();
-  var etichetta = t(lato === 'before' ? 'js_pd_first_one' : 'js_pd_after') + ' · ' + describeBlock(puntoScelto);
-  puntoScheda.querySelector('.code-anchor-point').value = pointSelector(puntoScelto);
-  puntoScheda.querySelector('.code-anchor-point-where').value = lato;
-  puntoScheda.querySelector('.code-anchor-point-label-text').value = etichetta;
-  puntoScheda.querySelector('.code-anchor-point-page').value =
+  if (!chosenPoint || !pointCard) { return; }
+  var side = pointSide();
+  var labelText = t(side === 'before' ? 'js_pd_first_one' : 'js_pd_after') + ' · ' + describeBlock(chosenPoint);
+  pointCard.querySelector('.code-anchor-point').value = pointSelector(chosenPoint);
+  pointCard.querySelector('.code-anchor-point-where').value = side;
+  pointCard.querySelector('.code-anchor-point-label-text').value = labelText;
+  pointCard.querySelector('.code-anchor-point-page').value =
     document.getElementById('sp-page').value === '' ? 'home' : 'article';
-  puntoScheda.querySelector('.code-point-text').textContent = etichetta;
-  var posizione = puntoScheda.querySelector('.code-position');
-  posizione.value = 'anchor';
-  posizione.dispatchEvent(new Event('change', { bubbles: true }));
+  pointCard.querySelector('.code-point-text').textContent = labelText;
+  var placement = pointCard.querySelector('.code-position');
+  placement.value = 'anchor';
+  placement.dispatchEvent(new Event('change', { bubbles: true }));
   document.getElementById('choice-point').close();
-  puntoScheda.querySelector('.code-point .button').focus();
+  pointCard.querySelector('.code-point .button').focus();
 }
 
 
@@ -5125,16 +5125,16 @@ function confirmPoint() {
 // fields. Nothing is saved: the author saves to keep it, as with any edit.
 // The address, the status and the article's own code stay as they are.
 
-var versioneMostrata = null;
+var shownVersion = null;
 
 function versionsWindow() {
-  var finestra = document.getElementById('window-versions');
-  if (finestra) { return finestra; }
-  finestra = document.createElement('dialog');
-  finestra.id = 'window-versions';
-  finestra.className = 'window-versions';
-  finestra.setAttribute('aria-labelledby', 'versions-title');
-  finestra.innerHTML =
+  var popup = document.getElementById('window-versions');
+  if (popup) { return popup; }
+  popup = document.createElement('dialog');
+  popup.id = 'window-versions';
+  popup.className = 'window-versions';
+  popup.setAttribute('aria-labelledby', 'versions-title');
+  popup.innerHTML =
     '<div class="fv-header"><h2 id="versions-title"></h2>' +
       '<button type="button" class="button button-text" id="fv-close"></button></div>' +
     '<div class="fv-body">' +
@@ -5148,99 +5148,99 @@ function versionsWindow() {
       '</div>' +
     '</div>' +
     '<div class="fv-foot"><button type="button" class="button button-primary" id="fv-restore" disabled></button></div>';
-  document.body.appendChild(finestra);
+  document.body.appendChild(popup);
   document.getElementById('versions-title').textContent = t('admin_versions');
   document.getElementById('fv-close').textContent = t('admin_close');
   document.getElementById('fv-restore').textContent = t('js_version_restore');
-  document.getElementById('fv-close').addEventListener('click', function() { finestra.close(); });
+  document.getElementById('fv-close').addEventListener('click', function() { popup.close(); });
   document.getElementById('fv-restore').addEventListener('click', restoreVersion);
-  return finestra;
+  return popup;
 }
 
-function versionStatusLabel(stato) {
-  if (stato === 'published') { return t('admin_state_published'); }
-  if (stato === 'scheduled') { return t('admin_state_scheduled'); }
+function versionStatusLabel(state) {
+  if (state === 'published') { return t('admin_state_published'); }
+  if (state === 'scheduled') { return t('admin_state_scheduled'); }
   return t('admin_state_draft');
 }
 
 function openVersions() {
-  var finestra = versionsWindow();
-  versioneMostrata = null;
+  var popup = versionsWindow();
+  shownVersion = null;
   document.getElementById('fv-restore').disabled = true;
   document.getElementById('fv-content').hidden = true;
   document.getElementById('fv-empty').textContent = '';
-  var elenco = document.getElementById('fv-list');
-  elenco.innerHTML = '';
-  finestra.showModal();
-  fetch('/versions?slug=' + encodeURIComponent(slugOriginale), { credentials: 'same-origin' })
+  var listEl = document.getElementById('fv-list');
+  listEl.innerHTML = '';
+  popup.showModal();
+  fetch('/versions?slug=' + encodeURIComponent(originalSlug), { credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
     .then(function(res) {
-      var versioni = res.versions || [];
-      if (versioni.length === 0) {
+      var versions = res.versions || [];
+      if (versions.length === 0) {
         document.getElementById('fv-empty').textContent = t('js_versions_empty_m');
         return;
       }
       document.getElementById('fv-empty').textContent = t('js_version_choose');
-      for (var i = 0; i < versioni.length; i++) {
-        var v = versioni[i];
-        var voce = document.createElement('li');
-        var pulsante = document.createElement('button');
-        pulsante.type = 'button';
-        pulsante.className = 'fv-item';
-        pulsante.setAttribute('aria-pressed', 'false');
-        pulsante.dataset.id = v.id;
-        var quando = document.createElement('span');
-        quando.className = 'fv-item-when';
-        quando.textContent = formatMoment(v.saved_at);
-        var dettagli = document.createElement('span');
-        dettagli.className = 'fv-item-details';
-        dettagli.textContent = versionStatusLabel(v.status) + ' · ' +
+      for (var i = 0; i < versions.length; i++) {
+        var v = versions[i];
+        var entryEl = document.createElement('li');
+        var buttonEl = document.createElement('button');
+        buttonEl.type = 'button';
+        buttonEl.className = 'fv-item';
+        buttonEl.setAttribute('aria-pressed', 'false');
+        buttonEl.dataset.id = v.id;
+        var when = document.createElement('span');
+        when.className = 'fv-item-when';
+        when.textContent = formatMoment(v.saved_at);
+        var detailsEl = document.createElement('span');
+        detailsEl.className = 'fv-item-details';
+        detailsEl.textContent = versionStatusLabel(v.status) + ' · ' +
           t('js_version_words').replace('{n}', v.words) + ' · ' + v.title;
-        pulsante.appendChild(quando);
-        pulsante.appendChild(dettagli);
-        pulsante.addEventListener('click', showVersion);
-        voce.appendChild(pulsante);
-        elenco.appendChild(voce);
+        buttonEl.appendChild(when);
+        buttonEl.appendChild(detailsEl);
+        buttonEl.addEventListener('click', showVersion);
+        entryEl.appendChild(buttonEl);
+        listEl.appendChild(entryEl);
       }
-      elenco.querySelector('.fv-item').focus();
+      listEl.querySelector('.fv-item').focus();
     })
     .catch(function() { document.getElementById('fv-empty').textContent = t('js_version_failure'); });
 }
 
-function showVersion(evento) {
-  var pulsante = evento.currentTarget;
-  var voci = document.querySelectorAll('#fv-list .fv-item');
-  for (var i = 0; i < voci.length; i++) { voci[i].setAttribute('aria-pressed', voci[i] === pulsante ? 'true' : 'false'); }
-  fetch('/version?slug=' + encodeURIComponent(slugOriginale) + '&id=' + encodeURIComponent(pulsante.dataset.id),
+function showVersion(evt) {
+  var buttonEl = evt.currentTarget;
+  var entries = document.querySelectorAll('#fv-list .fv-item');
+  for (var i = 0; i < entries.length; i++) { entries[i].setAttribute('aria-pressed', entries[i] === buttonEl ? 'true' : 'false'); }
+  fetch('/version?slug=' + encodeURIComponent(originalSlug) + '&id=' + encodeURIComponent(buttonEl.dataset.id),
         { credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
     .then(function(res) {
       if (!res.ok) { pbToast(t('js_version_failure'), 'danger'); return; }
-      versioneMostrata = res.version;
-      versioneMostrata._quando = pulsante.querySelector('.fv-item-when').textContent;
+      shownVersion = res.version;
+      shownVersion._when = buttonEl.querySelector('.fv-item-when').textContent;
       document.getElementById('fv-empty').textContent = '';
       document.getElementById('fv-content').hidden = false;
-      document.getElementById('fv-when').textContent = versioneMostrata._quando + ' · ' + versionStatusLabel(versioneMostrata.status);
-      document.getElementById('fv-title-article').textContent = versioneMostrata.title || '';
+      document.getElementById('fv-when').textContent = shownVersion._when + ' · ' + versionStatusLabel(shownVersion.status);
+      document.getElementById('fv-title-article').textContent = shownVersion.title || '';
       // The article's own HTML, written by the author: the same trust as
       // the editor, and the admin CSP stops any script in it.
-      document.getElementById('fv-text').innerHTML = versioneMostrata.content || '';
+      document.getElementById('fv-text').innerHTML = shownVersion.content || '';
       document.getElementById('fv-restore').disabled = false;
     })
     .catch(function() { pbToast(t('js_version_failure'), 'danger'); });
 }
 
 function restoreVersion() {
-  if (!versioneMostrata) { return; }
-  var applica = function() {
-    var v = versioneMostrata;
-    var campi = { title: 'title', description: 'description', preview: 'reader_preview', tags: 'tags',
+  if (!shownVersion) { return; }
+  var applyIt = function() {
+    var v = shownVersion;
+    var fields = { title: 'title', description: 'description', preview: 'reader_preview', tags: 'tags',
                   series: 'series', series_number: 'series_number', kind: 'kind', lab_of: 'lab_of',
                   repo_url: 'repo_url', stack: 'stack', run_steps: 'run_steps', original_url: 'original_url',
                   image: 'image', title_en: 'title_en', description_en: 'description_en', preview_en: 'preview_en' };
-    for (var chiave in campi) {
-      var campo = document.getElementById(campi[chiave]);
-      if (campo) { campo.value = v[chiave] || ''; }
+    for (var key in fields) {
+      var fieldEl = document.getElementById(fields[key]);
+      if (fieldEl) { fieldEl.value = v[key] || ''; }
     }
     quill.root.innerHTML = v.content || '';
     quillEn.root.innerHTML = v.content_en || '';
@@ -5253,18 +5253,18 @@ function restoreVersion() {
     updateDescriptionCounter();
     updatePreviewCounter();
     markEditorDirty();
-    var finestra = document.getElementById('window-versions');
-    if (finestra.open) { finestra.close(); }
-    pbToast(t('js_version_restored_f').replace('{date}', v._quando), 'success');
+    var popup = document.getElementById('window-versions');
+    if (popup.open) { popup.close(); }
+    pbToast(t('js_version_restored_f').replace('{date}', v._when), 'success');
     document.getElementById('title').focus();
   };
   if (editorDirty) {
     // A <dialog> sits above everything, the confirmation window included:
     // it closes first, so the question can be seen and answered.
     document.getElementById('window-versions').close();
-    pbConfirm(t('js_version_restore'), t('js_version_lose'), t('js_version_restore'), 'primary', applica);
+    pbConfirm(t('js_version_restore'), t('js_version_lose'), t('js_version_restore'), 'primary', applyIt);
   } else {
-    applica();
+    applyIt();
   }
 }
 
@@ -5274,31 +5274,31 @@ function restoreVersion() {
 // The newsletter fields of the Settings, as saved. An empty password keeps
 // the one already saved (the server sees to that).
 function newsletterData() {
-  var valore = function(id) { return document.getElementById(id).value.trim(); };
+  var val = function(id) { return document.getElementById(id).value.trim(); };
   return {
     enabled: document.getElementById('nl_enabled').checked,
     in_sidebar: document.getElementById('nl_in_sidebar').checked,
     after_article: document.getElementById('nl_after_article').checked,
     send_on_publish: document.getElementById('nl_send_on_publish').checked,
-    title: valore('nl_title'),
-    text: valore('nl_text'),
-    sender_name: valore('nl_sender_name'),
-    sender_email: valore('nl_sender_email'),
-    smtp_host: valore('nl_smtp_host'),
-    smtp_port: parseInt(valore('nl_smtp_port'), 10) || 587,
+    title: val('nl_title'),
+    text: val('nl_text'),
+    sender_name: val('nl_sender_name'),
+    sender_email: val('nl_sender_email'),
+    smtp_host: val('nl_smtp_host'),
+    smtp_port: parseInt(val('nl_smtp_port'), 10) || 587,
     smtp_security: document.getElementById('nl_smtp_security').value,
-    smtp_user: valore('nl_smtp_user'),
+    smtp_user: val('nl_smtp_user'),
     smtp_password: document.getElementById('nl_smtp_password').value
   };
 }
 
 // A test email with what is written in the form, saved or not.
-function sendNewsletterTest(pulsante) {
-  pbBusy(pulsante, true);
+function sendNewsletterTest(buttonEl) {
+  pbBusy(buttonEl, true);
   pbStatus('nl-test-state', '');
   pbPostJson('/newsletter-test', newsletterData())
     .then(function(res) {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       if (res.ok) {
         pbToast(t('js_nl_test_ok').replace('{to}', res.to), 'success');
       } else {
@@ -5306,18 +5306,18 @@ function sendNewsletterTest(pulsante) {
       }
     })
     .catch(function() {
-      pbBusy(pulsante, false);
+      pbBusy(buttonEl, false);
       pbToast(t('js_nl_test_failure').replace('{error}', ''), 'danger');
     });
 }
 
-function removeSubscriber(pulsante) {
-  var email = pulsante.getAttribute('data-email');
+function removeSubscriber(buttonEl) {
+  var email = buttonEl.getAttribute('data-email');
   pbConfirm(t('js_nl_remove_title'), email, t('admin_nl_remove'), 'danger', function() {
     pbPostJson('/newsletter-remove', { email: email })
       .then(function(res) {
         if (res.ok) {
-          pulsante.closest('li').remove();
+          buttonEl.closest('li').remove();
           pbToast(t('js_nl_removed').replace('{email}', email), 'success');
         }
       });
@@ -5327,23 +5327,23 @@ function removeSubscriber(pulsante) {
 // In the editor: whether the subscribers hear about this article.
 // Opens and closes the Details panel. It slides over the page from the
 // right on a wide screen and covers a phone's; Escape and the veil close it.
-function toggleDetails(apri) {
-  var pannello = document.getElementById('panel-details');
-  var pulsante = document.getElementById('btn-details');
-  if (!pannello || !pulsante) { return; }
-  if (apri === undefined || apri === null || typeof apri !== 'boolean') {
-    apri = !document.body.classList.contains('details-open');
+function toggleDetails(openIt) {
+  var panel = document.getElementById('panel-details');
+  var buttonEl = document.getElementById('btn-details');
+  if (!panel || !buttonEl) { return; }
+  if (openIt === undefined || openIt === null || typeof openIt !== 'boolean') {
+    openIt = !document.body.classList.contains('details-open');
   }
-  document.body.classList.toggle('details-open', apri);
-  pulsante.setAttribute('aria-expanded', apri ? 'true' : 'false');
-  if (apri) {
+  document.body.classList.toggle('details-open', openIt);
+  buttonEl.setAttribute('aria-expanded', openIt ? 'true' : 'false');
+  if (openIt) {
     document.getElementById('btn-details-close').focus();
-  } else if (pannello.contains(document.activeElement)) {
-    pulsante.focus();
+  } else if (panel.contains(document.activeElement)) {
+    buttonEl.focus();
   }
 }
-document.addEventListener('keydown', function(evento) {
-  if (evento.key === 'Escape' && document.body.classList.contains('details-open')) {
+document.addEventListener('keydown', function(evt) {
+  if (evt.key === 'Escape' && document.body.classList.contains('details-open')) {
     toggleDetails(false);
   }
 });
@@ -5352,62 +5352,62 @@ document.addEventListener('keydown', function(evento) {
 // and the part, whether the description is there, how far the translation
 // is. The texts are rebuilt whenever a field of the column changes.
 function updateGroupSummaries() {
-  function scrivi(id, testo, daFare) {
-    var riga = document.getElementById('summary-' + id);
-    if (!riga) { return; }
-    riga.textContent = testo;
-    riga.classList.toggle('to-do', daFare === true);
+  function write(id, textValue, toDo) {
+    var row = document.getElementById('summary-' + id);
+    if (!row) { return; }
+    row.textContent = textValue;
+    row.classList.toggle('to-do', toDo === true);
   }
-  function valore(id) {
-    var campo = document.getElementById(id);
-    return campo ? campo.value.trim() : '';
+  function val(id) {
+    var fieldEl = document.getElementById(id);
+    return fieldEl ? fieldEl.value.trim() : '';
   }
-  var dettagli = valore('tags') || t('js_summary_without_tag');
-  if (valore('image') !== '') { dettagli = dettagli + ' \u00b7 ' + t('js_summary_cover'); }
-  scrivi('details', dettagli);
+  var detailsEl = val('tags') || t('js_summary_without_tag');
+  if (val('image') !== '') { detailsEl = detailsEl + ' \u00b7 ' + t('js_summary_cover'); }
+  write('details', detailsEl);
 
-  var tipo = document.getElementById('kind');
-  var serie = valore('series');
-  if (serie !== '' && valore('series_number') !== '') {
-    serie = serie + ', ' + t('js_summary_part') + ' ' + valore('series_number');
+  var kindValue = document.getElementById('kind');
+  var seriesValue = val('series');
+  if (seriesValue !== '' && val('series_number') !== '') {
+    seriesValue = seriesValue + ', ' + t('js_summary_part') + ' ' + val('series_number');
   }
-  var nomeTipo = tipo ? tipo.options[tipo.selectedIndex].text : '';
-  scrivi('series', serie === '' ? nomeTipo : serie + ' \u00b7 ' + nomeTipo);
+  var kindName = kindValue ? kindValue.options[kindValue.selectedIndex].text : '';
+  write('series', seriesValue === '' ? kindName : seriesValue + ' \u00b7 ' + kindName);
 
-  if (valore('description') === '') {
-    scrivi('preview', t('js_summary_missing_one_description'), true);
+  if (val('description') === '') {
+    write('preview', t('js_summary_missing_one_description'), true);
   } else {
-    scrivi('preview', t('js_summary_description_ok'));
+    write('preview', t('js_summary_description_ok'));
   }
 
-  var confermata = document.getElementById('translation_confirmed');
-  var autorizzata = document.getElementById('translation_authorized');
-  if (confermata && confermata.checked) {
-    scrivi('english', t('js_summary_translation_of_ok'));
-  } else if (autorizzata && autorizzata.checked) {
-    scrivi('english', t('js_summary_draft_translation_of'), true);
+  var confirmed = document.getElementById('translation_confirmed');
+  var authorized = document.getElementById('translation_authorized');
+  if (confirmed && confirmed.checked) {
+    write('english', t('js_summary_translation_of_ok'));
+  } else if (authorized && authorized.checked) {
+    write('english', t('js_summary_draft_translation_of'), true);
   } else {
-    scrivi('english', t('js_summary_not_translated_m'));
+    write('english', t('js_summary_not_translated_m'));
   }
 }
 
 // Which groups are open is remembered in this browser, so the column comes
 // back the way the author left it.
 function rememberOpenGroups() {
-  var gruppi = document.querySelectorAll('.group-editor');
-  for (var i = 0; i < gruppi.length; i++) {
-    var salvato = null;
-    try { salvato = localStorage.getItem('pb-' + gruppi[i].id); } catch (errore) { salvato = null; }
-    if (salvato === '1') { gruppi[i].open = true; }
-    if (salvato === '0') { gruppi[i].open = false; }
-    gruppi[i].addEventListener('toggle', function() {
-      try { localStorage.setItem('pb-' + this.id, this.open ? '1' : '0'); } catch (errore) { /* private window */ }
+  var groups = document.querySelectorAll('.group-editor');
+  for (var i = 0; i < groups.length; i++) {
+    var savedValue = null;
+    try { savedValue = localStorage.getItem('pb-' + groups[i].id); } catch (err) { savedValue = null; }
+    if (savedValue === '1') { groups[i].open = true; }
+    if (savedValue === '0') { groups[i].open = false; }
+    groups[i].addEventListener('toggle', function() {
+      try { localStorage.setItem('pb-' + this.id, this.open ? '1' : '0'); } catch (err) { /* private window */ }
     });
   }
-  var colonna = document.querySelector('.editor-sidebar');
-  if (colonna) {
-    colonna.addEventListener('input', updateGroupSummaries);
-    colonna.addEventListener('change', updateGroupSummaries);
+  var column = document.querySelector('.editor-sidebar');
+  if (column) {
+    column.addEventListener('input', updateGroupSummaries);
+    column.addEventListener('change', updateGroupSummaries);
   }
   updateGroupSummaries();
 }
@@ -5415,12 +5415,12 @@ function rememberOpenGroups() {
 // The article a lab or a practical version starts from shows for those two
 // kinds only; the project fields for a lab only.
 function toggleKindFields() {
-  var tipo = document.getElementById('kind').value;
-  document.getElementById('fields-reference').hidden = tipo === '';
-  document.getElementById('fields-lab').hidden = tipo !== 'lab';
+  var kindValue = document.getElementById('kind').value;
+  document.getElementById('fields-reference').hidden = kindValue === '';
+  document.getElementById('fields-lab').hidden = kindValue !== 'lab';
 }
 
 function notifySubscribers() {
-  var spunta = document.getElementById('notify_subscribers');
-  return spunta ? spunta.checked : true;
+  var tick = document.getElementById('notify_subscribers');
+  return tick ? tick.checked : true;
 }

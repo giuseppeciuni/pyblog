@@ -76,13 +76,13 @@ def test_versions():
     check("le versioni si confrontano come numeri",
           updates.version_tuple("1.10.0") > updates.version_tuple("1.9.3"))
     check("una versione scritta male non vale niente", updates.version_tuple("1.x") == ())
-    testo = 'Docstring\n"""\n\n__version__ = "1.4.2"\n'
-    check("la versione si legge da core/__init__.py", updates.VERSION_LINE.search(testo).group(1) == "1.4.2")
+    page_text = 'Docstring\n"""\n\n__version__ = "1.4.2"\n'
+    check("la versione si legge da core/__init__.py", updates.VERSION_LINE.search(page_text).group(1) == "1.4.2")
     real = updates.latest_release
     try:
         updates.latest_release = lambda url=None: "9.0.0"
-        stato = updates.release_status()
-        check("una versione più nuova su GitHub si vede", stato["behind"] == 1 and stato["latest"] == "9.0.0")
+        state = updates.release_status()
+        check("una versione più nuova su GitHub si vede", state["behind"] == 1 and state["latest"] == "9.0.0")
         updates.latest_release = lambda url=None: None
         check("senza rete lo dice", updates.release_status() == {"kind": "other", "error": "upd_offline"})
     finally:
@@ -93,12 +93,12 @@ def test_updating():
     print("\naggiornare un checkout git")
     repos = Repositories()
     try:
-        stato = updates.git_status()
-        check("appena installato è aggiornato", stato["behind"] == 0 and not stato["can_update"], str(stato))
+        state = updates.git_status()
+        check("appena installato è aggiornato", state["behind"] == 0 and not state["can_update"], str(state))
         repos.commit("modulo.py", "VALORE = 2\n", "feat: una novità")
-        stato = updates.git_status()
+        state = updates.git_status()
         check("una novità su GitHub si vede, con il suo titolo",
-              stato["behind"] == 1 and stato["news"] == ["feat: una novità"] and stato["can_update"])
+              state["behind"] == 1 and state["news"] == ["feat: una novità"] and state["can_update"])
         saved_items = []
         outcome = updates.update(save_backup=lambda: saved_items.append(True))
         check("l'aggiornamento riesce", outcome["ok"] is True, str(outcome))
@@ -135,9 +135,9 @@ def test_check():
     try:
         real = updates.is_git_checkout
         updates.is_git_checkout = lambda: True
-        stato = updates.check(force=True, now=1000)
+        state = updates.check(force=True, now=1000)
         check("il controllo dice la versione e se è automatico",
-              stato["version"] and stato["auto"] is True and stato["behind"] == 0)
+              state["version"] and state["auto"] is True and state["behind"] == 0)
         repos.commit("modulo.py", "VALORE = 5\n", "feat: altra novità")
         check("entro dodici ore risponde con l'ultimo controllo, senza chiedere a GitHub",
               updates.check(now=1000 + 3600)["behind"] == 0)

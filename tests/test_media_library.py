@@ -130,9 +130,9 @@ def test_page():
               page_html[page_html.find("deleteMedia(this,"):][:60])
         check("il menu porta alla libreria e la segna",
               'aria-current="page" href="/media-library"' in page_html)
-        barra = page_html[page_html.index('class="bar-bottom"'):]
-        check("ma la barra del telefono resta a quattro voci", 'href="/media-library"' not in barra
-              and barra.count('class="bar-item"') == 4)
+        sidebar_html = page_html[page_html.index('class="bar-bottom"'):]
+        check("ma la barra del telefono resta a quattro voci", 'href="/media-library"' not in sidebar_html
+              and sidebar_html.count('class="bar-item"') == 4)
         media_library.delete_media(["dimenticata.png"])
         page_html = server.library_page("TOKEN")
         check("senza file inutilizzati, il pulsante della pulizia si nasconde",

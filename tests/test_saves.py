@@ -285,8 +285,8 @@ def test_backup_with_images():
     """The backup carries the uploaded media, not only the texts."""
     print("\nbackup")
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
-    immagine = MEDIA_DIR / "zz-prova-backup.png"
-    immagine.write_bytes(b"\x89PNG\r\n\x1a\n" + b"x" * 64)
+    image = MEDIA_DIR / "zz-prova-backup.png"
+    image.write_bytes(b"\x89PNG\r\n\x1a\n" + b"x" * 64)
 
     httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
@@ -295,7 +295,7 @@ def test_backup_with_images():
         token = create_session_token()
         request_value = urllib.request.Request(
             f"http://127.0.0.1:{httpd.server_address[1]}/export",
-            headers={"Cookie": "sessione=" + token})
+            headers={"Cookie": "session=" + token})
         with urllib.request.urlopen(request_value, timeout=30) as response:
             payload = response.read()
         archive = zipfile.ZipFile(io.BytesIO(payload))
@@ -307,11 +307,11 @@ def test_backup_with_images():
         check("le immagini non vengono ricompresse",
               archive.getinfo("media/zz-prova-backup.png").compress_type == zipfile.ZIP_STORED)
         check("e arrivano intatte",
-              archive.read("media/zz-prova-backup.png") == immagine.read_bytes())
+              archive.read("media/zz-prova-backup.png") == image.read_bytes())
     finally:
         httpd.shutdown()
         httpd.server_close()
-        immagine.unlink(missing_ok=True)
+        image.unlink(missing_ok=True)
 
 
 def main():

@@ -621,12 +621,12 @@ def card_slug(title_value):
     return slug
 
 
-def excerpt_from_html(html_content_value, lunghezza=120):
+def excerpt_from_html(html_content_value, length=120):
     """Derive a short text excerpt from the HTML content of a card."""
     text = plain_text(html_content_value)
-    if len(text) <= lunghezza:
+    if len(text) <= length:
         return text
-    return text[:lunghezza].rstrip() + "..."
+    return text[:length].rstrip() + "..."
 
 def plain_text(html_content_value):
     """Strip the HTML tags to get plain text (for the index and llms.txt)."""
@@ -642,11 +642,11 @@ def articles_visible_in_language(articles, language):
     """
     if language == main_language():
         return list(articles)
-    visibili = []
+    visible = []
     for art in articles:
         if art.get("translation_confirmed", False):
-            visibili.append(art)
-    return visibili
+            visible.append(art)
+    return visible
 
 def extract_article_tags(art):
     """
@@ -707,13 +707,13 @@ def collect_tags(articles):
     of the articles using it. Return a dictionary:
     { tag_name: [article, article, ...] }.
     """
-    mappa = {}
+    mapping = {}
     for art in articles:
         for tag in extract_article_tags(art):
-            if tag not in mappa:
-                mappa[tag] = []
-            mappa[tag].append(art)
-    return mappa
+            if tag not in mapping:
+                mapping[tag] = []
+            mapping[tag].append(art)
+    return mapping
 
 # ---------------------------------------------------------------------------
 # UPLOADED FILES
@@ -925,9 +925,9 @@ def sanitize_file_name(name_value):
     It keeps only letters, digits, dots, hyphens and underscores.
     """
     clean_name = ""
-    caratteri_ammessi = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_"
+    allowed_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_"
     for character in name_value:
-        if character in caratteri_ammessi:
+        if character in allowed_chars:
             clean_name = clean_name + character
         else:
             clean_name = clean_name + "_"
@@ -954,9 +954,9 @@ def save_uploaded_file(file_name, binary_data):
     # If the name already exists, look for a free one by adding a number.
     counter = 1
     while path_value.exists():
-        parti = safe_name.rsplit(".", 1)
-        if len(parti) == 2:
-            new_name = parti[0] + "-" + str(counter) + "." + parti[1]
+        parts = safe_name.rsplit(".", 1)
+        if len(parts) == 2:
+            new_name = parts[0] + "-" + str(counter) + "." + parts[1]
         else:
             new_name = safe_name + "-" + str(counter)
         path_value = MEDIA_DIR / new_name
@@ -1016,7 +1016,7 @@ def markdown_to_html(md_text):
     paragraph = []          # lines of the paragraph being built
     in_code_block = False       # inside a ``` block?
     code_lines = []
-    tipo_lista = ""         # "ul", "ol" or "" (no list open)
+    list_kind = ""         # "ul", "ol" or "" (no list open)
     quote_lines = []
 
     def close_paragraph():
@@ -1026,10 +1026,10 @@ def markdown_to_html(md_text):
             paragraph.clear()
 
     def close_list():
-        nonlocal tipo_lista
-        if tipo_lista != "":
-            html_out.append("</" + tipo_lista + ">")
-            tipo_lista = ""
+        nonlocal list_kind
+        if list_kind != "":
+            html_out.append("</" + list_kind + ">")
+            list_kind = ""
 
     def close_quote():
         if len(quote_lines) > 0:
@@ -1096,10 +1096,10 @@ def markdown_to_html(md_text):
         if ul_match:
             close_paragraph()
             close_quote()
-            if tipo_lista != "ul":
+            if list_kind != "ul":
                 close_list()
                 html_out.append("<ul>")
-                tipo_lista = "ul"
+                list_kind = "ul"
             html_out.append("<li>" + markdown_inline(ul_match.group(1)) + "</li>")
             continue
 
@@ -1108,10 +1108,10 @@ def markdown_to_html(md_text):
         if ol_match:
             close_paragraph()
             close_quote()
-            if tipo_lista != "ol":
+            if list_kind != "ol":
                 close_list()
                 html_out.append("<ol>")
-                tipo_lista = "ol"
+                list_kind = "ol"
             html_out.append("<li>" + markdown_inline(ol_match.group(1)) + "</li>")
             continue
 
@@ -1258,8 +1258,8 @@ def import_markdown(path_value):
         return 0
 
     imported_count = 0
-    for file_corrente in file_md:
-        text = file_corrente.read_text(encoding="utf-8")
+    for current_file in file_md:
+        text = current_file.read_text(encoding="utf-8")
         metadata, body = read_front_matter(text)
 
         # Title: from the front matter, or from the first # heading, or from the file name.
@@ -1272,7 +1272,7 @@ def import_markdown(path_value):
                 # We remove the title from the body: it becomes the page's <h1>.
                 body = body.replace(match.group(0), "", 1)
         if title_value == "":
-            title_value = file_corrente.stem.replace("-", " ").replace("_", " ").title()
+            title_value = current_file.stem.replace("-", " ").replace("_", " ").title()
 
         # Status: "pubblicato"/"published", otherwise draft (the cautious default).
         raw_status = metadata.get("status", metadata.get("stato", metadata.get("draft", "")))
@@ -1297,7 +1297,7 @@ def import_markdown(path_value):
         # the same import twice, or importing a file whose title matches an
         # existing article, adds a copy with a numbered slug instead.
         slug = save_article(data, new_article=True)
-        print(f"  imported: {file_corrente.name} -> posts/{slug}.json ({status})")
+        print(f"  imported: {current_file.name} -> posts/{slug}.json ({status})")
         if slug != requested_slug(data):
             print(f"    note: {requested_slug(data)} was already taken, saved as {slug}")
         imported_count = imported_count + 1

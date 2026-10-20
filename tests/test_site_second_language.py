@@ -85,10 +85,10 @@ def test_english_pages():
     check("e in italiano restano italiani",
           build.person_jsonld("it").get("jobTitle") == "Programmatore")
     home = build.generate_homepage([], "en")
-    descrizione = re.search(r'<meta name="description" content="([^"]*)"', home)
+    description_text = re.search(r'<meta name="description" content="([^"]*)"', home)
     social = re.search(r'<meta property="og:description" content="([^"]*)"', home)
     check("la descrizione della home inglese per Google e per i social",
-          descrizione is not None and descrizione.group(1) == EN_SUB
+          description_text is not None and description_text.group(1) == EN_SUB
           and social is not None and social.group(1) == EN_SUB)
     payload = re.search(r'<script type="application/ld\+json">(.*?)</script>', home, re.S)
     check("e quella dei dati strutturati del sito",
@@ -135,7 +135,7 @@ def test_settings():
           'id="subtitle_en" value="' + EN_SUB + '" lang="en"' in page_html)
     check("il pulsante traduce tutti e tre", 'onclick="translateSiteTexts(this)"' in page_html)
     check("le etichette nominano la lingua, non \"_en\"",
-          "Sottotitolo in inglese" in page_html and "{lingua}" not in page_html)
+          "Sottotitolo in inglese" in page_html and "{other_language}" not in page_html)
     js = pathlib.Path(__file__).resolve().parent.parent.joinpath("static", "admin.js").read_text()
     check("il salvataggio manda i tre campi",
           "subtitle_en: document.getElementById('subtitle_en')" in js

@@ -50,9 +50,9 @@ ARTICLE_FIXTURE = ('<h2>Titolo</h2><p>Prima riga.</p>'
             '<p>Seconda riga.</p>' + VIDEO + '<p>Ultima riga.</p>')
 
 
-def fake_translation(testo):
+def fake_translation(text):
     """Un traduttore che si comporta bene: cambia il testo, lascia i marcatori."""
-    return (testo.replace("Titolo", "Title")
+    return (text.replace("Titolo", "Title")
                  .replace("Prima riga.", "First line.")
                  .replace("Seconda riga.", "Second line.")
                  .replace("Ultima riga.", "Last line."))
@@ -67,11 +67,11 @@ def test_full_round():
     check("i tag messi da parte sono due", len(originals) == 2, str(originals))
     check("il testo intorno c'e' ancora", "Prima riga." in protected, protected)
 
-    returned, spostate = restore_media(fake_translation(protected), originals)
+    returned, moved = restore_media(fake_translation(protected), originals)
     check("l'immagine e' tornata", PICTURE in returned, returned)
     check("il video e' tornato", VIDEO in returned, returned)
     check("nessun marcatore rimasto in pagina", "PBM" not in returned, returned)
-    check("niente da rimettere a mano", spostate == 0, str(spostate))
+    check("niente da rimettere a mano", moved == 0, str(moved))
     check("il testo e' quello tradotto", "First line." in returned, returned)
     check("l'immagine e' rimasta dentro il suo paragrafo",
           '<p class="ql-align-center">' + PICTURE + '</p>' in returned, returned)
@@ -83,10 +83,10 @@ def test_translator_loses_a_marker():
 
     # Il servizio restituisce il testo senza il primo marcatore.
     lost = fake_translation(protected).replace("[[PBM0]]", "")
-    returned, spostate = restore_media(lost, originals)
+    returned, moved = restore_media(lost, originals)
     check("l'immagine e' nell'articolo lo stesso", PICTURE in returned, returned)
     check("il video e' al suo posto", VIDEO in returned, returned)
-    check("l'editor viene avvisato di una sola", spostate == 1, str(spostate))
+    check("l'editor viene avvisato di una sola", moved == 1, str(moved))
     check("l'ordine e' rispettato: prima l'immagine, poi il video",
           returned.index(PICTURE) < returned.index(VIDEO), returned)
 
@@ -113,16 +113,16 @@ def test_rewritten_marker():
     protected, originals = shield_media(ARTICLE_FIXTURE)
     # Un modello linguistico ci mette gli spazi dentro.
     with_spaces = protected.replace("[[PBM0]]", "[[ PBM 0 ]]")
-    returned, spostate = restore_media(with_spaces, originals)
+    returned, moved = restore_media(with_spaces, originals)
     check("riconosciuto lo stesso", PICTURE in returned, returned)
-    check("e non contato come perso", spostate == 0, str(spostate))
+    check("e non contato come perso", moved == 0, str(moved))
 
 
 def test_what_must_be_translated_stays():
     print("\ncio' che ha del testo dentro non viene protetto")
-    testo = ('<table><tbody><tr><td>comando</td><td>cosa fa</td></tr></tbody></table>'
+    text = ('<table><tbody><tr><td>comando</td><td>cosa fa</td></tr></tbody></table>'
              '<pre class="ql-syntax">def build():</pre>')
-    protected, originals = shield_media(testo)
+    protected, originals = shield_media(text)
     check("la tabella parte per essere tradotta", "<table" in protected, protected)
     check("le sue parole partono", "comando" in protected, protected)
     check("niente e' stato messo da parte", len(originals) == 0, str(originals))
@@ -130,12 +130,12 @@ def test_what_must_be_translated_stays():
 
 def test_no_media_no_work():
     print("\nun articolo senza immagini non viene toccato")
-    testo = "<h2>Titolo</h2><p>Solo parole.</p>"
-    protected, originals = shield_media(testo)
-    check("il testo passa intero", protected == testo, protected)
-    returned, spostate = restore_media(protected, originals)
-    check("e torna intero", returned == testo, returned)
-    check("senza avvisi", spostate == 0, str(spostate))
+    text = "<h2>Titolo</h2><p>Solo parole.</p>"
+    protected, originals = shield_media(text)
+    check("il testo passa intero", protected == text, protected)
+    returned, moved = restore_media(protected, originals)
+    check("e torna intero", returned == text, returned)
+    check("senza avvisi", moved == 0, str(moved))
 
 
 def main():

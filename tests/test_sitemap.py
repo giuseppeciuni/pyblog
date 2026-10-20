@@ -49,22 +49,22 @@ def check(description, condition, detail=""):
 
 def sitemap_addresses():
     """The <loc> addresses of the sitemap, in the order they are written."""
-    testo = (OUTPUT_DIR / "sitemap.xml").read_text(encoding="utf-8")
-    return re.findall(r"<loc>(.*?)</loc>", testo)
+    text = (OUTPUT_DIR / "sitemap.xml").read_text(encoding="utf-8")
+    return re.findall(r"<loc>(.*?)</loc>", text)
 
 
 def path_of(address):
     """The file that should answer an address of the sitemap."""
     base = CONFIG["base_url"].rstrip("/")
-    resto = address[len(base):].lstrip("/")
-    if resto == "" or resto.endswith("/"):
-        resto = resto + "index.html"
-    return OUTPUT_DIR / resto
+    rest = address[len(base):].lstrip("/")
+    if rest == "" or rest.endswith("/"):
+        rest = rest + "index.html"
+    return OUTPUT_DIR / rest
 
 
-def article(titolo, slug, stato="published", tags="Prova"):
-    return {"title": titolo, "slug": slug, "content": "<p>Testo di prova.</p>",
-            "status": stato, "tags": tags}
+def article(title, slug, state="published", tags="Prova"):
+    return {"title": title, "slug": slug, "content": "<p>Testo di prova.</p>",
+            "status": state, "tags": tags}
 
 
 def test_sitemap_exists():
@@ -73,9 +73,9 @@ def test_sitemap_exists():
     build()
     sitemap = OUTPUT_DIR / "sitemap.xml"
     check("sitemap.xml esiste", sitemap.exists())
-    testo = sitemap.read_text(encoding="utf-8")
+    text = sitemap.read_text(encoding="utf-8")
     check("dichiara il namespace dei sitemap",
-          "http://www.sitemaps.org/schemas/sitemap/0.9" in testo)
+          "http://www.sitemaps.org/schemas/sitemap/0.9" in text)
     check("contiene almeno la home", len(sitemap_addresses()) > 0)
     robots = (OUTPUT_DIR / "robots.txt").read_text(encoding="utf-8")
     check("robots.txt indica la sitemap", "Sitemap: " in robots,
@@ -159,7 +159,7 @@ def test_article_lifecycle():
           not (OUTPUT_DIR / "posts" / f"{SLUG_ONE}.html").exists())
 
     # 3. Unpublishing: a draft has no public page.
-    draft = article("Prova sitemap due", SLUG_TWO, stato="draft")
+    draft = article("Prova sitemap due", SLUG_TWO, state="draft")
     save_article(draft)
     build()
     check("l'articolo messo in bozza esce dalla sitemap",
@@ -183,10 +183,10 @@ def test_real_pages_stay():
     """The sweep must only remove leftovers, never a page still in use."""
     print("\nla pulizia non tocca le pagine buone")
     build()
-    for nome in ("index.html", "archivio.html", "404.html", "robots.txt",
+    for name in ("index.html", "archivio.html", "404.html", "robots.txt",
                  "sitemap.xml", "rss.xml", "search-index.json", "llms.txt",
                  "style.css", "site.js", "training-rights.html"):
-        check(f"{nome} resta al suo posto", (OUTPUT_DIR / nome).is_file())
+        check(f"{name} resta al suo posto", (OUTPUT_DIR / name).is_file())
     check("la home inglese resta", (OUTPUT_DIR / "en" / "index.html").is_file())
     check("la cartella media non viene toccata",
           (OUTPUT_DIR / "media").is_dir())

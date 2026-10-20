@@ -88,7 +88,7 @@ def profile_label(url):
     "https://github.com/name" -> "GitHub". If the domain is not known,
     it uses the domain itself (e.g. "mastodon.social").
     """
-    noti = {
+    known = {
         "github.com": "GitHub", "linkedin.com": "LinkedIn",
         "x.com": "X", "twitter.com": "X", "youtube.com": "YouTube",
         "instagram.com": "Instagram", "facebook.com": "Facebook",
@@ -98,8 +98,8 @@ def profile_label(url):
     if m is None:
         return url
     domain = m.group(1).lower()
-    if domain in noti:
-        return noti[domain]
+    if domain in known:
+        return known[domain]
     return domain
 
 
@@ -867,17 +867,17 @@ def site_header(language="it", nav_extra="", is_home=False):
         nav_extra = ((nav_extra.strip() + "\n      " if nav_extra.strip() else "")
                      + f'<a class="nav-work" href="{esc(work[0])}">{esc(work[1])}</a>')
 
-    link_titolo = f'<a href="{prefix}/">{esc(CONFIG["site_title"])}</a>'
+    title_link = f'<a href="{prefix}/">{esc(CONFIG["site_title"])}</a>'
     if is_home:
-        titolo_sito = '<h1 class="site-title">' + link_titolo + "</h1>"
+        site_title_html = '<h1 class="site-title">' + title_link + "</h1>"
     else:
-        titolo_sito = '<p class="site-title">' + link_titolo + "</p>"
+        site_title_html = '<p class="site-title">' + title_link + "</p>"
 
     return render.render(
         "public/header.html",
         skip_content=T("skip_content", language),
         url_home=prefix + "/",
-        title_site=titolo_sito,
+        title_site=site_title_html,
         subtitle=esc(site_subtitle(language)),
         label_menu=T("menu", language),
         aria_menu=esc(T("menu_main", language)),
@@ -904,9 +904,9 @@ def site_footer(language="it", consent_active=False):
     # Configured social profiles: in the footer, for consistency with what
     # we declare to Google in the structured data (sameAs).
     link_social = social_profile_links()
-    riga_social = ""
+    social_row_html = ""
     if len(link_social) > 0:
-        riga_social = ('\n    <p class="foot-social">'
+        social_row_html = ('\n    <p class="foot-social">'
                        + " &middot; ".join(link_social) + "</p>")
 
     return render.render(
@@ -918,7 +918,7 @@ def site_footer(language="it", consent_active=False):
         url_feed=feed_url(language),
         title_rss=esc(T("rss_title", language)),
         link_preferences=consent_footer_link(language, consent_active),
-        row_html_social=riga_social,
+        row_html_social=social_row_html,
     ).rstrip("\n")
 
 
@@ -959,7 +959,7 @@ def consent_footer_link(language, active):
             + T("consent_preferences", language) + "</button>")
 
 
-def render_page(language, titolo_pagina, contenuto, meta_extra="",
+def render_page(language, full_page_title, content_html, meta_extra="",
                 head_extra="", script_extra="", feed_links=None,
                 site_extra=None, page_kind="other", article_ids=(),
                 is_home=False, article=None):
@@ -1024,14 +1024,14 @@ def render_page(language, titolo_pagina, contenuto, meta_extra="",
         lang=language,
         favicon=favicon_link(),
         analytics=analytics,
-        title_page=titolo_pagina,
+        title_page=full_page_title,
         meta_extra=block(meta_extra),
         feed_links=block(feed_links),
         head_extra=block(head_extra),
         body_open=block(body_open),
         header=site_header(language, nav_extra, is_home),
         after_header=block(after_header),
-        content=block(contenuto),
+        content=block(content_html),
         before_footer=block(before_footer),
         footer=site_footer(language, len(categories) > 0),
         script_extra=block(script_extra),
@@ -1056,9 +1056,9 @@ def comments_block(art, language=None):
     """
     if language is None:
         language = main_language()
-    sistema = CONFIG.get("comments", "none")
+    system = CONFIG.get("comments", "none")
 
-    if sistema == "giscus":
+    if system == "giscus":
         g = CONFIG["giscus"]
         return render.render(
             "public/comments_giscus.html",
@@ -1071,7 +1071,7 @@ def comments_block(art, language=None):
             language=esc(language),
         ).rstrip("\n")
 
-    if sistema == "disqus":
+    if system == "disqus":
         d = CONFIG["disqus"]
         # Disqus identifies each thread with a unique URL and identifier.
         # Both cross into JavaScript, so both go through json.dumps.
@@ -1109,39 +1109,39 @@ def generate_table_of_contents(html_content_value, language="it"):
     and the HTML of the index. With fewer than 3 headings it generates no
     index (short articles do not need one).
     """
-    titoli = HEADING_PATTERN.findall(html_content_value)
-    if len(titoli) < 3:
+    titles = HEADING_PATTERN.findall(html_content_value)
+    if len(titles) < 3:
         # Few headings: no index, content unchanged.
         return html_content_value, ""
 
     toc_items = []
-    stato = {"counter": 0}
+    state = {"counter": 0}
 
     def add_anchor(match):
         level = match.group(1)
-        attributi = match.group(2)
-        if attributi is None:
-            attributi = ""
+        attributes = match.group(2)
+        if attributes is None:
+            attributes = ""
         heading_text = match.group(3)
 
-        stato["counter"] = stato["counter"] + 1
+        state["counter"] = state["counter"] + 1
         # We derive a readable id from the heading text.
         clean_text = plain_text(heading_text)
-        ancora = slugify(clean_text)
-        if ancora == "":
-            ancora = "section"
-        ancora = ancora + "-" + str(stato["counter"])
+        anchor_id = slugify(clean_text)
+        if anchor_id == "":
+            anchor_id = "section"
+        anchor_id = anchor_id + "-" + str(state["counter"])
 
         # An id already on the heading would collide with ours: we replace it.
-        attributi = re.sub(r'\s+id\s*=\s*"[^"]*"', "", attributi)
+        attributes = re.sub(r'\s+id\s*=\s*"[^"]*"', "", attributes)
 
         item_class = "toc-h2"
         if level.lower() == "h3":
             item_class = "toc-h3"
         toc_items.append(
-            f'<li class="{item_class}"><a href="#{ancora}">{esc(clean_text)}</a></li>')
+            f'<li class="{item_class}"><a href="#{anchor_id}">{esc(clean_text)}</a></li>')
 
-        return f'<{level}{attributi} id="{ancora}">{heading_text}</{level}>'
+        return f'<{level}{attributes} id="{anchor_id}">{heading_text}</{level}>'
 
     modified_content = HEADING_PATTERN.sub(add_anchor, html_content_value)
 
@@ -1241,24 +1241,24 @@ def find_related_articles(article, all_articles, maximum=3):
         return []
 
     candidates = []
-    for altro in all_articles:
+    for other_value in all_articles:
         # We skip the article itself and the drafts.
-        if altro["slug"] == article["slug"]:
+        if other_value["slug"] == article["slug"]:
             continue
-        if altro.get("status") != "published":
+        if other_value.get("status") != "published":
             continue
-        other_tags = set(extract_article_tags(altro))
-        comuni = article_tags.intersection(other_tags)
-        common_count = len(comuni)
+        other_tags = set(extract_article_tags(other_value))
+        common = article_tags.intersection(other_tags)
+        common_count = len(common)
         if common_count > 0:
-            candidates.append((common_count, altro))
+            candidates.append((common_count, other_value))
 
     # We sort by number of tags in common, highest first.
-    candidates.sort(key=lambda coppia: coppia[0], reverse=True)
+    candidates.sort(key=lambda scored: scored[0], reverse=True)
 
     result = []
-    for common_count, altro in candidates:
-        result.append(altro)
+    for common_count, other_value in candidates:
+        result.append(other_value)
         if len(result) >= maximum:
             break
     return result
@@ -1299,17 +1299,17 @@ def generate_related_block(article, all_articles, language="it"):
     """
     related = find_related_articles(article, all_articles)
 
-    visibili = []
+    visible = []
     for art in related:
         if article_has_page_in(art, language):
-            visibili.append(art)
-    if len(visibili) == 0:
+            visible.append(art)
+    if len(visible) == 0:
         return ""
 
     # The same rows as the homepage: thumbnail, title, date, the opening of
     # the text. They used to be bare cards whose date, title and link sat
     # side by side on one line.
-    feed_items = [article_row(art, language) for art in visibili]
+    feed_items = [article_row(art, language) for art in visible]
     return render.render(
         "public/related.html",
         title_section_of=T("articles_related", language),
@@ -1616,7 +1616,7 @@ def generate_labs_page(articles, language="it"):
     """The page of the labs: every lab online, newest first, as on the homepage."""
     prefix = language_url_prefix(language)
     labs = [art for art in articles_visible_in_language(articles, language) if is_lab(art)]
-    principale = render.render(
+    main_html = render.render(
         "public/labs.html",
         url_home=prefix + "/",
         label_home=T("home", language),
@@ -1624,11 +1624,11 @@ def generate_labs_page(articles, language="it"):
         intro=T("labs_intro", language),
         list_items="\n".join(article_row(art, language) for art in labs),
     )
-    contenuto = two_columns(principale, build_sidebar(language, "other", articles), language)
-    url_canonico = CONFIG["base_url"].rstrip("/") + labs_page_url(language)
+    content_html = two_columns(main_html, build_sidebar(language, "other", articles), language)
+    canonical = CONFIG["base_url"].rstrip("/") + labs_page_url(language)
     meta_extra = (f'  <meta name="description" content="{esc(T("labs_intro", language))}">\n'
-                  f'  <link rel="canonical" href="{url_canonico}">')
-    return render_page(language, with_site_title(T("labs", language)), contenuto,
+                  f'  <link rel="canonical" href="{canonical}">')
+    return render_page(language, with_site_title(T("labs", language)), content_html,
                        meta_extra=meta_extra)
 
 
@@ -1698,28 +1698,28 @@ def generate_series_page(slug, series, language="it", all_articles=None):
     if all_articles is None:
         all_articles = series["articles"]
     prefix = language_url_prefix(language)
-    visibili = articles_visible_in_language(series["articles"], language)
-    rows = ["<li>\n" + article_row(art, language) + "\n</li>" for art in visibili]
-    principale = render.render(
+    visible = articles_visible_in_language(series["articles"], language)
+    rows = ["<li>\n" + article_row(art, language) + "\n</li>" for art in visible]
+    main_html = render.render(
         "public/series.html",
         url_home=prefix + "/",
         label_home=T("home", language),
         label_series=T("series", language),
         name_series=esc(series["name"]),
-        count=len(visibili),
+        count=len(visible),
         label_count=T("series_count", language),
         list_items="\n".join(rows),
     )
-    contenuto = two_columns(principale, build_sidebar(language, "other", all_articles),
+    content_html = two_columns(main_html, build_sidebar(language, "other", all_articles),
                             language)
-    url_canonico = CONFIG["base_url"].rstrip("/") + series_page_url(slug, language)
+    canonical = CONFIG["base_url"].rstrip("/") + series_page_url(slug, language)
     meta_extra = (f'  <meta name="description" '
                   f'content="{T("series_description", language)} {esc(series["name"])}.">\n'
-                  f'  <link rel="canonical" href="{url_canonico}">')
+                  f'  <link rel="canonical" href="{canonical}">')
     return render_page(
         language,
         with_site_title(f'{T("series", language)}: {esc(series["name"])}'),
-        contenuto,
+        content_html,
         meta_extra=meta_extra,
     )
 
@@ -1751,34 +1751,34 @@ def generate_article_nav(art, all_articles, language="it"):
                 f'<span class="article-nav-title">{esc(title_in_language(neighbor, language))}</span></a>')
         return render.render("public/article_nav.html", previous=blocks[0],
                              next_m=blocks[1])
-    visibili = articles_visible_in_language(all_articles, language)
-    posizione = -1
-    for index_value in range(len(visibili)):
-        if visibili[index_value].get("slug") == art.get("slug"):
-            posizione = index_value
+    visible = articles_visible_in_language(all_articles, language)
+    found_at = -1
+    for index_value in range(len(visible)):
+        if visible[index_value].get("slug") == art.get("slug"):
+            found_at = index_value
             break
-    if posizione == -1:
+    if found_at == -1:
         return ""
 
     post_prefix = language_url_prefix(language) + "/posts/"
 
     newer_block = '<span class="article-nav-empty"></span>'
-    if posizione > 0:
-        neighbor = visibili[posizione - 1]
+    if found_at > 0:
+        neighbor = visible[found_at - 1]
         newer_block = (
             f'<a class="article-nav-link" href="{post_prefix}{neighbor["slug"]}.html">'
             f'<span class="article-nav-label">&larr; {T("nav_more_than_recente", language)}</span>'
             f'<span class="article-nav-title">{esc(title_in_language(neighbor, language))}</span></a>')
 
     older_block = '<span class="article-nav-empty"></span>'
-    if posizione < len(visibili) - 1:
-        neighbor = visibili[posizione + 1]
+    if found_at < len(visible) - 1:
+        neighbor = visible[found_at + 1]
         older_block = (
             f'<a class="article-nav-link article-nav-right" href="{post_prefix}{neighbor["slug"]}.html">'
             f'<span class="article-nav-label">{T("nav_less_than_recente", language)} &rarr;</span>'
             f'<span class="article-nav-title">{esc(title_in_language(neighbor, language))}</span></a>')
 
-    if posizione == 0 and len(visibili) == 1:
+    if found_at == 0 and len(visible) == 1:
         return ""
 
     return render.render(
@@ -1934,12 +1934,12 @@ def topics_bar(articles, language, current_tag=""):
 
 def sidebar_box(css_class, title, content):
     """One box of the sidebar. An empty title leaves the heading out."""
-    titolo = ""
+    box_title = ""
     if title != "":
-        titolo = title
+        box_title = title
     html_box = render.render("public/sidebar_box.html", css_class=css_class,
-                             title=titolo, content=block(content))
-    if titolo == "":
+                             title=box_title, content=block(content))
+    if box_title == "":
         html_box = html_box.replace('        <h2 class="box-title"></h2>\n', "")
     return html_box
 
@@ -2091,18 +2091,18 @@ def build_sidebar(language, page_kind, articles, article=(), toc_html="",
     return "\n".join(part for part in parts if part != "")
 
 
-def two_columns(principale, barra, language, argomenti="", main_has_id=True):
+def two_columns(main_html, sidebar_html, language, topics_html="", main_has_id=True):
     """The main column and the sidebar, with the topics bar above them."""
-    attributi = ""
+    attributes = ""
     if main_has_id:
-        attributi = ' id="content"'
+        attributes = ' id="content"'
     return render.render(
         "public/layout_columns.html",
-        topics=block(argomenti),
-        attributes_main=attributi,
-        main=block(principale),
+        topics=block(topics_html),
+        attributes_main=attributes,
+        main=block(main_html),
         aria_bar=esc(T("bar_side", language)),
-        bar=block(barra),
+        bar=block(sidebar_html),
     )
 
 
@@ -2365,7 +2365,7 @@ def generate_article_page(art, language="it", all_articles=None):
         '  <script type="application/ld+json">'
         + json.dumps(jsonld_data, ensure_ascii=False) + "</script>")
 
-    principale = render.render(
+    main_html = render.render(
         "public/article.html",
         language_switcher=language_switcher,
         url_home=prefix + "/",
@@ -2391,8 +2391,8 @@ def generate_article_page(art, language="it", all_articles=None):
     )
     if all_articles is None:
         all_articles = [art]
-    contenuto = two_columns(
-        principale,
+    content_html = two_columns(
+        main_html,
         build_sidebar(language, "article", all_articles, art, toc_html=toc_sidebar),
         language,
         main_has_id=False,
@@ -2401,7 +2401,7 @@ def generate_article_page(art, language="it", all_articles=None):
     return render_page(
         language,
         with_site_title(f"{esc(title_value)}"),
-        contenuto,
+        content_html,
         meta_extra=meta_extra,
         head_extra=head_extra,
         script_extra='  <script src="https://cdn.jsdelivr.net/gh/highlightjs/'
@@ -2635,7 +2635,7 @@ def projects_home_html(language):
         return sidebar_box("box-progetti", T("projects", language),
                            '        <ul class="projects-list-box">\n' + "\n".join(rows)
                            + "\n        </ul>")
-    return render.render("public/home_section.html", css_class="home-progetti",
+    return render.render("public/home_section.html", css_class="home-projects",
                          id_title="title-projects", title=T("projects", language),
                          content='        <ul class="projects-grid">\n' + "\n".join(rows)
                          + "\n        </ul>\n").rstrip("\n")
@@ -2690,7 +2690,7 @@ def newsletter_message_page(language, title, text, action=""):
     "you are out". action is an optional form with the button that does it.
     """
     prefix = language_url_prefix(language)
-    principale = render.render(
+    main_html = render.render(
         "public/newsletter_page.html",
         title=esc(title),
         text=esc(text),
@@ -2698,11 +2698,11 @@ def newsletter_message_page(language, title, text, action=""):
         url_home=prefix + "/",
         back_to_home=T("back_to_homepage", language),
     )
-    contenuto = ('  <main id="content" class="main-content">\n' + principale
+    content_html = ('  <main id="content" class="main-content">\n' + main_html
                  + '  </main>\n')
     meta_extra = '  <meta name="robots" content="noindex">'
     return render_page(language, with_site_title(f"{esc(title)}"),
-                       contenuto, meta_extra=meta_extra)
+                       content_html, meta_extra=meta_extra)
 
 
 def generate_biography_page(language="it", articles=None):
@@ -2715,7 +2715,7 @@ def generate_biography_page(language="it", articles=None):
     if photo != "":
         photo = photo + "\n        "
     prefix = language_url_prefix(language)
-    principale = render.render(
+    main_html = render.render(
         "public/card_page.html",
         url_home=prefix + "/",
         label_home=T("home", language),
@@ -2723,18 +2723,18 @@ def generate_biography_page(language="it", articles=None):
         content_card=photo + add_lazy_loading(content),
         back_to_home=T("back_to_homepage", language),
     )
-    contenuto = two_columns(principale, build_sidebar(language, "card", articles), language)
-    url_canonico = CONFIG["base_url"] + biography_page_url(language)
+    content_html = two_columns(main_html, build_sidebar(language, "card", articles), language)
+    canonical = CONFIG["base_url"] + biography_page_url(language)
     meta_extra = "\n".join([
         f'  <meta name="description" content="{esc(excerpt_from_html(content, 150))}">',
-        f'  <link rel="canonical" href="{url_canonico}">',
+        f'  <link rel="canonical" href="{canonical}">',
         f'  <meta property="og:title" content="{esc(title_value)}">',
         '  <meta property="og:type" content="profile">',
     ])
     return render_page(
         language,
         with_site_title(f"{esc(title_value)}"),
-        contenuto,
+        content_html,
         meta_extra=meta_extra,
     )
 
@@ -2768,9 +2768,9 @@ def generate_card_page(card, language="it", articles=None):
     # it used to always point to /pages/, even from the English version,
     # declaring a wrong canonical to Google for the /en/ pages.
     prefix = language_url_prefix(language)
-    url_canonico = f"{CONFIG['base_url']}{prefix}/pages/{slug}.html"
+    canonical = f"{CONFIG['base_url']}{prefix}/pages/{slug}.html"
 
-    principale = render.render(
+    main_html = render.render(
         "public/card_page.html",
         url_home=prefix + "/",
         label_home=T("home", language),
@@ -2778,11 +2778,11 @@ def generate_card_page(card, language="it", articles=None):
         content_card=add_lazy_loading(content),
         back_to_home=T("back_to_homepage", language),
     )
-    contenuto = two_columns(principale, build_sidebar(language, "card", articles), language)
+    content_html = two_columns(main_html, build_sidebar(language, "card", articles), language)
 
     meta_extra = "\n".join([
         f'  <meta name="description" content="{esc(description)}">',
-        f'  <link rel="canonical" href="{url_canonico}">',
+        f'  <link rel="canonical" href="{canonical}">',
         f'  <meta property="og:title" content="{esc(title_value)}">',
         '  <meta property="og:type" content="article">',
     ])
@@ -2790,7 +2790,7 @@ def generate_card_page(card, language="it", articles=None):
     return render_page(
         language,
         with_site_title(f"{esc(title_value)}"),
-        contenuto,
+        content_html,
         meta_extra=meta_extra,
     )
 
@@ -2799,7 +2799,7 @@ def generate_card_page(card, language="it", articles=None):
 # HOMEPAGE
 # ---------------------------------------------------------------------------
 
-def generate_homepage(articles, language="it", page=1, totale_pagine=1):
+def generate_homepage(articles, language="it", page=1, total_pages=1):
     """
     Generate the homepage: the articles in the main column, with the opening
     of each one, and the sidebar with the introduction, the cards and the
@@ -2811,16 +2811,16 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
     post_prefix = prefix + "/posts/"
 
     # Articles visible in this language, then the slice of the current page.
-    visibili = articles_visible_in_language(articles, language)
+    visible = articles_visible_in_language(articles, language)
     per_page = articles_per_page_count()
     if per_page > 0:
         start = (page - 1) * per_page
         end = start + per_page
-        page_articles = visibili[start:end]
+        page_articles = visible[start:end]
     else:
         start = 0
-        end = len(visibili)
-        page_articles = visibili
+        end = len(visible)
+        page_articles = visible
 
     # The most recent article leads the list on the first page: a bigger
     # thumbnail and twice the text. It stays in the list rather than in a
@@ -2839,17 +2839,17 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
                             + feed_code + "\n      </div>")
 
     if len(rows) > 0:
-        lista = "\n".join(rows)
+        items_list = "\n".join(rows)
     else:
-        lista = f'      <p class="no-articles">{T("no_one_article", language)}</p>'
+        items_list = f'      <p class="no-articles">{T("no_one_article", language)}</p>'
 
     articles_block = render.render(
         "public/home_articles.html",
         title_section_of=T("articles", language),
         placeholder_search_box=esc(T("search_articles", language)),
         aria_search_box=esc(T("search", language)),
-        list_items=lista,
-        pagination=block(pagination_html(page, totale_pagine, language)),
+        list_items=items_list,
+        pagination=block(pagination_html(page, total_pages, language)),
     )
 
     # The introduction lives in the sidebar, or above the articles when the
@@ -2889,24 +2889,24 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
             else:
                 below.append(html_piece)
 
-    principale = "".join(block(piece) for piece in above) + articles_block
-    principale = principale + "".join(block(piece) for piece in below)
+    main_html = "".join(block(piece) for piece in above) + articles_block
+    main_html = main_html + "".join(block(piece) for piece in below)
 
-    contenuto = two_columns(
-        principale,
+    content_html = two_columns(
+        main_html,
         build_sidebar(language, "home", articles, intro=sidebar_intro,
                       biography=side["biography"], projects=side["projects"]),
         language,
-        argomenti=topics_bar(articles, language),
+        topics_html=topics_bar(articles, language),
     )
 
     # --- Homepage SEO ---
     base = CONFIG["base_url"].rstrip("/")
     if page > 1:
-        url_canonico_home = (base + prefix + "/"
+        home_canonical_url = (base + prefix + "/"
                              + pagination_folder(language) + f"/{page}.html")
     else:
-        url_canonico_home = base + prefix + "/"
+        home_canonical_url = base + prefix + "/"
     # The two homepages always exist: we declare both with hreflang.
     hreflang_home = hreflang_links(
         language_url_prefix("it") + "/", language_url_prefix("en") + "/")
@@ -2926,18 +2926,18 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
     meta_extra = "\n".join([
         f'  <meta name="description" content="{esc(site_subtitle(language))}">',
         f'  <meta name="author" content="{esc(CONFIG["author"])}">',
-        f'  <link rel="canonical" href="{url_canonico_home}">',
+        f'  <link rel="canonical" href="{home_canonical_url}">',
         "  " + hreflang_home,
         f'  <meta property="og:title" content="{esc(CONFIG["site_title"])}">',
         f'  <meta property="og:description" content="{esc(site_subtitle(language))}">',
         '  <meta property="og:type" content="website">',
-        f'  <meta property="og:url" content="{url_canonico_home}">',
+        f'  <meta property="og:url" content="{home_canonical_url}">',
         "  " + social_meta(language),
     ])
 
     # rel=prev/next tell a search engine that the paginated pages are one
     # sequence rather than a pile of near-duplicates.
-    if totale_pagine > 1:
+    if total_pages > 1:
         page_folder = pagination_folder(language)
         if page > 1:
             if page == 2:
@@ -2945,7 +2945,7 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
             else:
                 previous_url = f"{base}{prefix}/{page_folder}/{page - 1}.html"
             meta_extra = meta_extra + f'\n  <link rel="prev" href="{previous_url}">'
-        if page < totale_pagine:
+        if page < total_pages:
             next_url = f"{base}{prefix}/{page_folder}/{page + 1}.html"
             meta_extra = meta_extra + f'\n  <link rel="next" href="{next_url}">'
 
@@ -2971,7 +2971,7 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         language,
         " &middot; ".join(esc(part) for part in (CONFIG["site_title"].strip(),
                                                     site_subtitle(language)) if part != ""),
-        contenuto,
+        content_html,
         meta_extra=meta_extra,
         head_extra=head_extra,
         site_extra=search_options,
@@ -3009,10 +3009,10 @@ def generate_archive_page(articles, language="it"):
             by_year[year] = []
         by_year[year].append({"title": item_title, "art": art})
 
-    anni_ordinati = sorted(by_year.keys(), reverse=True)
+    sorted_years = sorted(by_year.keys(), reverse=True)
 
     year_blocks = []
-    for year in anni_ordinati:
+    for year in sorted_years:
         feed_items = []
         for url_entry in by_year[year]:
             art = url_entry["art"]
@@ -3038,12 +3038,12 @@ def generate_archive_page(articles, language="it"):
         body = f'    <p class="no-articles">{T("no_one_article", language)}</p>'
 
     base = CONFIG["base_url"].rstrip("/")
-    url_canonico = base + prefix + "/" + archive_file_name(language)
+    canonical = base + prefix + "/" + archive_file_name(language)
     hreflang = hreflang_links(
         language_url_prefix("it") + "/" + archive_file_name("it"),
         language_url_prefix("en") + "/" + archive_file_name("en"))
 
-    principale = render.render(
+    main_html = render.render(
         "public/archive.html",
         url_home=prefix + "/",
         label_home=T("home", language),
@@ -3051,12 +3051,12 @@ def generate_archive_page(articles, language="it"):
         title_archive=T("archive_title", language),
         body=body,
     )
-    contenuto = two_columns(principale, build_sidebar(language, "other", articles),
-                            language, argomenti=topics_bar(articles, language))
+    content_html = two_columns(main_html, build_sidebar(language, "other", articles),
+                            language, topics_html=topics_bar(articles, language))
 
     meta_extra = "\n".join([
         f'  <meta name="description" content="{T("archive_description", language)}">',
-        f'  <link rel="canonical" href="{url_canonico}">',
+        f'  <link rel="canonical" href="{canonical}">',
         "  " + hreflang,
         "  " + social_meta(language),
     ])
@@ -3064,7 +3064,7 @@ def generate_archive_page(articles, language="it"):
     return render_page(
         language,
         with_site_title(f"{T('archive_title', language)}"),
-        contenuto,
+        content_html,
         meta_extra=meta_extra,
     )
 
@@ -3083,21 +3083,21 @@ def generate_tag_page(tag_name, tag_articles, language="it", all_articles=None):
         all_articles = tag_articles
     prefix = language_url_prefix(language)
 
-    visibili = articles_visible_in_language(tag_articles, language)
-    rows = [article_row(art, language) for art in visibili]
+    visible = articles_visible_in_language(tag_articles, language)
+    rows = [article_row(art, language) for art in visible]
 
-    principale = render.render(
+    main_html = render.render(
         "public/tag.html",
         url_home=prefix + "/",
         label_home=T("home", language),
         label_tag=T("tag", language),
         name_tag=esc(tag_name),
-        count=len(visibili),
+        count=len(visible),
         label_count=T("tag_count", language),
         list_items="\n".join(rows),
     )
-    contenuto = two_columns(principale, build_sidebar(language, "other", all_articles),
-                            language, argomenti=topics_bar(all_articles, language, tag_name))
+    content_html = two_columns(main_html, build_sidebar(language, "other", all_articles),
+                            language, topics_html=topics_bar(all_articles, language, tag_name))
 
     meta_extra = (f'  <meta name="description" '
                   f'content="{T("articles_with_tag", language)} {esc(tag_name)}.">')
@@ -3105,7 +3105,7 @@ def generate_tag_page(tag_name, tag_articles, language="it", all_articles=None):
     return render_page(
         language,
         with_site_title(f"{T('articles_with_tag', language)} {esc(tag_name)}"),
-        contenuto,
+        content_html,
         meta_extra=meta_extra,
     )
 
@@ -3127,9 +3127,9 @@ def generate_404_page(articles=None):
 
     latest_block = ""
     if articles is not None:
-        visibili = articles_visible_in_language(articles, language)
+        visible = articles_visible_in_language(articles, language)
         feed_items = []
-        for art in visibili[:5]:
+        for art in visible[:5]:
             feed_items.append(
                 f'        <li><a href="{post_prefix}{art["slug"]}.html">'
                 f'{esc(title_in_language(art, language))}</a>'
@@ -3140,7 +3140,7 @@ def generate_404_page(articles=None):
                             "        <ul>\n" + "\n".join(feed_items)
                             + "\n        </ul>\n      </section>\n")
 
-    contenuto = render.render(
+    content_html = render.render(
         "public/404.html",
         text=T("failure_404", language),
         url_home=prefix + "/",
@@ -3152,7 +3152,7 @@ def generate_404_page(articles=None):
     return render_page(
         language,
         with_site_title(f"{T('page_not_found', language)}"),
-        contenuto,
+        content_html,
     )
 
 
@@ -3174,7 +3174,7 @@ def generate_rss(articles, language=None):
 
     prefix = language_url_prefix(language)
     base = CONFIG["base_url"].rstrip("/")
-    ora = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
+    now_value = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
 
     feed_articles = []
     for art in articles:
@@ -3187,7 +3187,7 @@ def generate_rss(articles, language=None):
             dt = datetime.fromisoformat(art["date"])
             pubdate = dt.strftime("%a, %d %b %Y %H:%M:%S +0000")
         except ValueError:
-            pubdate = ora
+            pubdate = now_value
         url = f"{base}{prefix}/posts/{art['slug']}.html"
         item_title = title_in_language(art, language)
         if language == main_language():
@@ -3211,7 +3211,7 @@ def generate_rss(articles, language=None):
     <link>{base}{prefix}/</link>
     <description>{esc(site_subtitle(language))}</description>
     <language>{language}</language>
-    <lastBuildDate>{ora}</lastBuildDate>
+    <lastBuildDate>{now_value}</lastBuildDate>
 {items}
   </channel>
 </rss>"""
@@ -3315,10 +3315,10 @@ def generate_llms_txt(articles):
     lines.append("")
     lines.append(ai_training_statement("en"))
     training = ai_training_config()
-    contatto = training.get("contact_email", "").strip()
-    if training.get("policy", "open") == "licensed" and contatto != "":
+    contact = training.get("contact_email", "").strip()
+    if training.get("policy", "open") == "licensed" and contact != "":
         lines.append("")
-        lines.append(f"Licensing contact: {contatto}")
+        lines.append(f"Licensing contact: {contact}")
     lines.append("")
     lines.append(f"Full statement: {CONFIG['base_url']}/training-rights.html")
     lines.append("")
@@ -3355,11 +3355,11 @@ def generate_sitemap(articles):
     # Next pages of the homepage (if pagination is active).
     per_page = articles_per_page_count()
     for home_language in (main_language(), secondary_language()):
-        visibili = articles_visible_in_language(articles, home_language)
-        if per_page > 0 and len(visibili) > per_page:
-            totale_pagine = (len(visibili) + per_page - 1) // per_page
+        visible = articles_visible_in_language(articles, home_language)
+        if per_page > 0 and len(visible) > per_page:
+            total_pages = (len(visible) + per_page - 1) // per_page
             home_prefix = language_url_prefix(home_language)
-            for number in range(2, totale_pagine + 1):
+            for number in range(2, total_pages + 1):
                 lines.append(url_entry(home_prefix + "/"
                                   + pagination_folder(home_language)
                                   + f"/{number}.html"))
@@ -3371,24 +3371,24 @@ def generate_sitemap(articles):
     # Published articles (main language and, if confirmed, secondary).
     # lastmod helps the engines understand which pages have changed.
     for art in articles:
-        ultima_modifica = art.get("date_modified", art.get("date", ""))
+        last_modified = art.get("date_modified", art.get("date", ""))
         lines.append(url_entry(main_prefix + "/posts/" + art["slug"] + ".html",
-                          ultima_modifica))
+                          last_modified))
         translation_confirmed = art.get("translation_confirmed", False)
         content_en = art.get("content_en", "")
         if translation_confirmed and content_en.strip() != "":
             lines.append(url_entry(sec_prefix + "/posts/" + art["slug"] + ".html",
-                              ultima_modifica))
+                              last_modified))
 
     # Tag index pages (mirroring what build() generates).
-    mappa_tag = collect_tags(articles)
-    for tag_name in mappa_tag:
+    tag_map = collect_tags(articles)
+    for tag_name in tag_map:
         tag_slug = slugify(tag_name)
         if tag_slug == "":
             continue
         lines.append(url_entry(main_prefix + "/tag/" + tag_slug + ".html"))
         # The secondary version exists only if at least one article is translated.
-        for art_tag in mappa_tag[tag_name]:
+        for art_tag in tag_map[tag_name]:
             if art_tag.get("translation_confirmed", False):
                 lines.append(url_entry(sec_prefix + "/tag/" + tag_slug + ".html"))
                 break
@@ -3477,8 +3477,8 @@ def generate_robots_block_ai_crawlers():
     if policy not in ("licensed", "disallow"):
         return ""
     lines = ["", "# AI training crawlers: see /training-rights.html"]
-    for agente in KNOWN_AI_CRAWLERS:
-        lines.append(f"User-agent: {agente}")
+    for agent in KNOWN_AI_CRAWLERS:
+        lines.append(f"User-agent: {agent}")
         lines.append("Disallow: /")
     return "\n".join(lines) + "\n"
 
@@ -3500,13 +3500,13 @@ def generate_ai_txt():
         "",
         ai_training_statement("en"),
     ]
-    contatto = training.get("contact_email", "").strip()
-    if contatto != "" and policy == "licensed":
+    contact = training.get("contact_email", "").strip()
+    if contact != "" and policy == "licensed":
         lines.append("")
-        lines.append("Contact: " + contatto)
-    licenza_url = training.get("license_url", "").strip()
-    if licenza_url != "":
-        lines.append("License: " + licenza_url)
+        lines.append("Contact: " + contact)
+    license_url = training.get("license_url", "").strip()
+    if license_url != "":
+        lines.append("License: " + license_url)
     else:
         base = CONFIG.get("base_url", "").rstrip("/")
         lines.append("License: " + base + "/training-rights.html")
@@ -3531,12 +3531,12 @@ def generate_tdmrep_json():
     else:
         reservation = 1
     base = CONFIG.get("base_url", "").rstrip("/")
-    licenza_url = training.get("license_url", "").strip()
-    if licenza_url == "":
-        licenza_url = base + "/training-rights.html"
+    license_url = training.get("license_url", "").strip()
+    if license_url == "":
+        license_url = base + "/training-rights.html"
     data_value = {
         "tdm-reservation": reservation,
-        "tdm-policy": licenza_url,
+        "tdm-policy": license_url,
     }
     return json.dumps(data_value, ensure_ascii=False, indent=2) + "\n"
 
@@ -3550,25 +3550,25 @@ def generate_training_rights_page(language="it"):
     """
     training = ai_training_config()
     policy = training.get("policy", "open")
-    contatto = training.get("contact_email", "").strip()
-    licenza_url = training.get("license_url", "").strip()
+    contact = training.get("contact_email", "").strip()
+    license_url = training.get("license_url", "").strip()
     statement = esc(ai_training_statement(language))
 
     contact_block = ""
-    if policy == "licensed" and contatto != "":
+    if policy == "licensed" and contact != "":
         contact_block = (f'<p>{T("training_contact", language)} '
-                         f'<a href="mailto:{esc(contatto)}">{esc(contatto)}</a></p>')
+                         f'<a href="mailto:{esc(contact)}">{esc(contact)}</a></p>')
 
     license_block = ""
-    if licenza_url != "":
+    if license_url != "":
         license_block = (f'<p>{T("training_terms_own_pl", language)} '
-                         f'<a href="{esc(licenza_url)}">{esc(licenza_url)}</a></p>')
+                         f'<a href="{esc(license_url)}">{esc(license_url)}</a></p>')
 
     prefix = language_url_prefix(language)
     base = CONFIG["base_url"].rstrip("/")
-    url_canonico = base + prefix + "/training-rights.html"
+    canonical = base + prefix + "/training-rights.html"
 
-    contenuto = render.render(
+    content_html = render.render(
         "public/training_rights.html",
         url_home=prefix + "/",
         label_home=T("home", language),
@@ -3581,13 +3581,13 @@ def generate_training_rights_page(language="it"):
     meta_extra = "\n".join([
         f'  <meta name="description" content="{statement}">',
         '  <meta name="robots" content="noindex, follow">',
-        f'  <link rel="canonical" href="{url_canonico}">',
+        f'  <link rel="canonical" href="{canonical}">',
     ])
 
     return render_page(
         language,
         with_site_title(f"{T('training_title', language)}"),
-        contenuto,
+        content_html,
         meta_extra=meta_extra,
     )
 
@@ -3744,8 +3744,8 @@ def _build_unlocked():
     # Scheduled articles whose moment has come go out with this build: a
     # site rebuilt by cron, with no editor running, publishes them too.
     publish_due_articles()
-    tutti = load_articles()
-    published_articles = [a for a in tutti if a.get("status") == "published"]
+    every_article = load_articles()
+    published_articles = [a for a in every_article if a.get("status") == "published"]
     note_labs(published_articles)
 
     # Pages written by this build, grouped by folder. At the end
@@ -3786,9 +3786,9 @@ def _build_unlocked():
 
     # Tag index pages (one for every tag used in the articles).
     (OUTPUT_DIR / "tag").mkdir(parents=True, exist_ok=True)
-    mappa_tag = collect_tags(published_articles)
-    for tag_name in mappa_tag:
-        tag_articles = mappa_tag[tag_name]
+    tag_map = collect_tags(published_articles)
+    for tag_name in tag_map:
+        tag_articles = tag_map[tag_name]
         tag_slug = slugify(tag_name)
         if tag_slug == "":
             continue
@@ -3855,11 +3855,11 @@ def _build_unlocked():
     (OUTPUT_DIR / sec_folder).mkdir(parents=True, exist_ok=True)
     per_page = articles_per_page_count()
     for home_language in (lp, ls):
-        visibili = articles_visible_in_language(published_articles, home_language)
-        if per_page > 0 and len(visibili) > per_page:
-            totale_pagine = (len(visibili) + per_page - 1) // per_page
+        visible = articles_visible_in_language(published_articles, home_language)
+        if per_page > 0 and len(visible) > per_page:
+            total_pages = (len(visible) + per_page - 1) // per_page
         else:
-            totale_pagine = 1
+            total_pages = 1
         # Destination folder: the root for the main language, a subfolder
         # for the secondary one.
         if home_language == lp:
@@ -3868,16 +3868,16 @@ def _build_unlocked():
             base_folder = OUTPUT_DIR / sec_folder
         # Page 1: this is the homepage proper.
         (base_folder / "index.html").write_text(
-            generate_homepage(published_articles, home_language, 1, totale_pagine),
+            generate_homepage(published_articles, home_language, 1, total_pages),
             encoding="utf-8")
         # Next pages, only if they are needed.
-        if totale_pagine > 1:
+        if total_pages > 1:
             page_folder = base_folder / pagination_folder(home_language)
             page_folder.mkdir(parents=True, exist_ok=True)
-            for number in range(2, totale_pagine + 1):
+            for number in range(2, total_pages + 1):
                 write_page(page_folder / f"{number}.html",
                            generate_homepage(published_articles, home_language,
-                                             number, totale_pagine))
+                                             number, total_pages))
 
     # Archive page (compact list by year) in both languages.
     write_page(OUTPUT_DIR / archive_file_name(lp),

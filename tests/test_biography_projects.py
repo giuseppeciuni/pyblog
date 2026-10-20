@@ -34,10 +34,10 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def article(numero):
-    return {"title": f"Articolo {numero}", "slug": f"articolo-{numero}",
+def article(number):
+    return {"title": f"Articolo {number}", "slug": f"articolo-{number}",
             "content": "<p>Testo dell'articolo.</p>", "status": "published",
-            "date": f"2026-01-{numero:02d}", "tags": "Prova"}
+            "date": f"2026-01-{number:02d}", "tags": "Prova"}
 
 
 ARTICLES_FIXTURE = [article(n) for n in range(1, 4)]
@@ -64,9 +64,9 @@ def test_defaults():
     print("\nvalori predefiniti")
     check("biografia spenta", CONFIG_DEFAULT["biography"]["enabled"] is False)
     check("progetti spenti", CONFIG_DEFAULT["projects"]["enabled"] is False)
-    titoli = [card["title"] for card in CONFIG_DEFAULT["home_cards"]]
+    titles = [card["title"] for card in CONFIG_DEFAULT["home_cards"]]
     check("niente card Biografia e Progetti tra quelle di partenza",
-          "Biografia" not in titoli and "Progetti" not in titoli, str(titoli))
+          "Biografia" not in titles and "Progetti" not in titles, str(titles))
     CONFIG["biography"] = copy.deepcopy(CONFIG_DEFAULT["biography"])
     CONFIG["projects"] = copy.deepcopy(CONFIG_DEFAULT["projects"])
     home = build.generate_homepage(ARTICLES_FIXTURE, "it")
@@ -93,36 +93,36 @@ def test_positions():
     home = build.generate_homepage(ARTICLES_FIXTURE, "it")
     i_biography = home.find("home-biography")
     i_article = home.find('id="articles"')
-    i_projects = home.find("home-progetti")
+    i_projects = home.find("home-projects")
     check("biografia sopra gli articoli, progetti sotto", 0 < i_biography < i_article < i_projects)
     check("la biografia porta alla sua pagina",
           'href="/pages/biografia.html"' in home)
 
     set_value("bottom", "top")
     home = build.generate_homepage(ARTICLES_FIXTURE, "it")
-    check("e al contrario", 0 < home.find("home-progetti") < home.find('id="articles"')
+    check("e al contrario", 0 < home.find("home-projects") < home.find('id="articles"')
           < home.find("home-biography"))
 
     set_value("sidebar", "sidebar")
     home = build.generate_homepage(ARTICLES_FIXTURE, "it")
-    barra = home[home.find("<aside"):]
+    sidebar_html = home[home.find("<aside"):]
     check("nella barra laterale, fuori dalla colonna",
-          "box-biography" in barra and "box-progetti" in barra and "home-section" not in home)
+          "box-biography" in sidebar_html and "box-progetti" in sidebar_html and "home-section" not in home)
     check("in barra: presentazione, biografia, progetti, esplora, nell'ordine",
-          barra.find("box-intro") < barra.find("box-biography") < barra.find("box-progetti")
-          < barra.find("box-segui"))
+          sidebar_html.find("box-intro") < sidebar_html.find("box-biography") < sidebar_html.find("box-progetti")
+          < sidebar_html.find("box-segui"))
 
     set_value("top", "top")
-    page_two = build.generate_homepage(ARTICLES_FIXTURE, "it", page=2, totale_pagine=2)
+    page_two = build.generate_homepage(ARTICLES_FIXTURE, "it", page=2, total_pages=2)
     check("dalla seconda pagina in poi non si ripetono",
-          "home-biography" not in page_two and "home-progetti" not in page_two)
+          "home-biography" not in page_two and "home-projects" not in page_two)
 
 
 def test_projects():
     print("\nprogetti")
     set_value("top", "top")
     home = build.generate_homepage(ARTICLES_FIXTURE, "it")
-    section = home[home.find("home-progetti"):home.find('id="articles"')]
+    section = home[home.find("home-projects"):home.find('id="articles"')]
     check("il nascosto e quello senza nome restano fuori",
           "Nascosto" not in section and "Senza nome" not in section)
     check("nell'ordine della lista", section.find("Alfa") < section.find("Beta"))
@@ -209,9 +209,9 @@ def test_work_with_me():
           '<a class="nav-work" href="/pages/lavora-con-me.html">Lavora con me</a>' in menu
           and menu.index("nav-work") > menu.index("Chi sono"), menu[-400:])
     page_html = build.generate_article_page(article(1), "it", ARTICLES_FIXTURE)
-    invito = page_html.split('<aside class="invite-work">')[1].split("</aside>")[0]
+    invitation = page_html.split('<aside class="invite-work">')[1].split("</aside>")[0]
     check("a fine articolo c'e' l'invito, con la frase scelta e senza far passare HTML",
-          "Parliamone &lt;ora&gt;" in invito and 'href="/pages/lavora-con-me.html"' in invito
+          "Parliamone &lt;ora&gt;" in invitation and 'href="/pages/lavora-con-me.html"' in invitation
           and page_html.index("invite-work") > page_html.index('class="post-content"'))
     english = build.generate_homepage(ARTICLES_FIXTURE, "en").split("</nav>")[0]
     check("in inglese porta alla pagina inglese, con la sua scritta",
@@ -236,12 +236,12 @@ def test_card_with_same_name():
     CONFIG["home_cards_enabled"] = True
     CONFIG["home_cards"] = [{"active": True, "title": "Biografia", "content": "<p>Vecchia</p>"},
                             {"active": True, "title": "Contatti", "content": "<p>Scrivimi</p>"}]
-    titoli = [card["title"] for card in build.published_home_cards()]
+    titles = [card["title"] for card in build.published_home_cards()]
     check("con la biografia accesa, la vecchia card Biografia non scrive sopra la sua pagina",
-          titoli == ["Contatti"], str(titoli))
+          titles == ["Contatti"], str(titles))
     CONFIG["biography"]["enabled"] = False
-    titoli = [card["title"] for card in build.published_home_cards()]
-    check("con la biografia spenta, la card torna", titoli == ["Biografia", "Contatti"], str(titoli))
+    titles = [card["title"] for card in build.published_home_cards()]
+    check("con la biografia spenta, la card torna", titles == ["Biografia", "Contatti"], str(titles))
 
 
 def test_admin_settings():
@@ -272,7 +272,7 @@ def main():
         CONFIG.update(saved_page)
     # The Settings page reads config.json from disk: it is checked with the
     # configuration on disk patched for the length of the test.
-    originale = server.load_config
+    original = server.load_config
     server.load_config = lambda: dict(CONFIG, **{"biography": {
         "enabled": True, "position": "top", "photo": "", "content": "<p>Sono Maria.</p>",
         "content_en": ""}, "projects": {"enabled": True, "position": "top", "items": [
@@ -280,7 +280,7 @@ def main():
     try:
         test_admin_settings()
     finally:
-        server.load_config = originale
+        server.load_config = original
     print(f"\n{PASSED} passed, {FAILED} failed")
     if FAILED > 0:
         sys.exit(1)

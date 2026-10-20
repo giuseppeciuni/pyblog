@@ -108,10 +108,10 @@ class Headers(dict):
     """The headers of a fake request: dict.get is all the handler uses."""
 
 
-def address(peer, intestazioni):
+def address(peer, header_lines):
     handler = server.Handler.__new__(server.Handler)
     handler.client_address = (peer, 50000)
-    handler.headers = Headers(intestazioni)
+    handler.headers = Headers(header_lines)
     return handler._client_address()
 
 
@@ -162,26 +162,26 @@ def test_through_the_server():
 
         open_url = urllib.request.build_opener(DoNotFollow).open
 
-        def accedi(password, visitor):
-            corpo = urllib.parse.urlencode({"password": password}).encode()
+        def log_in(password, visitor):
+            body = urllib.parse.urlencode({"password": password}).encode()
             request_value = urllib.request.Request(
-                f"http://127.0.0.1:{httpd.server_address[1]}/login", data=corpo,
+                f"http://127.0.0.1:{httpd.server_address[1]}/login", data=body,
                 headers={"X-Real-IP": visitor})
             try:
                 with open_url(request_value, timeout=30) as response:
                     return response.status, response.read().decode("utf-8")
-            except urllib.error.HTTPError as errore:
-                return errore.code, ""
+            except urllib.error.HTTPError as error:
+                return error.code, ""
 
         try:
             for _ in range(auth.LOGIN_MAX_ATTEMPTS):
-                accedi("sbagliata", "203.0.113.9")
-            stato, page_html = accedi("giusta-123", "203.0.113.9")
+                log_in("sbagliata", "203.0.113.9")
+            state, page_html = log_in("giusta-123", "203.0.113.9")
             notice = T("err_too_many_attempts", admin_language()).split("{n}")[0]
             check("chi ha sbagliato 5 volte e' bloccato anche con la password giusta",
-                  stato == 200 and html.escape(notice) in page_html, page_html[:200])
-            stato, _ = accedi("giusta-123", "198.51.100.4")
-            check("un altro visitatore entra subito", stato == 303, str(stato))
+                  state == 200 and html.escape(notice) in page_html, page_html[:200])
+            state, _ = log_in("giusta-123", "198.51.100.4")
+            check("un altro visitatore entra subito", state == 303, str(state))
         finally:
             httpd.shutdown()
             httpd.server_close()
@@ -213,37 +213,37 @@ def test_server_defences():
         threading.Thread(target=httpd.serve_forever, daemon=True).start()
         base = f"http://127.0.0.1:{httpd.server_address[1]}"
 
-        def ask(path_value, corpo=None, intestazioni=None, method_name=None):
-            request_value = urllib.request.Request(base + path_value, data=corpo,
-                                               headers=intestazioni or {}, method=method_name)
+        def ask(path_value, body=None, header_lines=None, method_name=None):
+            request_value = urllib.request.Request(base + path_value, data=body,
+                                               headers=header_lines or {}, method=method_name)
             try:
                 with open_url(request_value, timeout=30) as response:
                     return response.status, response.read().decode("utf-8")
-            except urllib.error.HTTPError as errore:
-                return errore.code, ""
+            except urllib.error.HTTPError as error:
+                return error.code, ""
 
-        before = urllib.parse.urlencode({"password": "nuova-123", "conferma": "nuova-123"}).encode()
+        before = urllib.parse.urlencode({"password": "nuova-123", "confirm": "nuova-123"}).encode()
         try:
             ask("/set-password", before, {"X-Real-IP": "203.0.113.9"})
             check("la prima password non si crea da fuori, attraverso nginx",
                   not auth.PASSWORD_FILE.exists())
-            stato, _ = ask("/set-password", before)
+            state, _ = ask("/set-password", before)
             check("si crea collegandosi direttamente all'editor",
-                  stato == 303 and auth.PASSWORD_FILE.exists(), str(stato))
+                  state == 303 and auth.PASSWORD_FILE.exists(), str(state))
             permissions = stat.S_IMODE(os.stat(auth.PASSWORD_FILE).st_mode)
             check("il file della password lo legge solo il proprietario",
                   permissions == 0o600, oct(permissions))
             check("e non lascia file temporanei",
                   [f.name for f in pathlib.Path(folder).iterdir()] == ["password.txt"])
 
-            stato, _ = ask("/admin_password.txt", method_name="HEAD")
-            check("HEAD non serve piu' i file della cartella", stato == 501, str(stato))
+            state, _ = ask("/admin_password.txt", method_name="HEAD")
+            check("HEAD non serve piu' i file della cartella", state == 501, str(state))
 
             token = auth.create_session_token()
-            stato, testo = ask("/rotta-nuova", b"{}", {"Cookie": "sessione=" + token})
-            response = json.loads(testo or "{}")
+            state, text = ask("/rotta-nuova", b"{}", {"Cookie": "session=" + token})
+            response = json.loads(text or "{}")
             check("una rotta POST non elencata chiede comunque il token CSRF",
-                  response.get("error") == T("err_csrf", admin_language()), testo[:200])
+                  response.get("error") == T("err_csrf", admin_language()), text[:200])
         finally:
             httpd.shutdown()
             httpd.server_close()

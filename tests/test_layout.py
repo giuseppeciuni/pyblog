@@ -35,28 +35,28 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def article(numero, with_cover=True, titoli=0):
+def article(number, with_cover=True, titles=0):
     """A published article with a predictable text."""
-    testo = ("<p>Primo paragrafo dell'articolo numero " + str(numero)
+    text = ("<p>Primo paragrafo dell'articolo numero " + str(number)
              + " con un <strong>grassetto</strong> e un esponente E=mc<sup>2</sup>.</p>")
-    for indice in range(titoli):
-        testo = testo + f"<h2>Sezione {indice + 1}</h2><p>Testo della sezione {indice + 1}.</p>"
-    testo = testo + "<p>" + " ".join(["parola"] * 80) + "</p>"
+    for index_value in range(titles):
+        text = text + f"<h2>Sezione {index_value + 1}</h2><p>Testo della sezione {index_value + 1}.</p>"
+    text = text + "<p>" + " ".join(["parola"] * 80) + "</p>"
     return {
-        "title": f"Articolo di prova {numero}", "slug": f"articolo-di-prova-{numero}",
-        "description": "", "preview": "", "content": testo,
-        "tags": "Prova, Layout" if numero % 2 else "Prova",
+        "title": f"Articolo di prova {number}", "slug": f"articolo-di-prova-{number}",
+        "description": "", "preview": "", "content": text,
+        "tags": "Prova, Layout" if number % 2 else "Prova",
         "image": "/media/prova.png" if with_cover else "",
         "status": "published", "custom_code_ids": [],
-        "date": f"2026-0{1 + numero % 8}-1{numero % 9}T09:00:00+00:00",
+        "date": f"2026-0{1 + number % 8}-1{number % 9}T09:00:00+00:00",
         "date_modified": "2026-01-01T09:00:00+00:00",
-        "title_en": f"Test article {numero}", "description_en": "", "preview_en": "",
+        "title_en": f"Test article {number}", "description_en": "", "preview_en": "",
         "content_en": "<p>English text.</p>", "translation_authorized": True,
         "translation_confirmed": True,
     }
 
 
-ARTICLES_FIXTURE = sorted([article(n, with_cover=(n % 3 != 0), titoli=(4 if n == 1 else 0))
+ARTICLES_FIXTURE = sorted([article(n, with_cover=(n % 3 != 0), titles=(4 if n == 1 else 0))
                    for n in range(1, 15)], key=lambda a: a["date"], reverse=True)
 
 
@@ -106,20 +106,20 @@ def test_lines_and_previews():
     check("solo il primo", sum('art-lead' in line for line in lines) == 1)
     check("chi non ha copertina ha il riquadro col primo tag",
           any('<span class="art-tile">Prova</span>' in line for line in lines))
-    estratto = re.search(r'<p class="art-excerpt">(.*?)</p>', lines[1]).group(1)
-    check("l'anteprima finisce con i puntini", estratto.endswith("…"), estratto)
+    excerpt = re.search(r'<p class="art-excerpt">(.*?)</p>', lines[1]).group(1)
+    check("l'anteprima finisce con i puntini", excerpt.endswith("…"), excerpt)
     # The filler words are all "parola": the last one before the dots must be
     # a whole one, not "par" or "parol".
-    check("e non spezza le parole", estratto[:-1].split()[-1] == "parola", estratto[-30:])
-    for testo, expected_value in (("<p>Uno due tre. Quattro</p>", "Uno due tre…"),
+    check("e non spezza le parole", excerpt[:-1].split()[-1] == "parola", excerpt[-30:])
+    for text, expected_value in (("<p>Uno due tre. Quattro</p>", "Uno due tre…"),
                           ("<p>Davvero? Sì, certo</p>", "Davvero…"),
                           ("<p>Primo, secondo; terzo</p>", "Primo…")):
         words = len(expected_value.split())
-        obtained = build.excerpt_words(testo, words)
+        obtained = build.excerpt_words(text, words)
         check(f"il taglio dopo la punteggiatura non lascia «.…» ({obtained})",
               obtained == expected_value, obtained)
-    check("i grassetti non lasciano spazi", "un grassetto e un esponente E=mc2" in estratto,
-          estratto)
+    check("i grassetti non lasciano spazi", "un grassetto e un esponente E=mc2" in excerpt,
+          excerpt)
     check("i titoletti non entrano nell'anteprima",
           all("Sezione 1" not in line for line in lines))
     second = build.generate_homepage(ARTICLES_FIXTURE, "it", 2, 2)
@@ -152,12 +152,12 @@ def test_table_of_contents_in_article():
 
 def test_introduction_position():
     print("\npresentazione della home")
-    vecchia = CONFIG.get("home_intro_position")
+    old_value = CONFIG.get("home_intro_position")
     try:
         CONFIG["home_intro_position"] = "sidebar"
         home = build.generate_homepage(ARTICLES_FIXTURE, "it", 1, 2)
-        barra = home.split('<aside class="bar-side"', 1)[1]
-        check("di serie sta nella barra", '<section class="home-intro">' in barra)
+        sidebar_html = home.split('<aside class="bar-side"', 1)[1]
+        check("di serie sta nella barra", '<section class="home-intro">' in sidebar_html)
         CONFIG["home_intro_position"] = "top"
         home = build.generate_homepage(ARTICLES_FIXTURE, "it", 1, 2)
         column = home.split('<aside class="bar-side"', 1)[0]
@@ -165,7 +165,7 @@ def test_introduction_position():
         second = build.generate_homepage(ARTICLES_FIXTURE, "it", 2, 2)
         check("e mai dalla seconda pagina", '<section class="home-intro">' not in second)
     finally:
-        CONFIG["home_intro_position"] = vecchia
+        CONFIG["home_intro_position"] = old_value
 
 
 def test_slots_for_code():
@@ -186,16 +186,16 @@ def test_slots_for_code():
         page_html = build.generate_article_page(ARTICLES_FIXTURE[0], "it", ARTICLES_FIXTURE)
         check("a inizio testo: dopo il titolo, prima del testo",
               page_html.index("<h1>") < page_html.index("INIZIO-TESTO") < page_html.index('class="post-content"'))
-        contenuto = page_html.split('class="post-content">', 1)[1]
-        check("a meta' testo: dentro il testo", "META-TESTO" in contenuto)
+        content_html = page_html.split('class="post-content">', 1)[1]
+        check("a meta' testo: dentro il testo", "META-TESTO" in content_html)
     finally:
         CONFIG["custom_code"] = old_items
 
 
 def test_meta_text_between_two_paragraphs():
     print("\nil codice a meta' testo")
-    testo = "<p>uno</p><h2>titolo</h2><p>due</p><p>tre</p><ul><li>a</li></ul><p>quattro</p>"
-    result = build.insert_in_middle(testo, "<!--X-->")
+    text = "<p>uno</p><h2>titolo</h2><p>due</p><p>tre</p><ul><li>a</li></ul><p>quattro</p>"
+    result = build.insert_in_middle(text, "<!--X-->")
     check("finisce dopo un paragrafo", re.search(r"</p><!--X-->", result) is not None, result)
     check("mai tra un titolo e il suo paragrafo", "</h2><!--X-->" not in result)
     check("mai alla fine", not result.endswith("<!--X-->"))

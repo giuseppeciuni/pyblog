@@ -95,7 +95,7 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def leggi(path_value):
+def read_text_of(path_value):
     full_path = ROOT_DIR / path_value
     if not full_path.exists():
         return ""
@@ -103,7 +103,7 @@ def leggi(path_value):
 
 
 def contains(path_value, marker):
-    return marker in leggi(path_value)
+    return marker in read_text_of(path_value)
 
 
 def test_page_scope():
@@ -112,7 +112,7 @@ def test_page_scope():
 
     home = "output/index.html"
     chosen = f"output/posts/{TICKED}.html"
-    altro = f"output/posts/{UNTICKED}.html"
+    other_value = f"output/posts/{UNTICKED}.html"
 
     # The homepage takes all three scopes: that is what they have in common.
     check("la home riceve il codice 'solo home'", contains(home, "MARCA-SOLO-HOME"))
@@ -124,24 +124,24 @@ def test_page_scope():
     check("l'articolo scelto non riceve il 'solo home'",
           not contains(chosen, "MARCA-SOLO-HOME"))
     check("l'altro articolo non riceve il 'solo home'",
-          not contains(altro, "MARCA-SOLO-HOME"))
+          not contains(other_value, "MARCA-SOLO-HOME"))
 
     # "Every article" means every article.
     check("l'articolo scelto riceve il 'tutti gli articoli'",
           contains(chosen, "MARCA-TUTTI-ARTICOLI"))
     check("l'altro articolo riceve il 'tutti gli articoli'",
-          contains(altro, "MARCA-TUTTI-ARTICOLI"))
+          contains(other_value, "MARCA-TUTTI-ARTICOLI"))
 
     # The point of the whole feature: opt-in reaches ONLY the ticked article.
     check("l'articolo con la spunta riceve il codice scelto",
           contains(chosen, "MARCA-OPTIN"))
     check("l'articolo SENZA la spunta non lo riceve",
-          not contains(altro, "MARCA-OPTIN"),
+          not contains(other_value, "MARCA-OPTIN"),
           "una spunta su un articolo ha invaso gli altri")
 
     # Switched off means off, wherever it was pointed.
-    for nome, path_value in (("home", home), ("articolo", chosen)):
-        check(f"il codice disattivato non esce nella {nome}",
+    for name, path_value in (("home", home), ("articolo", chosen)):
+        check(f"il codice disattivato non esce nella {name}",
               not contains(path_value, "MARCA-SPENTA"))
 
     # "Solo gli articoli" is the mirror of "solo home": it must skip the home.
@@ -151,7 +151,7 @@ def test_page_scope():
     check("l'articolo scelto riceve il 'solo articoli'",
           contains(chosen, "MARCA-SOLO-ARTICOLI"))
     check("l'altro articolo riceve il 'solo articoli'",
-          contains(altro, "MARCA-SOLO-ARTICOLI"))
+          contains(other_value, "MARCA-SOLO-ARTICOLI"))
 
     # "Solo gli articoli scelti": nemmeno la home, e solo quello spuntato.
     check("la home NON riceve il 'solo articoli scelti'",
@@ -159,14 +159,14 @@ def test_page_scope():
     check("l'articolo con la spunta riceve il 'solo articoli scelti'",
           contains(chosen, "MARCA-SOLO-SCELTI"))
     check("l'articolo senza la spunta non lo riceve",
-          not contains(altro, "MARCA-SOLO-SCELTI"))
+          not contains(other_value, "MARCA-SOLO-SCELTI"))
 
     # "Tutto il sito" means every page we generate, the odd ones included.
-    for nome, path_value in (("home", home), ("articolo", chosen),
+    for name, path_value in (("home", home), ("articolo", chosen),
                            ("tag", "output/tag/ai.html"),
                            ("archivio", "output/archivio.html"),
                            ("404", "output/404.html")):
-        check(f"'tutto il sito' arriva anche su {nome}",
+        check(f"'tutto il sito' arriva anche su {name}",
               contains(path_value, "MARCA-OVUNQUE"),
               f"{path_value} non ha ricevuto il codice di tutto il sito")
 
@@ -183,7 +183,7 @@ def test_page_scope():
 def test_position_on_page():
     """Each position must land where the dropdown says it does."""
     print("\nposizione: dove finisce dentro la pagina")
-    home = leggi("output/index.html")
+    home = read_text_of("output/index.html")
 
     head = home.split("</head>")[0]
     check("'nell'head' sta davvero nell'head", "MARCA-SOLO-HOME" in head)
@@ -200,7 +200,7 @@ def test_position_on_page():
     # The three visible positions all exist on an article page, so one page
     # is enough to check them. We compare offsets rather than splitting: the
     # question here is the ORDER of the landmarks, and that is what reads.
-    chosen = leggi(f"output/posts/{TICKED}.html")
+    chosen = read_text_of(f"output/posts/{TICKED}.html")
 
     def before_of(marker, landmark):
         where = chosen.find(marker)
@@ -231,19 +231,19 @@ def test_position_on_page():
     # header is shared.
     for path_value in ("output/index.html", f"output/posts/{TICKED}.html",
                      "output/404.html", "output/en/index.html"):
-        page_html = leggi(path_value)
+        page_html = read_text_of(path_value)
         menu = page_html.split('<nav class="site-nav"', 1)[-1].split("</nav>", 1)[0]
         check(f"{path_value}: 'nel menu' sta dentro il <nav>", "MARCA-MENU" in menu)
         check(f"{path_value}: 'nel menu' sta dopo RSS e prima della lingua",
               menu.find(">RSS</a>") < menu.find("MARCA-MENU") < menu.find("nav-language"))
     check("'nel menu' esce una volta sola per pagina",
-          leggi("output/index.html").count("MARCA-MENU") == 1)
+          read_text_of("output/index.html").count("MARCA-MENU") == 1)
 
 
 def test_inserted_code_intact():
     """The code is injected verbatim: escaping it would defeat the point."""
     print("\nil codice arriva intatto")
-    home = leggi("output/index.html")
+    home = read_text_of("output/index.html")
     check("il commento non e' stato trasformato in testo",
           "&lt;!-- MARCA-SOLO-HOME" not in home,
           "il codice e' stato escapato invece che inserito")
@@ -355,32 +355,32 @@ def test_off_on_one_article():
 def test_own_code():
     """The code written inside an article goes there and nowhere else."""
     print("\ncodice scritto dentro un articolo")
-    page_html = leggi(f"output/posts/{TICKED}.html")
+    page_html = read_text_of(f"output/posts/{TICKED}.html")
     check("l'articolo riceve il suo codice in cima", "MARCA-MIO-INIZIO" in page_html)
     check("l'articolo riceve il suo codice a metà", "MARCA-MIO-META" in page_html)
     check("il codice proprio spento non esce", "MARCA-NON-DEVE-USCIRE" not in page_html)
     check("la versione tradotta riceve lo stesso codice",
           contains(f"output/en/posts/{TICKED}.html", "MARCA-MIO-INIZIO"))
 
-    for nome, path_value in (("home", "output/index.html"),
+    for name, path_value in (("home", "output/index.html"),
                            ("altro articolo", f"output/posts/{UNTICKED}.html"),
                            ("archivio", "output/archivio.html"),
                            ("tag", "output/tag/ai.html")):
-        elsewhere = leggi(path_value)
-        check(f"non esce su {nome}",
+        elsewhere = read_text_of(path_value)
+        check(f"non esce su {name}",
               "MARCA-MIO-INIZIO" not in elsewhere and "MARCA-MIO-META" not in elsewhere)
 
     # "At the start": after the title, before the text. "Half way": inside
     # the text, with paragraphs on both sides.
     start = page_html.find("MARCA-MIO-INIZIO")
-    testo = page_html.find('<div class="post-content">')
+    text = page_html.find('<div class="post-content">')
     check("'all'inizio' sta dopo il titolo e prima del testo",
-          page_html.find("<h1") < start < testo)
+          page_html.find("<h1") < start < text)
     meta = page_html.find("MARCA-MIO-META")
     check("'a metà' sta dentro il testo",
-          testo < meta < page_html.find("</article>"))
+          text < meta < page_html.find("</article>"))
     check("'a metà' ha testo prima e dopo",
-          "</p>" in page_html[testo:meta] and "<p" in page_html[meta:page_html.find("</article>")])
+          "</p>" in page_html[text:meta] and "<p" in page_html[meta:page_html.find("</article>")])
 
 
 def test_saving_own_code():
@@ -434,7 +434,7 @@ def test_consent():
     save_config(config)
     build()
 
-    home = leggi("output/index.html")
+    home = read_text_of("output/index.html")
     check("le statistiche arrivano trattenute",
           '<template data-pb-consent="statistics"><!-- MARCA-STATISTICHE --></template>' in home)
     check("la pubblicità arriva trattenuta",
@@ -455,10 +455,10 @@ def test_consent():
     check("il banner porta all'informativa", 'href="https://example.org/privacy"' in home)
     check("il piè di pagina permette di cambiare idea", 'data-consent="open"' in home)
     check("in inglese il banner è in inglese",
-          "Cookies and privacy" in leggi("output/en/index.html"))
+          "Cookies and privacy" in read_text_of("output/en/index.html"))
     check("il codice proprio dell'articolo aspetta il suo consenso",
           '<template data-pb-consent="marketing"><!-- MARCA-MIO-META --></template>'
-          in leggi(f"output/posts/{TICKED}.html"))
+          in read_text_of(f"output/posts/{TICKED}.html"))
 
     ads = OUTPUT_DIR / "ads.txt"
     check("ads.txt viene pubblicato",
@@ -469,7 +469,7 @@ def test_consent():
     config["custom_code"] = TEST_SNIPPET
     save_config(config)
     build()
-    home = leggi("output/index.html")
+    home = read_text_of("output/index.html")
     check("senza codici da trattenere il banner non esce", 'id="pb-consent"' not in home)
     check("e il piè di pagina non offre preferenze", 'data-consent="open"' not in home)
 
@@ -479,7 +479,7 @@ def test_consent():
     config["ads_txt"] = ""
     save_config(config)
     build()
-    home = leggi("output/index.html")
+    home = read_text_of("output/index.html")
     check("a banner spento niente viene trattenuto", "data-pb-consent" not in home)
     check("a banner spento Analytics parte subito",
           '<script async src="https://www.googletagmanager.com/gtag/js?id=G-PROVA12345">' in home)

@@ -54,8 +54,8 @@ def finished_config():
     return c
 
 
-def state(section_id, c, la="it"):
-    return settings_panel.section_state(section_id, c, la)
+def state(section_id, c, lang="it"):
+    return settings_panel.section_state(section_id, c, lang)
 
 
 def test_section_descriptions():
@@ -68,13 +68,13 @@ def test_section_descriptions():
     groups = {g for g, _ in settings_panel.GROUPS}
     without = [s["id"] for s in settings_panel.SECTIONS if s["group"] not in groups]
     check("solo il file di configurazione è fuori dai gruppi", without == ["advanced"], str(without))
-    for la in ("it", "en"):
+    for lang in ("it", "en"):
         missing = [s["id"] for s in settings_panel.SECTIONS
-                    if la not in UI_TRANSLATIONS.get(s["label"], {})
-                    or la not in UI_TRANSLATIONS.get(s["label"] + "_desc", {})]
-        check(f"{la}: ogni sezione ha nome e descrizione", missing == [], str(missing))
-        missing = [k for _, k in settings_panel.GROUPS if la not in UI_TRANSLATIONS.get(k, {})]
-        check(f"{la}: ogni gruppo ha un nome", missing == [], str(missing))
+                    if lang not in UI_TRANSLATIONS.get(s["label"], {})
+                    or lang not in UI_TRANSLATIONS.get(s["label"] + "_desc", {})]
+        check(f"{lang}: ogni sezione ha nome e descrizione", missing == [], str(missing))
+        missing = [k for _, k in settings_panel.GROUPS if lang not in UI_TRANSLATIONS.get(k, {})]
+        check(f"{lang}: ogni gruppo ha un nome", missing == [], str(missing))
     check("ogni sezione con uno stato ha la sua funzione, e nessuna funzione è orfana",
           set(settings_panel.STATE_FUNCTIONS) == set(ids) - {"advanced"})
     names = [m for m, _ in bundle.BUNDLED_MODULES]
@@ -93,9 +93,9 @@ def test_everything_from_the_interface():
     import re
     js = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
     start = js.index("function saveConfig")
-    corpo = js[start:js.index("\n}\n", start)]
-    main_ones = set(re.findall(r"^    (\w+):", corpo, re.M))
-    nested = set(re.findall(r"^      (\w+):", corpo, re.M))
+    body = js[start:js.index("\n}\n", start)]
+    main_ones = set(re.findall(r"^    (\w+):", body, re.M))
+    nested = set(re.findall(r"^      (\w+):", body, re.M))
     # The language of the admin changes from the menu; home_order is a
     # leftover of the single-column homepage, read by nothing any more.
     outside = {"admin_language", "home_order"}
@@ -148,12 +148,12 @@ def test_texts_in_other_language():
     print("\ntesti nell'altra lingua")
     c = finished_config()
     c["seo"]["author_role"] = "Programmatore"
-    notice = ("warn", T("state_texts_of_only_main", "it").replace("{principale}", "italiano"))
+    notice = ("warn", T("state_texts_of_only_main", "it").replace("{main_language}", "italiano"))
     check("ruolo scritto solo in italiano su un sito bilingue: avviso",
           state("site", c) == notice, str(state("site", c)))
     check("in inglese l'avviso nomina la lingua in inglese",
           state("site", c, "en")[1] == T("state_texts_of_only_main", "en")
-          .replace("{principale}", "Italian"))
+          .replace("{main_language}", "Italian"))
     c["seo"]["author_role_en"] = "Software developer"
     check("tradotto anche il ruolo, l'avviso sparisce", state("site", c)[0] == "ok")
     c["home_content_en"] = ""
@@ -230,7 +230,7 @@ def test_analytics():
     c["custom_code"] = [{"id": "a", "enabled": True, "code": GTAG, "scope": "all"}]
     check("un codice esterno con Google Analytics",
           state("analytics", c) == ("ok", T("state_analytics_from_code", "it")
-                                      .replace("{nome}", "Google Analytics")))
+                                      .replace("{name}", "Google Analytics")))
     c["custom_code"].append({"id": "b", "enabled": True, "code": GTAG, "scope": "all"})
     check("lo stesso id in due codici: ogni visita conta due volte",
           state("analytics", c) == ("warn", T("state_analytics_double", "it").replace("{n}", "2")),
@@ -287,7 +287,7 @@ def test_cookie_translation_newsletter_ai():
           state("cookie", c2) == ("warn", T("state_cookie_on_m_useless", "it")))
 
     check("DeepL senza chiave",
-          state("translation", c) == ("warn", T("state_missing_one_key", "it").replace("{servizio}", "DeepL")))
+          state("translation", c) == ("warn", T("state_missing_one_key", "it").replace("{service}", "DeepL")))
     os.environ["PYBLOG_DEEPL_API_KEY"] = "chiave-di-prova"
     try:
         check("la chiave in una variabile d'ambiente vale come quella scritta",
@@ -346,7 +346,7 @@ def test_pages():
               and 'class="card-setting card-ok" href="#site"' in panel
               and 'class="card-setting card-off" href="#biography"' in panel)
         check("il file di configurazione, senza stato, resta fuori dai gruppi colorati",
-              'href="#avanzate"' not in panel)
+              'href="#advanced"' not in panel)
         check("il pannello ha un titolo per ogni gruppo",
               all(T(k, "it") in panel for _, k in settings_panel.GROUPS))
         check("le parole chiave stanno nella scheda, per la ricerca",

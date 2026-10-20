@@ -43,9 +43,9 @@ PAST = (NOW - timedelta(hours=1)).isoformat()
 FUTURE = (NOW + timedelta(days=2)).isoformat()
 
 
-def article(slug, stato, moment):
+def article(slug, state, moment):
     return {"title": "Prova " + slug, "slug": slug, "content": "<p>Testo.</p>",
-            "status": stato, "publish_at": moment, "tags": "Prova"}
+            "status": state, "publish_at": moment, "tags": "Prova"}
 
 
 def test_data():
@@ -97,16 +97,16 @@ def test_administration():
         check("i dati per il JavaScript hanno il momento", '"publish_at": "' + normalized_moment(FUTURE) + '"' in editor)
         draft = server.editor_page(None, "TOKEN")
         check("un articolo nuovo ha il pulsante per programmarlo", 'id="btn-schedule"' in draft)
-        elenco = server.admin_page(load_articles(), "TOKEN")
-        check("nell'elenco ha la sua etichetta", 'pill-scheduled' in elenco)
-        check("e il filtro dei programmati compare", re.search(r'data-filter="s" onclick="filterByStatus\(this\)">', elenco) is not None)
-        check("il riepilogo li conta", "Programmati: 1" in elenco)
+        listing = server.admin_page(load_articles(), "TOKEN")
+        check("nell'elenco ha la sua etichetta", 'pill-scheduled' in listing)
+        check("e il filtro dei programmati compare", re.search(r'data-filter="s" onclick="filterByStatus\(this\)">', listing) is not None)
+        check("il riepilogo li conta", "Programmati: 1" in listing)
         check("il suo menu può pubblicarlo subito o annullare",
-              "Pubblica ora" in elenco and "Annulla la programmazione" in elenco)
+              "Pubblica ora" in listing and "Annulla la programmazione" in listing)
     finally:
         delete_article(slug)
-    elenco = server.admin_page(load_articles(), "TOKEN")
-    check("senza programmati il filtro resta nascosto", 'data-filter="s" onclick="filterByStatus(this)" hidden>' in elenco)
+    listing = server.admin_page(load_articles(), "TOKEN")
+    check("senza programmati il filtro resta nascosto", 'data-filter="s" onclick="filterByStatus(this)" hidden>' in listing)
 
 
 def test_site():
@@ -114,9 +114,9 @@ def test_site():
     from core import build
     slug = save_article(article("prova-programmato-sito", "scheduled", FUTURE), new_article=True)
     try:
-        pubblicati = [a for a in load_articles() if a.get("status") == "published"]
-        check("non è tra gli articoli che la build pubblica", slug not in [a["slug"] for a in pubblicati])
-        check("la sitemap non lo nomina", slug not in build.generate_sitemap(pubblicati))
+        published = [a for a in load_articles() if a.get("status") == "published"]
+        check("non è tra gli articoli che la build pubblica", slug not in [a["slug"] for a in published])
+        check("la sitemap non lo nomina", slug not in build.generate_sitemap(published))
     finally:
         delete_article(slug)
 

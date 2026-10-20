@@ -157,9 +157,9 @@ def test_deceptive_archives():
     print("\narchivi costruiti per ingannare")
     site = Site()
     try:
-        testo = pathlib.Path(ARCHIVES.name) / "testo.zip"
-        testo.write_text("non sono uno zip")
-        check("un file che non è uno zip viene rifiutato", refused(testo) == "err_backup_not_zip")
+        text = pathlib.Path(ARCHIVES.name) / "testo.zip"
+        text.write_text("non sono uno zip")
+        check("un file che non è uno zip viene rifiutato", refused(text) == "err_backup_not_zip")
         check("uno zip qualsiasi, senza articoli né impostazioni, non è un backup",
               refused(archive({"foto.jpg": PNG})) == "err_backup_not_pyblog")
         check("un JSON rovinato ferma tutto",
@@ -225,10 +225,10 @@ def test_page_and_menu():
           and 'aria-current="page" href="/restore"' in page_html)
     site = Site()
     try:
-        nome = backup.save_automatic_backup().name
+        file_name = backup.save_automatic_backup().name
         page_html = server.restore_page("TOKEN")
         check("«Rimetti questo» passa il nome giusto al JavaScript",
-              f'onclick="restoreAutomatic(this, &quot;{nome}&quot;)"' in page_html)
+              f'onclick="restoreAutomatic(this, &quot;{file_name}&quot;)"' in page_html)
     finally:
         site.close()
     check("il ripristino chiede il token CSRF", "/restore" in server.CSRF_PROTECTED_ROUTES

@@ -38,34 +38,34 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def leggi(path_value):
+def read_text_of(path_value):
     return (ROOT_DIR / path_value).read_text(encoding="utf-8")
 
 
-def classes_of(testo):
+def classes_of(text):
     """Every class attribute of a fragment, in order."""
-    return re.findall(r'class="([a-z0-9 -]+)"', testo)
+    return re.findall(r'class="([a-z0-9 -]+)"', text)
 
 
 def test_card_parity():
     """The generator and site.js must build the same article row."""
     print("\nparita' fra le due versioni della riga di un articolo")
-    home = leggi("output/index.html")
+    home = read_text_of("output/index.html")
     # Up to the end of the articles section: a closing </div> alone would stop
     # inside the first row, which has divs of its own.
-    lista = re.search(r'id="list-box-articles">(.*?)</section>', home, re.S)
-    check("la lista degli articoli esiste", lista is not None)
-    if lista is None:
+    items_list = re.search(r'id="list-box-articles">(.*?)</section>', home, re.S)
+    check("la lista degli articoli esiste", items_list is not None)
+    if items_list is None:
         return
     # The first row is the lead one; the rows built by a search are ordinary
     # rows, so the comparison takes an ordinary one.
-    line = re.search(r'<article class="art-row">.*?</article>', lista.group(1), re.S)
+    line = re.search(r'<article class="art-row">.*?</article>', items_list.group(1), re.S)
     check("c'e' almeno una riga normale", line is not None)
     if line is None:
         return
     server_classes = set(classes_of(line.group(0)))
 
-    js = leggi("static/site.js")
+    js = read_text_of("static/site.js")
     function = re.search(r"function rowHtml\(.*?\n  \}", js, re.S)
     check("site.js ha un solo costruttore di righe", function is not None)
     if function is None:
@@ -94,36 +94,36 @@ def test_card_parity():
 
     # Order matters as much as presence: the thumbnail comes before the body,
     # and inside the body the tags come before the title.
-    corpo = function.group(0)
+    body = function.group(0)
     check("la miniatura viene prima del corpo della riga",
-          corpo.index("art-thumb") < corpo.index("art-body"), corpo[:200])
+          body.index("art-thumb") < body.index("art-body"), body[:200])
     check("i tag vengono prima del titolo",
-          corpo.index("tagsHtml(a)") < corpo.index("art-title"), corpo[:400])
+          body.index("tagsHtml(a)") < body.index("art-title"), body[:400])
 
 
 def test_search_index():
     """The index must carry everything the browser needs to rebuild a row."""
     print("\nindice di ricerca")
-    indice = json.loads(leggi("output/search-index.json"))
-    check("l'indice non e' vuoto", len(indice) > 0)
-    if len(indice) == 0:
+    index_value = json.loads(read_text_of("output/search-index.json"))
+    check("l'indice non e' vuoto", len(index_value) > 0)
+    if len(index_value) == 0:
         return
-    js = leggi("static/site.js")
+    js = read_text_of("static/site.js")
     source = ""
-    for nome in ("rowHtml", "tagsHtml", "articleDate", "articleTitle",
+    for name in ("rowHtml", "tagsHtml", "articleDate", "articleTitle",
                  "articleReading", "articleExcerpt"):
-        found_one = re.search(r"function " + nome + r"\(.*?\n  \}", js, re.S)
-        check(f"site.js ha {nome}", found_one is not None)
+        found_one = re.search(r"function " + name + r"\(.*?\n  \}", js, re.S)
+        check(f"site.js ha {name}", found_one is not None)
         if found_one is not None:
             source = source + found_one.group(0)
     # Every a.<field> the row builder reads must exist in the index.
     used_fields = set(re.findall(r"\ba\.([a-z_]+)", source))
-    index_fields = set(indice[0].keys())
+    index_fields = set(index_value[0].keys())
     missing = used_fields - index_fields
     check("ogni campo letto dal costruttore e' nell'indice",
           len(missing) == 0, "mancano: " + str(sorted(missing)))
     check("l'anteprima arriva gia' pronta dal server",
-          all("excerpt" in item and "reading" in item for item in indice))
+          all("excerpt" in item and "reading" in item for item in index_value))
 
 
 def test_cover_in_article():
@@ -132,19 +132,19 @@ def test_cover_in_article():
     article_list = sorted((ROOT_DIR / "output" / "posts").glob("*.html"))
     with_cover = []
     for path_value in article_list:
-        testo = path_value.read_text(encoding="utf-8")
-        if "article-cover" in testo:
-            with_cover.append((path_value.name, testo))
+        text = path_value.read_text(encoding="utf-8")
+        if "article-cover" in text:
+            with_cover.append((path_value.name, text))
     check("almeno un articolo ha la copertina in pagina", len(with_cover) > 0,
           "nessuno degli articoli di prova ha il campo image valorizzato")
-    for nome, testo in with_cover:
-        corpo = testo[testo.index("<h1>"):testo.index("</article>")]
-        positions = {etichetta: corpo.index(etichetta)
-                     for etichetta in ("<h1>", 'class="meta"', "article-cover")}
-        check(f"{nome}: la copertina sta dopo titolo e data",
+    for name, text in with_cover:
+        body = text[text.index("<h1>"):text.index("</article>")]
+        positions = {label: body.index(label)
+                     for label in ("<h1>", 'class="meta"', "article-cover")}
+        check(f"{name}: la copertina sta dopo titolo e data",
               positions["<h1>"] < positions['class="meta"'] < positions["article-cover"],
               str(positions))
-        check(f"{nome}: la copertina e' ingrandibile", "data-zoom" in testo)
+        check(f"{name}: la copertina e' ingrandibile", "data-zoom" in text)
 
 
 def test_zoom_closes_everywhere():
@@ -155,24 +155,24 @@ def test_zoom_closes_everywhere():
     whole screen, almost every tap landed on it and did nothing.
     """
     print("\nchiusura dell'ingrandimento")
-    js = leggi("static/site.js")
-    opening = re.search(r"function apriZoom\(.*?\n\}", js, re.S)
+    js = read_text_of("static/site.js")
+    opening = re.search(r"function openZoom\(.*?\n\}", js, re.S)
     check("la funzione esiste", opening is not None)
     if opening is None:
         return
-    corpo = opening.group(0)
+    body = opening.group(0)
     check("un clic sullo sfondo chiude",
-          "sfondo.addEventListener('click', chiudiZoom)" in corpo, corpo[-400:])
+          "backdrop.addEventListener('click', closeZoom)" in body, body[-400:])
     check("nessuna eccezione per l'immagine",
-          "evento.target !== grande" not in corpo, corpo[-400:])
-    check("Esc chiude", "'Escape'" in corpo)
+          "evt.target !== bigImage" not in body, body[-400:])
+    check("Esc chiude", "'Escape'" in body)
     check("il pulsante resta come scorciatoia",
-          "chiudi.addEventListener('click', chiudiZoom)" in corpo)
+          "closeIt.addEventListener('click', closeZoom)" in body)
 
-    css = leggi("static/style.css")
-    regola = re.search(r"\.zoom-picture img \{([^}]*)\}", css)
+    css = read_text_of("static/style.css")
+    rule = re.search(r"\.zoom-picture img \{([^}]*)\}", css)
     check("l'immagine mostra il cursore di chiusura",
-          regola is not None and "zoom-out" in regola.group(1), str(regola))
+          rule is not None and "zoom-out" in rule.group(1), str(rule))
 
 
 def test_zoom_only_in_articles():
@@ -186,8 +186,8 @@ def test_zoom_only_in_articles():
     print("\nlo zoom sta solo dentro gli articoli")
     for page_html in ("output/index.html", "output/en/index.html",
                    "output/archivio.html", "output/tag/ai.html"):
-        testo = leggi(page_html)
-        check(f"{page_html}: nessuno zoom", "data-zoom" not in testo)
+        text = read_text_of(page_html)
+        check(f"{page_html}: nessuno zoom", "data-zoom" not in text)
 
 
 def test_image_addresses():
@@ -213,8 +213,8 @@ def test_image_addresses():
           media_url("data:image/png;base64,AAA") == "data:image/png;base64,AAA")
     check("il campo vuoto resta vuoto", media_url("") == "")
 
-    contenuto = '<p><img src="media/dentro.png"></p><p><img src="https://cdn.tld/b.png"></p>'
-    fixed = absolute_image_sources(contenuto)
+    content_html = '<p><img src="media/dentro.png"></p><p><img src="https://cdn.tld/b.png"></p>'
+    fixed = absolute_image_sources(content_html)
     check("l'immagine dentro l'articolo viene sistemata",
           'src="/media/dentro.png"' in fixed, fixed)
     check("e quella esterna no",
@@ -229,8 +229,8 @@ def main():
     if article is None:
         print("articolo di prova assente: salto")
         return
-    originale = article.get("image", "")
-    if originale == "":
+    original = article.get("image", "")
+    if original == "":
         article["image"] = "/media/copertina-di-prova.png"
         save_article(article)
         build()
@@ -242,7 +242,7 @@ def main():
         test_zoom_only_in_articles()
         test_image_addresses()
     finally:
-        if originale == "":
+        if original == "":
             article = load_article(slug)
             article["image"] = ""
             save_article(article)

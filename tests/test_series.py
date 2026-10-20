@@ -36,13 +36,13 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def article(numero, serie="", part=0, tradotto=False):
-    art = {"title": f"Articolo {numero}", "slug": f"articolo-{numero}",
+def article(number, series_list="", part=0, translated=False):
+    art = {"title": f"Articolo {number}", "slug": f"articolo-{number}",
            "content": "<p>Testo dell'articolo.</p>", "status": "published",
-           "date": f"2026-01-{numero:02d}", "tags": "Prova",
-           "series": serie, "series_number": part}
-    if tradotto:
-        art.update({"title_en": f"Article {numero}", "content_en": "<p>Text.</p>",
+           "date": f"2026-01-{number:02d}", "tags": "Prova",
+           "series": series_list, "series_number": part}
+    if translated:
+        art.update({"title_en": f"Article {number}", "content_en": "<p>Text.</p>",
                     "translation_confirmed": True})
     return art
 
@@ -51,9 +51,9 @@ def article(numero, serie="", part=0, tradotto=False):
 # third has no number and follows by date; the name is typed in two ways.
 ARTICLES_FIXTURE = [
     article(5),
-    article(4, "Inside the machine", 0, tradotto=True),
+    article(4, "Inside the machine", 0, translated=True),
     article(3, "Un'altra serie", 1),
-    article(2, "Inside the Machine", 1, tradotto=True),
+    article(2, "Inside the Machine", 1, translated=True),
     article(1, "Inside the Machine", 2),
 ]
 
@@ -70,11 +70,11 @@ def test_data():
     check("un articolo senza serie non ne ha una",
           article_from_data({"title": "T"}, "t")["series"] == "")
 
-    serie = collect_series(ARTICLES_FIXTURE)
+    series_list = collect_series(ARTICLES_FIXTURE)
     check("maiuscole diverse nel nome sono la stessa serie",
-          set(serie) == {"inside-the-machine", "un-altra-serie"}, str(list(serie)))
+          set(series_list) == {"inside-the-machine", "un-altra-serie"}, str(list(series_list)))
     check("le parti numerate vanno in ordine di numero, le altre dopo per data",
-          [a["slug"] for a in serie["inside-the-machine"]["articles"]]
+          [a["slug"] for a in series_list["inside-the-machine"]["articles"]]
           == ["articolo-2", "articolo-1", "articolo-4"])
 
 
@@ -113,15 +113,15 @@ def test_article():
 
 def test_series_page():
     print("\nla pagina della serie")
-    serie = collect_series(ARTICLES_FIXTURE)["inside-the-machine"]
-    page_html = build.generate_series_page("inside-the-machine", serie, "it", ARTICLES_FIXTURE)
-    elenco = page_html.split('class="articles-list series-list"')[1].split("</ol>")[0]
+    series_list = collect_series(ARTICLES_FIXTURE)["inside-the-machine"]
+    page_html = build.generate_series_page("inside-the-machine", series_list, "it", ARTICLES_FIXTURE)
+    listing = page_html.split('class="articles-list series-list"')[1].split("</ol>")[0]
     check("ha il nome della serie nel titolo e nell'intestazione",
           "<title>Serie: Inside the Machine" in page_html
           and '<h1 class="articles-heading">Inside the Machine</h1>' in page_html)
     check("elenca le parti dalla prima all'ultima",
-          elenco.index("articolo-2") < elenco.index("articolo-1") < elenco.index("articolo-4")
-          and elenco.count("<li>") == 3)
+          listing.index("articolo-2") < listing.index("articolo-1") < listing.index("articolo-4")
+          and listing.count("<li>") == 3)
     check("ha il suo indirizzo canonico",
           'rel="canonical" href="' + CONFIG["base_url"].rstrip("/")
           + '/series/inside-the-machine.html"' in page_html)
@@ -134,12 +134,12 @@ def test_series_page():
 
 def test_editor():
     print("\nl'editor")
-    originale = server.load_articles
+    original = server.load_articles
     server.load_articles = lambda: ARTICLES_FIXTURE
     try:
         page_html = server.editor_page(ARTICLES_FIXTURE[4], "csrf")
     finally:
-        server.load_articles = originale
+        server.load_articles = original
     check("i campi hanno la serie e il numero dell'articolo",
           'id="series" value="Inside the Machine"' in page_html
           and 'id="series_number" value="2"' in page_html)

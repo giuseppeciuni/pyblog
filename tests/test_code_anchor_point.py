@@ -40,12 +40,12 @@ def check(description, condition, detail=""):
 SELECTOR = "div.post-content > p:nth-of-type(2)"
 
 
-def code_text(**altro):
+def code_text(**other_value):
     snippet = {"id": "punto-1", "name": "Banner", "enabled": True, "scope": "articles",
                "position": "anchor", "anchor_selector": SELECTOR, "anchor_where": "after",
                "anchor_label": "Dopo · Paragrafo 2 del testo", "anchor_page": "article",
                "consent": "necessary", "code": '<div class="banner">B</div>'}
-    snippet.update(altro)
+    snippet.update(other_value)
     return snippet
 
 

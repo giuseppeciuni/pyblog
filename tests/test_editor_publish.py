@@ -119,13 +119,13 @@ def test_preview_does_not_save():
     address = f"http://127.0.0.1:{httpd.server_address[1]}/preview"
     token = create_session_token()
 
-    def preview(payload, lingua="it", csrf=None, cookie=True):
+    def preview(payload, language="it", csrf=None, cookie=True):
         if csrf is None:
             csrf = csrf_token_for(token)
-        corpo = urllib.parse.urlencode(
-            {"csrf_token": csrf, "language": lingua, "data": json.dumps(payload)}).encode()
-        intestazioni = {"Cookie": "sessione=" + token} if cookie else {}
-        request_value = urllib.request.Request(address, data=corpo, headers=intestazioni)
+        body = urllib.parse.urlencode(
+            {"csrf_token": csrf, "language": language, "data": json.dumps(payload)}).encode()
+        header_lines = {"Cookie": "session=" + token} if cookie else {}
+        request_value = urllib.request.Request(address, data=body, headers=header_lines)
         with urllib.request.urlopen(request_value, timeout=30) as response:
             return response.status, response.headers, response.read().decode("utf-8")
 
@@ -134,14 +134,14 @@ def test_preview_does_not_save():
             "title_en": "Title NEVER SAVED", "content_en": "<p>Text NEVER SAVED.</p>",
             "translation_authorized": True, "translation_confirmed": True}
     try:
-        stato, intestazioni, page_html = preview(payload)
+        state, header_lines, page_html = preview(payload)
         check("risponde con la pagina come è nell'editor",
-              stato == 200 and "Titolo MAI SALVATO" in page_html and "Testo MAI SALVATO" in page_html,
+              state == 200 and "Titolo MAI SALVATO" in page_html and "Testo MAI SALVATO" in page_html,
               page_html[:200])
         check("senza la CSP dell'amministrazione, come le pagine pubbliche",
-              "default-src" not in intestazioni.get("Content-Security-Policy", ""))
+              "default-src" not in header_lines.get("Content-Security-Policy", ""))
         check("ma chiusa nel sandbox: i codici esterni non raggiungono l'editor",
-              intestazioni.get("Content-Security-Policy") == server.PREVIEW_SANDBOX
+              header_lines.get("Content-Security-Policy") == server.PREVIEW_SANDBOX
               and "allow-same-origin" not in server.PREVIEW_SANDBOX)
         check("il file dell'articolo non è cambiato", article_file.read_bytes() == before)
 

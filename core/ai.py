@@ -157,13 +157,13 @@ def translate_with_deepl(text, api_key, source="it", target="en"):
     else:
         url = "https://api.deepl.com/v2/translate"
 
-    parametri = {
+    params = {
         "text": text,
         "source_lang": source.upper(),
         "target_lang": target.upper(),
         "tag_handling": "html",
     }
-    data = urllib.parse.urlencode(parametri).encode("utf-8")
+    data = urllib.parse.urlencode(params).encode("utf-8")
     request = _urlreq.Request(url, data=data)
     request.add_header("Authorization", "DeepL-Auth-Key " + api_key)
 
@@ -182,13 +182,13 @@ def translate_with_google(text, api_key, source="it", target="en"):
         raise missing_key_error("Google")
 
     url = "https://translation.googleapis.com/language/translate/v2?key=" + api_key
-    parametri = {
+    params = {
         "q": text,
         "source": source,
         "target": target,
         "format": "html",
     }
-    data = urllib.parse.urlencode(parametri).encode("utf-8")
+    data = urllib.parse.urlencode(params).encode("utf-8")
     request = _urlreq.Request(url, data=data)
 
     with _urlreq.urlopen(request, timeout=30) as response:
@@ -207,7 +207,7 @@ def translation_instruction(text, source, target):
     )
 
 
-def translate_with_llm(text, api_key, endpoint, modello, source="it", target="en"):
+def translate_with_llm(text, api_key, endpoint, model, source="it", target="en"):
     """
     Translate an HTML text using an LLM (e.g. Claude).
     We ask the model to translate while keeping the HTML tags intact.
@@ -215,12 +215,12 @@ def translate_with_llm(text, api_key, endpoint, modello, source="it", target="en
     if api_key == "":
         raise missing_key_error("Anthropic")
 
-    istruzione = translation_instruction(text, source, target)
+    instruction = translation_instruction(text, source, target)
     request_body = {
-        "model": modello,
+        "model": model,
         "max_tokens": 4000,
         "messages": [
-            {"role": "user", "content": istruzione},
+            {"role": "user", "content": instruction},
         ],
     }
     data = json.dumps(request_body).encode("utf-8")
@@ -247,7 +247,7 @@ def translate_with_llm(text, api_key, endpoint, modello, source="it", target="en
     return translated_text
 
 
-def translate_with_openai_compat(text, api_key, endpoint, modello, source="it", target="en"):
+def translate_with_openai_compat(text, api_key, endpoint, model, source="it", target="en"):
     """
     Translate an HTML text using a service compatible with the OpenAI API
     (both OpenAI and DeepSeek are). Both use the same 'chat completions'
@@ -257,11 +257,11 @@ def translate_with_openai_compat(text, api_key, endpoint, modello, source="it", 
     if api_key == "":
         raise missing_key_error("OpenAI / DeepSeek")
 
-    istruzione = translation_instruction(text, source, target)
+    instruction = translation_instruction(text, source, target)
     request_body = {
-        "model": modello,
+        "model": model,
         "messages": [
-            {"role": "user", "content": istruzione},
+            {"role": "user", "content": instruction},
         ],
     }
     data = json.dumps(request_body).encode("utf-8")
@@ -278,8 +278,8 @@ def translate_with_openai_compat(text, api_key, endpoint, modello, source="it", 
         return ""
     if choices[0].get("finish_reason") == "length":
         raise ValueError(T("err_translation_truncated", admin_language()))
-    messaggio = choices[0].get("message", {})
-    translated_text = messaggio.get("content", "")
+    message = choices[0].get("message", {})
+    translated_text = message.get("content", "")
     return translated_text
 
 def translate_text(text):
@@ -305,33 +305,33 @@ def translate_text(text):
 
     try:
         if service == "deepl":
-            tradotto = translate_with_deepl(
+            translated = translate_with_deepl(
                 text, secret_setting(translation_config, "deepl_api_key"), source, target)
         elif service == "google":
-            tradotto = translate_with_google(
+            translated = translate_with_google(
                 text, secret_setting(translation_config, "google_api_key"), source, target)
         elif service == "llm":
-            tradotto = translate_with_llm(
+            translated = translate_with_llm(
                 text,
                 secret_setting(translation_config, "llm_api_key"),
                 translation_config.get("llm_endpoint", ""),
                 translation_config.get("llm_model", ""), source, target)
         elif service == "openai":
-            tradotto = translate_with_openai_compat(
+            translated = translate_with_openai_compat(
                 text,
                 secret_setting(translation_config, "openai_api_key"),
                 "https://api.openai.com/v1/chat/completions",
                 translation_config.get("openai_model", "gpt-4o-mini"), source, target)
         elif service == "deepseek":
-            tradotto = translate_with_openai_compat(
+            translated = translate_with_openai_compat(
                 text,
                 secret_setting(translation_config, "deepseek_api_key"),
                 "https://api.deepseek.com/chat/completions",
                 translation_config.get("deepseek_model", "deepseek-chat"), source, target)
         else:
             return {"ok": False, "error": T("err_unknown_translation_service", admin_language())}
-        tradotto, spostate = restore_media(tradotto, media)
-        return {"ok": True, "text": tradotto, "media_recovered": spostate}
+        translated, moved = restore_media(translated, media)
+        return {"ok": True, "text": translated, "media_recovered": moved}
     except _urlerr.HTTPError as error:
         return {"ok": False, "error": T("err_service_error", admin_language()) + str(error.code)}
     except Exception as error:
@@ -353,12 +353,12 @@ def call_llm_with_prompt(prompt, max_tokens=300):
         if service == "llm":
             api_key = secret_setting(translation_config, "llm_api_key")
             endpoint = translation_config.get("llm_endpoint", "")
-            modello = translation_config.get("llm_model", "")
+            model = translation_config.get("llm_model", "")
             if api_key == "":
                 return {"ok": False, "error": str(missing_key_error("Anthropic"))}
             # We reuse the structure of the Anthropic call.
             body = {
-                "model": modello,
+                "model": model,
                 "max_tokens": max_tokens,
                 "messages": [{"role": "user", "content": prompt}],
             }
@@ -379,15 +379,15 @@ def call_llm_with_prompt(prompt, max_tokens=300):
             if service == "openai":
                 api_key = secret_setting(translation_config, "openai_api_key")
                 endpoint = "https://api.openai.com/v1/chat/completions"
-                modello = translation_config.get("openai_model", "gpt-4o-mini")
+                model = translation_config.get("openai_model", "gpt-4o-mini")
             else:
                 api_key = secret_setting(translation_config, "deepseek_api_key")
                 endpoint = "https://api.deepseek.com/chat/completions"
-                modello = translation_config.get("deepseek_model", "deepseek-chat")
+                model = translation_config.get("deepseek_model", "deepseek-chat")
             if api_key == "":
                 return {"ok": False, "error": str(missing_key_error(service))}
             body = {
-                "model": modello,
+                "model": model,
                 "max_tokens": max_tokens,
                 "messages": [{"role": "user", "content": prompt}],
             }

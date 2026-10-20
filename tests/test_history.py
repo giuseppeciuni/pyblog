@@ -38,10 +38,10 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def payload(slug, testo, stato="draft", originale=None):
-    d = {"title": "Cronologia " + slug, "slug": slug, "content": f"<p>{testo}</p>",
-         "status": stato, "tags": "Prova"}
-    d["original_slug"] = slug if originale is None else originale
+def payload(slug, text, state="draft", original=None):
+    d = {"title": "Cronologia " + slug, "slug": slug, "content": f"<p>{text}</p>",
+         "status": state, "tags": "Prova"}
+    d["original_slug"] = slug if original is None else original
     return d
 
 
@@ -53,8 +53,8 @@ def test_saves():
         save_article(payload(slug, "Due"))
         versions = list_versions(slug)
         check("salvare un cambiamento tiene la versione di prima", len(versions) == 1, str(versions))
-        vecchia = load_version(slug, versions[0]["id"])
-        check("la versione tenuta ha il testo di prima", vecchia and vecchia["content"] == "<p>Uno</p>")
+        old_value = load_version(slug, versions[0]["id"])
+        check("la versione tenuta ha il testo di prima", old_value and old_value["content"] == "<p>Uno</p>")
         check("l'elenco dice titolo, stato e parole",
               versions[0]["title"] == "Cronologia prova-cronologia" and versions[0]["status"] == "draft"
               and versions[0]["words"] == 1, str(versions[0]))
@@ -89,7 +89,7 @@ def test_rename():
     print("\nun articolo rinominato si porta dietro le versioni")
     slug = save_article(payload("prova-cronologia-vecchio", "Uno"), new_article=True)
     save_article(payload(slug, "Due"))
-    new = save_article(payload("prova-cronologia-nuovo", "Tre", originale=slug))
+    new = save_article(payload("prova-cronologia-nuovo", "Tre", original=slug))
     delete_article(slug)  # what the server does after a rename
     try:
         # One version: the rename came within ten minutes of the first save.

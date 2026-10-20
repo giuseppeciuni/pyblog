@@ -39,14 +39,14 @@ def check(description, condition, detail=""):
             print(f"        {detail}")
 
 
-def regola(testo, selector):
+def rule(text, selector):
     """
     The declarations of the first rule with this EXACT selector.
 
     Anchored at the start of a line: without that, looking for "img" also
     matches ".card-page img", and the check reads the wrong rule.
     """
-    found_one = re.search(r"(?m)^" + re.escape(selector) + r"\s*\{([^}]*)\}", testo)
+    found_one = re.search(r"(?m)^" + re.escape(selector) + r"\s*\{([^}]*)\}", text)
     if found_one is None:
         return None
     return " ".join(found_one.group(1).split())
@@ -58,7 +58,7 @@ def test_featured_cover():
     # layout: every row, the lead included, uses this thumbnail.
     print("\nminiatura delle righe degli articoli (style.css)")
     css = (ROOT_DIR / "static" / "style.css").read_text(encoding="utf-8")
-    declarations = regola(css, ".art-thumb-img, .art-tile")
+    declarations = rule(css, ".art-thumb-img, .art-tile")
     check("la regola esiste", declarations is not None)
     if declarations is None:
         return
@@ -71,7 +71,7 @@ def test_featured_cover():
           "max-width" not in declarations, declarations)
     check("il ritaglio e' impostato", "object-fit:cover" in declarations.replace(" ", ""))
 
-    global_value = regola(css, "img")
+    global_value = rule(css, "img")
     check("la regola globale sulle immagini e' ancora !important "
           "(e' il motivo per cui non si usa max-width qui)",
           global_value is not None and "!important" in global_value, str(global_value))
@@ -81,7 +81,7 @@ def test_editor_preview():
     """The editor thumbnail has the same trap on the vertical axis."""
     print("\nminiatura della copertina nell'editor (admin.css)")
     css = (ROOT_DIR / "static" / "admin.css").read_text(encoding="utf-8")
-    declarations = regola(css, ".cover-image-preview")
+    declarations = rule(css, ".cover-image-preview")
     check("la regola esiste", declarations is not None)
     if declarations is None:
         return
@@ -103,7 +103,7 @@ def test_flex_images_have_a_width():
     css = (ROOT_DIR / "static" / "style.css").read_text(encoding="utf-8")
     # The images this project places inside a flex row or column.
     for selector in (".art-thumb-img, .art-tile", ".author-box-photo", ".profile-photo"):
-        declarations = regola(css, selector)
+        declarations = rule(css, selector)
         if declarations is None:
             check(f"{selector}: la regola esiste", False)
             continue

@@ -84,39 +84,39 @@ def test_requests():
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{httpd.server_address[1]}"
     try:
-        stato, header, _ = request(base, "/config?x=1", "www.ciunix.com")
+        state, header, _ = request(base, "/config?x=1", "www.ciunix.com")
         check("sull'indirizzo pubblico l'admin manda al suo indirizzo, con la stessa pagina",
-              stato == 303 and header.get("Location") == "https://admin.ciunix.com/config?x=1",
-              f"{stato} {header.get('Location')}")
-        stato, _, _ = request(base, "/save", "www.ciunix.com", "POST", body=b"{}")
-        check("sull'indirizzo pubblico nessuna richiesta all'admin arriva", stato == 404, str(stato))
-        stato, _, _ = request(base, "/login", "www.ciunix.com", "POST", body=b"password=x")
-        check("nemmeno il login", stato == 404, str(stato))
+              state == 303 and header.get("Location") == "https://admin.ciunix.com/config?x=1",
+              f"{state} {header.get('Location')}")
+        state, _, _ = request(base, "/save", "www.ciunix.com", "POST", body=b"{}")
+        check("sull'indirizzo pubblico nessuna richiesta all'admin arriva", state == 404, str(state))
+        state, _, _ = request(base, "/login", "www.ciunix.com", "POST", body=b"password=x")
+        check("nemmeno il login", state == 404, str(state))
         # Leaving the newsletter answers even with the newsletter off.
-        stato, _, _ = request(base, "/unsubscribe", "www.ciunix.com", "POST", body=b"token=x")
-        check("i moduli dei lettori sì", stato != 404, str(stato))
+        state, _, _ = request(base, "/unsubscribe", "www.ciunix.com", "POST", body=b"token=x")
+        check("i moduli dei lettori sì", state != 404, str(state))
 
-        stato, _, page_html = request(base, "/admin", "admin.ciunix.com")
+        state, _, page_html = request(base, "/admin", "admin.ciunix.com")
         check("sull'indirizzo dell'admin l'admin risponde (qui con l'accesso)",
-              stato == 200 and "password" in page_html.lower(), str(stato))
-        stato, header, _ = request(base, "/posts/un-articolo.html", "admin.ciunix.com")
+              state == 200 and "password" in page_html.lower(), str(state))
+        state, header, _ = request(base, "/posts/un-articolo.html", "admin.ciunix.com")
         check("sull'indirizzo dell'admin una pagina del sito va al sito pubblico",
-              stato == 303 and header.get("Location") == "https://www.ciunix.com/posts/un-articolo.html",
-              f"{stato} {header.get('Location')}")
-        stato, header, _ = request(base, "/", "admin.ciunix.com")
-        check("e la radice dell'admin apre l'admin", stato == 303 and header.get("Location") == "/admin")
-        stato, _, _ = request(base, "/style.css", "admin.ciunix.com")
-        check("fogli di stile e immagini restano: servono alle anteprime", stato != 303, str(stato))
+              state == 303 and header.get("Location") == "https://www.ciunix.com/posts/un-articolo.html",
+              f"{state} {header.get('Location')}")
+        state, header, _ = request(base, "/", "admin.ciunix.com")
+        check("e la radice dell'admin apre l'admin", state == 303 and header.get("Location") == "/admin")
+        state, _, _ = request(base, "/style.css", "admin.ciunix.com")
+        check("fogli di stile e immagini restano: servono alle anteprime", state != 303, str(state))
 
-        stato, _, _ = request(base, "/admin", "www.ciunix.com", proxied=False)
-        check("chi arriva direttamente all'editor, senza nginx, entra come sempre", stato == 200)
-        stato, _, _ = request(base, "/admin", "127.0.0.1:8000")
+        state, _, _ = request(base, "/admin", "www.ciunix.com", proxied=False)
+        check("chi arriva direttamente all'editor, senza nginx, entra come sempre", state == 200)
+        state, _, _ = request(base, "/admin", "127.0.0.1:8000")
         check("e anche un proxy che non passa l'host: un errore di nginx non chiude fuori",
-              stato == 200)
+              state == 200)
 
-        stato, header, corpo = request(base, "/pyblog-ping?n=inventata", "admin.ciunix.com")
+        state, header, body_text = request(base, "/pyblog-ping?n=inventata", "admin.ciunix.com")
         check("il segnale di vita non riconosce una parola che non ha inventato lui",
-              stato == 200 and json.loads(corpo) == {"pyblog": True, "same": False})
+              state == 200 and json.loads(body_text) == {"pyblog": True, "same": False})
 
         handler = server.Handler.__new__(server.Handler)
         CONFIG["admin_language"] = "it"
@@ -130,11 +130,11 @@ def test_requests():
         check("dopo il controllo la parola viene dimenticata", len(server.PING_NONCES) == 0)
 
         CONFIG["admin_url"] = ""
-        stato, _, _ = request(base, "/admin", "www.ciunix.com")
-        check("senza indirizzo a parte, tutto come prima", stato == 200)
+        state, _, _ = request(base, "/admin", "www.ciunix.com")
+        check("senza indirizzo a parte, tutto come prima", state == 200)
         CONFIG["admin_url"] = "admin.ciunix.com/sbagliato"
-        stato, _, _ = request(base, "/admin", "www.ciunix.com")
-        check("con un indirizzo scritto male, tutto come prima", stato == 200)
+        state, _, _ = request(base, "/admin", "www.ciunix.com")
+        check("con un indirizzo scritto male, tutto come prima", state == 200)
     finally:
         httpd.shutdown()
         httpd.server_close()
@@ -153,7 +153,7 @@ def test_settings():
     js = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
     check("prima di salvare un indirizzo nuovo, lo fa provare al server",
           "pbPostJson('/check-admin-address'" in js
-          and "checkAdminAddress(pulsante, indirizzoAdmin)" in js)
+          and "checkAdminAddress(buttonEl, adminAddress)" in js)
     nginx = (pathlib.Path(__file__).resolve().parent.parent / "nginx.conf.example").read_text()
     # Every page of the administration has to reach Python: a route left
     # out of the single-address example answers 404 online.
@@ -167,9 +167,9 @@ def test_settings():
     example = (pathlib.Path(__file__).resolve().parent.parent / "nginx.separate-admin.conf.example")
     check("c'è l'esempio di nginx con l'admin a parte", example.is_file())
     if example.is_file():
-        testo = example.read_text()
+        text = example.read_text()
         check("l'esempio passa l'host e l'indirizzo del visitatore",
-              "proxy_set_header Host $host;" in testo and "X-Real-IP" in testo)
+              "proxy_set_header Host $host;" in text and "X-Real-IP" in text)
 
 
 def main():

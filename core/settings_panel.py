@@ -252,61 +252,61 @@ def umami_is_set(config):
 # Each function returns a list of (tone, text) in order of importance: the
 # first is what the card shows, the warnings among them are the first steps.
 
-def _state_site(config, la):
+def _state_site(config, lang):
     problems = []
     if _text(config.get("site_title", "")) == "":
-        problems.append(("warn", T("state_missing_one_title", la)))
+        problems.append(("warn", T("state_missing_one_title", lang)))
     if not domain_is_set(config):
-        problems.append(("warn", T("state_missing_one_domain", la)))
+        problems.append(("warn", T("state_missing_one_domain", lang)))
     if _text(config.get("author", "")) == "":
-        problems.append(("warn", T("state_missing_one_author", la)))
+        problems.append(("warn", T("state_missing_one_author", lang)))
     if _text(str(config.get("admin_url", "") or "")) != "" and admin_address(config) == "":
-        problems.append(("warn", T("state_admin_not_valid", la)))
+        problems.append(("warn", T("state_admin_not_valid", lang)))
     elif admin_address(config) == "" and domain_is_set(config) and outside_code(config):
         # Code of outside services on the site's own address can read what
         # the logged-in author sees there, settings and keys included.
-        problems.append(("warn", T("state_admin_shared", la)))
+        problems.append(("warn", T("state_admin_shared", lang)))
     if site_is_bilingual(config) and texts_only_in_main_language(config):
         main = config.get("language", "it") if config.get("language") in ("it", "en") else "it"
-        problems.append(("warn", T("state_texts_of_only_main", la)
-                         .replace("{principale}", LANGUAGE_NAMES[main][la])))
+        problems.append(("warn", T("state_texts_of_only_main", lang)
+                         .replace("{main_language}", LANGUAGE_NAMES[main][lang])))
     if problems:
         return problems
     domain = re.sub(r"^https?://", "", _text(config.get("base_url", ""))).rstrip("/")
     return [("ok", domain)]
 
 
-def _state_home(config, la):
+def _state_home(config, lang):
     contents = [config.get("home_content", ""), config.get("home_content_en", "")]
     if any(has_placeholder(c) for c in contents):
-        return [("warn", T("state_introduction_example", la))]
+        return [("warn", T("state_introduction_example", lang))]
     if plain_text(contents[0]) == "":
-        return [("off", T("state_introduction_empty_f", la))]
-    return [("ok", T("state_introduction_written_f", la))]
+        return [("off", T("state_introduction_empty_f", lang))]
+    return [("ok", T("state_introduction_written_f", lang))]
 
 
-def _state_biography(config, la):
+def _state_biography(config, lang):
     bio = _dict(config, "biography")
     if bio.get("enabled", False) is not True:
-        return [("off", T("state_off_f", la))]
+        return [("off", T("state_off_f", lang))]
     if plain_text(bio.get("content", "")) == "":
-        return [("warn", T("state_on_f_empty_f", la))]
-    return [("ok", T("state_on_f", la))]
+        return [("warn", T("state_on_f_empty_f", lang))]
+    return [("ok", T("state_on_f", lang))]
 
 
-def _state_projects(config, la):
+def _state_projects(config, lang):
     # The same rule as the homepage: a project shows when it is visible and
     # has a name.
     projects = projects_settings(config)
     shown = [p for p in projects["items"] if p["visible"] and p["name"] != ""]
     if not projects["enabled"]:
-        return [("off", T("state_off_pl", la))]
+        return [("off", T("state_off_pl", lang))]
     if len(shown) == 0:
-        return [("warn", T("state_on_pl_without_projects", la))]
-    return [("ok", T("state_n_projects", la).replace("{n}", str(len(shown))))]
+        return [("warn", T("state_on_pl_without_projects", lang))]
+    return [("ok", T("state_n_projects", lang).replace("{n}", str(len(shown))))]
 
 
-def _state_cards(config, la):
+def _state_cards(config, lang):
     cards = config.get("home_cards", [])
     if not isinstance(cards, list) or config.get("home_cards_enabled", True) is not True:
         cards = []
@@ -314,55 +314,55 @@ def _state_cards(config, la):
     example = [c for c in active
                if has_placeholder(c.get("content", "")) or has_placeholder(c.get("content_en", ""))]
     if len(example) == 1:
-        return [("warn", T("state_box_example", la))]
+        return [("warn", T("state_box_example", lang))]
     if len(example) > 1:
-        return [("warn", T("state_boxes_example", la).replace("{n}", str(len(example))))]
+        return [("warn", T("state_boxes_example", lang).replace("{n}", str(len(example))))]
     if len(active) == 0:
-        return [("off", T("state_no_one_box", la))]
-    return [("ok", T("state_n_boxes", la).replace("{n}", str(len(active))))]
+        return [("off", T("state_no_one_box", lang))]
+    return [("ok", T("state_n_boxes", lang).replace("{n}", str(len(active))))]
 
 
-def _state_comments(config, la):
+def _state_comments(config, lang):
     system = config.get("comments", "none")
     if system == "giscus":
         giscus = _dict(config, "giscus")
         values = [_text(giscus.get(k, "")) for k in ("repo", "repo_id", "category_id")]
         if any(v == "" or v in PLACEHOLDER_GISCUS for v in values):
-            return [("warn", T("state_giscus_from_configure", la))]
+            return [("warn", T("state_giscus_from_configure", lang))]
         return [("ok", "Giscus")]
     if system == "disqus":
         if _text(_dict(config, "disqus").get("shortname", "")) in PLACEHOLDER_DISQUS:
-            return [("warn", T("state_disqus_from_configure", la))]
+            return [("warn", T("state_disqus_from_configure", lang))]
         return [("ok", "Disqus")]
-    return [("off", T("state_off_pl", la))]
+    return [("off", T("state_off_pl", lang))]
 
 
-def _state_newsletter(config, la):
+def _state_newsletter(config, lang):
     current = newsletter.settings(config)
     if not current["enabled"]:
-        return [("off", T("state_off_f", la))]
+        return [("off", T("state_off_f", lang))]
     if not newsletter.ready(current):
-        return [("warn", T("state_newsletter_without_mail", la))]
+        return [("warn", T("state_newsletter_without_mail", lang))]
     confirmed, _ = newsletter.counts()
-    return [("ok", T("state_n_subscribers", la).replace("{n}", str(confirmed)))]
+    return [("ok", T("state_n_subscribers", lang).replace("{n}", str(confirmed)))]
 
 
-def _state_translation(config, la):
+def _state_translation(config, lang):
     translation = _dict(config, "translation")
     service = translation.get("service", "deepl")
     if service not in TRANSLATION_SERVICES:
         service = "deepl"
     name, key_name = TRANSLATION_SERVICES[service]
     if _text(secret_setting(translation, key_name)) == "":
-        return [("warn", T("state_missing_one_key", la).replace("{servizio}", name))]
+        return [("warn", T("state_missing_one_key", lang).replace("{service}", name))]
     return [("ok", name)]
 
 
-def _state_analytics(config, la):
+def _state_analytics(config, lang):
     loads = analytics_loads(config)
     doubled = sorted({i for i in loads if loads.count(i) > 1})
     if doubled:
-        return [("warn", T("state_analytics_double", la)
+        return [("warn", T("state_analytics_double", lang)
                  .replace("{n}", str(loads.count(doubled[0]))))]
     names = []
     if loads:
@@ -370,49 +370,49 @@ def _state_analytics(config, la):
     if umami_is_set(config):
         names.append("Umami")
     if not names:
-        return [("off", T("state_none_f", la))]
+        return [("off", T("state_none_f", lang))]
     text = " + ".join(names)
     if loads and _text(config.get("analytics_id", "")) == "":
-        text = T("state_analytics_from_code", la).replace("{nome}", text)
+        text = T("state_analytics_from_code", lang).replace("{name}", text)
     return [("ok", text)]
 
 
-def _state_code(config, la):
+def _state_code(config, lang):
     # The warning of the cookie banner, again where it is fixed: the
     # consent of a card of code is chosen here.
     if _dict(config, "consent").get("enabled", False) is True and analytics_without_consent(config):
-        return [("warn", T("state_cookie_analytics_needed", la))]
+        return [("warn", T("state_cookie_analytics_needed", lang))]
     count = len(enabled_snippets(config))
     if count == 0:
-        return [("off", T("state_nobody", la))]
+        return [("off", T("state_nobody", lang))]
     if count == 1:
-        return [("ok", T("state_one_item_active", la))]
-    return [("ok", T("state_n_active_pl", la).replace("{n}", str(count)))]
+        return [("ok", T("state_one_item_active", lang))]
+    return [("ok", T("state_n_active_pl", lang).replace("{n}", str(count)))]
 
 
-def _state_consent(config, la):
+def _state_consent(config, lang):
     consent = _dict(config, "consent")
     if consent.get("enabled", False) is True:
         problems = []
         # Google Analytics marked "necessary" runs before anyone agrees,
         # banner or not: the most common way to get this wrong.
         if analytics_without_consent(config):
-            problems.append(("warn", T("state_cookie_analytics_needed", la)))
+            problems.append(("warn", T("state_cookie_analytics_needed", lang)))
         # With nothing waiting for consent the banner never shows, and the
         # author who switched it on is left wondering why.
         if not consent_categories(config):
-            problems.append(("warn", T("state_cookie_on_m_useless", la)))
-        return problems or [("ok", T("state_on_m", la))]
+            problems.append(("warn", T("state_cookie_on_m_useless", lang)))
+        return problems or [("ok", T("state_on_m", lang))]
     # Google Analytics sets cookies, and in Europe it needs consent first.
     if analytics_loads(config):
-        return [("warn", T("state_cookie_off_m_analytics", la))]
-    return [("off", T("state_off_m", la))]
+        return [("warn", T("state_cookie_off_m_analytics", lang))]
+    return [("off", T("state_off_m", lang))]
 
 
-def _state_ai(config, la):
+def _state_ai(config, lang):
     policy = _dict(config, "ai_training").get("policy", "open")
     keys = {"licensed": "state_ai_licence", "disallow": "state_ai_forbidden"}
-    return [("ok", T(keys.get(policy, "state_ai_open"), la))]
+    return [("ok", T(keys.get(policy, "state_ai_open"), lang))]
 
 
 STATE_FUNCTIONS = {
@@ -431,21 +431,21 @@ STATE_FUNCTIONS = {
 }
 
 
-def section_states(section_id, config, la):
+def section_states(section_id, config, lang):
     """Everything worth saying about a section, most important first."""
     function = STATE_FUNCTIONS.get(section_id)
     if function is None:
         return []
-    return function(config, la)
+    return function(config, lang)
 
 
-def section_state(section_id, config, la):
+def section_state(section_id, config, lang):
     """What the card of a section shows: (tone, text), or None."""
-    states = section_states(section_id, config, la)
+    states = section_states(section_id, config, lang)
     return states[0] if states else None
 
 
-def setup_steps(config, articles, la):
+def setup_steps(config, articles, lang):
     """
     The first steps of the dashboard: every warning of the sections a
     visitor of the site would notice, then the first article to publish.
@@ -454,9 +454,9 @@ def setup_steps(config, articles, la):
     """
     steps = []
     for section_id in SETUP_SECTIONS:
-        for tone, text in section_states(section_id, config, la):
+        for tone, text in section_states(section_id, config, lang):
             if tone == "warn":
                 steps.append((section_id, text))
     if not any(a.get("status") == "published" for a in articles):
-        steps.append(("", T("state_first_article", la)))
+        steps.append(("", T("state_first_article", lang)))
     return steps
