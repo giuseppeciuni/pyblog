@@ -528,6 +528,20 @@ caricarlo di nuovo.
   grandi vengono ridotte nel browser prima di partire. Clicca l'immagine e
   trascina gli angoli per ridimensionarla; i pulsanti di allineamento la
   centrano o la mettono a sinistra o a destra, con il testo intorno.
+- **Testo alternativo e didascalia:** cliccata un'immagine, compare il
+  pulsante **Testo alternativo e didascalia** (o fai doppio clic
+  sull'immagine).
+  - Il **testo alternativo** descrive l'immagine a Google Immagini e a chi
+    usa un lettore di schermo.
+  - La **didascalia** è la riga sotto l'immagine: nell'editor è un paragrafo
+    più piccolo, che puoi anche correggere scrivendoci dentro; sul sito
+    diventa una `<figure>` con la sua `<figcaption>`, la forma che i motori
+    di ricerca riconoscono.
+  - Un'immagine senza testo alternativo prende la didascalia come
+    descrizione. Se l'immagine stava dentro una frase, aggiungendo la
+    didascalia passa su un paragrafo suo.
+  - Sotto l'editor una riga conta le immagini ancora senza testo
+    alternativo, e **Aggiungi** apre la prima.
 - **Codice:** il pulsante `<>` crea un blocco; sul sito il codice viene
   colorato secondo il linguaggio e ha un pulsante "Copia".
 - **Tabelle:** **Inserisci tabella** chiede righe e colonne; clicca una
@@ -544,7 +558,9 @@ caricarlo di nuovo.
 **Importa da Word (.docx)**, sopra l'editor, carica un documento intero
 (fino a 30 MB): titoli, grassetti e corsivi, allineamenti, elenchi anche
 annidati, tabelle con le celle unite, immagini con il loro testo
-alternativo, note a piè di pagina, link, apici e pedici, caselle di testo. Il
+alternativo (in Word: clic destro sull'immagine → "Modifica testo
+alternativo") e le didascalie scritte con "Inserisci didascalia" (stile
+Didascalia), note a piè di pagina, link, apici e pedici, caselle di testo. Il
 titolo del documento (stile Titolo o Titolo 1 all'inizio) diventa il titolo
 dell'articolo e il sottotitolo la descrizione, se è vuota. Restano fuori il
 sommario di Word, il testo nascosto, le immagini WMF/EMF (che nessun browser

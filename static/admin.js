@@ -743,6 +743,186 @@ function uploadMediaFile(idCampoFile, limiteMb, messaggioInizio, messaggioFine,
     });
 }
 
+/* --- Alternative text and caption of a picture ------------------------------- */
+
+// The alternative text describes a picture to Google Images and to whoever
+// cannot see it; the caption is the line under it. Clicking a picture shows
+// the button that edits both (a double click opens the window at once), and
+// a line under the editor counts the pictures that still have no
+// description. Everything goes through Quill, so the change is part of the
+// text, saved with it and undone with Ctrl+Z.
+
+var imageDetailsTarget = null;
+
+function watchImageDescriptions(editor) {
+  editor.root.addEventListener('click', function(event) {
+    var button = document.getElementById('image-details-button');
+    if (event.target.tagName === 'IMG') {
+      imageDetailsTarget = { editor: editor, image: event.target };
+      if (button) { button.hidden = false; }
+    } else if (button) {
+      button.hidden = true;
+    }
+  });
+  editor.root.addEventListener('dblclick', function(event) {
+    if (event.target.tagName === 'IMG') {
+      imageDetailsTarget = { editor: editor, image: event.target };
+      openImageDetails();
+    }
+  });
+  var pending = null;
+  editor.on('text-change', function() {
+    clearTimeout(pending);
+    pending = setTimeout(function() { countUndescribedImages(editor); }, 400);
+  });
+  countUndescribedImages(editor);
+}
+
+function undescribedImages(editor) {
+  return Array.prototype.filter.call(editor.root.querySelectorAll('img'), function(image) {
+    return (image.getAttribute('alt') || '').trim() === '';
+  });
+}
+
+function countUndescribedImages(editor) {
+  var line = document.getElementById('image-alt-status');
+  if (!line) { return; }
+  var missing = undescribedImages(editor).length;
+  line.hidden = missing === 0;
+  document.getElementById('image-alt-status-text').textContent = missing === 1
+    ? t('js_image_alt_missing_one') : t('js_image_alt_missing').replace('{n}', missing);
+}
+
+// "Fix": the first picture without a description, selected and opened.
+function describeNextImage() {
+  var missing = undescribedImages(PB_MAIN_QUILL);
+  if (missing.length === 0) { return; }
+  missing[0].scrollIntoView({ block: 'center' });
+  imageDetailsTarget = { editor: PB_MAIN_QUILL, image: missing[0] };
+  openImageDetails();
+}
+
+// The block that holds the picture, and the caption under it if there is one.
+function imageLines(editor, image) {
+  var blot = Quill.find(image);
+  var index = editor.getIndex(blot);
+  var line = editor.getLine(index)[0];
+  var next = line ? line.next : null;
+  var caption = next && next.domNode.classList && next.domNode.classList.contains('image-caption') ? next : null;
+  return { index: index, line: line, caption: caption };
+}
+
+function imageDetailsDialog() {
+  var dialog = document.getElementById('image-details');
+  if (dialog) { return dialog; }
+  dialog = document.createElement('dialog');
+  dialog.id = 'image-details';
+  dialog.className = 'image-details';
+  dialog.setAttribute('aria-labelledby', 'image-details-title');
+  var title = document.createElement('h2');
+  title.id = 'image-details-title';
+  title.textContent = t('js_image_details_title');
+  var preview = document.createElement('img');
+  preview.id = 'image-details-preview';
+  preview.alt = '';
+  dialog.appendChild(title);
+  dialog.appendChild(preview);
+  [['image-details-alt', 'js_image_alt_label', 'js_image_alt_hint', 'textarea'],
+   ['image-details-caption', 'js_image_caption_label', 'js_image_caption_hint', 'input']].forEach(function(field) {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'campo';
+    var label = document.createElement('label');
+    label.htmlFor = field[0];
+    label.textContent = t(field[1]);
+    var control = document.createElement(field[3]);
+    control.id = field[0];
+    control.className = 'campo-input';
+    if (field[3] === 'textarea') { control.rows = 2; } else { control.type = 'text'; }
+    control.setAttribute('aria-describedby', field[0] + '-hint');
+    var hint = document.createElement('p');
+    hint.className = 'aiuto';
+    hint.id = field[0] + '-hint';
+    hint.textContent = t(field[2]);
+    wrapper.appendChild(label);
+    wrapper.appendChild(control);
+    wrapper.appendChild(hint);
+    dialog.appendChild(wrapper);
+  });
+  var actions = document.createElement('div');
+  actions.className = 'azioni';
+  var save = document.createElement('button');
+  save.type = 'button';
+  save.className = 'pulsante pulsante-primario';
+  save.textContent = t('js_image_details_apply');
+  save.addEventListener('click', applyImageDetails);
+  var cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'pulsante';
+  cancel.textContent = t('admin_annulla');
+  cancel.addEventListener('click', function() { dialog.close(); });
+  actions.appendChild(save);
+  actions.appendChild(cancel);
+  dialog.appendChild(actions);
+  document.body.appendChild(dialog);
+  return dialog;
+}
+
+function openImageDetails() {
+  if (!imageDetailsTarget || !document.contains(imageDetailsTarget.image)) { return; }
+  var dialog = imageDetailsDialog();
+  var image = imageDetailsTarget.image;
+  var lines = imageLines(imageDetailsTarget.editor, image);
+  document.getElementById('image-details-preview').src = image.getAttribute('src');
+  document.getElementById('image-details-alt').value = image.getAttribute('alt') || '';
+  document.getElementById('image-details-caption').value = lines.caption ? lines.caption.domNode.textContent : '';
+  dialog.showModal();
+  document.getElementById('image-details-alt').focus();
+}
+
+function applyImageDetails() {
+  var editor = imageDetailsTarget.editor;
+  var image = imageDetailsTarget.image;
+  var alt = document.getElementById('image-details-alt').value.replace(/\s+/g, ' ').trim();
+  var caption = document.getElementById('image-details-caption').value.replace(/\s+/g, ' ').trim();
+  document.getElementById('image-details').close();
+  if (!document.contains(image)) { return; }
+
+  var lines = imageLines(editor, image);
+  editor.formatText(lines.index, 1, 'alt', alt === '' ? false : alt, 'user');
+
+  lines = imageLines(editor, image);
+  if (caption !== '' && !lines.caption) {
+    // A caption belongs to a picture that stands on its own line: one put
+    // in the middle of a sentence is moved to a paragraph of its own first,
+    // or the page could not show it as a picture with its caption.
+    var start0 = editor.getIndex(lines.line);
+    var end0 = start0 + lines.line.length() - 1;
+    if (lines.index + 1 < end0) { editor.insertText(lines.index + 1, '\n', 'user'); }
+    if (lines.index > start0) { editor.insertText(lines.index, '\n', 'user'); }
+    lines = imageLines(editor, image);
+  }
+  if (lines.caption) {
+    var start = editor.getIndex(lines.caption);
+    if (caption === '') {
+      editor.deleteText(start, lines.caption.length(), 'user');
+    } else {
+      editor.deleteText(start, lines.caption.length() - 1, 'user');
+      editor.insertText(start, caption, 'user');
+    }
+  } else if (caption !== '') {
+    // A new line right after the picture's, with the picture's alignment.
+    // Quill gives an inserted line break no block format, so the picture's
+    // line gets its alignment back, and the caption gets it and its class.
+    var lineStart = editor.getIndex(lines.line);
+    var align = editor.getFormat(lineStart).align || false;
+    var end = lineStart + lines.line.length() - 1;
+    editor.insertText(end, '\n' + caption, 'user');
+    editor.formatLine(lineStart, 1, { align: align }, 'user');
+    editor.formatLine(end + 1, 1, { align: align, imagecaption: 'caption' }, 'user');
+  }
+  countUndescribedImages(editor);
+}
+
 /* --- Choosing from the media library ---------------------------------------- */
 
 // A file already uploaded goes into the text, or becomes the cover, without
@@ -1995,6 +2175,18 @@ function registerBlotFormatter() {
   if (window.QuillBlotFormatter) {
     Quill.register('modules/blotFormatter', window.QuillBlotFormatter.default);
   }
+  registerImageCaption();
+}
+
+// A caption is a paragraph with the class image-caption: the author sees it
+// and types into it like any text, and the build turns it and the picture
+// above it into <figure> and <figcaption>. Quill only keeps the classes it
+// knows, so the class is registered as a block format of its own.
+function registerImageCaption() {
+  var Parchment = Quill.import('parchment');
+  Quill.register(new Parchment.Attributor.Class('imagecaption', 'image', {
+    scope: Parchment.Scope.BLOCK, whitelist: ['caption']
+  }), true);
 }
 
 // The two Quill editors of the article page (Italian and English).
@@ -2046,6 +2238,7 @@ function initEditorPage() {
   quill.update(Quill.sources.SILENT);
   PB_MAIN_QUILL = quill;
   attachImageOverlay(quill);
+  watchImageDescriptions(quill);
   handlePastedImages(quill, 'upload-status');
   attachTableSupport(quill);
 
@@ -2954,6 +3147,7 @@ function initConfigPage() {
   quillHome.update(Quill.sources.SILENT);
   PB_MAIN_QUILL = quillHome;
   attachImageOverlay(quillHome);
+  watchImageDescriptions(quillHome);
   handlePastedImages(quillHome, 'upload-status');
 
   // Quill editor for the English introduction of the homepage.

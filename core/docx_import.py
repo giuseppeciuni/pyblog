@@ -74,6 +74,10 @@ for _level in (1, 2, 3, 4, 5, 6):
 TITLE_STYLE_NAMES = {"title", "titolo", "titel", "titre", "ttulo", "titulo"}
 SUBTITLE_STYLE_NAMES = {"subtitle", "sottotitolo", "untertitel", "soustitre",
                         "subttulo", "subtitulo"}
+# The caption Word writes with "Insert caption" (and LibreOffice's): under a
+# picture it becomes the picture's caption on the site.
+CAPTION_STYLE_NAMES = {"caption", "didascalia", "legende", "beschriftung", "leyenda",
+                       "legenda", "bijschrift", "figure", "illustration"}
 QUOTE_STYLE_NAMES = {"quote", "intensequote", "citazione", "citazioneintensa",
                      "quotations", "blockquotation", "blocktext", "zitat",
                      "intensiveszitat", "citation", "citationintense", "cita",
@@ -689,7 +693,7 @@ class DocxConverter:
     def style_kind(self, style_id):
         """
         What a paragraph style means for us: ("heading", level), ("title",),
-        ("subtitle",), ("quote",), ("code",), ("toc",) or None.
+        ("subtitle",), ("quote",), ("caption",), ("code",), ("toc",) or None.
 
         The style and its ancestors are tried in turn, the most specific
         first: a style based on "Heading 2" is a heading, while a style of
@@ -720,6 +724,8 @@ class DocxConverter:
                     return ("toc",)
                 if key in QUOTE_STYLE_NAMES:
                     return ("quote",)
+                if key in CAPTION_STYLE_NAMES:
+                    return ("caption",)
                 if key in CODE_STYLE_NAMES:
                     return ("code",)
             if entry is not None and entry.get("outline") is not None:
@@ -1620,6 +1626,10 @@ class DocxConverter:
         name = ""
         if kind is not None:
             name = kind[0]
+        if name == "caption":
+            # The class the editor and the site know a caption by, next to
+            # the alignment Word gave it.
+            alignment = ' class="' + (alignment[8:-1] + " " if alignment else "") + 'image-caption"'
 
         if context.get("in_cell"):
             return [self.cell_entry(paragraph, _cell_html(inner), code_like,

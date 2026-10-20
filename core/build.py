@@ -180,6 +180,39 @@ def absolute_image_sources(html_content_value):
     return IMAGE_SRC_PATTERN.sub(fix, html_content_value)
 
 
+# A picture (or a video) alone in its paragraph, followed by the paragraph the
+# editor marks as its caption.
+CAPTIONED_MEDIA = re.compile(
+    r'<p(?P<attrs>[^>]*)>\s*(?P<media><img\b[^>]*>|<video\b[^>]*>.*?</video>)\s*</p>\s*'
+    r'<p class="(?P<cclass>[^"]*\bimage-caption\b[^"]*)">(?P<caption>.*?)</p>',
+    re.IGNORECASE | re.DOTALL)
+ALIGN_CLASS = re.compile(r"\bql-align-(?:center|right|justify)\b")
+HAS_ALT = re.compile(r"\balt=", re.IGNORECASE)
+
+
+def captioned_figures(html_content_value):
+    """
+    Turn a picture and the caption under it into <figure> and <figcaption>.
+
+    In the editor the caption is an ordinary paragraph with the class
+    image-caption, so the author sees it and types into it like any text.
+    On the page it becomes the markup search engines and screen readers
+    know as a caption, keeping the picture's alignment. A picture with no
+    alternative text takes its caption as one: a description is better than
+    none, for Google Images and for whoever cannot see the picture.
+    """
+    def figure(match):
+        media = match.group("media")
+        caption = match.group("caption")
+        plain = html.unescape(re.sub(r"<[^>]+>", "", caption)).strip()
+        if media.lower().startswith("<img") and plain != "" and HAS_ALT.search(media) is None:
+            media = media[:4] + ' alt="' + esc(plain) + '"' + media[4:]
+        align = ALIGN_CLASS.search(match.group("attrs") or "")
+        css = f' class="{align.group(0)}"' if align else ""
+        return f"<figure{css}>{media}<figcaption>{caption}</figcaption></figure>"
+    return CAPTIONED_MEDIA.sub(figure, html_content_value)
+
+
 def add_lazy_loading(html_content_value):
     """
     Add loading="lazy" to every image that does not already have it.
@@ -196,6 +229,7 @@ def add_lazy_loading(html_content_value):
     if html_content_value is None or html_content_value == "":
         return ""
     html_content_value = absolute_image_sources(html_content_value)
+    html_content_value = captioned_figures(html_content_value)
     return LAZY_IMAGE_PATTERN.sub(r'<img\1 loading="lazy">', html_content_value)
 
 

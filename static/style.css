@@ -459,6 +459,12 @@ video { max-width:100%; height:auto; display:block; margin:1rem 0; }
 .ql-size-small { font-size:0.75em; }
 .ql-size-large { font-size:1.5em; }
 .ql-size-huge { font-size:2.5em; }
+/* A picture with its caption. The caption is smaller and quieter than the
+   text, and follows the picture's alignment. A caption the editor marks
+   but that has no picture above it looks the same. */
+article.post figure { margin:1.6rem 0; }
+article.post figure :is(img, video) { max-width:100%; height:auto; }
+figcaption, p.image-caption { font-size:0.875rem; line-height:1.5; color:var(--secondario); margin-top:0.5rem; }
 /* A centred image is inline: display block is needed to really centre it. */
 p.ql-align-center img, .ql-align-center img { display:inline-block; }
 blockquote { border-left:3px solid var(--bordo); margin-left:0; padding-left:1.2rem; color:var(--secondario); font-style:italic; }

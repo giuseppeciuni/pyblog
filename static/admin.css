@@ -640,6 +640,21 @@ select.campo-input { padding-right:2rem; }
 .media-azioni { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem; }
 #libreria-stato:empty { display:none; }
 
+/* A caption in the editor looks like one on the page. */
+.ql-editor p.image-caption { font-size:0.875em; color:var(--a-testo-2); }
+/* The window with a picture's alternative text and caption. */
+.image-details { width:min(34rem, calc(100vw - 2rem)); padding:1.25rem; border:1px solid var(--a-bordo);
+                 border-radius:12px; background:var(--a-superficie); color:var(--a-testo); box-sizing:border-box; }
+.image-details[open] { display:flex; flex-direction:column; gap:0.875rem; }
+.image-details::backdrop { background:rgba(15, 20, 25, 0.45); }
+.image-details h2 { margin:0; font-size:1.125rem; font-weight:650; }
+#image-details-preview { max-width:100%; max-height:12rem; object-fit:contain; align-self:flex-start; border-radius:6px; }
+.image-details label { display:block; font-weight:600; font-size:0.875rem; margin-bottom:0.375rem; }
+.image-details .campo-input { width:100%; box-sizing:border-box; font-size:1rem; padding:0.6rem 0.75rem;
+                              border:1px solid var(--a-bordo-campo); border-radius:8px; font-family:inherit; }
+.image-alt-status { margin:0.5rem 0 0; width:100%; font-size:0.875rem; color:#8a4b00; font-weight:600; }
+.image-alt-status[hidden], #image-details-button[hidden] { display:none; }
+
 /* The window that picks a file from the media library. */
 .media-picker { width:min(56rem, calc(100vw - 2rem)); max-height:calc(100vh - 3rem); padding:1.25rem;
                 border:1px solid var(--a-bordo); border-radius:12px; background:var(--a-superficie);

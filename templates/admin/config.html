@@ -147,11 +147,16 @@ $testata_home
       <span class="video-bar-titolo" aria-hidden="true">$label_inserisci</span>
       <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_image" onclick="document.getElementById('file-image').click()">$label_carica_immagine</button>
       <button type="button" class="pulsante pulsante-piccolo" onclick="openMediaPicker('editor')">$label_from_library</button>
+      <button type="button" class="pulsante pulsante-piccolo" id="image-details-button" hidden onclick="openImageDetails()">$label_image_details</button>
       <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_youtube" onclick="insertYoutube()">$label_youtube</button>
       <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_video" onclick="document.getElementById('file-video').click()">$label_carica_video</button>
       <input type="file" id="file-image" aria-label="$label_carica_immagine" accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml, .svg, .png, .jpg, .jpeg, .gif, .webp" hidden onchange="uploadImage()">
       <input type="file" id="file-video" aria-label="$label_carica_video" accept="video/mp4, video/webm, .mp4, .webm" hidden onchange="uploadVideo()">
       <span id="upload-status" class="hint" role="status"></span>
+      <p class="image-alt-status" id="image-alt-status" role="status" hidden>
+        <span id="image-alt-status-text"></span>
+        <button type="button" class="pulsante-testo" onclick="describeNextImage()">$label_image_alt_fix</button>
+      </p>
     </div>
     <div class="preview-bar">
       <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_preview" onclick="togglePreview()">$label_mostra_anteprima_home</button>

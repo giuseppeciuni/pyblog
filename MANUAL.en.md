@@ -528,6 +528,19 @@ it again.
   in the browser before they leave. Click the image and drag the corners to
   resize it; the alignment buttons centre it or put it left or right, with
   the text around it.
+- **Alternative text and caption:** once you click a picture, the
+  **Alternative text and caption** button shows (or double-click the
+  picture).
+  - The **alternative text** describes the picture to Google Images and to
+    screen readers.
+  - The **caption** is the line under the picture: in the editor it is a
+    smaller paragraph you can also type into; on the site it becomes a
+    `<figure>` with its `<figcaption>`, the shape search engines recognise.
+  - A picture with no alternative text takes its caption as its
+    description. A picture that sat inside a sentence moves to a paragraph
+    of its own when it gets a caption.
+  - Under the editor a line counts the pictures still without alternative
+    text, and **Add it** opens the first.
 - **Code:** the `<>` button creates a block; on the site the code is
   coloured according to the language and has a "Copy" button.
 - **Tables:** **Insert table** asks for rows and columns; click a table to
@@ -542,7 +555,9 @@ it again.
 
 **Import from Word (.docx)**, above the editor, loads a whole document (up to
 30 MB): headings, bold and italics, alignments, nested lists, tables with
-merged cells, images with their alternative text, footnotes, links,
+merged cells, images with their alternative text (in Word: right-click the
+picture → "Edit Alt Text") and the captions written with "Insert Caption"
+(Caption style), footnotes, links,
 superscripts and subscripts, text boxes. The document's title (Title or
 Heading 1 style at the beginning) becomes the article's title and the
 subtitle the description, if it is empty. Word's table of contents, hidden

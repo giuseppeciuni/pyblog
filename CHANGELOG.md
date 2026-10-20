@@ -138,6 +138,15 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Alternative text and captions for pictures.** Clicking a picture in the
+  editor shows "Alternative text and caption" (a double click opens it): the
+  alternative text describes the picture to Google Images and to screen
+  readers, the caption is the line under it. On the site a picture and its
+  caption become `<figure>` and `<figcaption>`, and a picture with no
+  alternative text takes its caption as one. A line under the editor counts
+  the pictures still without a description. Word documents bring their
+  captions along (the Caption style, "Didascalia" in Italian Word), next to
+  the alternative text they already brought.
 - **Pictures already uploaded go into the text in one click.** "From media",
   next to "Upload image" in the article editor and in the homepage
   introduction, opens the thumbnails of the media library with a search;
