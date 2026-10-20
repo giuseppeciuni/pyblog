@@ -478,7 +478,7 @@ open. **Close** or Esc shuts it.
   with a box naming the series, "part 3 of 7" and the list of all the
   parts; at the bottom it leads to the previous and the next part instead
   of the neighbours by date. The series has a page of its own,
-  `/serie/<name>.html`, with the parts first to last. Parts with no number
+  `/series/<name>.html`, with the parts first to last. Parts with no number
   follow the numbered ones, by date. Until a series has two parts online
   nothing shows.
 - **First published on:** if the article came out first on another site,
@@ -735,8 +735,8 @@ Off until you tick **Show the biography**. Write the text with the editor,
 choose a **photo** (left empty, the one from "Site and author" is used) and
 **where it shows on the homepage**: in the sidebar, above or below the
 articles. The homepage shows the photo and the first lines, with **Read the
-biography** leading to the page with the whole text (`/pagine/biography.html`
-on an English site, `/pagine/biografia.html` on an Italian one). Below is the
+biography** leading to the page with the whole text (`/pages/biography.html`
+on an English site, `/pages/biografia.html` on an Italian one). Below is the
 version in the other language, with automatic translation.
 
 ### 5.4 Projects
@@ -752,7 +752,7 @@ nowhere.
 
 The pages of the **Explore** box in the sidebar: contacts, a gallery,
 notices. Each has a title, a text written with the editor and an address of
-its own (`/pagine/<title>.html`). **Show this page** puts it online; **Show
+its own (`/pages/<title>.html`). **Show this page** puts it online; **Show
 the Explore box** turns the whole box on or off (each page keeps its own
 choice). A page with the same name as the biography is skipped while the
 biography is on.
@@ -761,7 +761,7 @@ At the top of the section is the **"Work with me" button**: switched on, it
 closes the menu of every page with a button that stands out and puts an
 invitation at the end of every article. **Where it leads** takes the
 destination: a page of the site (create it below, for instance "Work with
-me", and paste `/pagine/work-with-me.html`), an email address
+me", and paste `/pages/work-with-me.html`), an email address
 (`mailto:...`) or a profile. The text of the button and the sentence of the
 invitation can be changed, in both languages; empty, the defaults are used.
 
@@ -1023,7 +1023,7 @@ emails leave from your SMTP account, with no service in between.
 
 **What it needs.** The editor online (way C of chapter 2.5, the tutorial's):
 the sign-up form is on the static site but must reach PyBlog, and nginx
-passes it `/iscriviti`, `/conferma` and `/disiscrivi` (with a request limit
+passes it `/subscribe`, `/confirm` and `/unsubscribe` (with a request limit
 of their own). And an **SMTP account**: your mail provider's or a service
 such as Brevo, Mailgun or Amazon SES, which gives you server, port, username
 and password.
@@ -1471,7 +1471,7 @@ password safe.
 | Forgotten password | — | `python3 pyblog.py password` on the server |
 | `config.json` broken | a hand edit | the data is in `config.broken.json` (see [13.10](#1310-if-configjson-breaks-and-old-versions)) |
 | Certbot fails | the domain does not point at the server | check the DNS records and try again |
-| The newsletter form answers 404 | nginx does not pass `/iscriviti` to PyBlog, or the newsletter is off | the `location ~ ^/(iscriviti|conferma|disiscrivi)$` block of `nginx.conf.example`; the checkbox in the Settings |
+| The newsletter form answers 404 | nginx does not pass `/subscribe` to PyBlog, or the newsletter is off | the `location ~ ^/(iscriviti|conferma|disiscrivi)$` block of `nginx.conf.example`; the checkbox in the Settings |
 | Emails do not go out | wrong SMTP values, or the provider refuses the sender | **Send a test email** says the error; the last failed sending is written in the Newsletter section |
 | Emails end up in spam | the sender's domain does not authorise the mail server | set SPF and DKIM as your SMTP provider says |
 

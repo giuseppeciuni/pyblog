@@ -127,7 +127,7 @@ def test_iscrizione(porta):
     anna = newsletter.find(stato, "email", "anna@example.org")
     check("è in attesa, in minuscolo, con la sua lingua", anna and anna["status"] == "pending" and anna["language"] == "it")
     check("è arrivata un'email di conferma", len(RICEVUTE) == 1 and "Conferma" in RICEVUTE[0]["Subject"])
-    link = re.search(r"https://blog\.example\.org/conferma\?t=([\w-]+)", testo_di(RICEVUTE[0]))
+    link = re.search(r"https://blog\.example\.org/confirm\?t=([\w-]+)", testo_di(RICEVUTE[0]))
     check("con il link di conferma giusto", link is not None and link.group(1) == anna["token"])
     newsletter.subscribe("anna@example.org", "it", SITO)
     check("chiedere di nuovo subito non manda un'altra email", len(RICEVUTE) == 1)
@@ -195,9 +195,9 @@ def test_articoli(porta):
             m = RICEVUTE[0]
             check("con il titolo come oggetto", m["Subject"] == "Articolo per gli iscritti")
             check("con il link all'articolo e alla disiscrizione",
-                  f"{SITO}/posts/{nuovo}.html" in testo_di(m) and "/disiscrivi?t=" in testo_di(m))
+                  f"{SITO}/posts/{nuovo}.html" in testo_di(m) and "/unsubscribe?t=" in testo_di(m))
             check("e la disiscrizione con un clic per i programmi di posta",
-                  m["List-Unsubscribe"].startswith(f"<{SITO}/disiscrivi?t=")
+                  m["List-Unsubscribe"].startswith(f"<{SITO}/unsubscribe?t=")
                   and m["List-Unsubscribe-Post"] == "List-Unsubscribe=One-Click")
             check("il mittente è quello scelto", m["From"] == "Il blog <blog@example.org>")
         stato = newsletter.load_state()
@@ -225,16 +225,16 @@ def test_sito(porta):
     imposta(porta, in_sidebar=True, after_article=True)
     pubblicati = [a for a in build.load_articles() if a.get("status") == "published"]
     home = build.generate_homepage(pubblicati, "it")
-    check("il modulo è nella barra laterale", 'class="box box-newsletter"' in home and 'action="/iscriviti"' in home)
-    check("con il campo trappola per i robot", 'name="sito" tabindex="-1"' in home)
-    check("e la lingua della pagina", 'name="lingua" value="it"' in home)
+    check("il modulo è nella barra laterale", 'class="box box-newsletter"' in home and 'action="/subscribe"' in home)
+    check("con il campo trappola per i robot", 'name="website" tabindex="-1"' in home)
+    check("e la lingua della pagina", 'name="language" value="it"' in home)
     articolo = build.generate_article_page(pubblicati[0], "it", pubblicati)
     check("e in fondo all'articolo", 'class="newsletter-articolo"' in articolo)
     imposta(porta, in_sidebar=False, after_article=False)
-    check("dove l'autore non lo vuole, non c'è", 'action="/iscriviti"' not in build.generate_homepage(pubblicati, "it"))
+    check("dove l'autore non lo vuole, non c'è", 'action="/subscribe"' not in build.generate_homepage(pubblicati, "it"))
     imposta(porta, enabled=False)
     check("con la newsletter spenta non c'è da nessuna parte",
-          'action="/iscriviti"' not in build.generate_article_page(pubblicati[0], "it", pubblicati))
+          'action="/subscribe"' not in build.generate_article_page(pubblicati[0], "it", pubblicati))
     pagina = build.newsletter_message_page("en", "Check your inbox", "An email has arrived.")
     check("le pagine di risposta hanno la grafica del sito e non si indicizzano",
           "<h1>Check your inbox</h1>" in pagina and 'content="noindex"' in pagina)
@@ -252,7 +252,7 @@ def test_amministrazione(porta):
           and "/newsletter-remove" in server.CSRF_PROTECTED_ROUTES)
     nginx = (pathlib.Path(__file__).resolve().parent.parent / "nginx.conf.example").read_text()
     check("nginx porta a Python le rotte pubbliche, con un limite loro",
-          "location ~ ^/(iscriviti|conferma|disiscrivi)$" in nginx and "zone=pyblog_newsletter" in nginx)
+          "location ~ ^/(subscribe|confirm|unsubscribe|iscriviti|conferma|disiscrivi)$" in nginx and "zone=pyblog_newsletter" in nginx)
     check("e quelle dell'amministrazione", "newsletter-test|newsletter-remove|newsletter-subscribers" in nginx)
     editor = server.editor_page(None, "TOKEN")
     check("nell'editor di una bozza c'è la spunta per avvisare gli iscritti", 'id="notify_subscribers" checked' in editor)

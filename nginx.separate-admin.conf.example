@@ -43,8 +43,9 @@ server {
         return 301 https://admin.mysite.com$request_uri;
     }
 
-    # The newsletter's public forms: subscribing, confirming, leaving.
-    location ~ ^/(iscriviti|conferma|disiscrivi)$ {
+    # The newsletter's public forms: subscribing, confirming, leaving. The
+    # Italian names are the old addresses, still in emails already sent.
+    location ~ ^/(subscribe|confirm|unsubscribe|iscriviti|conferma|disiscrivi)$ {
         limit_req zone=pyblog_newsletter burst=5 nodelay;
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
@@ -52,6 +53,12 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
+
+    # The card pages and the series used to live in Italian folders: their
+    # old addresses move for good to the new ones. PyBlog also leaves a
+    # redirect page at each old address, so this is a nicety, not a need.
+    rewrite ^(/en|/it)?/pagine/(.*)$ $1/pages/$2 permanent;
+    rewrite ^(/en|/it)?/serie/(.*)$ $1/series/$2 permanent;
 
     location / {
         try_files $uri $uri/ =404;

@@ -631,8 +631,8 @@ UI_TRANSLATIONS = {
         "en": "Whoever reads an article and wants to reach you finds it on every page. Write the page below, among the pages (for instance \"Work with me\": what you do for a company, your projects, how to write to you) and paste its address."},
     "admin_lavoro_url": {"it": "Dove porta", "en": "Where it leads"},
     "admin_lavoro_url_hint": {
-        "it": "Una pagina del sito (/pagine/lavora-con-me.html), un indirizzo email (mailto:tu@esempio.it) o un profilo (https://www.linkedin.com/in/...). Vuoto = niente pulsante.",
-        "en": "A page of the site (/pagine/work-with-me.html), an email address (mailto:you@example.com) or a profile (https://www.linkedin.com/in/...). Empty = no button."},
+        "it": "Una pagina del sito (/pages/lavora-con-me.html), un indirizzo email (mailto:tu@esempio.it) o un profilo (https://www.linkedin.com/in/...). Vuoto = niente pulsante.",
+        "en": "A page of the site (/pages/work-with-me.html), an email address (mailto:you@example.com) or a profile (https://www.linkedin.com/in/...). Empty = no button."},
     "admin_lavoro_label": {"it": "Scritta del pulsante", "en": "Button text"},
     "admin_lavoro_label_en": {"it": "Scritta del pulsante in inglese", "en": "Button text in English"},
     "admin_lavoro_testo": {"it": "Frase dell'invito a fine articolo", "en": "Sentence of the invitation at the end of the articles"},

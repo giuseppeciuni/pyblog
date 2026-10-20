@@ -93,7 +93,7 @@ def test_richieste():
         stato, _, _ = request(base, "/login", "www.ciunix.com", "POST", body=b"password=x")
         check("nemmeno il login", stato == 404, str(stato))
         # Leaving the newsletter answers even with the newsletter off.
-        stato, _, _ = request(base, "/disiscrivi", "www.ciunix.com", "POST", body=b"token=x")
+        stato, _, _ = request(base, "/unsubscribe", "www.ciunix.com", "POST", body=b"token=x")
         check("i moduli dei lettori sì", stato != 404, str(stato))
 
         stato, _, pagina = request(base, "/admin", "admin.ciunix.com")

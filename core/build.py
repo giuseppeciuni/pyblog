@@ -1623,7 +1623,7 @@ def series_of(art, all_articles, language):
 
 def series_page_url(slug, language):
     """The address of the page that lists a series."""
-    return f"{language_url_prefix(language)}/serie/{slug}.html"
+    return f"{language_url_prefix(language)}/series/{slug}.html"
 
 
 def series_box(art, all_articles, language="it"):
@@ -1981,7 +1981,7 @@ def explore_box(language):
     cards = published_home_cards()
     if len(cards) == 0:
         return ""
-    prefix = language_url_prefix(language) + "/pagine/"
+    prefix = language_url_prefix(language) + "/pages/"
     items = []
     for card in cards:
         slug = card_slug(card.get("title", ""))
@@ -2506,7 +2506,7 @@ def biography_photo_html(css_class):
 
 def biography_page_url(language):
     """The address of the biography page in a language."""
-    return f"{language_url_prefix(language)}/pagine/{biography_slug()}.html"
+    return f"{language_url_prefix(language)}/pages/{biography_slug()}.html"
 
 
 def biography_home_html(language):
@@ -2731,10 +2731,10 @@ def generate_card_page(card, language="it", articles=None):
     slug = card_slug(title_value)
     description = excerpt_from_html(content, 150)
     # The canonical must point to the version in the current language:
-    # it used to always point to /pagine/, even from the English version,
+    # it used to always point to /pages/, even from the English version,
     # declaring a wrong canonical to Google for the /en/ pages.
     prefix = language_url_prefix(language)
-    url_canonico = f"{CONFIG['base_url']}{prefix}/pagine/{slug}.html"
+    url_canonico = f"{CONFIG['base_url']}{prefix}/pages/{slug}.html"
 
     principale = render.render(
         "public/card_page.html",
@@ -3369,20 +3369,20 @@ def generate_sitemap(articles):
     for series_slug, series in collect_series(articles).items():
         if len(series["articles"]) < 2:
             continue
-        lines.append(url_entry(main_prefix + "/serie/" + series_slug + ".html"))
+        lines.append(url_entry(main_prefix + "/series/" + series_slug + ".html"))
         if len(articles_visible_in_language(series["articles"], secondary_language())) >= 2:
-            lines.append(url_entry(sec_prefix + "/serie/" + series_slug + ".html"))
+            lines.append(url_entry(sec_prefix + "/series/" + series_slug + ".html"))
 
     # The biography page, in both languages like the cards.
     if biography_published():
-        lines.append(url_entry(main_prefix + "/pagine/" + biography_slug() + ".html"))
-        lines.append(url_entry(sec_prefix + "/pagine/" + biography_slug() + ".html"))
+        lines.append(url_entry(main_prefix + "/pages/" + biography_slug() + ".html"))
+        lines.append(url_entry(sec_prefix + "/pages/" + biography_slug() + ".html"))
 
     # Pages of the published cards (both languages: build() always writes them).
     for card in published_home_cards():
         slug = card_slug(card.get("title", ""))
-        lines.append(url_entry(main_prefix + "/pagine/" + slug + ".html"))
-        lines.append(url_entry(sec_prefix + "/pagine/" + slug + ".html"))
+        lines.append(url_entry(main_prefix + "/pages/" + slug + ".html"))
+        lines.append(url_entry(sec_prefix + "/pages/" + slug + ".html"))
 
     lines.append("</urlset>")
     return "\n".join(lines)
@@ -3581,6 +3581,28 @@ def copy_public_assets():
             (OUTPUT_DIR / name).write_text(render.read_static(name), encoding="utf-8")
 
 
+# The folders of the public site that had Italian names, and those names.
+# Their old addresses keep working through redirect pages.
+LEGACY_FOLDERS = {"pages": "pagine", "series": "serie"}
+
+
+def legacy_redirect_page(new_url):
+    """
+    The page left at an old address: it sends the reader on at once and
+    tells search engines where the page lives now, so the link someone
+    shared, or the result on Google, still leads to the right place.
+    nginx can do the same with a 301 (see nginx.conf.example); this works
+    with any web server.
+    """
+    base = CONFIG.get("base_url", "").rstrip("/")
+    target = esc(new_url)
+    return ("<!DOCTYPE html>\n<html><head><meta charset=\"utf-8\">\n"
+            f'<link rel="canonical" href="{esc(base + new_url)}">\n'
+            f'<meta http-equiv="refresh" content="0; url={target}">\n'
+            f"<script>location.replace({js(new_url)} + location.hash)</script>\n"
+            f'<title>{target}</title></head>\n<body><p><a href="{target}">{target}</a></p></body></html>\n')
+
+
 def remove_stale_pages(written_pages, lp, ls, sec_folder):
     """
     Delete the generated pages that this build did not write again.
@@ -3598,8 +3620,10 @@ def remove_stale_pages(written_pages, lp, ls, sec_folder):
     for root in (OUTPUT_DIR, OUTPUT_DIR / sec_folder):
         folders.append(root / "posts")
         folders.append(root / "tag")
-        folders.append(root / "serie")
-        folders.append(root / "pagine")
+        folders.append(root / "series")
+        folders.append(root / "pages")
+        for legacy in LEGACY_FOLDERS.values():
+            folders.append(root / legacy)
         # The pagination folder is named after the language ("pagina", "page"):
         # we sweep both names, so that flipping the site language cleans up too.
         for language in (lp, ls):
@@ -3668,8 +3692,8 @@ def _build_unlocked():
     reload_global_config()
 
     (OUTPUT_DIR / "posts").mkdir(parents=True, exist_ok=True)
-    # The "pagine" folder holds the card pages (bio, projects...).
-    (OUTPUT_DIR / "pagine").mkdir(parents=True, exist_ok=True)
+    # The "pages" folder holds the card pages (bio, projects...).
+    (OUTPUT_DIR / "pages").mkdir(parents=True, exist_ok=True)
     # The media folder holds the uploaded videos: build() does not touch it,
     # we only make sure it exists.
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
@@ -3703,6 +3727,15 @@ def _build_unlocked():
         path_value.parent.mkdir(parents=True, exist_ok=True)
         path_value.write_text(content, encoding="utf-8")
         written_pages.setdefault(path_value.parent, set()).add(path_value.name)
+        # The card pages and the series used to live under Italian names:
+        # the old address gets a page that sends the reader on.
+        legacy = LEGACY_FOLDERS.get(path_value.parent.name)
+        if legacy is not None:
+            old_path = path_value.parent.with_name(legacy) / path_value.name
+            new_url = "/" + path_value.relative_to(OUTPUT_DIR).as_posix()
+            old_path.parent.mkdir(parents=True, exist_ok=True)
+            old_path.write_text(legacy_redirect_page(new_url), encoding="utf-8")
+            written_pages.setdefault(old_path.parent, set()).add(old_path.name)
 
     # Pages of the individual articles in the main language (at the root).
     for art in published_articles:
@@ -3752,12 +3785,12 @@ def _build_unlocked():
     for series_slug, series in collect_series(published_articles).items():
         if len(series["articles"]) < 2:
             continue
-        (OUTPUT_DIR / "serie").mkdir(parents=True, exist_ok=True)
-        write_page(OUTPUT_DIR / "serie" / f"{series_slug}.html",
+        (OUTPUT_DIR / "series").mkdir(parents=True, exist_ok=True)
+        write_page(OUTPUT_DIR / "series" / f"{series_slug}.html",
                    generate_series_page(series_slug, series, lp, published_articles))
         if len(articles_visible_in_language(series["articles"], ls)) >= 2:
-            (OUTPUT_DIR / sec_folder / "serie").mkdir(parents=True, exist_ok=True)
-            write_page(OUTPUT_DIR / sec_folder / "serie" / f"{series_slug}.html",
+            (OUTPUT_DIR / sec_folder / "series").mkdir(parents=True, exist_ok=True)
+            write_page(OUTPUT_DIR / sec_folder / "series" / f"{series_slug}.html",
                        generate_series_page(series_slug, series, ls, published_articles))
 
     # Pages of the published cards (Biography, Projects, About...). A card
@@ -3766,21 +3799,21 @@ def _build_unlocked():
     for card in published_home_cards():
         slug = card_slug(card.get("title", ""))
         # Cards in the main language (at the root).
-        write_page(OUTPUT_DIR / "pagine" / f"{slug}.html",
+        write_page(OUTPUT_DIR / "pages" / f"{slug}.html",
                    generate_card_page(card, lp, published_articles))
         # Cards in the secondary language.
-        (OUTPUT_DIR / sec_folder / "pagine").mkdir(parents=True, exist_ok=True)
-        write_page(OUTPUT_DIR / sec_folder / "pagine" / f"{slug}.html",
+        (OUTPUT_DIR / sec_folder / "pages").mkdir(parents=True, exist_ok=True)
+        write_page(OUTPUT_DIR / sec_folder / "pages" / f"{slug}.html",
                    generate_card_page(card, ls, published_articles))
 
     # The page of the whole biography, in both languages. Switched off, it is
     # not written, and the sweep removes the one a previous build left.
     if biography_published():
-        (OUTPUT_DIR / "pagine").mkdir(parents=True, exist_ok=True)
-        write_page(OUTPUT_DIR / "pagine" / f"{biography_slug()}.html",
+        (OUTPUT_DIR / "pages").mkdir(parents=True, exist_ok=True)
+        write_page(OUTPUT_DIR / "pages" / f"{biography_slug()}.html",
                    generate_biography_page(lp, published_articles))
-        (OUTPUT_DIR / sec_folder / "pagine").mkdir(parents=True, exist_ok=True)
-        write_page(OUTPUT_DIR / sec_folder / "pagine" / f"{biography_slug()}.html",
+        (OUTPUT_DIR / sec_folder / "pages").mkdir(parents=True, exist_ok=True)
+        write_page(OUTPUT_DIR / sec_folder / "pages" / f"{biography_slug()}.html",
                    generate_biography_page(ls, published_articles))
 
     # Homepage in the main language (at the root) and in the secondary one.

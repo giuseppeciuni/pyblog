@@ -338,7 +338,7 @@ def send_confirmation(address, token, language, site_url):
     """The email with the link that confirms a subscription."""
     current = settings()
     site = CONFIG.get("site_title", "")
-    link = f"{site_url}/conferma?t={token}"
+    link = f"{site_url}/confirm?t={token}"
     subject = T("nl_conferma_oggetto", language).replace("{site}", site)
     lines = [T("nl_conferma_testo", language).replace("{site}", site),
              T("nl_conferma_ignora", language)]
@@ -378,7 +378,7 @@ def article_email(art, subscriber, current, site_url):
     title, _, _, _ = build.article_card_fields(art, language)
     excerpt = build.article_excerpt(art, language, 60)
     link = site_url + build.article_url(art, language)
-    unsubscribe_url = f"{site_url}/disiscrivi?t={subscriber['token']}"
+    unsubscribe_url = f"{site_url}/unsubscribe?t={subscriber['token']}"
     site = CONFIG.get("site_title", "")
     footer_text = T("nl_piede", language).replace("{site}", site)
     from core.render import esc

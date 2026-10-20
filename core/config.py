@@ -339,6 +339,31 @@ def migrate_article_schema(data):
     return converted, True
 
 
+# The addresses of the public site that had Italian folder names.
+LEGACY_PATHS = (("/pagine/", "/pages/"), ("/serie/", "/series/"))
+
+
+def migrate_legacy_paths(data):
+    """
+    Point the addresses the Settings hold at the new folders: the author's
+    page and the "Work with me" button often lead to a card page. The old
+    addresses would still work through their redirect pages; this saves the
+    reader the detour. Return (data, changed).
+    """
+    changed = False
+    for section, key in (("seo", "author_url"), ("work_with_me", "url")):
+        block = data.get(section)
+        if not isinstance(block, dict) or not isinstance(block.get(key), str):
+            continue
+        value = block[key]
+        for old, new in LEGACY_PATHS:
+            value = value.replace(old, new)
+        if value != block[key]:
+            block[key] = value
+            changed = True
+    return data, changed
+
+
 def migrate_config_schema(data):
     """
     Convert a configuration dictionary from the old Italian schema to the
@@ -473,7 +498,8 @@ def load_config():
     # Old Italian schema detected: convert it and rewrite the file once,
     # so the migration happens transparently on the first load.
     saved_config, migrata = migrate_config_schema(saved_config)
-    if migrata:
+    saved_config, moved = migrate_legacy_paths(saved_config)
+    if migrata or moved:
         write_json_atomically(CONFIG_FILE, saved_config)
         print("config.json migrated to the new English schema.")
 

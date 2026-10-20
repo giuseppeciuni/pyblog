@@ -441,6 +441,17 @@ All notable changes to PyBlog are documented in this file.
 
 ### Breaking changes
 
+- **The public addresses are in English.** The card pages moved from
+  `/pagine/` to `/pages/`, the series from `/serie/` to `/series/`, and the
+  newsletter's pages from `/iscriviti`, `/conferma` and `/disiscrivi` to
+  `/subscribe`, `/confirm` and `/unsubscribe` (form fields `language` and
+  `website`). Nothing breaks: every build leaves a page at each old address
+  that sends the reader on, the old newsletter links (in emails already
+  sent) answer with a 301 to the new ones, and the addresses saved in the
+  Settings move by themselves. The nginx examples add a real 301 for the
+  old folders and both names for the newsletter. The archive and the
+  pagination keep their names in the language of the site
+  (`archivio.html` / `archive.html`): those are words for the reader.
 - **The administration's addresses are in English.** `/scegli-punto`,
   `/versioni`, `/versione`, `/newsletter-prova`, `/newsletter-rimuovi` and
   `/newsletter-iscritti.csv` are now `/pick-point`, `/versions`,

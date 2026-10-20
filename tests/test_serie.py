@@ -83,7 +83,7 @@ def test_articolo():
     pagina = build.generate_article_page(ARTICOLI[4], "it", ARTICOLI)
     riquadro = pagina.split('<nav class="serie-box"')[1].split("</nav>")[0]
     check("apre con il nome della serie e il posto della parte",
-          '<a class="serie-nome" href="/serie/inside-the-machine.html">' in riquadro
+          '<a class="serie-nome" href="/series/inside-the-machine.html">' in riquadro
           and "parte 2 di 3" in riquadro, riquadro[:300])
     check("elenca tutte le parti, con la corrente segnata e senza link",
           riquadro.count("<li") == 3 and '<li aria-current="page">Articolo 1</li>' in riquadro
@@ -107,7 +107,7 @@ def test_articolo():
 
     inglese = build.generate_article_page(ARTICOLI[3], "en", ARTICOLI)
     check("in inglese contano solo le parti tradotte",
-          "part 1 of 2" in inglese and '/en/serie/inside-the-machine.html' in inglese
+          "part 1 of 2" in inglese and '/en/series/inside-the-machine.html' in inglese
           and "Article 4" in inglese and "Articolo 1" not in inglese)
 
 
@@ -124,11 +124,11 @@ def test_pagina_serie():
           and elenco.count("<li>") == 3)
     check("ha il suo indirizzo canonico",
           'rel="canonical" href="' + CONFIG["base_url"].rstrip("/")
-          + '/serie/inside-the-machine.html"' in pagina)
+          + '/series/inside-the-machine.html"' in pagina)
     sitemap = build.generate_sitemap(ARTICOLI)
     check("la sitemap la elenca in tutte e due le lingue",
-          "/serie/inside-the-machine.html" in sitemap
-          and "/en/serie/inside-the-machine.html" in sitemap)
+          "/series/inside-the-machine.html" in sitemap
+          and "/en/series/inside-the-machine.html" in sitemap)
     check("ma non la serie con una sola parte", "un-altra-serie" not in sitemap)
 
 

@@ -477,7 +477,7 @@ ricorda quali hai lasciato aperti. Si chiude con **Chiudi** o con Esc.
   riquadro che dice la serie, "parte 3 di 7" e l'elenco di tutte le parti;
   in fondo porta alla parte precedente e alla successiva invece che agli
   articoli vicini per data. La serie ha una pagina sua,
-  `/serie/<nome>.html`, con le parti dalla prima all'ultima. Le parti senza
+  `/series/<nome>.html`, con le parti dalla prima all'ultima. Le parti senza
   numero seguono quelle numerate, in ordine di data. Finché la serie ha una
   sola parte online non si vede nulla.
 - **Pubblicato in origine su:** se l'articolo è uscito prima su un altro
@@ -741,8 +741,8 @@ Spenta finché non spunti **Mostra la biografia**. Scrivi il testo con
 l'editor, scegli una **foto** (vuota, si usa quella di "Sito e autore") e
 **dove compare in home**: nella barra laterale, sopra o sotto gli articoli.
 In home si vedono la foto e le prime righe, con **Leggi la biografia** che
-porta alla pagina con tutto il testo (`/pagine/biografia.html`, o
-`/pagine/biography.html` se il sito è in inglese). Sotto c'è la versione
+porta alla pagina con tutto il testo (`/pages/biografia.html`, o
+`/pages/biography.html` se il sito è in inglese). Sotto c'è la versione
 nell'altra lingua, con la traduzione automatica.
 
 ### 5.4 Progetti
@@ -758,7 +758,7 @@ elenco compatto. Un progetto senza link non porta da nessuna parte.
 
 Le pagine del riquadro **Esplora** della barra laterale: contatti, una
 galleria, avvisi. Ognuna ha un titolo, un testo scritto con l'editor e un
-suo indirizzo (`/pagine/<titolo>.html`). **Mostra questa pagina** la mette
+suo indirizzo (`/pages/<titolo>.html`). **Mostra questa pagina** la mette
 online; **Mostra il riquadro Esplora** accende o spegne tutto il riquadro
 (ogni pagina ricorda la sua scelta). Una pagina con lo stesso nome della
 biografia viene saltata finché la biografia è accesa.
@@ -767,7 +767,7 @@ In cima alla sezione c'è il **pulsante "Lavora con me"**: acceso, chiude il
 menu di ogni pagina con un pulsante in evidenza e mette un invito alla fine
 di ogni articolo. In **Dove porta** scrivi la destinazione: una pagina del
 sito (creala qui sotto, per esempio "Lavora con me", e incolla
-`/pagine/lavora-con-me.html`), un indirizzo email (`mailto:...`) o un
+`/pages/lavora-con-me.html`), un indirizzo email (`mailto:...`) o un
 profilo. Scritta del pulsante e frase dell'invito si possono cambiare, in
 italiano e in inglese; vuote, usano quelle predefinite.
 
@@ -1032,7 +1032,7 @@ partono dal tuo account SMTP, senza servizi in mezzo.
 
 **Cosa serve.** L'editor online (il modo C del capitolo 2.5, quello del
 tutorial): il modulo d'iscrizione è sul sito statico ma deve raggiungere
-PyBlog, e nginx gli passa `/iscriviti`, `/conferma` e `/disiscrivi` (con un
+PyBlog, e nginx gli passa `/subscribe`, `/confirm` e `/unsubscribe` (con un
 limite di richieste suo). E un **account SMTP**: quello del tuo provider di
 posta o di un servizio come Brevo, Mailgun o Amazon SES, che ti dà server,
 porta, utente e password.
@@ -1483,7 +1483,7 @@ entra nell'amministrazione può fare molto: tieni la password al sicuro.
 | Password dimenticata | — | `python3 pyblog.py password` sul server |
 | `config.json` rotto | una modifica a mano | i dati sono in `config.broken.json` (vedi [13.10](#1310-se-configjson-si-rompe-e-le-versioni-vecchie)) |
 | Certbot fallisce | il dominio non punta al server | controlla i record DNS e riprova |
-| Il modulo della newsletter risponde 404 | nginx non passa `/iscriviti` a PyBlog, o la newsletter è spenta | il blocco `location ~ ^/(iscriviti|conferma|disiscrivi)$` di `nginx.conf.example`; la spunta nelle Impostazioni |
+| Il modulo della newsletter risponde 404 | nginx non passa `/subscribe` a PyBlog, o la newsletter è spenta | il blocco `location ~ ^/(iscriviti|conferma|disiscrivi)$` di `nginx.conf.example`; la spunta nelle Impostazioni |
 | Le email non partono | dati SMTP sbagliati, o il provider rifiuta il mittente | **Manda un'email di prova** dice l'errore; l'ultimo invio fallito è scritto nella sezione Newsletter |
 | Le email finiscono nella posta indesiderata | il dominio del mittente non autorizza il server di posta | imposta SPF e DKIM come dice il tuo provider SMTP |
 

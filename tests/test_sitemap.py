@@ -110,7 +110,7 @@ def test_nessuna_pagina_orfana():
     for indirizzo in indirizzi_della_sitemap():
         elencate.add(percorso_di(indirizzo).resolve())
     orfane = []
-    for cartella in ("posts", "tag", "pagine"):
+    for cartella in ("posts", "tag", "pages", "series"):
         for radice in (OUTPUT_DIR, OUTPUT_DIR / "en"):
             if not (radice / cartella).is_dir():
                 continue
@@ -119,6 +119,14 @@ def test_nessuna_pagina_orfana():
                     orfane.append(str(pagina.relative_to(OUTPUT_DIR)))
     check("nessuna pagina fuori dalla sitemap", orfane == [],
           ", ".join(orfane))
+    # The old Italian folders hold only the pages that send readers on.
+    vecchie = []
+    for cartella in ("pagine", "serie"):
+        for radice in (OUTPUT_DIR, OUTPUT_DIR / "en"):
+            for pagina in (radice / cartella).glob("*.html") if (radice / cartella).is_dir() else []:
+                if 'http-equiv="refresh"' not in pagina.read_text(encoding="utf-8"):
+                    vecchie.append(str(pagina.relative_to(OUTPUT_DIR)))
+    check("nelle vecchie cartelle italiane ci sono solo redirect", vecchie == [], ", ".join(vecchie))
 
 
 def test_il_ciclo_di_vita_di_un_articolo():

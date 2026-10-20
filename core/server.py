@@ -81,6 +81,12 @@ CODEMIRROR_JS = (
 # injected into an article could no longer call out to a server of its own.
 # 'unsafe-inline' is still needed for the onclick attributes and the small
 # JSON block that carries PB_I18N; the host allowlist is what does the work.
+# The readers' pages of the newsletter, and the Italian addresses they had
+# before: emails already sent and cached pages still use those.
+NEWSLETTER_ROUTES = ("/subscribe", "/confirm", "/unsubscribe")
+LEGACY_NEWSLETTER_ROUTES = {"/iscriviti": "/subscribe", "/conferma": "/confirm",
+                            "/disiscrivi": "/unsubscribe"}
+
 # The words the server is waiting to hear back from /pyblog-ping, while it
 # checks a new address for the administration.
 PING_NONCES = set()
@@ -2632,6 +2638,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if route == "/pyblog-ping":
             self._send_ping(query.get("n", [""])[0])
             return
+        if route in LEGACY_NEWSLETTER_ROUTES:
+            # Emails already sent carry the old Italian addresses: they keep
+            # working, and land on the new one.
+            target = LEGACY_NEWSLETTER_ROUTES[route]
+            if parsed.query:
+                target = target + "?" + parsed.query
+            self.send_response(301)
+            self.send_header("Location", target)
+            self._security_headers(False)
+            self.end_headers()
+            return
 
         # --- The stylesheets and script of the admin area ---
         # These are served BEFORE the authentication check, and deliberately.
@@ -2665,7 +2682,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
 
         # --- The newsletter's links from the emails ---
-        if route in ("/conferma", "/disiscrivi"):
+        if route in ("/confirm", "/unsubscribe"):
             self._handle_newsletter_link(route, query)
             return
 
@@ -2834,17 +2851,19 @@ class Handler(http.server.BaseHTTPRequestHandler):
         for nothing more than an address, the others carry their token.
         """
         form = self._read_form()
-        language = form.get("lingua", [main_language()])[0]
+        # The old Italian field names still arrive from pages cached before
+        # the names went English.
+        language = form.get("language", form.get("lingua", [main_language()]))[0]
         if language not in ("it", "en"):
             language = main_language()
         # Leaving always works, even with the newsletter switched off.
-        if route != "/disiscrivi" and not newsletter.settings()["enabled"]:
+        if route != "/unsubscribe" and not newsletter.settings()["enabled"]:
             self.send_error(404)
             return
-        if route == "/iscriviti":
+        if route == "/subscribe":
             # The hidden field is invisible to people: whoever fills it in is
             # a robot, and gets the same answer as everybody, with no email.
-            if form.get("sito", [""])[0].strip() != "":
+            if form.get("website", form.get("sito", [""]))[0].strip() != "":
                 self._newsletter_page(language, "nl_richiesta")
                 return
             if not newsletter.allowed_request(self._client_address()):
@@ -2860,7 +2879,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
         token = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get("t", [""])[0]
         language = newsletter.token_language(token) or language
-        if route == "/conferma":
+        if route == "/confirm":
             done = newsletter.confirm(token)
             self._newsletter_page(language, "nl_confermata" if done else "nl_link")
         else:
@@ -2874,15 +2893,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
         """
         token = query.get("t", [""])[0]
         language = newsletter.token_language(token)
-        if language == "" or (route == "/conferma" and not newsletter.settings()["enabled"]):
+        if language == "" or (route == "/confirm" and not newsletter.settings()["enabled"]):
             self._newsletter_page(language or main_language(), "nl_link", status=404)
             return
-        if route == "/conferma":
+        if route == "/confirm":
             prefix, button = "nl_conferma_pagina", T("nl_conferma_pulsante", language)
         else:
             prefix, button = "nl_disiscrivi", T("nl_disiscrivi_pulsante", language)
         action = (f'        <form method="post" action="{route}?t={urllib.parse.quote(token)}">\n'
-                  f'          <input type="hidden" name="lingua" value="{language}">\n'
+                  f'          <input type="hidden" name="language" value="{language}">\n'
                   f'          <button class="pulsante pulsante-primario" type="submit">{esc(button)}</button>\n'
                   '        </form>')
         self._newsletter_page(language, prefix, action)
@@ -2967,7 +2986,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self._pending_form = None
 
         # --- On the public address only the readers' forms answer ---
-        if self._side() == "public" and route not in ("/iscriviti", "/conferma", "/disiscrivi"):
+        if route in LEGACY_NEWSLETTER_ROUTES:
+            route = LEGACY_NEWSLETTER_ROUTES[route]
+        if self._side() == "public" and route not in NEWSLETTER_ROUTES:
             self.send_error(404)
             return
 
@@ -2982,7 +3003,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
 
         # --- The newsletter's public forms (readers, not the author) ---
-        if route in ("/iscriviti", "/conferma", "/disiscrivi"):
+        if route in NEWSLETTER_ROUTES:
             self._handle_newsletter_post(route)
             return
 
