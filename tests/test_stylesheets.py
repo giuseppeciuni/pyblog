@@ -81,7 +81,7 @@ def test_editor_preview():
     """The editor thumbnail has the same trap on the vertical axis."""
     print("\nminiatura della copertina nell'editor (admin.css)")
     css = (ROOT_DIR / "static" / "admin.css").read_text(encoding="utf-8")
-    declarations = regola(css, ".copertina-anteprima")
+    declarations = regola(css, ".cover-image-preview")
     check("la regola esiste", declarations is not None)
     if declarations is None:
         return
@@ -102,7 +102,7 @@ def test_flex_images_have_a_width():
     print("\nogni immagine dentro un contenitore flex ha una larghezza")
     css = (ROOT_DIR / "static" / "style.css").read_text(encoding="utf-8")
     # The images this project places inside a flex row or column.
-    for selector in (".art-thumb-img, .art-tile", ".author-box-photo", ".profilo-foto"):
+    for selector in (".art-thumb-img, .art-tile", ".author-box-photo", ".profile-photo"):
         declarations = regola(css, selector)
         if declarations is None:
             check(f"{selector}: la regola esiste", False)

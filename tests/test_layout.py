@@ -83,17 +83,17 @@ def test_single_h1():
 def test_two_columns():
     print("\ndue colonne")
     home = build.generate_homepage(ARTICLES_FIXTURE, "it", 1, 2)
-    check("c'e' la colonna principale", 'class="colonna-principale" id="content"' in home)
-    check("c'e' la barra laterale", '<aside class="barra-laterale"' in home)
+    check("c'e' la colonna principale", 'class="column-main" id="content"' in home)
+    check("c'e' la barra laterale", '<aside class="bar-side"' in home)
     check("la colonna viene prima della barra (sul telefono la barra va sotto)",
-          home.index("colonna-principale") < home.index("barra-laterale"))
+          home.index("column-main") < home.index("bar-side"))
     check("la barra degli argomenti ha i conteggi",
-          re.search(r'class="argomento" href="/tag/prova.html">Prova <span class="argomento-conteggio">14</span>', home)
+          re.search(r'class="topic" href="/tag/prova.html">Prova <span class="topic-count">14</span>', home)
           is not None)
     check("il menu del telefono ha il suo pulsante", 'class="menu-toggle"' in home
           and 'aria-controls="site-nav"' in home)
     page_html = build.generate_article_page(ARTICLES_FIXTURE[0], "it", ARTICLES_FIXTURE)
-    check("anche l'articolo ha la barra", '<aside class="barra-laterale"' in page_html)
+    check("anche l'articolo ha la barra", '<aside class="bar-side"' in page_html)
     check("l'articolo tiene l'id del salto al contenuto", '<article id="content" class="post">' in page_html)
 
 
@@ -130,8 +130,8 @@ def test_pagination():
     print("\npaginazione numerata")
     home = build.generate_homepage(ARTICLES_FIXTURE, "it", 1, 2)
     check("la pagina attuale e' segnata",
-          '<span class="paginazione-numero" aria-current="page">1</span>' in home)
-    check("la seconda e' un link", '<a class="paginazione-numero" href="/pagina/2.html">2</a>' in home)
+          '<span class="pagination-number" aria-current="page">1</span>' in home)
+    check("la seconda e' un link", '<a class="pagination-number" href="/pagina/2.html">2</a>' in home)
     check("i numeri saltati diventano puntini",
           build.pages_to_show(5, 10) == [1, None, 4, 5, 6, None, 10])
     check("niente puntini quando non servono", build.pages_to_show(1, 3) == [1, 2, 3])
@@ -141,11 +141,11 @@ def test_table_of_contents_in_article():
     print("\nindice dell'articolo")
     long_value = next(a for a in ARTICLES_FIXTURE if a["slug"] == "articolo-di-prova-1")
     page_html = build.generate_article_page(long_value, "it", ARTICLES_FIXTURE)
-    check("nella barra, ultimo riquadro", '<nav class="box box-indice"' in page_html)
-    check("piegato in cima al testo per il telefono", '<details class="toc-telefono">' in page_html)
+    check("nella barra, ultimo riquadro", '<nav class="box box-toc-index"' in page_html)
+    check("piegato in cima al testo per il telefono", '<details class="toc-phone">' in page_html)
     short_value = next(a for a in ARTICLES_FIXTURE if a["slug"] == "articolo-di-prova-2")
     page_html = build.generate_article_page(short_value, "it", ARTICLES_FIXTURE)
-    check("un articolo corto non ha indice", "box-indice" not in page_html and "toc-telefono" not in page_html)
+    check("un articolo corto non ha indice", "box-toc-index" not in page_html and "toc-phone" not in page_html)
     check("i correlati sono righe come in home", 'class="related-articles"' in page_html
           and '<article class="art-row">' in page_html)
 
@@ -156,11 +156,11 @@ def test_introduction_position():
     try:
         CONFIG["home_intro_position"] = "sidebar"
         home = build.generate_homepage(ARTICLES_FIXTURE, "it", 1, 2)
-        barra = home.split('<aside class="barra-laterale"', 1)[1]
+        barra = home.split('<aside class="bar-side"', 1)[1]
         check("di serie sta nella barra", '<section class="home-intro">' in barra)
         CONFIG["home_intro_position"] = "top"
         home = build.generate_homepage(ARTICLES_FIXTURE, "it", 1, 2)
-        column = home.split('<aside class="barra-laterale"', 1)[0]
+        column = home.split('<aside class="bar-side"', 1)[0]
         check("oppure sopra gli articoli", '<section class="home-intro">' in column)
         second = build.generate_homepage(ARTICLES_FIXTURE, "it", 2, 2)
         check("e mai dalla seconda pagina", '<section class="home-intro">' not in second)
@@ -182,7 +182,7 @@ def test_slots_for_code():
         lines = home.split("TRA-GLI-ARTICOLI")
         check("tra gli articoli: dopo il terzo",
           len(lines) == 2 and lines[0].count('<article class="art-row') == 3, str(len(lines)))
-        check("nella barra laterale", "NELLA-BARRA" in home.split('<aside class="barra-laterale"', 1)[1])
+        check("nella barra laterale", "NELLA-BARRA" in home.split('<aside class="bar-side"', 1)[1])
         page_html = build.generate_article_page(ARTICLES_FIXTURE[0], "it", ARTICLES_FIXTURE)
         check("a inizio testo: dopo il titolo, prima del testo",
               page_html.index("<h1>") < page_html.index("INIZIO-TESTO") < page_html.index('class="post-content"'))

@@ -1,32 +1,32 @@
-<div class="pagina pagina-stretta pagina-piccola">
-  <div class="pagina-testata">
+<div class="page page-narrow page-small">
+  <div class="page-header">
     <div>
-      <h1 class="pagina-titolo">$title</h1>
-      <p class="pagina-sottotitolo">$version_installed</p>
+      <h1 class="page-title">$title</h1>
+      <p class="page-subtitle">$version_installed</p>
     </div>
   </div>
 
-  <div class="gruppo">
+  <div class="group">
     <h2>$label_state</h2>
-    <p class="aggiornamenti-stato" id="aggiornamenti-stato" role="status">$label_checking</p>
-    <ul class="aggiornamenti-novita" id="aggiornamenti-novita" hidden></ul>
-    <p class="aiuto" id="aggiornamenti-istruzioni" hidden>$instructions</p>
-    <div class="azioni">
-      <button type="button" class="pulsante pulsante-primario" id="aggiorna-ora" hidden
+    <p class="updates-state" id="updates-state" role="status">$label_checking</p>
+    <ul class="updates-news" id="updates-news" hidden></ul>
+    <p class="help" id="updates-instructions" hidden>$instructions</p>
+    <div class="actions">
+      <button type="button" class="button button-primary" id="update-now" hidden
               onclick="installUpdate(this)">$label_update</button>
-      <button type="button" class="pulsante" onclick="checkUpdates(true)">$label_check_now</button>
+      <button type="button" class="button" onclick="checkUpdates(true)">$label_check_now</button>
     </div>
-    <p class="aiuto" id="aggiorna-aiuto" hidden>$hint_update</p>
+    <p class="help" id="update-help" hidden>$hint_update</p>
   </div>
 
-  <div class="gruppo">
+  <div class="group">
     <h2>$label_automatic</h2>
-    <div class="campo-spunta">
-      <input type="checkbox" id="controllo-automatico" aria-describedby="controllo-automatico-aiuto"
+    <div class="field-tick">
+      <input type="checkbox" id="automatic-check" aria-describedby="automatic-check-help"
              onchange="setAutomaticCheck(this)" $checked_automatic>
       <div>
-        <label for="controllo-automatico">$label_checking_automatic</label>
-        <p class="aiuto" id="controllo-automatico-aiuto">$hint_checking_automatic</p>
+        <label for="automatic-check">$label_checking_automatic</label>
+        <p class="help" id="automatic-check-help">$hint_checking_automatic</p>
       </div>
     </div>
   </div>

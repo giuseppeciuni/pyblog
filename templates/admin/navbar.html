@@ -1,31 +1,31 @@
 <nav class="menu" id="menu-admin" aria-label="$label_menu">
-  <a class="menu-marchio" href="/admin">
-    <span class="menu-marchio-nome">PyBlog</span>
-    <span class="menu-marchio-sito">$title_site</span>
+  <a class="menu-brand-mark" href="/admin">
+    <span class="menu-brand-mark-name">PyBlog</span>
+    <span class="menu-brand-mark-site">$title_site</span>
   </a>
-  <div class="menu-principale">
+  <div class="menu-main">
 $entries
   </div>
-  <div class="menu-spazio"></div>
-  <p class="menu-gruppo" id="menu-strumenti">$label_tools</p>
-  <div class="menu-voci" role="group" aria-labelledby="menu-strumenti">
-    <button class="voce" type="button" onclick="rebuildSite(this)">$icon_rebuild<span class="voce-testo">$label_rebuild<span class="voce-desc">$desc_rebuild</span></span></button>
-    <a class="voce" href="/export">$icon_backup<span class="voce-testo">$label_backup<span class="voce-desc">$desc_backup</span></span></a>
-    <a class="voce"$current_item_restoring href="/restore">$icon_restoring<span class="voce-testo">$label_restoring<span class="voce-desc">$desc_restoring</span></span></a>
-    <a class="voce"$current_item_updates href="/updates">$icon_updates<span class="voce-testo">$label_updates<span class="voce-desc">$desc_updates</span></span></a>
+  <div class="menu-spacer"></div>
+  <p class="menu-group" id="menu-tools">$label_tools</p>
+  <div class="menu-items" role="group" aria-labelledby="menu-tools">
+    <button class="item" type="button" onclick="rebuildSite(this)">$icon_rebuild<span class="item-text">$label_rebuild<span class="item-desc">$desc_rebuild</span></span></button>
+    <a class="item" href="/export">$icon_backup<span class="item-text">$label_backup<span class="item-desc">$desc_backup</span></span></a>
+    <a class="item"$current_item_restoring href="/restore">$icon_restoring<span class="item-text">$label_restoring<span class="item-desc">$desc_restoring</span></span></a>
+    <a class="item"$current_item_updates href="/updates">$icon_updates<span class="item-text">$label_updates<span class="item-desc">$desc_updates</span></span></a>
   </div>
-  <div class="menu-separatore"></div>
-  <div class="menu-voci">
-    <a class="voce" href="/" target="_blank" rel="noopener">$icon_blog<span class="voce-testo">$label_see_blog<span class="icona-esterna" aria-hidden="true"></span><span class="vh"> $label_new_f_card</span><span class="voce-desc">$desc_see_site</span></span></a>
-    <a class="voce"$current_item_password href="/change-password">$icon_password<span class="voce-testo">$label_password</span></a>
-    <button class="voce" type="button" lang="$next_f_language" onclick="changeAdminLanguage('$next_f_language')" aria-describedby="menu-lingua-aiuto">$icon_language<span class="voce-testo">$name_next_f_language</span></button>
-    <span class="vh" id="menu-lingua-aiuto">$label_language</span>
-    <a class="voce voce-pericolo" href="/logout">$icon_logout<span class="voce-testo">$label_logout</span></a>
+  <div class="menu-separator"></div>
+  <div class="menu-items">
+    <a class="item" href="/" target="_blank" rel="noopener">$icon_blog<span class="item-text">$label_see_blog<span class="icon-external" aria-hidden="true"></span><span class="vh"> $label_new_f_card</span><span class="item-desc">$desc_see_site</span></span></a>
+    <a class="item"$current_item_password href="/change-password">$icon_password<span class="item-text">$label_password</span></a>
+    <button class="item" type="button" lang="$next_f_language" onclick="changeAdminLanguage('$next_f_language')" aria-describedby="menu-language-help">$icon_language<span class="item-text">$name_next_f_language</span></button>
+    <span class="vh" id="menu-language-help">$label_language</span>
+    <a class="item item-danger" href="/logout">$icon_logout<span class="item-text">$label_logout</span></a>
   </div>
 </nav>
-<div class="menu-velo" id="menu-velo" hidden onclick="toggleAdminMenu(false)"></div>
-<nav class="barra-basso" aria-label="$label_menu">
+<div class="menu-veil" id="menu-veil" hidden onclick="toggleAdminMenu(false)"></div>
+<nav class="bar-bottom" aria-label="$label_menu">
 $entries_bar
-  <button class="barra-voce" type="button" id="barra-altro" aria-controls="menu-admin"
+  <button class="bar-item" type="button" id="bar-other" aria-controls="menu-admin"
           aria-expanded="false" onclick="toggleAdminMenu()">$icon_other<span>$label_other</span></button>
 </nav>

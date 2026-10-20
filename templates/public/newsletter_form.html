@@ -1,14 +1,14 @@
-        <form class="newsletter-modulo" action="/subscribe" method="post">
-          <p class="newsletter-testo">$text</p>
+        <form class="newsletter-form" action="/subscribe" method="post">
+          <p class="newsletter-text">$text</p>
           <input type="hidden" name="language" value="$language">
-          <div class="newsletter-trappola" aria-hidden="true">
+          <div class="newsletter-trap" aria-hidden="true">
             <label for="$id-website">Website</label>
             <input type="text" id="$id-website" name="website" tabindex="-1" autocomplete="off">
           </div>
           <label class="sr-only" for="$id-email">$label_email</label>
-          <div class="newsletter-riga">
-            <input class="campo-input" type="email" id="$id-email" name="email" required
+          <div class="newsletter-row">
+            <input class="field-input" type="email" id="$id-email" name="email" required
                    autocomplete="email" placeholder="$label_email">
-            <button class="pulsante pulsante-primario" type="submit">$subscribe</button>
+            <button class="button button-primary" type="submit">$subscribe</button>
           </div>
 $privacy        </form>

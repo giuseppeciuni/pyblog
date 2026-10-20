@@ -113,10 +113,10 @@ def test_interface():
     slug = save_article(payload("prova-cronologia-editor", "Uno"), new_article=True)
     try:
         check("un articolo salvato ha il pulsante delle versioni",
-              'id="btn-versioni" onclick="openVersions()"\n              aria-describedby="versioni-aiuto">'
+              'id="btn-versions" onclick="openVersions()"\n              aria-describedby="versions-help">'
               in server.editor_page(load_article(slug), "TOKEN"))
         check("uno nuovo lo ha nascosto",
-              'aria-describedby="versioni-aiuto" hidden>' in server.editor_page(None, "TOKEN"))
+              'aria-describedby="versions-help" hidden>' in server.editor_page(None, "TOKEN"))
     finally:
         delete_article(slug)
     check("le rotte chiedono l'accesso",

@@ -383,7 +383,7 @@ def translate_warnings(warnings, language):
 
 def icon(path, size=18):
     """An inline SVG icon drawn with lines, in the colour of the text around it."""
-    return (f'<svg class="icona" width="{size}" height="{size}" viewBox="0 0 24 24" '
+    return (f'<svg class="icon" width="{size}" height="{size}" viewBox="0 0 24 24" '
             'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
             f'stroke-linejoin="round" aria-hidden="true" focusable="false">{path}</svg>')
 
@@ -457,15 +457,15 @@ def admin_navbar(active_page, language, articles_count=None):
             current = ' aria-current="page"'
         count_html = ""
         if count != "":
-            count_html = f'<span class="voce-conta">{count}</span>'
+            count_html = f'<span class="item-count">{count}</span>'
         # The Settings item stays one line: its sections are in the panel
         # it opens, each with what it is for and how it stands.
         menu_html.append(
-            f'    <a class="voce"{current} href="{url}">{icon(path)}'
-            f'<span class="voce-testo">{label}</span>{count_html}</a>')
+            f'    <a class="item"{current} href="{url}">{icon(path)}'
+            f'<span class="item-text">{label}</span>{count_html}</a>')
         if in_bar:
             bar_html.append(
-                f'  <a class="barra-voce"{current} href="{url}">{icon(path, 22)}'
+                f'  <a class="bar-item"{current} href="{url}">{icon(path, 22)}'
                 f'<span>{short_label}</span></a>')
 
     # The language switch names the language you are switching to, in that
@@ -529,9 +529,9 @@ def admin_page_shell(titolo, contenuto, language, csrf="", navbar="",
     # The skip link only makes sense when there is a menu to skip.
     skip_link = ""
     if navbar != "":
-        skip_link = (f'<a class="salta-contenuto" href="#contenuto">'
+        skip_link = (f'<a class="skip-content" href="#content">'
                      f'{T("admin_skip_content", language)}</a>\n')
-        body_class = (body_class + " con-menu").strip()
+        body_class = (body_class + " with-menu").strip()
     return render.render(
         "admin/base.html",
         lang=language,
@@ -568,7 +568,7 @@ def notify_checkbox(art, la):
     if not current["enabled"] or not current["send_on_publish"] or art.get("newsletter_sent"):
         return ""
     checked = checked_if(art.get("notify_subscribers", True) is not False)
-    return ('      <label class="riga-flag avvisa-iscritti solo-non-pubblicato">'
+    return ('      <label class="row-flag notify-subscribers only-not-published">'
             f'<input type="checkbox" id="notify_subscribers" {checked}> '
             f'{T("admin_nl_notify", la)}</label>\n')
 
@@ -583,7 +583,7 @@ def moment_html(moment, la):
         return ""
     fallback = moment.replace("T", " ")[:16] + " UTC"
     return T("admin_goes_out_the", la).replace(
-        "{date}", f'<time class="ora-locale" datetime="{esc(moment)}">{esc(fallback)}</time>')
+        "{date}", f'<time class="now-local" datetime="{esc(moment)}">{esc(fallback)}</time>')
 
 
 def alert_block(message, kind):
@@ -591,7 +591,7 @@ def alert_block(message, kind):
     if message == "":
         return ""
     role = "alert" if kind == "danger" else "status"
-    return f'<p class="avviso avviso-{kind}" role="{role}">{esc(message)}</p>'
+    return f'<p class="notice notice-{kind}" role="{role}">{esc(message)}</p>'
 
 
 def login_page(error_message=""):
@@ -758,21 +758,21 @@ def library_page(csrf):
                     links.append(f'<a href="/config">{T("admin_settings_page", la)}</a>')
             usage = f'{T("admin_media_used_f_in", la)} ' + ", ".join(links)
         else:
-            usage = f'<span class="media-non-usata">{T("admin_media_not_used_f", la)}</span>'
+            usage = f'<span class="media-unused">{T("admin_media_not_used_f", la)}</span>'
         cards.append(
-            f'    <li class="media-scheda" data-nome="{esc(name.lower())}" data-usato="{1 if where else 0}" '
-            f'data-dove="{len(where)}">\n'
-            f'      <div class="media-anteprima">{preview}</div>\n'
+            f'    <li class="media-card" data-name="{esc(name.lower())}" data-used="{1 if where else 0}" '
+            f'data-where="{len(where)}">\n'
+            f'      <div class="media-preview">{preview}</div>\n'
             f'      <div class="media-info">\n'
-            f'        <p class="media-nome">{esc(name)}</p>\n'
+            f'        <p class="media-name">{esc(name)}</p>\n'
             f'        <p class="media-meta">{file_size_text(item["size"])} · '
             f'{item["date"].strftime("%d/%m/%Y")}</p>\n'
             f'        <p class="media-usi">{usage}</p>\n'
-            f'        <div class="media-azioni">'
-            f'<button type="button" class="pulsante pulsante-piccolo" '
+            f'        <div class="media-actions">'
+            f'<button type="button" class="button button-small" '
             f'onclick="copyMediaAddress({js_attr(address)})">{T("admin_media_copy", la)}'
             f'<span class="vh"> {esc(name)}</span></button>'
-            f'<button type="button" class="pulsante pulsante-piccolo pulsante-pericolo" '
+            f'<button type="button" class="button button-small button-danger" '
             f'onclick="deleteMedia(this, {js_attr(name)}, {len(where)})">{T("admin_delete", la)}'
             f'<span class="vh"> {esc(name)}</span></button></div>\n'
             f'      </div>\n'
@@ -823,17 +823,17 @@ def restore_page(csrf):
         when = item["date"].strftime("%d/%m/%Y %H:%M:%S")
         size = file_size_text(item["size"])
         rows.append(
-            f'      <li><span class="backup-quando">{when} · {size}</span>'
-            f'<span class="backup-azioni">'
-            f'<a class="pulsante pulsante-piccolo" href="/automatic-backup?file={esc(item["name"])}">'
+            f'      <li><span class="backup-when">{when} · {size}</span>'
+            f'<span class="backup-actions">'
+            f'<a class="button button-small" href="/automatic-backup?file={esc(item["name"])}">'
             f'{T("admin_download", la)}</a>'
-            f'<button type="button" class="pulsante pulsante-piccolo" '
+            f'<button type="button" class="button button-small" '
             f'onclick="restoreAutomatic(this, {js_attr(item["name"])})">'
             f'{T("admin_restore_this", la)}</button></span></li>')
     if rows:
-        listing = '    <ul class="lista-backup">\n' + "\n".join(rows) + "\n    </ul>"
+        listing = '    <ul class="list-box-backup">\n' + "\n".join(rows) + "\n    </ul>"
     else:
-        listing = f'    <p class="elenco-vuoto">{T("admin_no_one_backup_automatic", la)}</p>'
+        listing = f'    <p class="list-empty">{T("admin_no_one_backup_automatic", la)}</p>'
     contenuto = render.render(
         "admin/restore.html",
         title=T("admin_restore_backup", la),
@@ -866,18 +866,18 @@ def setup_steps_html(articles, la):
         else:
             href, action = "/config#" + section_id, T("admin_fix", la)
             # "Off, but Google Analytics uses cookies" needs to say what is off.
-            where = (f'<span class="passo-dove">'
+            where = (f'<span class="step-where">'
                      f'{T(settings_panel.section(section_id)["label"], la)}</span> ')
         rows.append(
-            f'      <li><span class="passo-testo">{icon(ICON_WARN, 18)}'
+            f'      <li><span class="step-text">{icon(ICON_WARN, 18)}'
             f'<span>{where}{esc(text)}</span></span>'
-            f'<a class="passo-link" href="{href}">{action}'
+            f'<a class="step-link" href="{href}">{action}'
             f'<span class="vh">: {esc(text)}</span>{icon(ICON_NEXT, 16)}</a></li>')
     return (
-        '  <section class="primi-passi" aria-labelledby="primi-passi-titolo">\n'
-        f'    <h2 id="primi-passi-titolo">{T("admin_first_steps_of_steps", la)} '
-        f'<span class="primi-passi-conta">{len(steps)}</span></h2>\n'
-        f'    <p class="aiuto">{T("admin_first_steps_of_steps_desc", la)}</p>\n'
+        '  <section class="first-steps" aria-labelledby="first-steps-title">\n'
+        f'    <h2 id="first-steps-title">{T("admin_first_steps_of_steps", la)} '
+        f'<span class="first-steps-count">{len(steps)}</span></h2>\n'
+        f'    <p class="help">{T("admin_first_steps_of_steps_desc", la)}</p>\n'
         '    <ul>\n' + "\n".join(rows) + '\n    </ul>\n'
         '  </section>')
 
@@ -908,7 +908,7 @@ def admin_page(articles, csrf):
     lines = []
     for number, art in enumerate(articles):
         if art.get("status") == "published":
-            pill_class = "pill-pubblicato"
+            pill_class = "pill-published"
             status_label = T("admin_published", la)
             # If it is published, the menu puts it back to draft. Same
             # words as the editor's link, from the same key, so the two
@@ -922,13 +922,13 @@ def admin_page(articles, csrf):
         elif art.get("status") == "scheduled":
             # Scheduled: it goes out by itself. The quick action publishes
             # it at once; the second one, in the menu, takes the schedule back.
-            pill_class = "pill-programmato"
+            pill_class = "pill-scheduled"
             status_label = T("admin_state_scheduled", la)
             status_action = "published"
             status_action_label = T("admin_publish_now", la)
             status_order = "s"
         else:
-            pill_class = "pill-bozza"
+            pill_class = "pill-draft"
             status_label = T("admin_draft", la)
             status_action = "published"
             status_action_label = T("admin_publish", la)
@@ -949,7 +949,7 @@ def admin_page(articles, csrf):
                 f'<a role="menuitem" tabindex="-1" '
                 f'href="/preview?slug={esc(art["slug"])}&amp;language={other}" '
                 f'target="_blank" rel="noopener">{preview_label}'
-                f'<span class="icona-esterna" aria-hidden="true"></span></a>')
+                f'<span class="icon-external" aria-hidden="true"></span></a>')
 
         # A scheduled article says when it goes out instead of its date, and
         # its menu can also take the schedule back.
@@ -999,7 +999,7 @@ def admin_page(articles, csrf):
     if len(lines) > 0:
         listing = "\n".join(lines)
     else:
-        listing = f'<p class="elenco-vuoto">{T("admin_no_one_article", la)}</p>'
+        listing = f'<p class="list-empty">{T("admin_no_one_article", la)}</p>'
 
     summary = (T("admin_overview_articles", la)
                .replace("{p}", str(published_count))
@@ -1099,19 +1099,19 @@ def subject_tabs(art, la):
             state = T("admin_card_new", la)
         else:
             state = state_words.get(other.get("status", "draft"), state_words["draft"])
-        text = f'<span class="scheda-nome">{name}</span><span class="scheda-stato">{esc(state)}</span>'
+        text = f'<span class="card-name">{name}</span><span class="card-state">{esc(state)}</span>'
         if other is art or (other.get("slug") and other.get("slug") == art.get("slug")):
-            tabs.append(f'    <span class="scheda-tema" aria-current="page">{text}</span>')
+            tabs.append(f'    <span class="card-theme" aria-current="page">{text}</span>')
         else:
-            tabs.append(f'    <a class="scheda-tema" href="/edit?slug={esc(other["slug"])}" '
+            tabs.append(f'    <a class="card-theme" href="/edit?slug={esc(other["slug"])}" '
                         f'title="{esc(other.get("title", ""))}">{text}</a>')
     # What can still be added to a subject whose theory is saved.
     if root_slug != "" and any(other.get("slug") == root_slug for other in everything):
         if not any(other.get("kind") == "practical" for other in group):
-            tabs.append(f'    <a class="scheda-tema scheda-aggiungi" '
+            tabs.append(f'    <a class="card-theme card-add" '
                         f'href="/edit?lab_of={esc(root_slug)}&amp;kind=practical">'
                         f'{T("admin_card_add_practice", la)}</a>')
-        tabs.append(f'    <a class="scheda-tema scheda-aggiungi" id="link-crea-lab" '
+        tabs.append(f'    <a class="card-theme card-add" id="link-create-lab" '
                     f'href="/edit?lab_of={esc(root_slug)}">{T("admin_card_add_lab", la)}</a>')
     return "\n".join(tabs)
 
@@ -1132,7 +1132,7 @@ def editor_page(art, csrf, starts_from=None, new_kind="lab"):
         menu_item = "articles"
         # Deleting sits at the very bottom of the sidebar, small: it used to
         # be a red button as big as Save, right under it.
-        delete_button = (f'<button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo btn-elimina-articolo" '
+        delete_button = (f'<button type="button" class="button button-text button-danger button-small btn-delete-article" '
                          f'onclick="deleteItem()">{T("admin_delete_article", la)}</button>')
     else:
         art = {}
@@ -1584,9 +1584,9 @@ def article_custom_code_html(art, la):
         where = esc(T(POSITION_LABEL_KEYS.get(snippet.get("position", "head"),
                                               "admin_code_pos_head"), la))
         rows.append(
-            '<label class="riga-flag codice-articolo-riga">'
-            f'<input type="checkbox" class="codice-articolo" value="{esc(snippet_id)}"'
-            f' data-tipo="{"optin" if optin else "sempre"}"{checked}> {name} '
+            '<label class="row-flag code-article-row">'
+            f'<input type="checkbox" class="code-article" value="{esc(snippet_id)}"'
+            f' data-kind="{"optin" if optin else "sempre"}"{checked}> {name} '
             f'<span class="hint">({where}, {esc(kind)})</span></label>')
 
     if len(rows) == 0:
@@ -1739,7 +1739,7 @@ def section_state_html(section_id, config, la):
     if tone == "warn":
         # The colour alone would leave a screen reader with no warning.
         warn = icon(ICON_WARN, 16) + f'<span class="vh">{T("admin_state_tone_warn", la)}: </span>'
-    return f'<span class="scheda-stato stato-{tone}">{warn}{esc(text)}</span>'
+    return f'<span class="card-state state-{tone}">{warn}{esc(text)}</span>'
 
 
 def section_warnings_html(key, config, la):
@@ -1752,14 +1752,14 @@ def section_warnings_html(key, config, la):
     rows = [f'    <li>{icon(ICON_WARN, 18)}{esc(text)}</li>'
             for tone, text in settings_panel.section_states(key, config, la) if tone == "warn"]
     hidden = "" if rows else " hidden"
-    return (f'  <ul class="sezione-avvisi" id="avvisi-{key}"{hidden}>\n'
+    return (f'  <ul class="section-notices" id="notices-{key}"{hidden}>\n'
             + "\n".join(rows) + ("\n" if rows else "") + '  </ul>')
 
 
 def config_sections_list(la, config=None):
     """
     The Settings panel, what /config opens on: the sections grouped, each
-    card with what it is for and how it stands now. data-cerca carries the
+    card with what it is for and how it stands now. data-search carries the
     words the search matches besides the visible ones; admin.js adds the
     labels of the section's fields.
     """
@@ -1775,16 +1775,16 @@ def config_sections_list(la, config=None):
             state = settings_panel.section_state(key, config, la)
             tone = state[0] if state else "off"
             cards.append(
-                f'      <li><a class="scheda-impostazione scheda-{tone}" href="#{key}" data-sezione="{key}" '
-                f'data-cerca="{esc(entry["keywords"])}">'
-                f'<span class="scheda-nome">{T(entry["label"], la)}</span>'
-                f'<span class="scheda-desc">{TL(entry["label"] + "_desc", la)}</span>'
+                f'      <li><a class="card-setting card-{tone}" href="#{key}" data-section="{key}" '
+                f'data-search="{esc(entry["keywords"])}">'
+                f'<span class="card-name">{T(entry["label"], la)}</span>'
+                f'<span class="card-desc">{TL(entry["label"] + "_desc", la)}</span>'
                 f'{section_state_html(key, config, la)}'
                 f'{icon(ICON_NEXT, 20)}</a></li>')
         parts.append(
-            f'  <div class="pannello-gruppo" role="group" aria-labelledby="gruppo-{group_id}">\n'
-            f'    <h2 class="pannello-gruppo-titolo" id="gruppo-{group_id}">{T(group_key, la)}</h2>\n'
-            f'    <ul class="pannello-schede">\n' + "\n".join(cards) + '\n    </ul>\n'
+            f'  <div class="panel-group" role="group" aria-labelledby="group-{group_id}">\n'
+            f'    <h2 class="panel-group-title" id="group-{group_id}">{T(group_key, la)}</h2>\n'
+            f'    <ul class="panel-cards">\n' + "\n".join(cards) + '\n    </ul>\n'
             '  </div>')
     return "\n".join(parts)
 
@@ -1797,18 +1797,18 @@ def config_section_header(key, la, config=None):
     label_key = dict(CONFIG_SECTIONS)[key]
     # The way back is the first word of the breadcrumb, on every screen;
     # the phone also gets the arrow it expects in the corner.
-    trail = f'<a href="#elenco">{T("admin_settings_page", la)}</a>'
+    trail = f'<a href="#list">{T("admin_settings_page", la)}</a>'
     group_key = settings_panel.group_label(key)
     if group_key != "":
         trail = trail + f' <span aria-hidden="true">›</span> {T(group_key, la)}'
     return (
-        '  <div class="sezione-testata">\n'
-        f'    <a class="pulsante pulsante-icona sezione-indietro" href="#elenco" '
+        '  <div class="section-header">\n'
+        f'    <a class="button button-icon section-back" href="#list" '
         f'aria-label="{esc(T("admin_back_to_settings_page", la))}">{icon(ICON_BACK, 22)}</a>\n'
         '    <div>\n'
-        f'      <p class="sezione-occhiello">{trail}</p>\n'
-        f'      <h1 class="pagina-titolo" id="titolo-{key}">{T(label_key, la)}</h1>\n'
-        f'      <p class="pagina-sottotitolo">{TL(label_key + "_desc", la)}</p>\n'
+        f'      <p class="section-eyebrow">{trail}</p>\n'
+        f'      <h1 class="page-title" id="title-{key}">{T(label_key, la)}</h1>\n'
+        f'      <p class="page-subtitle">{TL(label_key + "_desc", la)}</p>\n'
         '    </div>\n'
         '  </div>\n'
         + section_warnings_html(key, config if config is not None else CONFIG, la))
@@ -1894,21 +1894,21 @@ def config_page(csrf):
         email = esc(reader.get("email", ""))
         nl_rows.append(
             f'      <li><span class="nl-email">{email}</span> <span class="hint">{stato}</span>'
-            f'<button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo" '
+            f'<button type="button" class="button button-text button-danger button-small" '
             f'data-email="{email}" onclick="removeSubscriber(this)">{T("admin_nl_remove", la)}</button></li>')
     if nl_rows:
-        nl_list = '    <ul class="nl-elenco">\n' + "\n".join(nl_rows) + "\n    </ul>"
+        nl_list = '    <ul class="nl-list">\n' + "\n".join(nl_rows) + "\n    </ul>"
     else:
-        nl_list = f'    <p class="aiuto">{T("admin_nl_nobody", la)}</p>'
+        nl_list = f'    <p class="help">{T("admin_nl_nobody", la)}</p>'
     nl_confirmed = sum(1 for r in nl_state["subscribers"] if r.get("status") == "confirmed")
     last = nl_state["last"]
     nl_last = ""
     if last.get("title"):
         if last.get("error"):
-            nl_last = (f'    <p class="avviso avviso-danger">' + esc(T("admin_nl_last_failure", la)
+            nl_last = (f'    <p class="notice notice-danger">' + esc(T("admin_nl_last_failure", la)
                        .replace("{title}", last["title"]).replace("{error}", last["error"])) + "</p>")
         else:
-            nl_last = (f'    <p class="aiuto">' + esc(T("admin_nl_last", la)
+            nl_last = (f'    <p class="help">' + esc(T("admin_nl_last", la)
                        .replace("{title}", last["title"]).replace("{sent}", str(last.get("sent", 0)))) + "</p>")
 
     context = dict(
@@ -2287,7 +2287,7 @@ def config_page(csrf):
     return admin_page_shell(T("admin_settings_page", la), contenuto, la,
                             csrf=csrf, navbar=admin_navbar("config", la),
                             head_extra=head_extra, script_extra=script_extra,
-                            page_data=page_data, body_class="pagina-config")
+                            page_data=page_data, body_class="page-config")
 
 
 # ---------------------------------------------------------------------------
@@ -2908,7 +2908,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             prefix, button = "nl_unsubscribe", T("nl_unsubscribe_button", language)
         action = (f'        <form method="post" action="{route}?t={urllib.parse.quote(token)}">\n'
                   f'          <input type="hidden" name="language" value="{language}">\n'
-                  f'          <button class="pulsante pulsante-primario" type="submit">{esc(button)}</button>\n'
+                  f'          <button class="button button-primary" type="submit">{esc(button)}</button>\n'
                   '        </form>')
         self._newsletter_page(language, prefix, action)
 

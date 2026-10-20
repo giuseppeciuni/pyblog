@@ -185,12 +185,12 @@ def test_honest_deletion():
 def test_editor_marks_removed():
     """The editor's own markers never reach a published page."""
     print("\nsegni dell'editor")
-    html_editor = ('<div class="raw-html-block pb-tabella-selezionata" contenteditable="false" '
+    html_editor = ('<div class="raw-html-block pb-table-selected" contenteditable="false" '
                    'data-hint="Doppio clic per modificare"><table class="article-table">'
                    '<tbody><tr><td>a</td></tr></tbody></table></div><p>testo</p>')
     clean = clean_editor_markup(html_editor)
     check("il suggerimento sopra la tabella sparisce", "data-hint" not in clean)
-    check("la classe di selezione sparisce", "pb-tabella-selezionata" not in clean)
+    check("la classe di selezione sparisce", "pb-table-selected" not in clean)
     check("le classi vere restano", 'class="raw-html-block"' in clean)
     check("contenteditable resta (serve all'editor quando ricarica)",
           'contenteditable="false"' in clean)

@@ -25,10 +25,10 @@ from core.i18n import LANGUAGE_NAMES, T
 # The groups of the panel, in order. The advanced section belongs to none:
 # it is a link at the bottom, for whoever knows what config.json is.
 GROUPS = [
-    ("sito", "admin_settings_group_site"),
-    ("lettori", "admin_settings_group_readers"),
-    ("servizi", "admin_settings_group_services"),
-    ("regole", "admin_settings_group_regole"),
+    ("site", "admin_settings_group_site"),
+    ("readers", "admin_settings_group_readers"),
+    ("services", "admin_settings_group_services"),
+    ("rules", "admin_settings_group_rules"),
 ]
 
 # Every section, in the order of the panel. The id is the one in the
@@ -38,37 +38,37 @@ GROUPS = [
 # description and the labels of its fields; they are mostly the technical
 # names someone might type, in both languages.
 SECTIONS = [
-    {"id": "sito", "group": "sito", "label": "admin_section_site",
+    {"id": "site", "group": "site", "label": "admin_section_site",
      "keywords": "titolo title dominio domain url lingua language autore author "
                  "foto photo seo logo favicon linkedin social immagini images larghezza width"},
-    {"id": "home", "group": "sito", "label": "admin_section_home",
+    {"id": "home", "group": "site", "label": "admin_section_home",
      "keywords": "homepage presentazione introduction disposizione layout copertina cover "
                  "condividi share copia link"},
-    {"id": "biografia", "group": "sito", "label": "admin_section_biography",
+    {"id": "biography", "group": "site", "label": "admin_section_biography",
      "keywords": "bio about chi sono who am i"},
-    {"id": "progetti", "group": "sito", "label": "admin_section_projects",
+    {"id": "projects", "group": "site", "label": "admin_section_projects",
      "keywords": "projects portfolio"},
-    {"id": "pagine", "group": "sito", "label": "admin_section_pages",
+    {"id": "boxes", "group": "site", "label": "admin_section_pages",
      "keywords": "esplora explore riquadri cards contatti contacts avvisi lavora con me "
                  "work with me hire"},
-    {"id": "commenti", "group": "lettori", "label": "admin_section_comments",
+    {"id": "comments", "group": "readers", "label": "admin_section_comments",
      "keywords": "comments giscus disqus"},
-    {"id": "newsletter", "group": "lettori", "label": "admin_section_newsletter",
+    {"id": "newsletter", "group": "readers", "label": "admin_section_newsletter",
      "keywords": "email mail iscritti subscribers smtp"},
-    {"id": "traduzione", "group": "lettori", "label": "admin_section_translation_of",
+    {"id": "translation", "group": "readers", "label": "admin_section_translation_of",
      "keywords": "translation inglese english deepl google claude openai deepseek chiave key api "
                  "seo backlink anchor ai"},
-    {"id": "statistiche", "group": "servizi", "label": "admin_section_analytics_section",
+    {"id": "analytics", "group": "services", "label": "admin_section_analytics_section",
      "keywords": "analytics google ga4 gtag umami visite visits"},
-    {"id": "codici", "group": "servizi", "label": "admin_section_codes",
+    {"id": "code", "group": "services", "label": "admin_section_codes",
      "keywords": "code script widget chat annunci ads adsense pixel tag manager gtm "
                  "clarity ads.txt"},
-    {"id": "cookie", "group": "regole", "label": "admin_section_cookie",
+    {"id": "cookie", "group": "rules", "label": "admin_section_cookie",
      "keywords": "cookies consenso consent gdpr privacy banner"},
-    {"id": "ai", "group": "regole", "label": "admin_section_ai",
+    {"id": "ai", "group": "rules", "label": "admin_section_ai",
      "keywords": "intelligenza artificiale artificial intelligence crawler bot gptbot "
                  "claudebot chatgpt addestramento training robots.txt llms.txt"},
-    {"id": "avanzate", "group": None, "label": "admin_section_advanced",
+    {"id": "advanced", "group": None, "label": "admin_section_advanced",
      "keywords": "config.json json avanzate advanced"},
 ]
 
@@ -78,7 +78,7 @@ SECTION_IDS = [s["id"] for s in SECTIONS]
 # would see, or what makes a link of the site wrong. A translation key that
 # is missing is a warning on its card, but not a step: plenty of blogs never
 # translate anything.
-SETUP_SECTIONS = ("sito", "home", "pagine", "statistiche", "cookie")
+SETUP_SECTIONS = ("site", "home", "boxes", "analytics", "cookie")
 
 # The texts the first configuration puts in the homepage cards and in the
 # introduction, so that a new site does not open empty. On a site that is
@@ -416,16 +416,16 @@ def _state_ai(config, la):
 
 
 STATE_FUNCTIONS = {
-    "sito": _state_site,
+    "site": _state_site,
     "home": _state_home,
-    "biografia": _state_biography,
-    "progetti": _state_projects,
-    "pagine": _state_cards,
-    "commenti": _state_comments,
+    "biography": _state_biography,
+    "projects": _state_projects,
+    "boxes": _state_cards,
+    "comments": _state_comments,
     "newsletter": _state_newsletter,
-    "traduzione": _state_translation,
-    "statistiche": _state_analytics,
-    "codici": _state_code,
+    "translation": _state_translation,
+    "analytics": _state_analytics,
+    "code": _state_code,
     "cookie": _state_consent,
     "ai": _state_ai,
 }

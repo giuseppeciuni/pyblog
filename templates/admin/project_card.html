@@ -1,34 +1,34 @@
-  <div class="gruppo progetto-config">
-    <div class="progetto-testata">
-      <label class="campo-spunta"><input type="checkbox" class="progetto-visibile" $checked> <span>$label_visible</span></label>
-      <div class="progetto-azioni">
-        <button type="button" class="pulsante pulsante-icona" onclick="moveProject(this, -1)" aria-label="$label_on_top" title="$label_on_top">$icon_on_top</button>
-        <button type="button" class="pulsante pulsante-icona" onclick="moveProject(this, 1)" aria-label="$label_down" title="$label_down">$icon_down</button>
-        <button type="button" class="pulsante pulsante-testo voce-pericolo" onclick="removeProject(this)">$label_delete</button>
+  <div class="group project-config">
+    <div class="project-header">
+      <label class="field-tick"><input type="checkbox" class="project-visible" $checked> <span>$label_visible</span></label>
+      <div class="project-actions">
+        <button type="button" class="button button-icon" onclick="moveProject(this, -1)" aria-label="$label_on_top" title="$label_on_top">$icon_on_top</button>
+        <button type="button" class="button button-icon" onclick="moveProject(this, 1)" aria-label="$label_down" title="$label_down">$icon_down</button>
+        <button type="button" class="button button-text item-danger" onclick="removeProject(this)">$label_delete</button>
       </div>
     </div>
-    <label class="campo-etichettato"><span class="etichetta">$label_name</span>
-      <input type="text" class="progetto-nome" value="$name" maxlength="120"></label>
-    <div class="campo">
-      <label class="campo-etichettato"><span class="etichetta">$label_description</span>
-        <textarea class="progetto-descrizione" rows="2" maxlength="240">$description</textarea></label>
-      <p class="aiuto">$hint_description</p>
+    <label class="field-labelled"><span class="label-text">$label_name</span>
+      <input type="text" class="project-name" value="$name" maxlength="120"></label>
+    <div class="field">
+      <label class="field-labelled"><span class="label-text">$label_description</span>
+        <textarea class="project-description" rows="2" maxlength="240">$description</textarea></label>
+      <p class="help">$hint_description</p>
     </div>
-    <label class="campo-etichettato"><span class="etichetta">$label_description_en</span>
-      <textarea class="progetto-descrizione-en" rows="2" maxlength="240">$description_en</textarea></label>
-    <div class="campo">
-      <label class="campo-etichettato"><span class="etichetta">$label_link</span>
-        <input type="url" class="progetto-link" value="$link" placeholder="https://"></label>
-      <p class="aiuto">$hint_link</p>
+    <label class="field-labelled"><span class="label-text">$label_description_en</span>
+      <textarea class="project-description-en" rows="2" maxlength="240">$description_en</textarea></label>
+    <div class="field">
+      <label class="field-labelled"><span class="label-text">$label_link</span>
+        <input type="url" class="project-link" value="$link" placeholder="https://"></label>
+      <p class="help">$hint_link</p>
     </div>
-    <div class="campo">
-      <label class="campo-etichettato"><span class="etichetta">$label_picture</span>
-        <input type="text" class="progetto-immagine" value="$picture" oninput="updateProjectPreview(this.closest('.progetto-config'))"></label>
-      <p class="aiuto">$hint_picture</p>
-      <div class="azioni">
-        <button type="button" class="pulsante" onclick="chooseProjectImage(this)">$label_upload</button>
-        <span class="hint progetto-stato" role="status"></span>
+    <div class="field">
+      <label class="field-labelled"><span class="label-text">$label_picture</span>
+        <input type="text" class="project-picture" value="$picture" oninput="updateProjectPreview(this.closest('.project-config'))"></label>
+      <p class="help">$hint_picture</p>
+      <div class="actions">
+        <button type="button" class="button" onclick="chooseProjectImage(this)">$label_upload</button>
+        <span class="hint project-state" role="status"></span>
       </div>
-      <img class="progetto-anteprima" alt="" hidden>
+      <img class="project-preview" alt="" hidden>
     </div>
   </div>

@@ -290,7 +290,7 @@ UI_TRANSLATIONS = {
     "admin_settings_group_site": {"it": "Il tuo sito", "en": "Your site"},
     "admin_settings_group_readers": {"it": "I lettori", "en": "Readers"},
     "admin_settings_group_services": {"it": "Statistiche e servizi esterni", "en": "Analytics and outside services"},
-    "admin_settings_group_regole": {"it": "Regole e privacy", "en": "Rules and privacy"},
+    "admin_settings_group_rules": {"it": "Regole e privacy", "en": "Rules and privacy"},
     "admin_panel_subtitle": {"it": "Ogni riquadro dice a cosa serve e com'è adesso: in verde quello che è a posto, in arancio quello da sistemare.",
                                    "en": "Each card says what it is for and how it stands now: green when it is in order, orange when something needs fixing."},
     "admin_search_setting": {"it": "Cerca un'impostazione", "en": "Search the settings"},

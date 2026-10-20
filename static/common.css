@@ -67,7 +67,7 @@
 
 /* Dark theme: only the palette changes, every component adapts by itself.
    The attribute is set by site.js before the page is painted. */
-html[data-tema="dark"] {
+html[data-theme="dark"] {
   --pb-text:#e4e4e7;
   --pb-text-muted:#a1a1aa;
   --pb-accent:#6ba9ff;
@@ -119,15 +119,15 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible {
 /* --- Controls ---------------------------------------------------------------
    One family of buttons and fields for the whole platform: the public site
    (consent banner, search), the login, the editor and the Settings.
-   - .pulsante            a secondary action, outlined
-   - .pulsante-primario   the one main action of a place
-   - .pulsante-testo      a quiet action that reads as a link
-   - .pulsante-ai         an action done by an AI service (suggest, translate)
-   - .pulsante-pericolo   an action that deletes something
-   - .pulsante-icona      a square button with only an icon (it needs an
+   - .button            a secondary action, outlined
+   - .button-primary   the one main action of a place
+   - .button-text      a quiet action that reads as a link
+   - .button-ai         an action done by an AI service (suggest, translate)
+   - .button-danger   an action that deletes something
+   - .button-icon      a square button with only an icon (it needs an
                           aria-label)
    Heights are 40px with a mouse and 44px on touch screens. */
-.pulsante {
+.button {
   display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
   min-height:var(--pb-control-height); padding:0 1rem; box-sizing:border-box;
   border-radius:var(--pb-radius-control); border:1px solid var(--pb-border-control);
@@ -135,31 +135,31 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible {
   font:inherit; font-size:0.9375rem; font-weight:600; line-height:1.2;
   text-decoration:none; cursor:pointer; flex:none; white-space:nowrap;
 }
-.pulsante:hover { background:var(--pb-surface-alt); color:var(--pb-text); }
-.pulsante:disabled { opacity:0.65; cursor:default; }
-.pulsante[hidden] { display:none; }
-.pulsante .icona { flex:none; }
-.pulsante-primario { background:var(--pb-accent); border-color:var(--pb-accent); color:var(--pb-on-accent); }
-.pulsante-primario:hover { background:var(--pb-accent-strong); border-color:var(--pb-accent-strong); color:var(--pb-on-accent); }
-.pulsante.pulsante-testo { border-color:transparent; background:transparent; color:var(--pb-accent-strong); padding:0 0.5rem; }
-.pulsante.pulsante-testo:hover { background:var(--pb-accent-soft); }
-.pulsante.pulsante-ai { border-color:var(--pb-ai-border); background:var(--pb-ai-soft); color:var(--pb-ai); }
-.pulsante.pulsante-ai:hover { background:var(--pb-ai-soft-strong); color:var(--pb-ai); }
-.pulsante.pulsante-pericolo { color:var(--pb-danger); }
-.pulsante.pulsante-pericolo.pulsante-testo:hover { background:var(--pb-danger-soft); }
-.pulsante-primario.pulsante-pericolo, .pulsante-primario.pulsante-pericolo:hover {
+.button:hover { background:var(--pb-surface-alt); color:var(--pb-text); }
+.button:disabled { opacity:0.65; cursor:default; }
+.button[hidden] { display:none; }
+.button .icon { flex:none; }
+.button-primary { background:var(--pb-accent); border-color:var(--pb-accent); color:var(--pb-on-accent); }
+.button-primary:hover { background:var(--pb-accent-strong); border-color:var(--pb-accent-strong); color:var(--pb-on-accent); }
+.button.button-text { border-color:transparent; background:transparent; color:var(--pb-accent-strong); padding:0 0.5rem; }
+.button.button-text:hover { background:var(--pb-accent-soft); }
+.button.button-ai { border-color:var(--pb-ai-border); background:var(--pb-ai-soft); color:var(--pb-ai); }
+.button.button-ai:hover { background:var(--pb-ai-soft-strong); color:var(--pb-ai); }
+.button.button-danger { color:var(--pb-danger); }
+.button.button-danger.button-text:hover { background:var(--pb-danger-soft); }
+.button-primary.button-danger, .button-primary.button-danger:hover {
   background:var(--pb-danger); border-color:var(--pb-danger); color:var(--pb-on-accent); }
-.pulsante-primario.pulsante-pericolo:hover { filter:brightness(0.92); }
-.pulsante-icona { width:var(--pb-control-height); padding:0; }
-.pulsante-largo { width:100%; }
-.pulsante-piccolo { min-height:32px; padding:0 0.75rem; font-size:0.875rem; }
+.button-primary.button-danger:hover { filter:brightness(0.92); }
+.button-icon { width:var(--pb-control-height); padding:0; }
+.button-wide { width:100%; }
+.button-small { min-height:32px; padding:0 0.75rem; font-size:0.875rem; }
 
-.campo-input {
+.field-input {
   min-height:var(--pb-control-height); padding:0.5rem 0.75rem; box-sizing:border-box;
   border:1px solid var(--pb-border-control); border-radius:var(--pb-radius-control);
   font:inherit; font-size:1rem; background:var(--pb-surface); color:var(--pb-text);
 }
-.campo-input:focus { outline:none; border-color:var(--pb-accent); box-shadow:0 0 0 3px var(--pb-accent-ring); }
+.field-input:focus { outline:none; border-color:var(--pb-accent); box-shadow:0 0 0 3px var(--pb-accent-ring); }
 
 /* Touch screens: bigger targets, and 16px text so phones do not zoom in. */
 @media (pointer: coarse), (max-width: 860px) {

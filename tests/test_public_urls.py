@@ -20,7 +20,7 @@ import urllib.request
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 from core import build, server  # noqa: E402
-from core.config import migrate_legacy_paths  # noqa: E402
+from core.config import migrate_legacy_paths, migrate_legacy_selectors  # noqa: E402
 
 PASSED = 0
 FAILED = 0
@@ -91,6 +91,13 @@ def test_moved_folders():
           and config["work_with_me"]["url"] == "/pages/lavora-con-me.html")
     config, changed = migrate_legacy_paths({"seo": {"author_url": "https://www.linkedin.com/in/x"}})
     check("other addresses are left alone", not changed)
+    config, changed = migrate_legacy_selectors({"custom_code": [
+        {"anchor_selector": ".colonna-principale > .box-indice"}, {"anchor_selector": "article.art-lead"}]})
+    check("the points chosen for external code follow the classes' new names",
+          changed and config["custom_code"][0]["anchor_selector"] == ".column-main > .box-toc-index"
+          and config["custom_code"][1]["anchor_selector"] == "article.art-lead")
+    config, changed = migrate_legacy_selectors({"custom_code": [{"anchor_selector": "article.art-lead"}]})
+    check("a selector already in English is left alone", not changed)
     for name in ("nginx.conf.example", "nginx.separate-admin.conf.example"):
         text = (pathlib.Path(__file__).resolve().parent.parent / name).read_text()
         check(f"{name} sends the old folders on with a 301",

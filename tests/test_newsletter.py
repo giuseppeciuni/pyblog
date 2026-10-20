@@ -229,7 +229,7 @@ def test_site(port):
     check("con il campo trappola per i robot", 'name="website" tabindex="-1"' in home)
     check("e la lingua della pagina", 'name="language" value="it"' in home)
     article = build.generate_article_page(pubblicati[0], "it", pubblicati)
-    check("e in fondo all'articolo", 'class="newsletter-articolo"' in article)
+    check("e in fondo all'articolo", 'class="newsletter-article"' in article)
     set_value(port, in_sidebar=False, after_article=False)
     check("dove l'autore non lo vuole, non c'è", 'action="/subscribe"' not in build.generate_homepage(pubblicati, "it"))
     set_value(port, enabled=False)
@@ -244,7 +244,7 @@ def test_administration(port):
     print("\nl'amministrazione")
     set_value(port)
     settings_value = server.config_page("TOKEN")
-    check("la sezione Newsletter c'è", 'id="sezione-newsletter"' in settings_value)
+    check("la sezione Newsletter c'è", 'id="section-newsletter"' in settings_value)
     check("la password salvata non torna mai nella pagina", 'id="nl_smtp_password" value=""' in settings_value)
     check("le rotte dell'amministrazione chiedono l'accesso e il token",
           "/newsletter-subscribers.csv" in server.ADMIN_GET_ROUTES

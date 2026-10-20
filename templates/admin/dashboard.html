@@ -1,33 +1,33 @@
-<div class="pagina">
+<div class="page">
 
-  <div class="pagina-testata">
+  <div class="page-header">
     <div>
-      <h1 class="pagina-titolo">$label_articles</h1>
-      <p class="pagina-sottotitolo">$overview</p>
+      <h1 class="page-title">$label_articles</h1>
+      <p class="page-subtitle">$overview</p>
     </div>
-    <a class="pulsante pulsante-primario" href="/edit">$new_article</a>
+    <a class="button button-primary" href="/edit">$new_article</a>
   </div>
 
-  <p class="avviso-aggiornamento" id="avviso-aggiornamento" role="status" hidden>
-    <span id="avviso-aggiornamento-testo"></span>
+  <p class="notice-update-notice" id="notice-update-notice" role="status" hidden>
+    <span id="notice-update-notice-text"></span>
     <a href="/updates">$label_see_update_notice</a>
   </p>
 
 $first_steps_of_steps
 
-  <div class="elenco-strumenti">
-    <div class="segmenti" role="group" aria-label="$label_show" id="filtro-stato">
-      <button type="button" class="segmento" aria-pressed="true" data-filtro="tutti" onclick="filterByStatus(this)">$label_all<span class="segmento-conta">$total</span></button>
-      <button type="button" class="segmento" aria-pressed="false" data-filtro="1" onclick="filterByStatus(this)">$label_published_pl<span class="segmento-conta">$published_pl</span></button>
-      <button type="button" class="segmento" aria-pressed="false" data-filtro="0" onclick="filterByStatus(this)">$label_drafts<span class="segmento-conta">$drafts</span></button>
-      <button type="button" class="segmento" aria-pressed="false" data-filtro="s" onclick="filterByStatus(this)"$scheduled_pl_hidden_m>$label_scheduled_pl<span class="segmento-conta">$scheduled_pl</span></button>
+  <div class="list-tools">
+    <div class="segments" role="group" aria-label="$label_show" id="filter-state">
+      <button type="button" class="segment" aria-pressed="true" data-filter="all" onclick="filterByStatus(this)">$label_all<span class="segment-count">$total</span></button>
+      <button type="button" class="segment" aria-pressed="false" data-filter="1" onclick="filterByStatus(this)">$label_published_pl<span class="segment-count">$published_pl</span></button>
+      <button type="button" class="segment" aria-pressed="false" data-filter="0" onclick="filterByStatus(this)">$label_drafts<span class="segment-count">$drafts</span></button>
+      <button type="button" class="segment" aria-pressed="false" data-filter="s" onclick="filterByStatus(this)"$scheduled_pl_hidden_m>$label_scheduled_pl<span class="segment-count">$scheduled_pl</span></button>
     </div>
     <label for="search-box-admin" class="vh">$label_search</label>
-    <input type="search" class="campo-input elenco-cerca" id="search-box-admin"
+    <input type="search" class="field-input list-search" id="search-box-admin"
            placeholder="$label_search" oninput="filterArticles()">
-    <div class="elenco-ordina">
-      <label for="ordina-articoli">$label_sort</label>
-      <select class="campo-input" id="ordina-articoli" onchange="sortArticles()">
+    <div class="list-sort">
+      <label for="sort-articles">$label_sort</label>
+      <select class="field-input" id="sort-articles" onchange="sortArticles()">
         <option value="recenti">$sort_recent</option>
         <option value="vecchi">$sort_old</option>
         <option value="titolo">$sort_title</option>
@@ -36,8 +36,8 @@ $first_steps_of_steps
     </div>
   </div>
 
-  <div class="elenco-articoli" id="elenco-articoli">
+  <div class="list-articles" id="list-articles">
 $list
   </div>
-  <p class="elenco-vuoto" id="nessun-risultato" hidden>$no_one_matches</p>
+  <p class="list-empty" id="no-result" hidden>$no_one_matches</p>
 </div>

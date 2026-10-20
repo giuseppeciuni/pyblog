@@ -117,11 +117,11 @@ def test_page():
     lib = Library()
     try:
         page_html = server.library_page("TOKEN")
-        check("una scheda per file", page_html.count('<li class="media-scheda"') == 4)
+        check("una scheda per file", page_html.count('<li class="media-card"') == 4)
         check("ogni uso porta all'articolo o alle impostazioni",
               '<a href="/edit?slug=primo">Il primo</a>' in page_html and '<a href="/config">' in page_html)
         check("il file non usato è segnato, e contato nella pulizia",
-              'data-nome="dimenticata.png" data-usato="0"' in page_html
+              'data-name="dimenticata.png" data-used="0"' in page_html
               and "(1, 1 KB)" in page_html, page_html[page_html.find("Elimina i non"):][:80])
         check("i video si vedono come video", '<video src="/media/video.mp4"' in page_html)
         check("il nome arriva al JavaScript senza virgolette in più",
@@ -130,9 +130,9 @@ def test_page():
               page_html[page_html.find("deleteMedia(this,"):][:60])
         check("il menu porta alla libreria e la segna",
               'aria-current="page" href="/media-library"' in page_html)
-        barra = page_html[page_html.index('class="barra-basso"'):]
+        barra = page_html[page_html.index('class="bar-bottom"'):]
         check("ma la barra del telefono resta a quattro voci", 'href="/media-library"' not in barra
-              and barra.count('class="barra-voce"') == 4)
+              and barra.count('class="bar-item"') == 4)
         media_library.delete_media(["dimenticata.png"])
         page_html = server.library_page("TOKEN")
         check("senza file inutilizzati, il pulsante della pulizia si nasconde",

@@ -81,15 +81,15 @@ def test_data():
 def test_article():
     print("\nla pagina di una parte")
     page_html = build.generate_article_page(ARTICLES_FIXTURE[4], "it", ARTICLES_FIXTURE)
-    box = page_html.split('<nav class="serie-box"')[1].split("</nav>")[0]
+    box = page_html.split('<nav class="series-box"')[1].split("</nav>")[0]
     check("apre con il nome della serie e il posto della parte",
-          '<a class="serie-nome" href="/series/inside-the-machine.html">' in box
+          '<a class="series-name" href="/series/inside-the-machine.html">' in box
           and "parte 2 di 3" in box, box[:300])
     check("elenca tutte le parti, con la corrente segnata e senza link",
           box.count("<li") == 3 and '<li aria-current="page">Articolo 1</li>' in box
           and '<a href="/posts/articolo-2.html">Articolo 2</a>' in box)
     check("il riquadro sta prima del testo",
-          page_html.index("serie-box") < page_html.index('class="post-content"'))
+          page_html.index("series-box") < page_html.index('class="post-content"'))
     bottom = page_html.split('class="article-nav"')[1].split("</nav>")[0]
     check("in fondo porta alla parte precedente e alla successiva della serie",
           "Parte precedente" in bottom and "/posts/articolo-2.html" in bottom
@@ -100,10 +100,10 @@ def test_article():
           "Parte precedente" not in bottom and "Parte successiva" in bottom)
 
     outside = build.generate_article_page(ARTICLES_FIXTURE[0], "it", ARTICLES_FIXTURE)
-    check("un articolo fuori dalle serie non ha il riquadro", "serie-box" not in outside)
+    check("un articolo fuori dalle serie non ha il riquadro", "series-box" not in outside)
     check("e naviga per data come prima", "Meno recente" in outside)
     alone = build.generate_article_page(ARTICLES_FIXTURE[2], "it", ARTICLES_FIXTURE)
-    check("una serie con una sola parte online non mostra nulla", "serie-box" not in alone)
+    check("una serie con una sola parte online non mostra nulla", "series-box" not in alone)
 
     english = build.generate_article_page(ARTICLES_FIXTURE[3], "en", ARTICLES_FIXTURE)
     check("in inglese contano solo le parti tradotte",
@@ -115,7 +115,7 @@ def test_series_page():
     print("\nla pagina della serie")
     serie = collect_series(ARTICLES_FIXTURE)["inside-the-machine"]
     page_html = build.generate_series_page("inside-the-machine", serie, "it", ARTICLES_FIXTURE)
-    elenco = page_html.split('class="articles-list serie-elenco"')[1].split("</ol>")[0]
+    elenco = page_html.split('class="articles-list series-list"')[1].split("</ol>")[0]
     check("ha il nome della serie nel titolo e nell'intestazione",
           "<title>Serie: Inside the Machine" in page_html
           and '<h1 class="articles-heading">Inside the Machine</h1>' in page_html)

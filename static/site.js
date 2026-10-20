@@ -23,23 +23,24 @@
   // browser without JavaScript keeps every link visible.
   document.documentElement.classList.add('js');
   try {
-    var salvato = localStorage.getItem('pb-tema');
+    // The theme was saved as pb-tema before the names went English.
+    var salvato = localStorage.getItem('pb-theme') || localStorage.getItem('pb-tema');
     if (salvato === 'dark') {
-      document.documentElement.setAttribute('data-tema', 'dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
     } else if (salvato === null && window.matchMedia
                && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       // No saved choice: we respect the system preference.
-      document.documentElement.setAttribute('data-tema', 'dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
     }
   } catch (e) { }
 })();
 
 // Aligns the code blocks theme (highlight.js) with the site theme.
-// The link has id "hljs-tema" and only exists on the article pages.
+// The link has id "hljs-theme" and only exists on the article pages.
 function updateCodeTheme() {
-  var link = document.getElementById('hljs-tema');
+  var link = document.getElementById('hljs-theme');
   if (!link) { return; }
-  var scuro = document.documentElement.getAttribute('data-tema') === 'dark';
+  var scuro = document.documentElement.getAttribute('data-theme') === 'dark';
   if (scuro) {
     link.href = 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css';
   } else {
@@ -49,13 +50,13 @@ function updateCodeTheme() {
 
 // Switches between light and dark theme and saves the choice.
 function toggleTheme() {
-  var attuale = document.documentElement.getAttribute('data-tema');
+  var attuale = document.documentElement.getAttribute('data-theme');
   if (attuale === 'dark') {
-    document.documentElement.removeAttribute('data-tema');
-    try { localStorage.setItem('pb-tema', 'light'); } catch (e) { }
+    document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem('pb-theme', 'light'); } catch (e) { }
   } else {
-    document.documentElement.setAttribute('data-tema', 'dark');
-    try { localStorage.setItem('pb-tema', 'dark'); } catch (e) { }
+    document.documentElement.setAttribute('data-theme', 'dark');
+    try { localStorage.setItem('pb-theme', 'dark'); } catch (e) { }
   }
   updateCodeTheme();
 }
@@ -85,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var input = document.getElementById('search-box-input');
   var info = document.getElementById('search-box-info');
-  var lista = document.getElementById('lista-articoli');
+  var lista = document.getElementById('list-box-articles');
   if (!input || !info || !lista) { return; }
   if (opzioni.post_prefix === undefined) { return; }
 
@@ -94,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // to give back cards with a different excerpt, and on the translated
   // homepage with the excerpt of the other language.
   var listaOriginale = lista.innerHTML;
-  var paginazione = document.querySelector('.paginazione');
+  var paginazione = document.querySelector('.pagination');
 
   var indice = [];
 
@@ -361,18 +362,18 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!pulsante || !menu) { return; }
 
   function chiudi() {
-    menu.classList.remove('aperto');
+    menu.classList.remove('open');
     pulsante.setAttribute('aria-expanded', 'false');
   }
 
   pulsante.addEventListener('click', function() {
-    var aperto = menu.classList.toggle('aperto');
+    var aperto = menu.classList.toggle('open');
     pulsante.setAttribute('aria-expanded', aperto ? 'true' : 'false');
   });
   // Esc closes it, and so does following one of its links (an anchor such
   // as #articles keeps the page, so the menu would stay open over it).
   document.addEventListener('keydown', function(evento) {
-    if (evento.key === 'Escape' && menu.classList.contains('aperto')) {
+    if (evento.key === 'Escape' && menu.classList.contains('open')) {
       chiudi();
       pulsante.focus();
     }
@@ -387,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // In the sidebar of an article, the entry of the section being read is
 // marked, so the index doubles as a "you are here".
 document.addEventListener('DOMContentLoaded', function() {
-  var voci = document.querySelectorAll('.box-indice a[href^="#"]');
+  var voci = document.querySelectorAll('.box-toc-index a[href^="#"]');
   if (voci.length === 0 || !('IntersectionObserver' in window)) { return; }
 
   var perId = {};
@@ -450,13 +451,13 @@ function aggiungiPulsanteCopia(blocco, opzioni) {
   // The button is positioned against a wrapper, so the block itself keeps
   // its own scrolling and padding untouched.
   var contenitore = document.createElement('div');
-  contenitore.className = 'blocco-codice';
+  contenitore.className = 'code-block';
   blocco.parentNode.insertBefore(contenitore, blocco);
   contenitore.appendChild(blocco);
 
   var pulsante = document.createElement('button');
   pulsante.type = 'button';
-  pulsante.className = 'copia-codice';
+  pulsante.className = 'copy-code';
   pulsante.textContent = opzioni.copy_label;
   pulsante.setAttribute('title', opzioni.copy_title);
   pulsante.setAttribute('aria-label', opzioni.copy_title);
@@ -466,11 +467,11 @@ function aggiungiPulsanteCopia(blocco, opzioni) {
     copiaTesto(testo, function(riuscito) {
       if (riuscito) {
         pulsante.textContent = opzioni.copied_label;
-        pulsante.classList.add('copiato');
+        pulsante.classList.add('copied');
       }
       setTimeout(function() {
         pulsante.textContent = opzioni.copy_label;
-        pulsante.classList.remove('copiato');
+        pulsante.classList.remove('copied');
       }, 1500);
     });
   });
@@ -481,14 +482,14 @@ function aggiungiPulsanteCopia(blocco, opzioni) {
 // "Copy the link" at the end of an article: the address goes to the
 // clipboard and the button says so for a moment.
 document.addEventListener('DOMContentLoaded', function() {
-  var pulsanti = document.querySelectorAll('.condividi-copia');
+  var pulsanti = document.querySelectorAll('.share-copy');
   for (var i = 0; i < pulsanti.length; i++) {
     pulsanti[i].addEventListener('click', function() {
       var pulsante = this;
       var scritta = pulsante.textContent;
       copiaTesto(pulsante.getAttribute('data-url'), function(riuscito) {
         if (!riuscito) { return; }
-        pulsante.textContent = pulsante.getAttribute('data-fatto');
+        pulsante.textContent = pulsante.getAttribute('data-done');
         setTimeout(function() { pulsante.textContent = scritta; }, 1500);
       });
     });
@@ -534,14 +535,14 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!opzioni || !articolo) { return; }
 
   var barra = document.createElement('div');
-  barra.className = 'progresso-lettura';
+  barra.className = 'progress-reading';
   barra.setAttribute('role', 'progressbar');
   barra.setAttribute('aria-label', opzioni.progress_label);
   barra.setAttribute('aria-valuemin', '0');
   barra.setAttribute('aria-valuemax', '100');
 
   var riempimento = document.createElement('div');
-  riempimento.className = 'progresso-lettura-barra';
+  riempimento.className = 'progress-reading-bar';
   barra.appendChild(riempimento);
   document.body.appendChild(barra);
 
@@ -595,7 +596,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var opzioni = window.PB_SITE;
   if (!opzioni) { return; }
 
-  var immagini = document.querySelectorAll('.articolo-copertina img[data-zoom]');
+  var immagini = document.querySelectorAll('.article-cover img[data-zoom]');
   if (immagini.length === 0) { return; }
 
   for (var i = 0; i < immagini.length; i++) {
@@ -626,10 +627,10 @@ function preparaZoom(immagine, opzioni) {
 // Shows the picture over the page. Built by hand rather than with a library:
 // it is a div, an image and two ways to close it.
 function apriZoom(indirizzo, testoAlternativo, opzioni) {
-  if (document.querySelector('.zoom-immagine')) { return; }
+  if (document.querySelector('.zoom-picture')) { return; }
 
   var sfondo = document.createElement('div');
-  sfondo.className = 'zoom-immagine';
+  sfondo.className = 'zoom-picture';
   sfondo.setAttribute('role', 'dialog');
   sfondo.setAttribute('aria-modal', 'true');
   sfondo.setAttribute('aria-label', testoAlternativo || opzioni.zoom_label);
@@ -641,7 +642,7 @@ function apriZoom(indirizzo, testoAlternativo, opzioni) {
 
   var chiudi = document.createElement('button');
   chiudi.type = 'button';
-  chiudi.className = 'zoom-chiudi';
+  chiudi.className = 'zoom-close';
   chiudi.setAttribute('aria-label', opzioni.close_label);
   chiudi.textContent = '×';
   sfondo.appendChild(chiudi);
@@ -652,7 +653,7 @@ function apriZoom(indirizzo, testoAlternativo, opzioni) {
   function chiudiZoom() {
     document.removeEventListener('keydown', suTasto);
     if (sfondo.parentNode) { sfondo.parentNode.removeChild(sfondo); }
-    document.body.classList.remove('zoom-aperto');
+    document.body.classList.remove('zoom-open');
     if (elementoPrecedente && elementoPrecedente.focus) { elementoPrecedente.focus(); }
   }
 
@@ -671,7 +672,7 @@ function apriZoom(indirizzo, testoAlternativo, opzioni) {
 
   document.body.appendChild(sfondo);
   // Stops the page behind from scrolling while the picture is open.
-  document.body.classList.add('zoom-aperto');
+  document.body.classList.add('zoom-open');
   chiudi.focus();
 }
 
@@ -704,12 +705,12 @@ function attivaModello(modello) {
 // not, it runs now. A page without that block simply does not show it.
 // This listener is registered before the consent one, so it runs first.
 document.addEventListener('DOMContentLoaded', function() {
-  var modelli = document.querySelectorAll('template[data-pb-ancora]');
+  var modelli = document.querySelectorAll('template[data-pb-anchor]');
   for (var i = 0; i < modelli.length; i++) {
     var modello = modelli[i];
     var bersaglio = null;
     try {
-      bersaglio = document.querySelector(modello.getAttribute('data-pb-ancora'));
+      bersaglio = document.querySelector(modello.getAttribute('data-pb-anchor'));
     } catch (e) {
       bersaglio = null;
     }
@@ -718,14 +719,14 @@ document.addEventListener('DOMContentLoaded', function() {
       continue;
     }
     var contenitore = document.createElement('div');
-    contenitore.className = 'codice-posizionato';
-    if (modello.getAttribute('data-pb-dove') === 'before') {
+    contenitore.className = 'code-positioned';
+    if (modello.getAttribute('data-pb-where') === 'before') {
       bersaglio.parentNode.insertBefore(contenitore, bersaglio);
     } else {
       bersaglio.parentNode.insertBefore(contenitore, bersaglio.nextSibling);
     }
     contenitore.appendChild(modello);
-    if (!modello.hasAttribute('data-pb-consenso')) {
+    if (!modello.hasAttribute('data-pb-consent')) {
       attivaModello(modello);
     }
   }
@@ -734,7 +735,7 @@ document.addEventListener('DOMContentLoaded', function() {
 /* --- 7) Consent to statistics and advertising ------------------------------ */
 
 // The code that needs the visitor's consent reaches the page inside inert
-// <template data-pb-consenso="..."> elements: nothing in them runs or loads.
+// <template data-pb-consent="..."> elements: nothing in them runs or loads.
 // Here, once the visitor has accepted a category, its templates become live
 // code in the very place they stand, and Google's tags are told through
 // Consent Mode. The choice is kept in this browser and asked again only when
@@ -743,19 +744,21 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
   var opzioni = window.PB_SITE;
   if (!opzioni || !opzioni.consent) { return; }
-  var banner = document.getElementById('pb-consenso');
+  var banner = document.getElementById('pb-consent');
   if (!banner) { return; }
 
-  var CHIAVE = 'pb-consenso';
+  var CHIAVE = 'pb-consent';
   var versione = opzioni.consent.version;
   var categorie = opzioni.consent.categories || [];
-  var scelte = document.getElementById('pb-consenso-scelte');
-  var pulsanteSalva = banner.querySelector('[data-consenso="salva"]');
-  var pulsantePersonalizza = banner.querySelector('[data-consenso="personalizza"]');
+  var scelte = document.getElementById('pb-consent-choices');
+  var pulsanteSalva = banner.querySelector('[data-consent="save"]');
+  var pulsantePersonalizza = banner.querySelector('[data-consent="customize"]');
 
   function leggiScelta() {
     try {
-      var valore = JSON.parse(localStorage.getItem(CHIAVE));
+      // A choice made before the names went English was saved as pb-consenso:
+      // it still counts, so a visitor is not asked again.
+      var valore = JSON.parse(localStorage.getItem(CHIAVE) || localStorage.getItem('pb-consenso'));
       if (valore && valore.v === versione) { return valore; }
     } catch (e) { }
     return null;
@@ -768,7 +771,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function attivaCategoria(categoria) {
-    var modelli = document.querySelectorAll('template[data-pb-consenso="' + categoria + '"]');
+    var modelli = document.querySelectorAll('template[data-pb-consent="' + categoria + '"]');
     for (var i = 0; i < modelli.length; i++) {
       attivaModello(modelli[i]);
     }
@@ -794,9 +797,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function mostraScelte(valore) {
-    var caselle = scelte.querySelectorAll('input[data-categoria]');
+    var caselle = scelte.querySelectorAll('input[data-category]');
     for (var i = 0; i < caselle.length; i++) {
-      caselle[i].checked = !!(valore && valore[caselle[i].getAttribute('data-categoria')] === true);
+      caselle[i].checked = !!(valore && valore[caselle[i].getAttribute('data-category')] === true);
     }
     scelte.hidden = false;
     pulsanteSalva.hidden = false;
@@ -852,17 +855,17 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   banner.addEventListener('click', function(evento) {
-    var pulsante = evento.target.closest('[data-consenso]');
+    var pulsante = evento.target.closest('[data-consent]');
     if (!pulsante) { return; }
-    var azione = pulsante.getAttribute('data-consenso');
-    if (azione === 'accetta') { decidi(tutte(true)); }
-    if (azione === 'rifiuta') { decidi(tutte(false)); }
-    if (azione === 'personalizza') { mostraScelte(leggiScelta()); }
-    if (azione === 'salva') {
+    var azione = pulsante.getAttribute('data-consent');
+    if (azione === 'accept') { decidi(tutte(true)); }
+    if (azione === 'refuse') { decidi(tutte(false)); }
+    if (azione === 'customize') { mostraScelte(leggiScelta()); }
+    if (azione === 'save') {
       var valore = prendiPrecedenti();
-      var caselle = scelte.querySelectorAll('input[data-categoria]');
+      var caselle = scelte.querySelectorAll('input[data-category]');
       for (var i = 0; i < caselle.length; i++) {
-        valore[caselle[i].getAttribute('data-categoria')] = caselle[i].checked;
+        valore[caselle[i].getAttribute('data-category')] = caselle[i].checked;
       }
       decidi(valore);
     }
@@ -870,7 +873,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // The "cookie preferences" link of the footer reopens the banner.
   document.addEventListener('click', function(evento) {
-    if (evento.target.closest('.link-preferenze')) { apri(true); }
+    if (evento.target.closest('.link-preferences')) { apri(true); }
   });
 
   var salvata = leggiScelta();

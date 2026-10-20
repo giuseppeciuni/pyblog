@@ -160,10 +160,10 @@ def test_pages():
           'aria-current="page" href="/updates"' in page_html
           and server.T("admin_version", "it").replace("{v}", updates.__version__) in page_html)
     check("il controllo automatico si spegne con la sua casella",
-          'id="controllo-automatico"' in page_html and 'for="controllo-automatico"' in page_html)
+          'id="automatic-check"' in page_html and 'for="automatic-check"' in page_html)
     article_list = server.admin_page([], "TOKEN")
     check("la pagina Articoli ha il posto per l'avviso, nascosto finché non serve",
-          'id="avviso-aggiornamento" role="status" hidden' in article_list)
+          'id="notice-update-notice" role="status" hidden' in article_list)
     check("aggiornare chiede il token CSRF", "/update" in server.CSRF_PROTECTED_ROUTES)
     real_ones = (updates.update, updates.restart)
     restarts = []

@@ -131,7 +131,7 @@ function pbConfirm(titolo, corpo, etichettaConferma, kind, quandoConfermato) {
   var conferma = vecchio.cloneNode(false);
   conferma.textContent = etichettaConferma;
   // The buttons of the shared family: a deleting action is red.
-  conferma.className = 'pulsante pulsante-primario' + (kind === 'danger' ? ' pulsante-pericolo' : '');
+  conferma.className = 'pulsante button-primary' + (kind === 'danger' ? ' button-danger' : '');
   vecchio.parentNode.replaceChild(conferma, vecchio);
 
   var istanza = bootstrap.Modal.getOrCreateInstance(finestra);
@@ -836,7 +836,7 @@ function imageDetailsDialog() {
     label.textContent = t(field[1]);
     var control = document.createElement(field[3]);
     control.id = field[0];
-    control.className = 'campo-input';
+    control.className = 'field-input';
     if (field[3] === 'textarea') { control.rows = 2; } else { control.type = 'text'; }
     control.setAttribute('aria-describedby', field[0] + '-hint');
     var hint = document.createElement('p');
@@ -852,7 +852,7 @@ function imageDetailsDialog() {
   actions.className = 'azioni';
   var save = document.createElement('button');
   save.type = 'button';
-  save.className = 'pulsante pulsante-primario';
+  save.className = 'pulsante button-primary';
   save.textContent = t('js_image_details_apply');
   save.addEventListener('click', applyImageDetails);
   var cancel = document.createElement('button');
@@ -949,7 +949,7 @@ function mediaPickerDialog() {
   title.textContent = t('js_media_picker_title');
   var close = document.createElement('button');
   close.type = 'button';
-  close.className = 'pulsante pulsante-piccolo';
+  close.className = 'pulsante button-small';
   close.textContent = t('admin_close');
   close.addEventListener('click', function() { dialog.close(); });
   header.appendChild(title);
@@ -962,13 +962,13 @@ function mediaPickerDialog() {
   var search = document.createElement('input');
   search.type = 'search';
   search.id = 'media-picker-search';
-  search.className = 'campo-input';
+  search.className = 'field-input';
   search.placeholder = t('js_media_picker_search');
   search.addEventListener('input', renderMediaPicker);
 
   var status = document.createElement('p');
   status.id = 'media-picker-status';
-  status.className = 'elenco-vuoto';
+  status.className = 'list-empty';
   status.setAttribute('role', 'status');
 
   var grid = document.createElement('ul');
@@ -1097,7 +1097,7 @@ function uploadCoverImage() {
 function updateCoverPreview() {
   var campo = document.getElementById('image');
   var anteprima = document.getElementById('cover-preview');
-  var rimuovi = document.getElementById('btn-rimuovi-cover');
+  var rimuovi = document.getElementById('btn-remove-cover');
   if (!campo || !anteprima) { return; }
 
   var indirizzo = campo.value.trim();
@@ -1176,7 +1176,7 @@ function importDocx() {
 
 // Uploads the document and applies what comes back.
 function sendDocx(file) {
-  var pulsante = document.getElementById('btn-importa-docx');
+  var pulsante = document.getElementById('btn-import-docx');
   var datiForm = new FormData();
   datiForm.append('docx', file, file.name);
 
@@ -1493,7 +1493,7 @@ function selectTableBlock(istanzaQuill, blocco) {
 function highlightSelectedTable(istanzaQuill, range) {
   var blocchi = istanzaQuill.root.querySelectorAll('.raw-html-block');
   for (var i = 0; i < blocchi.length; i++) {
-    blocchi[i].classList.remove('pb-tabella-selezionata');
+    blocchi[i].classList.remove('pb-table-selected');
   }
   tabellaSelezionata = null;
   if (!range) { return; }
@@ -1503,7 +1503,7 @@ function highlightSelectedTable(istanzaQuill, range) {
   var nodo = linea[0].domNode;
   if (!nodo.classList || !nodo.classList.contains('raw-html-block')) { return; }
 
-  nodo.classList.add('pb-tabella-selezionata');
+  nodo.classList.add('pb-table-selected');
   tabellaSelezionata = nodo;
 }
 
@@ -1536,7 +1536,7 @@ var TABLE_FORMAT_CLASSES = {
 
 // Every class this file can put on a table, used by "remove formatting".
 var TABLE_ALL_CLASSES = ['pb-tbl-bold', 'pb-tbl-italic', 'pb-tbl-underline',
-                         'pb-tbl-strike', 'pb-tbl-sfondo'];
+                         'pb-tbl-strike', 'pb-tbl-background'];
 
 // The <table> inside a selected block, or null.
 function selectedTableElement() {
@@ -1612,10 +1612,10 @@ function backgroundHandler(valore) {
     changeSelectedTable(function(tabella) {
       if (valore) {
         tabella.style.backgroundColor = valore;
-        tabella.classList.add('pb-tbl-sfondo');
+        tabella.classList.add('pb-tbl-background');
       } else {
         tabella.style.backgroundColor = '';
-        tabella.classList.remove('pb-tbl-sfondo');
+        tabella.classList.remove('pb-tbl-background');
       }
     });
     return;
@@ -1903,13 +1903,13 @@ function changeAdminLanguage(lingua) {
 // Hidden rows get the hidden attribute, so sorting can keep moving them.
 function filterArticles() {
   var termine = document.getElementById('search-box-admin').value.toLowerCase().trim();
-  var scelto = document.querySelector('#filtro-stato [aria-pressed="true"]');
-  var stato = scelto ? scelto.getAttribute('data-filtro') : 'tutti';
-  var carte = document.querySelectorAll('.articolo-card');
+  var scelto = document.querySelector('#filter-state [aria-pressed="true"]');
+  var stato = scelto ? scelto.getAttribute('data-filter') : 'all';
+  var carte = document.querySelectorAll('.article-card');
   var visibili = 0;
   for (var i = 0; i < carte.length; i++) {
-    var titolo = carte[i].getAttribute('data-titolo');
-    var statoOk = stato === 'tutti' || carte[i].getAttribute('data-stato') === stato;
+    var titolo = carte[i].getAttribute('data-title');
+    var statoOk = stato === 'all' || carte[i].getAttribute('data-state') === stato;
     if (statoOk && titolo.indexOf(termine) !== -1) {
       carte[i].hidden = false;
       visibili = visibili + 1;
@@ -1919,12 +1919,12 @@ function filterArticles() {
   }
   // With no article at all the list already says so: the message is for a
   // search or a filter that leaves nothing.
-  document.getElementById('nessun-risultato').hidden = visibili > 0 || carte.length === 0;
+  document.getElementById('no-result').hidden = visibili > 0 || carte.length === 0;
 }
 
 // The All / Published / Drafts buttons: one pressed at a time.
 function filterByStatus(pulsante) {
-  var gruppo = pulsante.parentNode.querySelectorAll('.segmento');
+  var gruppo = pulsante.parentNode.querySelectorAll('.segment');
   for (var i = 0; i < gruppo.length; i++) {
     gruppo[i].setAttribute('aria-pressed', gruppo[i] === pulsante ? 'true' : 'false');
   }
@@ -1941,27 +1941,27 @@ function toggleRowMenu(pulsante) {
   if (!apri) { return; }
   pulsante.setAttribute('aria-expanded', 'true');
   // The open menu has to cover the buttons of the rows below it.
-  pulsante.parentNode.classList.add('aperto');
+  pulsante.parentNode.classList.add('open');
   menu.hidden = false;
   // Near the bottom of the window - or of the phone's bottom bar, which
   // would cover it - the menu opens upwards.
   var fondo = window.innerHeight;
-  var barra = document.querySelector('.barra-basso');
+  var barra = document.querySelector('.bar-bottom');
   if (barra && barra.offsetHeight > 0) {
     fondo = barra.getBoundingClientRect().top;
   }
   var spazioSotto = fondo - pulsante.getBoundingClientRect().bottom;
-  menu.classList.toggle('verso-alto', spazioSotto < menu.offsetHeight + 16);
+  menu.classList.toggle('toward-top', spazioSotto < menu.offsetHeight + 16);
   menu.querySelector('[role="menuitem"]').focus();
 }
 
 // Closes every open row menu; with ritornaFuoco, focus goes back to the
 // button that opened it, as after Esc.
 function closeRowMenus(ritornaFuoco) {
-  var aperti = document.querySelectorAll('.riga-menu [aria-expanded="true"]');
+  var aperti = document.querySelectorAll('.row-menu [aria-expanded="true"]');
   for (var i = 0; i < aperti.length; i++) {
     aperti[i].setAttribute('aria-expanded', 'false');
-    aperti[i].parentNode.classList.remove('aperto');
+    aperti[i].parentNode.classList.remove('open');
     document.getElementById(aperti[i].getAttribute('aria-controls')).hidden = true;
     if (ritornaFuoco) { aperti[i].focus(); }
   }
@@ -1971,32 +1971,32 @@ function closeRowMenus(ritornaFuoco) {
 // Called with no argument it switches; with true or false it opens or closes.
 function toggleAdminMenu(apri) {
   var menu = document.getElementById('menu-admin');
-  var pulsante = document.getElementById('barra-altro');
+  var pulsante = document.getElementById('bar-other');
   if (!menu || !pulsante) { return; }
   if (apri === undefined) {
-    apri = !menu.classList.contains('aperto');
+    apri = !menu.classList.contains('open');
   }
-  menu.classList.toggle('aperto', apri);
-  document.getElementById('menu-velo').hidden = !apri;
+  menu.classList.toggle('open', apri);
+  document.getElementById('menu-veil').hidden = !apri;
   pulsante.setAttribute('aria-expanded', apri ? 'true' : 'false');
   if (apri) {
-    var prima = menu.querySelector('.menu-voci .voce');
+    var prima = menu.querySelector('.menu-items .item');
     if (prima) { prima.focus(); }
   }
 }
 
 document.addEventListener('click', function(evento) {
-  if (!evento.target.closest('.riga-menu')) { closeRowMenus(); }
+  if (!evento.target.closest('.row-menu')) { closeRowMenus(); }
 });
 
 document.addEventListener('keydown', function(evento) {
-  var menu = evento.target.closest ? evento.target.closest('.menu-tendina') : null;
+  var menu = evento.target.closest ? evento.target.closest('.menu-dropdown') : null;
   if (evento.key === 'Escape') {
-    if (document.querySelector('.riga-menu [aria-expanded="true"]')) {
+    if (document.querySelector('.row-menu [aria-expanded="true"]')) {
       closeRowMenus(true);
-    } else if (document.querySelector('.menu.aperto')) {
+    } else if (document.querySelector('.menu.open')) {
       toggleAdminMenu(false);
-      document.getElementById('barra-altro').focus();
+      document.getElementById('bar-other').focus();
     }
     return;
   }
@@ -2275,8 +2275,8 @@ function initEditorPage() {
   quillEn.on('text-change', markEditorDirty);
   watchEditorFields();
   // The code of the article: its checkboxes and its own cards.
-  document.getElementById('lista-codice-articolo').addEventListener('change', markEditorDirty);
-  watchCodeList(document.getElementById('lista-codice-proprio'), markEditorDirty);
+  document.getElementById('list-box-code-article').addEventListener('change', markEditorDirty);
+  watchCodeList(document.getElementById('list-box-code-own'), markEditorDirty);
 
   // The article as it is right now is what is on disk: loading the page is
   // not a change.
@@ -2339,11 +2339,11 @@ function installSaveShortcut() {
     if (!modificatore || evento.key.toLowerCase() !== 's') { return; }
     evento.preventDefault();
     if (statoArticolo === 'published') {
-      updateArticle(document.getElementById('btn-aggiorna'));
+      updateArticle(document.getElementById('btn-update'));
     } else if (statoArticolo === 'scheduled') {
-      saveScheduled(document.getElementById('btn-salva-programmato'));
+      saveScheduled(document.getElementById('btn-save-scheduled'));
     } else {
-      saveDraft(document.getElementById('btn-salva-bozza'));
+      saveDraft(document.getElementById('btn-save-draft'));
     }
   });
 }
@@ -2785,12 +2785,12 @@ function translatePiece(testo, quandoFinito) {
 // ids the article already had for the others are kept as they were: the day
 // one of them is switched back on, the article's choice is still there.
 function articleCodeIds(tipo, spuntate, salvati) {
-  var caselle = document.querySelectorAll('.codice-articolo');
+  var caselle = document.querySelectorAll('.code-article');
   var mostrati = {};
   var ids = [];
   for (var i = 0; i < caselle.length; i++) {
     mostrati[caselle[i].value] = true;
-    if (caselle[i].getAttribute('data-tipo') === tipo && caselle[i].checked === spuntate) {
+    if (caselle[i].getAttribute('data-kind') === tipo && caselle[i].checked === spuntate) {
       ids.push(caselle[i].value);
     }
   }
@@ -2804,12 +2804,12 @@ function articleCodeIds(tipo, spuntate, salvati) {
 
 // A new piece of code for this article only.
 function addOwnCode() {
-  var card = cloneBlankCard('codice-proprio-modello', 'art');
-  document.getElementById('lista-codice-proprio').appendChild(card);
+  var card = cloneBlankCard('code-own-template', 'art');
+  document.getElementById('list-box-code-own').appendChild(card);
   updateCardSummary(card);
   startCodeEditor(card);
   markEditorDirty();
-  card.querySelector('.codice-nome').focus();
+  card.querySelector('.code-name').focus();
 }
 
 // Collects every form field into a single article object, for a save or a
@@ -2839,7 +2839,7 @@ function articleData(stato) {
     original_slug: slugOriginale,
     custom_code_ids: articleCodeIds('optin', true, pbPage('custom_code_ids', [])),
     custom_code_off_ids: articleCodeIds('sempre', false, pbPage('custom_code_off_ids', [])),
-    custom_code: customCodeData(document.getElementById('lista-codice-proprio'), 'art'),
+    custom_code: customCodeData(document.getElementById('list-box-code-own'), 'art'),
     // Fields of the English version.
     title_en: document.getElementById('title_en').value,
     description_en: document.getElementById('description_en').value,
@@ -2867,12 +2867,12 @@ function applySavedSlug(res) {
 function updateStatePanel(indirizzo) {
   // A saved article has versions to look at.
   if (slugOriginale !== '') {
-    var versioni = document.querySelectorAll('#btn-versioni, #versioni-aiuto');
+    var versioni = document.querySelectorAll('#btn-versions, #versions-help');
     for (var v = 0; v < versioni.length; v++) { versioni[v].hidden = false; }
   }
-  var pannello = document.getElementById('pannello-pubblica');
-  if (pannello) { pannello.setAttribute('data-stato', statoArticolo); }
-  var quando = document.getElementById('programmato-quando');
+  var pannello = document.getElementById('panel-publish');
+  if (pannello) { pannello.setAttribute('data-state', statoArticolo); }
+  var quando = document.getElementById('scheduled-when');
   if (quando && statoArticolo === 'scheduled') {
     quando.textContent = t('admin_goes_out_the').replace('{date}', formatMoment(scheduledMoment()));
   }
@@ -2942,10 +2942,10 @@ function formatMoment(iso) {
   });
 }
 
-// Every <time class="ora-locale"> written by the server shows UTC; here it
+// Every <time class="now-local"> written by the server shows UTC; here it
 // becomes the reader's own time.
 function localizeMoments(radice) {
-  var tempi = (radice || document).querySelectorAll('time.ora-locale');
+  var tempi = (radice || document).querySelectorAll('time.now-local');
   for (var i = 0; i < tempi.length; i++) {
     tempi[i].textContent = formatMoment(tempi[i].getAttribute('datetime'));
   }
@@ -2955,11 +2955,11 @@ document.addEventListener('DOMContentLoaded', function() { localizeMoments(); })
 // Opens or closes the little form with the date and time. With no button
 // (null) it is closed, as after a save.
 function toggleScheduleForm(pulsante, apri) {
-  var modulo = document.getElementById('programma-modulo');
+  var modulo = document.getElementById('schedule-form');
   if (!modulo) { return; }
   if (apri === undefined) { apri = modulo.hidden; }
   modulo.hidden = !apri;
-  var pulsanti = document.querySelectorAll('[aria-controls="programma-modulo"]');
+  var pulsanti = document.querySelectorAll('[aria-controls="schedule-form"]');
   for (var i = 0; i < pulsanti.length; i++) {
     pulsanti[i].setAttribute('aria-expanded', apri ? 'true' : 'false');
   }
@@ -3194,7 +3194,7 @@ function initConfigPage() {
   attachImageOverlay(quillBioEn);
   handlePastedImages(quillBioEn, null);
   updateBioPhotoPreview();
-  var progetti = document.querySelectorAll('#lista-progetti .progetto-config');
+  var progetti = document.querySelectorAll('#list-box-projects .project-config');
   for (var pr = 0; pr < progetti.length; pr++) { updateProjectPreview(progetti[pr]); }
 
   applyToolbarTooltips();
@@ -3206,9 +3206,9 @@ function initConfigPage() {
   updateTranslationGroups();
 
   updateCustomCodeNote();
-  watchCodeList(document.getElementById('lista-codice'), null);
+  watchCodeList(document.getElementById('list-box-code'), null);
   // Enter in a field of the templates creates the code, as a form would.
-  document.getElementById('modello-campi').addEventListener('keydown', function(evento) {
+  document.getElementById('template-fields').addEventListener('keydown', function(evento) {
     if (evento.key === 'Enter') {
       evento.preventDefault();
       createCodeFromTemplate();
@@ -3247,24 +3247,35 @@ function labelQuillEditors() {
 
 /* --- Settings: one section at a time ------------------------------------- */
 
-// Shows the section named in the address (#sito, #home...). With none, or
-// with #elenco, the panel of all the sections shows, on a computer as on a
+// The Italian names the sections had in the address before they went
+// English: a bookmark or a link in an old email still lands on the section.
+var LEGACY_SECTION_HASHES = {
+  sito: 'site', biografia: 'biography', progetti: 'projects', pagine: 'boxes', commenti: 'comments',
+  traduzione: 'translation', statistiche: 'analytics', codici: 'code', avanzate: 'advanced', elenco: 'list'
+};
+
+// Shows the section named in the address (#site, #home...). With none, or
+// with #list, the panel of all the sections shows, on a computer as on a
 // phone. After a click (spostaFuoco) the focus moves to the title of what
 // is now on screen, so a screen reader starts from there.
 function showConfigSection(spostaFuoco) {
   var richiesta = window.location.hash.replace('#', '');
-  var sezioni = document.querySelectorAll('.impostazioni .sezione');
+  if (LEGACY_SECTION_HASHES[richiesta]) {
+    richiesta = LEGACY_SECTION_HASHES[richiesta];
+    history.replaceState(null, '', '#' + richiesta);
+  }
+  var sezioni = document.querySelectorAll('.settings .section');
   var trovata = null;
   for (var i = 0; i < sezioni.length; i++) {
-    if (sezioni[i].getAttribute('data-sezione') === richiesta) { trovata = sezioni[i]; }
+    if (sezioni[i].getAttribute('data-section') === richiesta) { trovata = sezioni[i]; }
   }
   for (var j = 0; j < sezioni.length; j++) {
     sezioni[j].hidden = sezioni[j] !== trovata;
   }
-  document.getElementById('sezione-elenco').hidden = trovata !== null;
+  document.getElementById('section-list').hidden = trovata !== null;
 
-  var chiave = trovata ? trovata.getAttribute('data-sezione') : 'elenco';
-  document.getElementById('impostazioni').setAttribute('data-sezione', chiave);
+  var chiave = trovata ? trovata.getAttribute('data-section') : 'list';
+  document.getElementById('settings').setAttribute('data-section', chiave);
   // A photo uploaded or a translation filled in writes into a field without
   // the input event: looking again on every visit keeps the colours right.
   markFilledFields();
@@ -3278,7 +3289,7 @@ function showConfigSection(spostaFuoco) {
   }
   if (spostaFuoco) {
     window.scrollTo(0, 0);
-    var titolo = trovata ? trovata.querySelector('h1') : document.getElementById('sezioni-elenco-titolo');
+    var titolo = trovata ? trovata.querySelector('h1') : document.getElementById('sections-list-title');
     titolo.setAttribute('tabindex', '-1');
     titolo.focus({ preventScroll: true });
   }
@@ -3296,23 +3307,23 @@ var CAMPI_DA_SEGNARE = 'input[type="text"], input[type="url"], input[type="email
 
 function markFilled(campo) {
   if (!campo.matches || !campo.matches(CAMPI_DA_SEGNARE)) { return; }
-  if (campo.closest('#codice-modelli') || campo.id === 'cerca-impostazioni' || campo.id === 'config-raw') {
+  if (campo.closest('#code-templates') || campo.id === 'search-settings' || campo.id === 'config-raw') {
     return;
   }
-  campo.classList.toggle('compilato', campo.value.trim() !== '');
+  campo.classList.toggle('filled', campo.value.trim() !== '');
 }
 
 function markFilledFields() {
-  var campi = document.querySelectorAll('#impostazioni .sezione :is(' + CAMPI_DA_SEGNARE + ')');
+  var campi = document.querySelectorAll('#settings .section :is(' + CAMPI_DA_SEGNARE + ')');
   for (var i = 0; i < campi.length; i++) { markFilled(campi[i]); }
 }
 
 function watchFilledFields() {
-  var pagina = document.getElementById('impostazioni');
+  var pagina = document.getElementById('settings');
   pagina.addEventListener('input', function(evento) { markFilled(evento.target); });
   pagina.addEventListener('change', function(evento) { markFilled(evento.target); });
   // Cards of code and projects added on the page bring fields of their own.
-  var liste = ['lista-codice', 'lista-progetti'];
+  var liste = ['list-box-code', 'list-box-projects'];
   for (var i = 0; i < liste.length; i++) {
     new MutationObserver(markFilledFields)
       .observe(document.getElementById(liste[i]), { childList: true });
@@ -3332,29 +3343,29 @@ function normalizeSearch(testo) {
 // fields. Someone who types "smtp" or "giscus" finds the right card even
 // though neither word is on it.
 function indexSettingsSearch() {
-  var schede = document.querySelectorAll('.scheda-impostazione');
+  var schede = document.querySelectorAll('.card-setting');
   for (var i = 0; i < schede.length; i++) {
-    var sezione = document.getElementById('sezione-' + schede[i].getAttribute('data-sezione'));
-    var parole = [schede[i].textContent, schede[i].getAttribute('data-cerca') || ''];
+    var sezione = document.getElementById('section-' + schede[i].getAttribute('data-section'));
+    var parole = [schede[i].textContent, schede[i].getAttribute('data-search') || ''];
     if (sezione) {
-      var nomi = sezione.querySelectorAll('h1, h2, label, .campo-titolo');
+      var nomi = sezione.querySelectorAll('h1, h2, label, .field-title');
       for (var j = 0; j < nomi.length; j++) { parole.push(nomi[j].textContent); }
     }
-    schede[i].setAttribute('data-indice', normalizeSearch(parole.join(' ')));
+    schede[i].setAttribute('data-index', normalizeSearch(parole.join(' ')));
   }
 }
 
 // Every word typed has to be somewhere in a card's index for it to stay.
 function filterSettings() {
-  var parole = normalizeSearch(document.getElementById('cerca-impostazioni').value)
+  var parole = normalizeSearch(document.getElementById('search-settings').value)
     .split(/\s+/).filter(function(p) { return p !== ''; });
   var visibili = 0;
-  var gruppi = document.querySelectorAll('.pannello-gruppo');
+  var gruppi = document.querySelectorAll('.panel-group');
   for (var g = 0; g < gruppi.length; g++) {
     var nelGruppo = 0;
-    var schede = gruppi[g].querySelectorAll('.scheda-impostazione');
+    var schede = gruppi[g].querySelectorAll('.card-setting');
     for (var i = 0; i < schede.length; i++) {
-      var indice = schede[i].getAttribute('data-indice') || '';
+      var indice = schede[i].getAttribute('data-index') || '';
       var tiene = parole.every(function(p) { return indice.indexOf(p) !== -1; });
       schede[i].parentNode.hidden = !tiene;
       if (tiene) { nelGruppo++; }
@@ -3362,7 +3373,7 @@ function filterSettings() {
     gruppi[g].hidden = nelGruppo === 0;
     visibili += nelGruppo;
   }
-  document.getElementById('pannello-nessuna').hidden = visibili > 0;
+  document.getElementById('panel-none').hidden = visibili > 0;
 }
 
 // After a save the states on the cards are old: the page asks the server
@@ -3372,11 +3383,11 @@ function refreshSettingsPanel() {
   fetch('/config', { credentials: 'same-origin' })
     .then(function(risposta) { return risposta.ok ? risposta.text() : Promise.reject(); })
     .then(function(testo) {
-      var nuovo = new DOMParser().parseFromString(testo, 'text/html').getElementById('pannello-gruppi');
+      var nuovo = new DOMParser().parseFromString(testo, 'text/html').getElementById('panel-groups');
       if (!nuovo) { return; }
-      document.getElementById('pannello-gruppi').innerHTML = nuovo.innerHTML;
+      document.getElementById('panel-groups').innerHTML = nuovo.innerHTML;
       // The warnings at the top of each section are old too.
-      var avvisi = document.querySelectorAll('.sezione-avvisi');
+      var avvisi = document.querySelectorAll('.section-notices');
       for (var i = 0; i < avvisi.length; i++) {
         var fresco = nuovo.ownerDocument.getElementById(avvisi[i].id);
         if (fresco) {
@@ -3398,9 +3409,9 @@ var configModificata = false;
 // which has its own button, and the template chooser, which only prepares
 // a card. Adding or removing a card of code counts too.
 function watchConfigChanges() {
-  var pagina = document.getElementById('impostazioni');
+  var pagina = document.getElementById('settings');
   var segna = function(evento) {
-    if (evento.target.closest('#sezione-avanzate, #codice-modelli')) { return; }
+    if (evento.target.closest('#section-advanced, #code-templates')) { return; }
     markConfigDirty();
   };
   pagina.addEventListener('input', segna);
@@ -3410,10 +3421,10 @@ function watchConfigChanges() {
     editors[i].on('text-change', markConfigDirty);
   }
   new MutationObserver(markConfigDirty)
-    .observe(document.getElementById('lista-codice'), { childList: true });
+    .observe(document.getElementById('list-box-code'), { childList: true });
   // Adding, removing and moving a project changes the list itself.
   new MutationObserver(markConfigDirty)
-    .observe(document.getElementById('lista-progetti'), { childList: true });
+    .observe(document.getElementById('list-box-projects'), { childList: true });
 
   window.addEventListener('beforeunload', function(evento) {
     if (!configModificata) { return undefined; }
@@ -3433,12 +3444,12 @@ function markConfigDirty() {
 // is nothing to save - the list of sections, the raw config.json with its
 // own button - it only shows up once something has changed.
 function updateSaveBar() {
-  var barra = document.getElementById('barra-salva');
-  var sezione = document.getElementById('impostazioni').getAttribute('data-sezione');
-  barra.hidden = !configModificata && (sezione === 'avanzate' || sezione === 'elenco');
-  barra.classList.toggle('modificata', configModificata);
-  document.getElementById('annulla-modifiche').hidden = !configModificata;
-  document.getElementById('salva-nota').hidden = configModificata;
+  var barra = document.getElementById('bar-save');
+  var sezione = document.getElementById('settings').getAttribute('data-section');
+  barra.hidden = !configModificata && (sezione === 'advanced' || sezione === 'list');
+  barra.classList.toggle('modified', configModificata);
+  document.getElementById('cancel-changes-made').hidden = !configModificata;
+  document.getElementById('save-note').hidden = configModificata;
   document.getElementById('save-status').textContent =
     configModificata ? t('js_changes_made_from_to_save') : '';
 }
@@ -3498,15 +3509,15 @@ function translateSiteTexts(pulsante) {
                 ['seo_author_bio', 'seo_author_bio_en']];
   var daFare = coppie.filter(function(c) { return document.getElementById(c[0]).value.trim() !== ''; });
   if (daFare.length === 0) {
-    pbStatus('sito-en-status', t('js_write_site_texts_first'));
+    pbStatus('site-en-status', t('js_write_site_texts_first'));
     return;
   }
   pbBusy(pulsante, true);
-  pbStatus('sito-en-status', t('js_translating'));
+  pbStatus('site-en-status', t('js_translating'));
   var prossima = function(indice) {
     if (indice >= daFare.length) {
       pbBusy(pulsante, false);
-      pbStatus('sito-en-status', t('js_translated_site_texts'));
+      pbStatus('site-en-status', t('js_translated_site_texts'));
       markFilledFields();
       markConfigDirty();
       return;
@@ -3515,7 +3526,7 @@ function translateSiteTexts(pulsante) {
       .then(function(res) {
         if (res.ok !== true) {
           pbBusy(pulsante, false);
-          pbStatus('sito-en-status', t('js_error_prefix') + res.error);
+          pbStatus('site-en-status', t('js_error_prefix') + res.error);
           return;
         }
         document.getElementById(daFare[indice][1]).value = res.text.trim();
@@ -3523,7 +3534,7 @@ function translateSiteTexts(pulsante) {
       })
       .catch(function() {
         pbBusy(pulsante, false);
-        pbStatus('sito-en-status', '');
+        pbStatus('site-en-status', '');
         pbToast(t('js_net_error_translation'), 'danger');
       });
   };
@@ -3535,13 +3546,13 @@ function translateSiteTexts(pulsante) {
 // The dashboard says so when an update is waiting. The server asks GitHub
 // at most twice a day, so opening the dashboard costs nothing most times.
 function showUpdateNotice() {
-  var avviso = document.getElementById('avviso-aggiornamento');
+  var avviso = document.getElementById('notice-update-notice');
   if (!avviso) { return; }
   fetch('/updates-status', { credentials: 'same-origin', cache: 'no-store' })
     .then(function(risposta) { return risposta.json(); })
     .then(function(stato) {
       if (stato.available === true) {
-        document.getElementById('avviso-aggiornamento-testo').textContent = stato.message;
+        document.getElementById('notice-update-notice-text').textContent = stato.message;
         avviso.hidden = false;
       }
     })
@@ -3549,13 +3560,13 @@ function showUpdateNotice() {
 }
 
 function checkUpdates(forza) {
-  var riga = document.getElementById('aggiornamenti-stato');
+  var riga = document.getElementById('updates-state');
   riga.textContent = t('upd_checking');
   fetch('/updates-status' + (forza ? '?force=1' : ''), { credentials: 'same-origin', cache: 'no-store' })
     .then(function(risposta) { return risposta.json(); })
     .then(function(stato) {
       riga.textContent = stato.message;
-      var elenco = document.getElementById('aggiornamenti-novita');
+      var elenco = document.getElementById('updates-news');
       elenco.innerHTML = '';
       (stato.news || []).forEach(function(riga) {
         var voce = document.createElement('li');
@@ -3563,16 +3574,16 @@ function checkUpdates(forza) {
         elenco.appendChild(voce);
       });
       elenco.hidden = !stato.news || stato.news.length === 0;
-      document.getElementById('aggiorna-ora').hidden = stato.can_update !== true;
-      document.getElementById('aggiorna-aiuto').hidden = stato.can_update !== true;
-      document.getElementById('aggiornamenti-istruzioni').hidden = stato.instructions !== true;
+      document.getElementById('update-now').hidden = stato.can_update !== true;
+      document.getElementById('update-help').hidden = stato.can_update !== true;
+      document.getElementById('updates-instructions').hidden = stato.instructions !== true;
     })
     .catch(function() { riga.textContent = ''; });
 }
 
 function installUpdate(pulsante) {
   pbConfirm(t('upd_confirm_title'), t('upd_confirm_body'), t('admin_update_now'), 'primary', function() {
-    var riga = document.getElementById('aggiornamenti-stato');
+    var riga = document.getElementById('updates-state');
     pbBusy(pulsante, true);
     riga.textContent = t('upd_installation');
     pbPostJson('/update', {})
@@ -3602,7 +3613,7 @@ function waitForRestart() {
     fetch('/pyblog-ping', { cache: 'no-store' })
       .then(function(risposta) {
         if (!risposta.ok) { return Promise.reject(); }
-        document.getElementById('aggiornamenti-stato').textContent = t('upd_restarted');
+        document.getElementById('updates-state').textContent = t('upd_restarted');
         setTimeout(function() { window.location.href = '/login'; }, 1500);
       })
       .catch(function() {
@@ -3624,23 +3635,23 @@ function setAutomaticCheck(casella) {
 // matches both.
 function filterMedia(pulsante) {
   if (pulsante) {
-    var bottoni = document.querySelectorAll('#filtro-media .segmento');
+    var bottoni = document.querySelectorAll('#filter-media .segment');
     for (var i = 0; i < bottoni.length; i++) {
       bottoni[i].setAttribute('aria-pressed', bottoni[i] === pulsante ? 'true' : 'false');
     }
   }
-  var scelto = document.querySelector('#filtro-media .segmento[aria-pressed="true"]');
-  var filtro = scelto ? scelto.getAttribute('data-filtro') : 'tutti';
-  var testo = document.getElementById('cerca-media').value.trim().toLowerCase();
-  var schede = document.querySelectorAll('.media-scheda');
+  var scelto = document.querySelector('#filter-media .segment[aria-pressed="true"]');
+  var filtro = scelto ? scelto.getAttribute('data-filter') : 'all';
+  var testo = document.getElementById('search-media').value.trim().toLowerCase();
+  var schede = document.querySelectorAll('.media-card');
   var visibili = 0;
   for (var j = 0; j < schede.length; j++) {
-    var tiene = (filtro === 'tutti' || schede[j].getAttribute('data-usato') === filtro)
-      && schede[j].getAttribute('data-nome').indexOf(testo) !== -1;
+    var tiene = (filtro === 'all' || schede[j].getAttribute('data-used') === filtro)
+      && schede[j].getAttribute('data-name').indexOf(testo) !== -1;
     schede[j].hidden = !tiene;
     if (tiene) { visibili++; }
   }
-  document.getElementById('libreria-nessun-risultato').hidden = visibili > 0 || schede.length === 0;
+  document.getElementById('media-library-no-result').hidden = visibili > 0 || schede.length === 0;
 }
 
 function copyMediaAddress(indirizzo) {
@@ -3676,10 +3687,10 @@ function deleteMedia(pulsante, nome, usi) {
 }
 
 function deleteUnusedMedia(pulsante) {
-  var schede = document.querySelectorAll('.media-scheda[data-usato="0"]');
+  var schede = document.querySelectorAll('.media-card[data-used="0"]');
   var nomi = [];
   for (var i = 0; i < schede.length; i++) {
-    nomi.push(schede[i].querySelector('.media-nome').textContent);
+    nomi.push(schede[i].querySelector('.media-name').textContent);
   }
   if (nomi.length === 0) { return; }
   pbConfirm(t('js_media_delete_title'), t('js_media_cleanup_body').replace('{n}', nomi.length),
@@ -3691,7 +3702,7 @@ function deleteUnusedMedia(pulsante) {
 function uploadToLibrary(campo) {
   var file = Array.prototype.slice.call(campo.files);
   campo.value = '';
-  var pulsante = document.getElementById('libreria-carica');
+  var pulsante = document.getElementById('media-library-upload');
   var caricati = 0;
   var prossimo = function(indice) {
     if (indice >= file.length) {
@@ -3705,10 +3716,10 @@ function uploadToLibrary(campo) {
       prossimo(indice + 1);
       return;
     }
-    pbStatus('libreria-stato', t('js_media_uploading').replace('{i}', indice + 1).replace('{n}', file.length));
+    pbStatus('media-library-state', t('js_media_uploading').replace('{i}', indice + 1).replace('{n}', file.length));
     var pronto = video ? Promise.resolve(scelto) : resizeImageBeforeUpload(scelto, pbPage('max_image_width', 1600));
     pronto
-      .then(function(daInviare) { return inviaFile(daInviare, 'libreria-stato'); })
+      .then(function(daInviare) { return inviaFile(daInviare, 'media-library-state'); })
       .then(function(indirizzo) {
         if (indirizzo) { caricati++; }
         prossimo(indice + 1);
@@ -3725,22 +3736,22 @@ function uploadToLibrary(campo) {
 // The archive goes as it is, not inside a form: with videos it can weigh
 // hundreds of megabytes, and the server writes it straight to a file.
 function restoreBackup(pulsante) {
-  var campo = document.getElementById('file-ripristino');
+  var campo = document.getElementById('file-restoring');
   if (!campo.files || campo.files.length === 0) {
-    pbStatus('ripristino-stato', t('js_choose_backup'));
+    pbStatus('restoring-state', t('js_choose_backup'));
     return;
   }
   var file = campo.files[0];
   pbConfirm(t('js_restoring_title'), t('js_restoring_body'), t('js_restoring_confirm'),
             'danger', function() {
     pbBusy(pulsante, true);
-    pbStatus('ripristino-stato', t('js_restoring_in_progress'));
+    pbStatus('restoring-state', t('js_restoring_in_progress'));
     pbFetch('/restore', { method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file })
       .then(function(risposta) { return risposta.json(); })
       .then(function(esito) { showRestoreResult(pulsante, esito); })
       .catch(function() {
         pbBusy(pulsante, false);
-        pbStatus('ripristino-stato', '');
+        pbStatus('restoring-state', '');
         pbToast(t('js_restoring_failure_rete'), 'danger');
       });
   });
@@ -3751,12 +3762,12 @@ function restoreAutomatic(pulsante, nome) {
   pbConfirm(t('js_restoring_title'), t('js_restoring_automatic_body'), t('js_restoring_confirm'),
             'danger', function() {
     pbBusy(pulsante, true);
-    pbStatus('ripristino-stato', t('js_restoring_in_progress'));
+    pbStatus('restoring-state', t('js_restoring_in_progress'));
     pbPostJson('/restore-automatic', { file: nome })
       .then(function(esito) { showRestoreResult(pulsante, esito); })
       .catch(function() {
         pbBusy(pulsante, false);
-        pbStatus('ripristino-stato', '');
+        pbStatus('restoring-state', '');
         pbToast(t('js_restoring_failure_rete'), 'danger');
       });
   });
@@ -3764,7 +3775,7 @@ function restoreAutomatic(pulsante, nome) {
 
 function showRestoreResult(pulsante, esito) {
   pbBusy(pulsante, false);
-  pbStatus('ripristino-stato', '');
+  pbStatus('restoring-state', '');
   if (!esito || esito.ok !== true) {
     pbToast(t('js_error_prefix') + (esito && esito.error ? esito.error : ''), 'danger');
     return;
@@ -3773,7 +3784,7 @@ function showRestoreResult(pulsante, esito) {
   if (esito.ignored && esito.ignored.length > 0) {
     testo = testo + ' ' + t('js_restoring_ignored').replace('{n}', esito.ignored.length);
   }
-  pbStatus('ripristino-stato', testo);
+  pbStatus('restoring-state', testo);
   pbToast(testo, 'success');
   // The list of automatic backups has one more: the page shows it.
   setTimeout(function() { window.location.reload(); }, 2500);
@@ -3819,17 +3830,17 @@ function removeBioPhoto() {
 // A new project starts as the blank card of the template, at the end of the
 // list, with the cursor on its name.
 function addProject() {
-  var modello = document.getElementById('progetto-modello');
+  var modello = document.getElementById('project-template');
   var card = modello.content.firstElementChild.cloneNode(true);
-  document.getElementById('lista-progetti').appendChild(card);
+  document.getElementById('list-box-projects').appendChild(card);
   updateProjectsNote();
-  card.querySelector('.progetto-nome').focus();
+  card.querySelector('.project-name').focus();
 }
 
 // Moves a project one place up or down: the order of the list is the order
 // on the homepage. The focus stays on the button that was pressed.
 function moveProject(pulsante, passo) {
-  var card = pulsante.closest('.progetto-config');
+  var card = pulsante.closest('.project-config');
   var lista = card.parentNode;
   if (passo < 0 && card.previousElementSibling) {
     lista.insertBefore(card, card.previousElementSibling);
@@ -3840,8 +3851,8 @@ function moveProject(pulsante, passo) {
 }
 
 function removeProject(pulsante) {
-  var card = pulsante.closest('.progetto-config');
-  var nome = card.querySelector('.progetto-nome').value.trim() || t('admin_project_without_name');
+  var card = pulsante.closest('.project-config');
+  var nome = card.querySelector('.project-name').value.trim() || t('admin_project_without_name');
   pbConfirm(t('admin_project_delete'), nome, t('admin_project_delete'), 'danger',
     function() {
       card.remove();
@@ -3850,29 +3861,29 @@ function removeProject(pulsante) {
 }
 
 function updateProjectsNote() {
-  document.getElementById('progetti-vuoto-nota').hidden =
-    document.querySelectorAll('#lista-progetti .progetto-config').length > 0;
+  document.getElementById('projects-empty-note').hidden =
+    document.querySelectorAll('#list-box-projects .project-config').length > 0;
 }
 
 // One file field serves every card: it remembers which card asked.
 var progettoInCaricamento = null;
 
 function chooseProjectImage(pulsante) {
-  progettoInCaricamento = pulsante.closest('.progetto-config');
-  document.getElementById('file-progetto').click();
+  progettoInCaricamento = pulsante.closest('.project-config');
+  document.getElementById('file-project').click();
 }
 
 function uploadProjectImage() {
   var card = progettoInCaricamento;
   if (card === null) { return; }
-  var stato = card.querySelector('.progetto-stato');
+  var stato = card.querySelector('.project-state');
   stato.id = 'progetto-stato-attivo';
-  uploadChosenFile('file-progetto', pbPage('max_image_mb', 10), 'progetto-stato-attivo',
+  uploadChosenFile('file-project', pbPage('max_image_mb', 10), 'progetto-stato-attivo',
                    t('js_uploading_image'))
     .then(function(url) {
       stato.removeAttribute('id');
       if (url === null) { return; }
-      card.querySelector('.progetto-immagine').value = url;
+      card.querySelector('.project-picture').value = url;
       updateProjectPreview(card);
       markConfigDirty();
       stato.textContent = t('js_image_uploaded');
@@ -3880,8 +3891,8 @@ function uploadProjectImage() {
 }
 
 function updateProjectPreview(card) {
-  var indirizzo = card.querySelector('.progetto-immagine').value.trim();
-  var anteprima = card.querySelector('.progetto-anteprima');
+  var indirizzo = card.querySelector('.project-picture').value.trim();
+  var anteprima = card.querySelector('.project-preview');
   if (indirizzo === '') {
     anteprima.removeAttribute('src');
     anteprima.hidden = true;
@@ -3893,17 +3904,17 @@ function updateProjectPreview(card) {
 
 // The projects as they are saved, in the order of the list.
 function projectsData() {
-  var carte = document.querySelectorAll('#lista-progetti .progetto-config');
+  var carte = document.querySelectorAll('#list-box-projects .project-config');
   var elenco = [];
   for (var i = 0; i < carte.length; i++) {
     var c = carte[i];
     elenco.push({
-      name: c.querySelector('.progetto-nome').value.trim(),
-      description: c.querySelector('.progetto-descrizione').value.trim(),
-      description_en: c.querySelector('.progetto-descrizione-en').value.trim(),
-      url: c.querySelector('.progetto-link').value.trim(),
-      image: c.querySelector('.progetto-immagine').value.trim(),
-      visible: c.querySelector('.progetto-visibile').checked
+      name: c.querySelector('.project-name').value.trim(),
+      description: c.querySelector('.project-description').value.trim(),
+      description_en: c.querySelector('.project-description-en').value.trim(),
+      url: c.querySelector('.project-link').value.trim(),
+      image: c.querySelector('.project-picture').value.trim(),
+      visible: c.querySelector('.project-visible').checked
     });
   }
   return elenco;
@@ -3911,23 +3922,23 @@ function projectsData() {
 
 // Shows only the field group of the chosen comment system.
 function updateCommentGroups() {
-  var scelta = document.getElementById('commenti').value;
-  var gruppoGiscus = document.getElementById('gruppo-giscus');
-  var gruppoDisqus = document.getElementById('gruppo-disqus');
-  gruppoGiscus.classList.remove('attivo');
-  gruppoDisqus.classList.remove('attivo');
+  var scelta = document.getElementById('comments').value;
+  var gruppoGiscus = document.getElementById('group-giscus');
+  var gruppoDisqus = document.getElementById('group-disqus');
+  gruppoGiscus.classList.remove('active');
+  gruppoDisqus.classList.remove('active');
   if (scelta === 'giscus') {
-    gruppoGiscus.classList.add('attivo');
+    gruppoGiscus.classList.add('active');
   }
   if (scelta === 'disqus') {
-    gruppoDisqus.classList.add('attivo');
+    gruppoDisqus.classList.add('active');
   }
 }
 
 // Shows the licensing contact field only when the policy requires one.
 function updateAiTrainingGroup() {
   var scelta = document.getElementById('ai_training_policy').value;
-  var gruppo = document.getElementById('gruppo-ai-licenza');
+  var gruppo = document.getElementById('group-ai-licence');
   if (scelta === 'licensed') {
     gruppo.style.display = 'block';
   } else {
@@ -3940,11 +3951,11 @@ function updateTranslationGroups() {
   var scelta = document.getElementById('translation_service').value;
   var gruppi = ['deepl', 'google', 'llm', 'openai', 'deepseek'];
   for (var i = 0; i < gruppi.length; i++) {
-    var elemento = document.getElementById('gruppo-' + gruppi[i]);
+    var elemento = document.getElementById('group-' + gruppi[i]);
     if (gruppi[i] === scelta) {
-      elemento.classList.add('attivo');
+      elemento.classList.add('active');
     } else {
-      elemento.classList.remove('attivo');
+      elemento.classList.remove('active');
     }
   }
 }
@@ -3966,14 +3977,14 @@ function newSnippetId(prefisso) {
 
 function customCodeCards(lista) {
   if (lista === null) { return []; }
-  return lista.querySelectorAll('.codice-config');
+  return lista.querySelectorAll('.code-config');
 }
 
 // The empty-list note shows only while there are no cards at all.
 function updateCustomCodeNote() {
-  var nota = document.getElementById('codice-vuoto-nota');
+  var nota = document.getElementById('code-empty-note');
   if (nota === null) { return; }
-  nota.hidden = customCodeCards(document.getElementById('lista-codice')).length > 0;
+  nota.hidden = customCodeCards(document.getElementById('list-box-code')).length > 0;
 }
 
 // A new card, cloned from the blank one the server rendered into a
@@ -3990,7 +4001,7 @@ function cloneBlankCard(idModello, prefisso) {
 // textarea when it did not. CodeMirror cannot measure itself inside a closed
 // <details>, so it starts the first time its card is opened.
 function startCodeEditor(card) {
-  var area = card.querySelector('.codice-testo');
+  var area = card.querySelector('.code-text');
   if (area === null || area.pbEditor || typeof window.CodeMirror !== 'function') { return; }
   var editor = window.CodeMirror.fromTextArea(area, {
     mode: 'htmlmixed',
@@ -4012,7 +4023,7 @@ function startCodeEditor(card) {
 }
 
 function cardCode(card) {
-  var area = card.querySelector('.codice-testo');
+  var area = card.querySelector('.code-text');
   if (area.pbEditor) { return area.pbEditor.getValue(); }
   return area.value;
 }
@@ -4033,27 +4044,27 @@ function consentLabel(valore) {
 // change, in the words the server used to draw it: where the code goes, on
 // which pages, which consent it waits for.
 function updateCardSummary(card) {
-  var nome = card.querySelector('.codice-nome').value.trim();
+  var nome = card.querySelector('.code-name').value.trim();
   if (nome === '') { nome = t('admin_code_without_name'); }
-  card.querySelector('.codice-sommario-nome').textContent = nome;
+  card.querySelector('.code-summary-name').textContent = nome;
 
-  var posizione = card.querySelector('.codice-posizione');
+  var posizione = card.querySelector('.code-position');
   var pezzi = [selectedLabel(posizione)];
-  var etichettaPunto = card.querySelector('.codice-ancora-etichetta');
+  var etichettaPunto = card.querySelector('.code-anchor-point-label-text');
   if (posizione.value === 'anchor' && etichettaPunto && etichettaPunto.value !== '') {
     pezzi = [etichettaPunto.value];
   }
-  var riquadroPunto = card.querySelector('.codice-punto');
+  var riquadroPunto = card.querySelector('.code-point');
   if (riquadroPunto) { riquadroPunto.hidden = posizione.value !== 'anchor'; }
-  var ambito = card.querySelector('.codice-ambito');
+  var ambito = card.querySelector('.code-scope');
   if (ambito !== null) { pezzi.push(selectedLabel(ambito)); }
-  pezzi.push(consentLabel(card.querySelector('.codice-consenso').value));
-  card.querySelector('.codice-sommario-dove').textContent = pezzi.join(' · ');
+  pezzi.push(consentLabel(card.querySelector('.code-consent').value));
+  card.querySelector('.code-summary-where').textContent = pezzi.join(' · ');
 
-  var attivo = card.querySelector('.codice-attivo').checked;
-  var stato = card.querySelector('.codice-sommario-stato');
+  var attivo = card.querySelector('.code-active').checked;
+  var stato = card.querySelector('.code-summary-state');
   stato.textContent = attivo ? t('admin_code_active') : t('admin_code_off_m');
-  stato.classList.toggle('spento', !attivo);
+  stato.classList.toggle('off', !attivo);
 }
 
 // Wires a list of cards: the summary follows the fields and the code editor
@@ -4062,13 +4073,13 @@ function updateCardSummary(card) {
 function watchCodeList(lista, quandoCambia) {
   if (lista === null) { return; }
   var aggiorna = function(evento) {
-    var card = evento.target.closest('.codice-config');
+    var card = evento.target.closest('.code-config');
     if (card === null) { return; }
     updateCardSummary(card);
     if (quandoCambia) { quandoCambia(); }
     // Choosing "a point on the page" with no point yet opens the page.
-    if (evento.type === 'change' && evento.target.classList.contains('codice-posizione')
-        && evento.target.value === 'anchor' && card.querySelector('.codice-ancora').value === '') {
+    if (evento.type === 'change' && evento.target.classList.contains('code-position')
+        && evento.target.value === 'anchor' && card.querySelector('.code-anchor-point').value === '') {
       openPointPicker(evento.target);
     }
   };
@@ -4076,20 +4087,20 @@ function watchCodeList(lista, quandoCambia) {
   lista.addEventListener('change', aggiorna);
   lista.addEventListener('toggle', function(evento) {
     var card = evento.target;
-    if (card.classList && card.classList.contains('codice-config') && card.open) {
+    if (card.classList && card.classList.contains('code-config') && card.open) {
       startCodeEditor(card);
     }
   }, true);
-  var aperte = lista.querySelectorAll('.codice-config[open]');
+  var aperte = lista.querySelectorAll('.code-config[open]');
   for (var i = 0; i < aperte.length; i++) {
     startCodeEditor(aperte[i]);
   }
 }
 
 function removeCustomCode(pulsante) {
-  var card = pulsante.closest('.codice-config');
+  var card = pulsante.closest('.code-config');
   if (card === null) { return; }
-  var nome = card.querySelector('.codice-nome').value.trim();
+  var nome = card.querySelector('.code-name').value.trim();
   if (nome === '') { nome = t('admin_code_title'); }
   pbConfirm(t('admin_code_delete'), nome, t('admin_code_delete'), 'danger',
     function() {
@@ -4114,22 +4125,22 @@ function customCodeData(lista, prefisso) {
     }
     var snippet = {
       id: id,
-      name: card.querySelector('.codice-nome').value.trim(),
-      enabled: card.querySelector('.codice-attivo').checked,
-      position: card.querySelector('.codice-posizione').value,
-      consent: card.querySelector('.codice-consenso').value,
+      name: card.querySelector('.code-name').value.trim(),
+      enabled: card.querySelector('.code-active').checked,
+      position: card.querySelector('.code-position').value,
+      consent: card.querySelector('.code-consent').value,
       code: cardCode(card)
     };
-    var ambito = card.querySelector('.codice-ambito');
+    var ambito = card.querySelector('.code-scope');
     if (ambito !== null) { snippet.scope = ambito.value; }
     // The point chosen on the page travels with the snippet even when another
     // position is picked for now: going back to it finds it again.
-    var ancora = card.querySelector('.codice-ancora');
+    var ancora = card.querySelector('.code-anchor-point');
     if (ancora !== null && ancora.value !== '') {
       snippet.anchor_selector = ancora.value;
-      snippet.anchor_where = card.querySelector('.codice-ancora-dove').value || 'after';
-      snippet.anchor_label = card.querySelector('.codice-ancora-etichetta').value;
-      snippet.anchor_page = card.querySelector('.codice-ancora-pagina').value;
+      snippet.anchor_where = card.querySelector('.code-anchor-point-where').value || 'after';
+      snippet.anchor_label = card.querySelector('.code-anchor-point-label-text').value;
+      snippet.anchor_page = card.querySelector('.code-anchor-point-page').value;
     }
     dati.push(snippet);
   }
@@ -4299,25 +4310,25 @@ function codeTemplates() {
 
 // "Add code" opens the choice of templates in its place.
 function openCodeTemplates() {
-  var pannello = document.getElementById('codice-modelli');
+  var pannello = document.getElementById('code-templates');
   if (pannello === null) { return; }
   pannello.hidden = false;
-  document.getElementById('btn-aggiungi-codice').hidden = true;
+  document.getElementById('btn-add-code').hidden = true;
   updateCodeTemplateFields();
-  document.getElementById('modello-codice').focus();
+  document.getElementById('template-code').focus();
 }
 
 function closeCodeTemplates() {
-  document.getElementById('codice-modelli').hidden = true;
-  document.getElementById('btn-aggiungi-codice').hidden = false;
+  document.getElementById('code-templates').hidden = true;
+  document.getElementById('btn-add-code').hidden = false;
 }
 
 // The fields of the chosen template, built with textContent: a label is a
 // translated string, never markup.
 function updateCodeTemplateFields() {
-  var contenitore = document.getElementById('modello-campi');
+  var contenitore = document.getElementById('template-fields');
   contenitore.textContent = '';
-  var modello = codeTemplates()[document.getElementById('modello-codice').value];
+  var modello = codeTemplates()[document.getElementById('template-code').value];
   if (!modello) { return; }
   for (var i = 0; i < modello.campi.length; i++) {
     var etichetta = document.createElement('label');
@@ -4336,14 +4347,14 @@ function updateCodeTemplateFields() {
 
 // A card at the bottom of the Settings list, empty or filled from a template.
 function addCustomCodeCard(scheda) {
-  var lista = document.getElementById('lista-codice');
-  var card = cloneBlankCard('codice-modello', 'snip');
+  var lista = document.getElementById('list-box-code');
+  var card = cloneBlankCard('code-template', 'snip');
   if (scheda) {
-    card.querySelector('.codice-nome').value = scheda.nome;
-    card.querySelector('.codice-posizione').value = scheda.posizione;
-    card.querySelector('.codice-ambito').value = scheda.ambito;
-    card.querySelector('.codice-consenso').value = scheda.consenso;
-    card.querySelector('.codice-testo').value = scheda.codice;
+    card.querySelector('.code-name').value = scheda.nome;
+    card.querySelector('.code-position').value = scheda.posizione;
+    card.querySelector('.code-scope').value = scheda.ambito;
+    card.querySelector('.code-consent').value = scheda.consenso;
+    card.querySelector('.code-text').value = scheda.codice;
   }
   lista.appendChild(card);
   updateCardSummary(card);
@@ -4368,12 +4379,12 @@ function addAdsTxtLine(riga) {
 }
 
 function createCodeFromTemplate() {
-  var tendina = document.getElementById('modello-codice');
+  var tendina = document.getElementById('template-code');
   var scelta = tendina.value;
   if (scelta === 'libero') {
     var vuota = addCustomCodeCard(null);
     closeCodeTemplates();
-    vuota.querySelector('.codice-nome').focus();
+    vuota.querySelector('.code-name').focus();
     return;
   }
 
@@ -4481,7 +4492,7 @@ function saveConfig(pulsante) {
   var cardDati = [];
   for (var i = 0; i < cardElementi.length; i++) {
     var elemento = cardElementi[i];
-    var attiva = elemento.querySelector('.card-attiva').checked;
+    var attiva = elemento.querySelector('.card-active').checked;
     var titolo = elemento.querySelector('.card-title').value;
     // The content comes from the Quill editor matching this card.
     var contenuto = editorCard[i].root.innerHTML;
@@ -4489,7 +4500,7 @@ function saveConfig(pulsante) {
   }
 
   // Social profiles: from the textarea, one line per profile (blank lines excluded).
-  var righeProfili = document.getElementById('seo_profili').value.split('\n');
+  var righeProfili = document.getElementById('seo_profiles').value.split('\n');
   var profiliSocial = [];
   for (var p = 0; p < righeProfili.length; p++) {
     var rigaProfilo = righeProfili[p].trim();
@@ -4504,7 +4515,7 @@ function saveConfig(pulsante) {
     paroleAnteprima = 40;
   }
 
-  var articoliPerPagina = parseInt(document.getElementById('articoli_per_pagina').value, 10);
+  var articoliPerPagina = parseInt(document.getElementById('articles_for_page').value, 10);
   if (isNaN(articoliPerPagina) || articoliPerPagina < 0) {
     articoliPerPagina = 10;
   }
@@ -4570,7 +4581,7 @@ function saveConfig(pulsante) {
       text_en: document.getElementById('work_text_en').value.trim()
     },
     home_cards: cardDati,
-    custom_code: customCodeData(document.getElementById('lista-codice'), 'snip'),
+    custom_code: customCodeData(document.getElementById('list-box-code'), 'snip'),
     ads_txt: document.getElementById('ads_txt').value.trim(),
     consent: {
       enabled: document.getElementById('consent_enabled').checked,
@@ -4579,7 +4590,7 @@ function saveConfig(pulsante) {
       privacy_url: document.getElementById('consent_privacy_url').value.trim(),
       version: versioneConsenso
     },
-    comments: document.getElementById('commenti').value,
+    comments: document.getElementById('comments').value,
     giscus: {
       repo: document.getElementById('giscus_repo').value,
       repo_id: document.getElementById('giscus_repo_id').value,
@@ -4602,11 +4613,11 @@ function saveConfig(pulsante) {
       google_api_key: document.getElementById('google_api_key').value,
       llm_api_key: document.getElementById('llm_api_key').value,
       llm_endpoint: document.getElementById('llm_endpoint').value,
-      llm_model: document.getElementById('llm_modello').value,
+      llm_model: document.getElementById('llm_template').value,
       openai_api_key: document.getElementById('openai_api_key').value,
-      openai_model: document.getElementById('openai_modello').value,
+      openai_model: document.getElementById('openai_template').value,
       deepseek_api_key: document.getElementById('deepseek_api_key').value,
-      deepseek_model: document.getElementById('deepseek_modello').value
+      deepseek_model: document.getElementById('deepseek_template').value
     }
   };
 
@@ -4699,33 +4710,33 @@ document.addEventListener('DOMContentLoaded', function() {
 // Reorders the article cards in place. Sorting in the browser keeps the page
 // static: no reload, no round trip, and the search filter stays applied.
 function sortArticles() {
-  var scelta = document.getElementById('ordina-articoli').value;
-  var contenitore = document.getElementById('elenco-articoli');
+  var scelta = document.getElementById('sort-articles').value;
+  var contenitore = document.getElementById('list-articles');
   if (!contenitore) { return; }
 
   var carte = [];
-  var elementi = contenitore.querySelectorAll('.articolo-card');
+  var elementi = contenitore.querySelectorAll('.article-card');
   for (var i = 0; i < elementi.length; i++) {
     carte.push(elementi[i]);
   }
 
   carte.sort(function(a, b) {
     if (scelta === 'titolo') {
-      return a.getAttribute('data-titolo').localeCompare(b.getAttribute('data-titolo'));
+      return a.getAttribute('data-title').localeCompare(b.getAttribute('data-title'));
     }
     if (scelta === 'stato') {
       // Drafts first, then the scheduled ones, then the published ones.
       var ordine = { '0': 0, 's': 1, '1': 2 };
-      var statoA = ordine[a.getAttribute('data-stato')];
-      var statoB = ordine[b.getAttribute('data-stato')];
+      var statoA = ordine[a.getAttribute('data-state')];
+      var statoB = ordine[b.getAttribute('data-state')];
       if (statoA !== statoB) {
         return statoA - statoB;
       }
       // Within one status, the newest first: the same order as the default.
-      return b.getAttribute('data-data').localeCompare(a.getAttribute('data-data'));
+      return b.getAttribute('data-date').localeCompare(a.getAttribute('data-date'));
     }
-    var dataA = a.getAttribute('data-data');
-    var dataB = b.getAttribute('data-data');
+    var dataA = a.getAttribute('data-date');
+    var dataB = b.getAttribute('data-date');
     if (scelta === 'vecchi') {
       return dataA.localeCompare(dataB);
     }
@@ -4753,9 +4764,9 @@ var puntoBlocchi = [];       // the blocks of the page on show
 var puntoScelto = null;      // the block chosen, or null
 
 // The containers whose children can be chosen, from the outside in.
-var PUNTO_CONTENITORI = ['body', '.layout-colonne', 'main', '.colonna-principale',
+var PUNTO_CONTENITORI = ['body', '.layout-columns', 'main', '.column-main',
   'article.post', '.post-content', '.articles-section', '.articles-list',
-  '.barra-laterale'];
+  '.bar-side'];
 
 function puntoT(chiave, valori) {
   var testo = t(chiave);
@@ -4764,11 +4775,11 @@ function puntoT(chiave, valori) {
 }
 
 function openPointPicker(origine) {
-  puntoScheda = origine.closest('.codice-config');
+  puntoScheda = origine.closest('.code-config');
   var finestra = pointPickerWindow();
-  var scelta = document.getElementById('sp-pagina');
+  var scelta = document.getElementById('sp-page');
   scelta.innerHTML = '';
-  var avviso = document.getElementById('sp-avviso');
+  var avviso = document.getElementById('sp-notice');
   avviso.textContent = '';
   var nellEditor = pbPage('page', '') === 'editor';
   var opzioni = [];
@@ -4794,14 +4805,14 @@ function openPointPicker(origine) {
     scelta.appendChild(o);
   }
   // Start from the page the point was chosen on, or the one the scope suggests.
-  var paginaSalvata = puntoScheda.querySelector('.codice-ancora-pagina').value;
-  var ambito = puntoScheda.querySelector('.codice-ambito');
+  var paginaSalvata = puntoScheda.querySelector('.code-anchor-point-page').value;
+  var ambito = puntoScheda.querySelector('.code-scope');
   var preferisciArticolo = paginaSalvata === 'article' ||
     (paginaSalvata === '' && ambito !== null && ['articles', 'optin'].indexOf(ambito.value) !== -1);
   if (!nellEditor && preferisciArticolo && scelta.options.length > 1) { scelta.selectedIndex = 1; }
-  var dove = puntoScheda.querySelector('.codice-ancora-dove').value || 'after';
-  document.querySelector('input[name="sp-dove"][value="' + dove + '"]').checked = true;
-  document.getElementById('sp-conferma').disabled = true;
+  var dove = puntoScheda.querySelector('.code-anchor-point-where').value || 'after';
+  document.querySelector('input[name="sp-where"][value="' + dove + '"]').checked = true;
+  document.getElementById('sp-confirm').disabled = true;
   if (!finestra.open) { finestra.showModal(); }
   if (scelta.options.length > 0) {
     loadPointPage();
@@ -4812,54 +4823,54 @@ function openPointPicker(origine) {
 
 // The window is built once, the first time it is needed.
 function pointPickerWindow() {
-  var finestra = document.getElementById('scelta-punto');
+  var finestra = document.getElementById('choice-point');
   if (finestra) { return finestra; }
   finestra = document.createElement('dialog');
-  finestra.id = 'scelta-punto';
-  finestra.className = 'scelta-punto';
-  finestra.setAttribute('aria-labelledby', 'sp-titolo');
+  finestra.id = 'choice-point';
+  finestra.className = 'choice-point';
+  finestra.setAttribute('aria-labelledby', 'sp-title');
   finestra.innerHTML =
-    '<div class="sp-testata">' +
-      '<div class="sp-testata-testo"><h2 id="sp-titolo"></h2><p class="aiuto" id="sp-istruzioni"></p></div>' +
-      '<div class="campo sp-campo-pagina"><label for="sp-pagina"></label><select class="campo-input" id="sp-pagina"></select></div>' +
+    '<div class="sp-header">' +
+      '<div class="sp-header-text"><h2 id="sp-title"></h2><p class="help" id="sp-instructions"></p></div>' +
+      '<div class="field sp-field-page"><label for="sp-page"></label><select class="field-input" id="sp-page"></select></div>' +
     '</div>' +
-    '<p class="avviso avviso-danger" id="sp-avviso" role="status"></p>' +
-    '<div class="sp-corpo"><iframe id="sp-iframe"></iframe></div>' +
-    '<div class="sp-piede">' +
-      '<div class="campo sp-campo-blocco"><label for="sp-elenco"></label><select class="campo-input" id="sp-elenco"></select></div>' +
-      '<fieldset class="sp-dove"><legend></legend>' +
-        '<label class="campo-spunta"><input type="radio" name="sp-dove" value="before"> <span></span></label>' +
-        '<label class="campo-spunta"><input type="radio" name="sp-dove" value="after" checked> <span></span></label>' +
+    '<p class="notice notice-danger" id="sp-notice" role="status"></p>' +
+    '<div class="sp-body"><iframe id="sp-iframe"></iframe></div>' +
+    '<div class="sp-foot">' +
+      '<div class="field sp-field-lock"><label for="sp-list"></label><select class="field-input" id="sp-list"></select></div>' +
+      '<fieldset class="sp-where"><legend></legend>' +
+        '<label class="field-tick"><input type="radio" name="sp-where" value="before"> <span></span></label>' +
+        '<label class="field-tick"><input type="radio" name="sp-where" value="after" checked> <span></span></label>' +
       '</fieldset>' +
-      '<div class="azioni sp-azioni">' +
-        '<button type="button" class="pulsante" id="sp-annulla"></button>' +
-        '<button type="button" class="pulsante pulsante-primario" id="sp-conferma" disabled></button>' +
+      '<div class="actions sp-actions">' +
+        '<button type="button" class="button" id="sp-cancel"></button>' +
+        '<button type="button" class="button button-primary" id="sp-confirm" disabled></button>' +
       '</div>' +
     '</div>';
   document.body.appendChild(finestra);
-  document.getElementById('sp-titolo').textContent = t('js_sp_title');
-  document.getElementById('sp-istruzioni').textContent = t('js_sp_instructions');
-  finestra.querySelector('label[for="sp-pagina"]').textContent = t('js_sp_page');
-  finestra.querySelector('label[for="sp-elenco"]').textContent = t('js_sp_point');
-  finestra.querySelector('.sp-dove legend').textContent = t('js_sp_where');
-  var etichette = finestra.querySelectorAll('.sp-dove span');
+  document.getElementById('sp-title').textContent = t('js_sp_title');
+  document.getElementById('sp-instructions').textContent = t('js_sp_instructions');
+  finestra.querySelector('label[for="sp-page"]').textContent = t('js_sp_page');
+  finestra.querySelector('label[for="sp-list"]').textContent = t('js_sp_point');
+  finestra.querySelector('.sp-where legend').textContent = t('js_sp_where');
+  var etichette = finestra.querySelectorAll('.sp-where span');
   etichette[0].textContent = t('js_pd_first_one');
   etichette[1].textContent = t('js_pd_after');
-  document.getElementById('sp-annulla').textContent = t('admin_cancel');
-  document.getElementById('sp-conferma').textContent = t('js_sp_put');
+  document.getElementById('sp-cancel').textContent = t('admin_cancel');
+  document.getElementById('sp-confirm').textContent = t('js_sp_put');
   document.getElementById('sp-iframe').title = t('js_sp_title');
 
-  document.getElementById('sp-pagina').addEventListener('change', loadPointPage);
-  document.getElementById('sp-elenco').addEventListener('change', function() {
+  document.getElementById('sp-page').addEventListener('change', loadPointPage);
+  document.getElementById('sp-list').addEventListener('change', function() {
     var indice = parseInt(this.value, 10);
     choosePointBlock(isNaN(indice) ? null : puntoBlocchi[indice], true);
   });
-  var radio = finestra.querySelectorAll('input[name="sp-dove"]');
+  var radio = finestra.querySelectorAll('input[name="sp-where"]');
   for (var i = 0; i < radio.length; i++) {
     radio[i].addEventListener('change', drawPointMark);
   }
-  document.getElementById('sp-annulla').addEventListener('click', function() { finestra.close(); });
-  document.getElementById('sp-conferma').addEventListener('click', confirmPoint);
+  document.getElementById('sp-cancel').addEventListener('click', function() { finestra.close(); });
+  document.getElementById('sp-confirm').addEventListener('click', confirmPoint);
   document.getElementById('sp-iframe').addEventListener('load', preparePointPage);
   return finestra;
 }
@@ -4867,9 +4878,9 @@ function pointPickerWindow() {
 function loadPointPage() {
   puntoBlocchi = [];
   puntoScelto = null;
-  document.getElementById('sp-elenco').innerHTML = '';
-  document.getElementById('sp-conferma').disabled = true;
-  var slug = document.getElementById('sp-pagina').value;
+  document.getElementById('sp-list').innerHTML = '';
+  document.getElementById('sp-confirm').disabled = true;
+  var slug = document.getElementById('sp-page').value;
   document.getElementById('sp-iframe').src = '/pick-point' + (slug ? '?slug=' + encodeURIComponent(slug) : '');
 }
 
@@ -4888,7 +4899,7 @@ function preparePointPage() {
   doc.head.appendChild(stile);
 
   puntoBlocchi = pointBlocksOf(doc);
-  var elenco = document.getElementById('sp-elenco');
+  var elenco = document.getElementById('sp-list');
   elenco.innerHTML = '';
   var vuota = document.createElement('option');
   vuota.value = '';
@@ -4917,7 +4928,7 @@ function preparePointPage() {
   doc.addEventListener('submit', function(evento) { evento.preventDefault(); }, true);
 
   // A point already saved is found again, when this page has it.
-  var salvato = puntoScheda ? puntoScheda.querySelector('.codice-ancora').value : '';
+  var salvato = puntoScheda ? puntoScheda.querySelector('.code-anchor-point').value : '';
   if (salvato !== '') {
     var trovato = null;
     try { trovato = doc.querySelector(salvato); } catch (e) { trovato = null; }
@@ -4938,7 +4949,7 @@ function pointBlocksOf(doc) {
         var nome = el.tagName.toLowerCase();
         if (['script', 'style', 'template', 'link', 'meta', 'dialog'].indexOf(nome) !== -1) { continue; }
         if (el.classList.contains('skip-to-content') || el.classList.contains('pb-sp-segno')) { continue; }
-        if (el.id === 'pb-consenso') { continue; }
+        if (el.id === 'pb-consent') { continue; }
         // The containers themselves are not chosen: their children are.
         var eContenitore = false;
         for (var k = 0; k < PUNTO_CONTENITORI.length; k++) {
@@ -4969,8 +4980,8 @@ function choosePointBlock(blocco, scorri) {
   var precedente = puntoScelto;
   if (precedente) { precedente.classList.remove('pb-sp-scelto'); }
   puntoScelto = blocco;
-  document.getElementById('sp-conferma').disabled = blocco === null;
-  document.getElementById('sp-elenco').value = blocco ? String(puntoBlocchi.indexOf(blocco)) : '';
+  document.getElementById('sp-confirm').disabled = blocco === null;
+  document.getElementById('sp-list').value = blocco ? String(puntoBlocchi.indexOf(blocco)) : '';
   if (blocco) {
     blocco.classList.add('pb-sp-scelto');
     if (scorri) { blocco.scrollIntoView({ block: 'center' }); }
@@ -4987,7 +4998,7 @@ function drawPointMark() {
   if (!puntoScelto) { return; }
   var segno = doc.createElement('div');
   segno.className = 'pb-sp-segno';
-  var nome = puntoScheda ? puntoScheda.querySelector('.codice-nome').value.trim() : '';
+  var nome = puntoScheda ? puntoScheda.querySelector('.code-name').value.trim() : '';
   segno.textContent = puntoT('js_sp_here', { name: nome || t('admin_code_without_name') });
   if (pointSide() === 'before') {
     puntoScelto.parentNode.insertBefore(segno, puntoScelto);
@@ -4997,7 +5008,7 @@ function drawPointMark() {
 }
 
 function pointSide() {
-  var scelto = document.querySelector('input[name="sp-dove"]:checked');
+  var scelto = document.querySelector('input[name="sp-where"]:checked');
   return scelto ? scelto.value : 'after';
 }
 
@@ -5040,16 +5051,16 @@ function describeBlock(el) {
   var genitore = el.parentElement;
   if (nome === 'header') { return t('js_pd_masthead'); }
   if (nome === 'footer') { return t('js_pd_foot'); }
-  if (c.contains('barra-argomenti')) { return t('js_pd_topics'); }
+  if (c.contains('bar-topics')) { return t('js_pd_topics'); }
   if (c.contains('home-intro')) { return t('js_pd_introduction'); }
-  if (c.contains('home-biografia')) { return t('js_pd_biography'); }
+  if (c.contains('home-biography')) { return t('js_pd_biography'); }
   if (c.contains('home-progetti')) { return t('js_pd_projects'); }
   if (c.contains('articles-section')) { return t('js_pd_list'); }
   if (c.contains('articles-head')) { return t('js_pd_masthead_area_list'); }
   if (c.contains('art-row')) { return puntoT('js_pd_article_n', { n: pointOrdinal(el) }); }
   if (c.contains('paginazione')) { return t('js_pd_pagination'); }
   if (c.contains('box')) {
-    var titolo = el.querySelector('.box-titolo');
+    var titolo = el.querySelector('.box-title');
     if (titolo && titolo.textContent.trim() !== '') {
       return puntoT('js_pd_box', { title: titolo.textContent.trim() });
     }
@@ -5059,12 +5070,12 @@ function describeBlock(el) {
   if (c.contains('breadcrumbs')) { return t('js_pd_path'); }
   if (nome === 'h1') { return t('js_pd_title'); }
   if (c.contains('meta')) { return t('js_pd_meta'); }
-  if (c.contains('articolo-copertina')) { return t('js_pd_cover'); }
-  if (c.contains('toc-telefono')) { return t('js_pd_toc_index'); }
+  if (c.contains('article-cover')) { return t('js_pd_cover'); }
+  if (c.contains('toc-phone')) { return t('js_pd_toc_index'); }
   if (c.contains('post-content')) { return t('js_pd_text'); }
   if (c.contains('author-box')) { return t('js_pd_author'); }
   if (c.contains('article-nav')) { return t('js_pd_navigation'); }
-  if (c.contains('post-ritorno')) { return t('js_pd_return'); }
+  if (c.contains('post-back')) { return t('js_pd_return'); }
   if (c.contains('related-articles')) { return t('js_pd_related'); }
   if (c.contains('commenti')) { return t('js_pd_comments'); }
   if (genitore && genitore.classList.contains('post-content')) {
@@ -5093,17 +5104,17 @@ function confirmPoint() {
   if (!puntoScelto || !puntoScheda) { return; }
   var lato = pointSide();
   var etichetta = t(lato === 'before' ? 'js_pd_first_one' : 'js_pd_after') + ' · ' + describeBlock(puntoScelto);
-  puntoScheda.querySelector('.codice-ancora').value = pointSelector(puntoScelto);
-  puntoScheda.querySelector('.codice-ancora-dove').value = lato;
-  puntoScheda.querySelector('.codice-ancora-etichetta').value = etichetta;
-  puntoScheda.querySelector('.codice-ancora-pagina').value =
-    document.getElementById('sp-pagina').value === '' ? 'home' : 'article';
-  puntoScheda.querySelector('.codice-punto-testo').textContent = etichetta;
-  var posizione = puntoScheda.querySelector('.codice-posizione');
+  puntoScheda.querySelector('.code-anchor-point').value = pointSelector(puntoScelto);
+  puntoScheda.querySelector('.code-anchor-point-where').value = lato;
+  puntoScheda.querySelector('.code-anchor-point-label-text').value = etichetta;
+  puntoScheda.querySelector('.code-anchor-point-page').value =
+    document.getElementById('sp-page').value === '' ? 'home' : 'article';
+  puntoScheda.querySelector('.code-point-text').textContent = etichetta;
+  var posizione = puntoScheda.querySelector('.code-position');
   posizione.value = 'anchor';
   posizione.dispatchEvent(new Event('change', { bubbles: true }));
-  document.getElementById('scelta-punto').close();
-  puntoScheda.querySelector('.codice-punto .pulsante').focus();
+  document.getElementById('choice-point').close();
+  puntoScheda.querySelector('.code-point .button').focus();
 }
 
 
@@ -5117,32 +5128,32 @@ function confirmPoint() {
 var versioneMostrata = null;
 
 function versionsWindow() {
-  var finestra = document.getElementById('finestra-versioni');
+  var finestra = document.getElementById('window-versions');
   if (finestra) { return finestra; }
   finestra = document.createElement('dialog');
-  finestra.id = 'finestra-versioni';
-  finestra.className = 'finestra-versioni';
-  finestra.setAttribute('aria-labelledby', 'versioni-titolo');
+  finestra.id = 'window-versions';
+  finestra.className = 'window-versions';
+  finestra.setAttribute('aria-labelledby', 'versions-title');
   finestra.innerHTML =
-    '<div class="fv-testata"><h2 id="versioni-titolo"></h2>' +
-      '<button type="button" class="pulsante pulsante-testo" id="fv-chiudi"></button></div>' +
-    '<div class="fv-corpo">' +
-      '<ul class="fv-elenco" id="fv-elenco"></ul>' +
-      '<div class="fv-vista" id="fv-vista" tabindex="-1">' +
-        '<p class="aiuto" id="fv-vuota"></p>' +
-        '<div id="fv-contenuto" hidden>' +
-          '<p class="fv-quando" id="fv-quando"></p><h3 id="fv-titolo-articolo"></h3>' +
-          '<div class="ql-snow"><div class="ql-editor fv-testo" id="fv-testo"></div></div>' +
+    '<div class="fv-header"><h2 id="versions-title"></h2>' +
+      '<button type="button" class="button button-text" id="fv-close"></button></div>' +
+    '<div class="fv-body">' +
+      '<ul class="fv-list" id="fv-list"></ul>' +
+      '<div class="fv-view" id="fv-view" tabindex="-1">' +
+        '<p class="help" id="fv-empty"></p>' +
+        '<div id="fv-content" hidden>' +
+          '<p class="fv-when" id="fv-when"></p><h3 id="fv-title-article"></h3>' +
+          '<div class="ql-snow"><div class="ql-editor fv-text" id="fv-text"></div></div>' +
         '</div>' +
       '</div>' +
     '</div>' +
-    '<div class="fv-piede"><button type="button" class="pulsante pulsante-primario" id="fv-ripristina" disabled></button></div>';
+    '<div class="fv-foot"><button type="button" class="button button-primary" id="fv-restore" disabled></button></div>';
   document.body.appendChild(finestra);
-  document.getElementById('versioni-titolo').textContent = t('admin_versions');
-  document.getElementById('fv-chiudi').textContent = t('admin_close');
-  document.getElementById('fv-ripristina').textContent = t('js_version_restore');
-  document.getElementById('fv-chiudi').addEventListener('click', function() { finestra.close(); });
-  document.getElementById('fv-ripristina').addEventListener('click', restoreVersion);
+  document.getElementById('versions-title').textContent = t('admin_versions');
+  document.getElementById('fv-close').textContent = t('admin_close');
+  document.getElementById('fv-restore').textContent = t('js_version_restore');
+  document.getElementById('fv-close').addEventListener('click', function() { finestra.close(); });
+  document.getElementById('fv-restore').addEventListener('click', restoreVersion);
   return finestra;
 }
 
@@ -5155,10 +5166,10 @@ function versionStatusLabel(stato) {
 function openVersions() {
   var finestra = versionsWindow();
   versioneMostrata = null;
-  document.getElementById('fv-ripristina').disabled = true;
-  document.getElementById('fv-contenuto').hidden = true;
-  document.getElementById('fv-vuota').textContent = '';
-  var elenco = document.getElementById('fv-elenco');
+  document.getElementById('fv-restore').disabled = true;
+  document.getElementById('fv-content').hidden = true;
+  document.getElementById('fv-empty').textContent = '';
+  var elenco = document.getElementById('fv-list');
   elenco.innerHTML = '';
   finestra.showModal();
   fetch('/versions?slug=' + encodeURIComponent(slugOriginale), { credentials: 'same-origin' })
@@ -5166,23 +5177,23 @@ function openVersions() {
     .then(function(res) {
       var versioni = res.versions || [];
       if (versioni.length === 0) {
-        document.getElementById('fv-vuota').textContent = t('js_versions_empty_m');
+        document.getElementById('fv-empty').textContent = t('js_versions_empty_m');
         return;
       }
-      document.getElementById('fv-vuota').textContent = t('js_version_choose');
+      document.getElementById('fv-empty').textContent = t('js_version_choose');
       for (var i = 0; i < versioni.length; i++) {
         var v = versioni[i];
         var voce = document.createElement('li');
         var pulsante = document.createElement('button');
         pulsante.type = 'button';
-        pulsante.className = 'fv-voce';
+        pulsante.className = 'fv-item';
         pulsante.setAttribute('aria-pressed', 'false');
         pulsante.dataset.id = v.id;
         var quando = document.createElement('span');
-        quando.className = 'fv-voce-quando';
+        quando.className = 'fv-item-when';
         quando.textContent = formatMoment(v.saved_at);
         var dettagli = document.createElement('span');
-        dettagli.className = 'fv-voce-dettagli';
+        dettagli.className = 'fv-item-details';
         dettagli.textContent = versionStatusLabel(v.status) + ' · ' +
           t('js_version_words').replace('{n}', v.words) + ' · ' + v.title;
         pulsante.appendChild(quando);
@@ -5191,14 +5202,14 @@ function openVersions() {
         voce.appendChild(pulsante);
         elenco.appendChild(voce);
       }
-      elenco.querySelector('.fv-voce').focus();
+      elenco.querySelector('.fv-item').focus();
     })
-    .catch(function() { document.getElementById('fv-vuota').textContent = t('js_version_failure'); });
+    .catch(function() { document.getElementById('fv-empty').textContent = t('js_version_failure'); });
 }
 
 function showVersion(evento) {
   var pulsante = evento.currentTarget;
-  var voci = document.querySelectorAll('#fv-elenco .fv-voce');
+  var voci = document.querySelectorAll('#fv-list .fv-item');
   for (var i = 0; i < voci.length; i++) { voci[i].setAttribute('aria-pressed', voci[i] === pulsante ? 'true' : 'false'); }
   fetch('/version?slug=' + encodeURIComponent(slugOriginale) + '&id=' + encodeURIComponent(pulsante.dataset.id),
         { credentials: 'same-origin' })
@@ -5206,15 +5217,15 @@ function showVersion(evento) {
     .then(function(res) {
       if (!res.ok) { pbToast(t('js_version_failure'), 'danger'); return; }
       versioneMostrata = res.version;
-      versioneMostrata._quando = pulsante.querySelector('.fv-voce-quando').textContent;
-      document.getElementById('fv-vuota').textContent = '';
-      document.getElementById('fv-contenuto').hidden = false;
-      document.getElementById('fv-quando').textContent = versioneMostrata._quando + ' · ' + versionStatusLabel(versioneMostrata.status);
-      document.getElementById('fv-titolo-articolo').textContent = versioneMostrata.title || '';
+      versioneMostrata._quando = pulsante.querySelector('.fv-item-when').textContent;
+      document.getElementById('fv-empty').textContent = '';
+      document.getElementById('fv-content').hidden = false;
+      document.getElementById('fv-when').textContent = versioneMostrata._quando + ' · ' + versionStatusLabel(versioneMostrata.status);
+      document.getElementById('fv-title-article').textContent = versioneMostrata.title || '';
       // The article's own HTML, written by the author: the same trust as
       // the editor, and the admin CSP stops any script in it.
-      document.getElementById('fv-testo').innerHTML = versioneMostrata.content || '';
-      document.getElementById('fv-ripristina').disabled = false;
+      document.getElementById('fv-text').innerHTML = versioneMostrata.content || '';
+      document.getElementById('fv-restore').disabled = false;
     })
     .catch(function() { pbToast(t('js_version_failure'), 'danger'); });
 }
@@ -5242,7 +5253,7 @@ function restoreVersion() {
     updateDescriptionCounter();
     updatePreviewCounter();
     markEditorDirty();
-    var finestra = document.getElementById('finestra-versioni');
+    var finestra = document.getElementById('window-versions');
     if (finestra.open) { finestra.close(); }
     pbToast(t('js_version_restored_f').replace('{date}', v._quando), 'success');
     document.getElementById('title').focus();
@@ -5250,7 +5261,7 @@ function restoreVersion() {
   if (editorDirty) {
     // A <dialog> sits above everything, the confirmation window included:
     // it closes first, so the question can be seen and answered.
-    document.getElementById('finestra-versioni').close();
+    document.getElementById('window-versions').close();
     pbConfirm(t('js_version_restore'), t('js_version_lose'), t('js_version_restore'), 'primary', applica);
   } else {
     applica();
@@ -5284,7 +5295,7 @@ function newsletterData() {
 // A test email with what is written in the form, saved or not.
 function sendNewsletterTest(pulsante) {
   pbBusy(pulsante, true);
-  pbStatus('nl-prova-stato', '');
+  pbStatus('nl-test-state', '');
   pbPostJson('/newsletter-test', newsletterData())
     .then(function(res) {
       pbBusy(pulsante, false);
@@ -5317,22 +5328,22 @@ function removeSubscriber(pulsante) {
 // Opens and closes the Details panel. It slides over the page from the
 // right on a wide screen and covers a phone's; Escape and the veil close it.
 function toggleDetails(apri) {
-  var pannello = document.getElementById('pannello-dettagli');
-  var pulsante = document.getElementById('btn-dettagli');
+  var pannello = document.getElementById('panel-details');
+  var pulsante = document.getElementById('btn-details');
   if (!pannello || !pulsante) { return; }
   if (apri === undefined || apri === null || typeof apri !== 'boolean') {
-    apri = !document.body.classList.contains('dettagli-aperti');
+    apri = !document.body.classList.contains('details-open');
   }
-  document.body.classList.toggle('dettagli-aperti', apri);
+  document.body.classList.toggle('details-open', apri);
   pulsante.setAttribute('aria-expanded', apri ? 'true' : 'false');
   if (apri) {
-    document.getElementById('btn-dettagli-chiudi').focus();
+    document.getElementById('btn-details-close').focus();
   } else if (pannello.contains(document.activeElement)) {
     pulsante.focus();
   }
 }
 document.addEventListener('keydown', function(evento) {
-  if (evento.key === 'Escape' && document.body.classList.contains('dettagli-aperti')) {
+  if (evento.key === 'Escape' && document.body.classList.contains('details-open')) {
     toggleDetails(false);
   }
 });
@@ -5342,10 +5353,10 @@ document.addEventListener('keydown', function(evento) {
 // is. The texts are rebuilt whenever a field of the column changes.
 function updateGroupSummaries() {
   function scrivi(id, testo, daFare) {
-    var riga = document.getElementById('riepilogo-' + id);
+    var riga = document.getElementById('summary-' + id);
     if (!riga) { return; }
     riga.textContent = testo;
-    riga.classList.toggle('da-fare', daFare === true);
+    riga.classList.toggle('to-do', daFare === true);
   }
   function valore(id) {
     var campo = document.getElementById(id);
@@ -5353,7 +5364,7 @@ function updateGroupSummaries() {
   }
   var dettagli = valore('tags') || t('js_summary_without_tag');
   if (valore('image') !== '') { dettagli = dettagli + ' \u00b7 ' + t('js_summary_cover'); }
-  scrivi('dettagli', dettagli);
+  scrivi('details', dettagli);
 
   var tipo = document.getElementById('kind');
   var serie = valore('series');
@@ -5361,29 +5372,29 @@ function updateGroupSummaries() {
     serie = serie + ', ' + t('js_summary_part') + ' ' + valore('series_number');
   }
   var nomeTipo = tipo ? tipo.options[tipo.selectedIndex].text : '';
-  scrivi('serie', serie === '' ? nomeTipo : serie + ' \u00b7 ' + nomeTipo);
+  scrivi('series', serie === '' ? nomeTipo : serie + ' \u00b7 ' + nomeTipo);
 
   if (valore('description') === '') {
-    scrivi('anteprima', t('js_summary_missing_one_description'), true);
+    scrivi('preview', t('js_summary_missing_one_description'), true);
   } else {
-    scrivi('anteprima', t('js_summary_description_ok'));
+    scrivi('preview', t('js_summary_description_ok'));
   }
 
   var confermata = document.getElementById('translation_confirmed');
   var autorizzata = document.getElementById('translation_authorized');
   if (confermata && confermata.checked) {
-    scrivi('inglese', t('js_summary_translation_of_ok'));
+    scrivi('english', t('js_summary_translation_of_ok'));
   } else if (autorizzata && autorizzata.checked) {
-    scrivi('inglese', t('js_summary_draft_translation_of'), true);
+    scrivi('english', t('js_summary_draft_translation_of'), true);
   } else {
-    scrivi('inglese', t('js_summary_not_translated_m'));
+    scrivi('english', t('js_summary_not_translated_m'));
   }
 }
 
 // Which groups are open is remembered in this browser, so the column comes
 // back the way the author left it.
 function rememberOpenGroups() {
-  var gruppi = document.querySelectorAll('.gruppo-editor');
+  var gruppi = document.querySelectorAll('.group-editor');
   for (var i = 0; i < gruppi.length; i++) {
     var salvato = null;
     try { salvato = localStorage.getItem('pb-' + gruppi[i].id); } catch (errore) { salvato = null; }
@@ -5405,8 +5416,8 @@ function rememberOpenGroups() {
 // kinds only; the project fields for a lab only.
 function toggleKindFields() {
   var tipo = document.getElementById('kind').value;
-  document.getElementById('campi-riferimento').hidden = tipo === '';
-  document.getElementById('campi-lab').hidden = tipo !== 'lab';
+  document.getElementById('fields-reference').hidden = tipo === '';
+  document.getElementById('fields-lab').hidden = tipo !== 'lab';
 }
 
 function notifySubscribers() {

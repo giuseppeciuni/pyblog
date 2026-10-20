@@ -220,7 +220,7 @@ def test_page_and_menu():
     print("\npagina e menu")
     page_html = server.restore_page("TOKEN")
     check("la pagina ha il campo del file con la sua etichetta",
-          'id="file-ripristino"' in page_html and 'for="file-ripristino"' in page_html)
+          'id="file-restoring"' in page_html and 'for="file-restoring"' in page_html)
     check("il menu porta alla pagina, e la segna", 'href="/restore"' in page_html
           and 'aria-current="page" href="/restore"' in page_html)
     site = Site()

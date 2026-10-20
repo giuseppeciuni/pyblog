@@ -53,7 +53,7 @@ def test_card_parity():
     home = leggi("output/index.html")
     # Up to the end of the articles section: a closing </div> alone would stop
     # inside the first row, which has divs of its own.
-    lista = re.search(r'id="lista-articoli">(.*?)</section>', home, re.S)
+    lista = re.search(r'id="list-box-articles">(.*?)</section>', home, re.S)
     check("la lista degli articoli esiste", lista is not None)
     if lista is None:
         return
@@ -133,16 +133,16 @@ def test_cover_in_article():
     with_cover = []
     for path_value in article_list:
         testo = path_value.read_text(encoding="utf-8")
-        if "articolo-copertina" in testo:
+        if "article-cover" in testo:
             with_cover.append((path_value.name, testo))
     check("almeno un articolo ha la copertina in pagina", len(with_cover) > 0,
           "nessuno degli articoli di prova ha il campo image valorizzato")
     for nome, testo in with_cover:
         corpo = testo[testo.index("<h1>"):testo.index("</article>")]
         positions = {etichetta: corpo.index(etichetta)
-                     for etichetta in ("<h1>", 'class="meta"', "articolo-copertina")}
+                     for etichetta in ("<h1>", 'class="meta"', "article-cover")}
         check(f"{nome}: la copertina sta dopo titolo e data",
-              positions["<h1>"] < positions['class="meta"'] < positions["articolo-copertina"],
+              positions["<h1>"] < positions['class="meta"'] < positions["article-cover"],
               str(positions))
         check(f"{nome}: la copertina e' ingrandibile", "data-zoom" in testo)
 
@@ -170,7 +170,7 @@ def test_zoom_closes_everywhere():
           "chiudi.addEventListener('click', chiudiZoom)" in corpo)
 
     css = leggi("static/style.css")
-    regola = re.search(r"\.zoom-immagine img \{([^}]*)\}", css)
+    regola = re.search(r"\.zoom-picture img \{([^}]*)\}", css)
     check("l'immagine mostra il cursore di chiusura",
           regola is not None and "zoom-out" in regola.group(1), str(regola))
 

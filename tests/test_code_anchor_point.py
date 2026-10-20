@@ -50,7 +50,7 @@ def code_text(**altro):
 
 
 def templates_found(page_html):
-    return re.findall(r'<template data-pb-ancora="([^"]*)" data-pb-dove="([a-z]+)"([^>]*)>(.*?)</template>',
+    return re.findall(r'<template data-pb-anchor="([^"]*)" data-pb-where="([a-z]+)"([^>]*)>(.*?)</template>',
                       page_html, re.DOTALL)
 
 
@@ -65,18 +65,18 @@ def test_page():
           and found_items[0][0] == "div.post-content &gt; p:nth-of-type(2)" and found_items[0][1] == "after",
           str(found_items))
     check("il codice dentro è intatto", found_items and found_items[0][3] == '<div class="banner">B</div>')
-    check("senza consenso da chiedere non aspetta niente", found_items and "data-pb-consenso" not in found_items[0][2])
+    check("senza consenso da chiedere non aspetta niente", found_items and "data-pb-consent" not in found_items[0][2])
     check("sta in fondo alla pagina, non nel testo",
-          page_html.find("data-pb-ancora") > page_html.find("</main>"))
+          page_html.find("data-pb-anchor") > page_html.find("</main>"))
     home = build.generate_homepage(article_list, "it")
-    check("la home non lo ha (pagine: solo articoli)", "data-pb-ancora" not in home)
+    check("la home non lo ha (pagine: solo articoli)", "data-pb-anchor" not in home)
 
     CONFIG["consent"] = {"enabled": True, "version": 1}
     CONFIG["custom_code"] = [code_text(consent="marketing")]
     page_html = build.generate_article_page(article_list[0], "it", article_list)
     found_items = templates_found(page_html)
     check("con il banner acceso, la pubblicità aspetta il consenso nel suo modello",
-          found_items and 'data-pb-consenso="marketing"' in found_items[0][2], str(found_items))
+          found_items and 'data-pb-consent="marketing"' in found_items[0][2], str(found_items))
     check("e la pagina chiede il consenso alla pubblicità", '"marketing"' in page_html)
 
     CONFIG["custom_code"] = [code_text(anchor_where="before")]
@@ -94,12 +94,12 @@ def test_refusals():
                               ("a\nb", "con un a capo"), ("p" * 500, "troppo lungo"), (5, "non testo")):
         CONFIG["custom_code"] = [code_text(anchor_selector=selector)]
         page_html = build.generate_article_page(article_list[0], "it", article_list)
-        check(f"un selettore {reason} non produce niente", "data-pb-ancora" not in page_html)
+        check(f"un selettore {reason} non produce niente", "data-pb-anchor" not in page_html)
     CONFIG["custom_code"] = [code_text(enabled=False)]
-    check("spento non esce", "data-pb-ancora" not in build.generate_article_page(article_list[0], "it", article_list))
+    check("spento non esce", "data-pb-anchor" not in build.generate_article_page(article_list[0], "it", article_list))
     CONFIG["custom_code"] = [code_text(anchor_selector='p[title="x"]')]
     page_html = build.generate_article_page(article_list[0], "it", article_list)
-    check("le virgolette restano dentro l'attributo", 'data-pb-ancora="p[title=&quot;x&quot;]"' in page_html)
+    check("le virgolette restano dentro l'attributo", 'data-pb-anchor="p[title=&quot;x&quot;]"' in page_html)
 
 
 def test_article_code():
@@ -124,7 +124,7 @@ def test_page_without_code():
     finally:
         build.CODE_SWITCH.off = False
     check("è generata senza nessun codice esterno",
-          "data-pb-ancora" not in page_html and "traccia()" not in page_html)
+          "data-pb-anchor" not in page_html and "traccia()" not in page_html)
     check("e subito dopo i codici tornano",
           "traccia()" in build.generate_article_page(article_list[0], "it", article_list))
     check("la rotta è tra quelle dell'amministrazione, che chiedono l'accesso",
@@ -138,12 +138,12 @@ def test_card():
     card = server.custom_code_card(code_text(), 0, "it")
     check("la posizione «punto sulla pagina» è scelta", 'value="anchor" selected' in card)
     check("il riquadro del punto è visibile e dice quale",
-          'class="codice-punto">' in card and "Dopo · Paragrafo 2 del testo" in card)
+          'class="code-point">' in card and "Dopo · Paragrafo 2 del testo" in card)
     check("il riassunto della scheda chiusa dice il punto",
           "Dopo · Paragrafo 2 del testo · Solo gli articoli" in server.snippet_summary(code_text(), "it"))
     other = server.custom_code_card(code_text(position="head"), 0, "it")
     check("con un'altra posizione il riquadro è nascosto ma il punto resta",
-          'class="codice-punto" hidden>' in other and SELECTOR.replace(">", "&gt;") in other)
+          'class="code-point" hidden>' in other and SELECTOR.replace(">", "&gt;") in other)
 
 
 def main():

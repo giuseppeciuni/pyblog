@@ -142,12 +142,12 @@ def test_menu():
             page_html = parse_page(testo)
             menu = [e for e in page_html.elements if e["attrs"].get("id") == "menu-admin"]
             skip_link = [e for e in page_html.elements
-                     if e["tag"] == "a" and e["attrs"].get("href") == "#contenuto"]
+                     if e["tag"] == "a" and e["attrs"].get("href") == "#content"]
             principale = [e for e in page_html.elements
-                          if e["tag"] == "main" and e["attrs"].get("id") == "contenuto"]
+                          if e["tag"] == "main" and e["attrs"].get("id") == "content"]
             check(f"{lingua} / {nome}: un menu, il salto al contenuto e il main",
                   len(menu) == 1 and len(skip_link) == 1 and len(principale) == 1)
-            correnti = [e["attrs"].get("href") for e in page_html.with_class("voce")
+            correnti = [e["attrs"].get("href") for e in page_html.with_class("item")
                         if e["attrs"].get("aria-current") == "page"]
             if expected is None:
                 check(f"{lingua} / {nome}: nessuna voce segnata dal server (lo fa admin.js)",
@@ -157,7 +157,7 @@ def test_menu():
                       correnti == [expected], str(correnti))
             # The sections are in the panel, not in the menu: the menu
             # stays the same short list on every page.
-            below = [e for e in page_html.with_class("voce")
+            below = [e for e in page_html.with_class("item")
                      if "#" in e["attrs"].get("href", "")]
             check(f"{lingua} / {nome}: niente sotto-voci nel menu", len(below) == 0)
     config.CONFIG["admin_language"] = "it"
@@ -172,7 +172,7 @@ def test_settings_sections():
     print("\nsezioni delle impostazioni")
     page_html = parse_page(server.config_page("TOKEN"))
     sections = [e for e in page_html.elements if e["tag"] == "section"]
-    keys = [e["attrs"].get("data-sezione") for e in sections]
+    keys = [e["attrs"].get("data-section") for e in sections]
     expected_items = [key for key, _ in server.CONFIG_SECTIONS]
     check(f"{len(expected_items)} sezioni, nell'ordine del menu", keys == expected_items, str(keys))
     check("tutte nascoste finché admin.js non sceglie quale mostrare",
@@ -180,19 +180,19 @@ def test_settings_sections():
     titoli = {e["attrs"].get("id") for e in page_html.elements if e["tag"] == "h1"}
     check("ogni sezione ha il suo titolo, che le dà il nome",
           all(e["attrs"].get("aria-labelledby") in titoli for e in sections))
-    schede = [e["attrs"].get("href") for e in page_html.with_class("scheda-impostazione")]
-    grouped = [key for key in expected_items if key != "avanzate"]
+    schede = [e["attrs"].get("href") for e in page_html.with_class("card-setting")]
+    grouped = [key for key in expected_items if key != "advanced"]
     check("il pannello ha una scheda per ogni sezione, nell'ordine",
           schede == ["#" + key for key in grouped], str(schede))
     advanced = [e for e in page_html.elements
-                if e["tag"] == "a" and e["attrs"].get("href") == "#avanzate"]
+                if e["tag"] == "a" and e["attrs"].get("href") == "#advanced"]
     check("il file di configurazione è un link in fondo al pannello", len(advanced) == 1)
-    back = page_html.with_class("sezione-indietro")
+    back = page_html.with_class("section-back")
     check("ogni sezione ha il ritorno all'elenco, con un nome",
           len(back) == len(expected_items)
           and all(e["attrs"].get("aria-label") for e in back))
     check("gli aiuti sotto i campi sono frasi, non parentesi",
-          '<p class="aiuto" id="base_url-aiuto">(' not in server.config_page("TOKEN"))
+          '<p class="help" id="base_url-help">(' not in server.config_page("TOKEN"))
 
 
 def test_labels():

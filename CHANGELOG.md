@@ -450,6 +450,16 @@ All notable changes to PyBlog are documented in this file.
 
 ### Breaking changes
 
+- **The names inside the pages are in English.** CSS classes, ids,
+  `data-*` attributes and the ids of the Settings sections went from
+  Italian to English (`.barra-laterale` is `.sidebar`, `#codici` is
+  `#code`). The points chosen on the page for external code move by
+  themselves when the configuration loads, old links to a Settings section
+  (`/config#codici`) still open it, and the theme and consent choices saved
+  in the readers' browsers are still read. Not migrated: your own CSS or
+  JavaScript in the external code that targets the old class names; check
+  it against `core/legacy_names.py`, which lists every old name and its new
+  one.
 - **The public addresses are in English.** The card pages moved from
   `/pagine/` to `/pages/`, the series from `/serie/` to `/series/`, and the
   newsletter's pages from `/iscriviti`, `/conferma` and `/disiscrivi` to

@@ -146,7 +146,7 @@ def free_slug(slug):
 # nothing on a published page: the hint over a table and the outline of the
 # table that happened to be selected when the author pressed Save.
 EDITOR_ONLY_ATTRIBUTES = re.compile(r'\sdata-hint="[^"]*"')
-EDITOR_ONLY_CLASS = re.compile(r'(class="[^"]*?)\s*\bpb-tabella-selezionata\b([^"]*")')
+EDITOR_ONLY_CLASS = re.compile(r'(class="[^"]*?)\s*\bpb-table-selected\b([^"]*")')
 
 
 def clean_editor_markup(html_value):

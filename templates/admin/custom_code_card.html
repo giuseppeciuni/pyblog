@@ -1,21 +1,21 @@
-  <details class="codice-config" data-indice="$toc_index" data-id="$id_snippet"$open>
-    <summary class="codice-sommario">
-      <span class="codice-sommario-nome">$name_shown</span>
-      <span class="codice-sommario-dove">$summary_text</span>
-      <span class="codice-sommario-stato$css_class_off_m">$state</span>
+  <details class="code-config" data-index="$toc_index" data-id="$id_snippet"$open>
+    <summary class="code-summary">
+      <span class="code-summary-name">$name_shown</span>
+      <span class="code-summary-where">$summary_text</span>
+      <span class="code-summary-state$css_class_off_m">$state</span>
     </summary>
-    <div class="codice-corpo">
-      <div class="codice-intestazione">
-        <label class="riga-flag"><input type="checkbox" class="codice-attivo" $checked> $label_active</label>
-        <button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo" onclick="removeCustomCode(this)">$label_delete</button>
+    <div class="code-body">
+      <div class="code-heading">
+        <label class="row-flag"><input type="checkbox" class="code-active" $checked> $label_active</label>
+        <button type="button" class="button button-text button-danger button-small" onclick="removeCustomCode(this)">$label_delete</button>
       </div>
 
-      <label class="campo-etichettato"><span class="etichetta">$label_name</span>
-      <input type="text" class="codice-nome" value="$name" placeholder="$ph_name"></label>
+      <label class="field-labelled"><span class="label-text">$label_name</span>
+      <input type="text" class="code-name" value="$name" placeholder="$ph_name"></label>
 
-      <div class="codice-griglia">
-        <label class="campo-etichettato"><span class="etichetta">$label_position</span>
-          <select class="codice-posizione">
+      <div class="code-grid">
+        <label class="field-labelled"><span class="label-text">$label_position</span>
+          <select class="code-position">
             <optgroup label="$group_technical">
               <option value="head" $sel_head>$label_pos_head</option>
               <option value="body_start" $sel_body_start>$label_pos_body_start</option>
@@ -34,28 +34,28 @@
             </optgroup>
           </select>
         </label>
-$lock_scope        <label class="campo-etichettato"><span class="etichetta">$label_consent</span>
-          <select class="codice-consenso">
+$lock_scope        <label class="field-labelled"><span class="label-text">$label_consent</span>
+          <select class="code-consent">
             <option value="necessary" $sel_necessary>$label_consent_choice_necessary</option>
             <option value="statistics" $sel_statistics>$label_consent_choice_statistics</option>
             <option value="marketing" $sel_marketing>$label_consent_choice_marketing</option>
           </select>
         </label>
       </div>
-      <div class="codice-punto"$point_hidden_m>
-        <p class="codice-punto-riga"><span class="codice-punto-etichetta">$label_point:</span>
-          <span class="codice-punto-testo">$point_text</span></p>
-        <button type="button" class="pulsante pulsante-piccolo" onclick="openPointPicker(this)">$label_choose_point</button>
-        <p class="hint codice-aiuto">$hint_point</p>
-        <input type="hidden" class="codice-ancora" value="$anchor_point">
-        <input type="hidden" class="codice-ancora-dove" value="$anchor_point_where">
-        <input type="hidden" class="codice-ancora-etichetta" value="$anchor_point_label_text">
-        <input type="hidden" class="codice-ancora-pagina" value="$anchor_point_page">
+      <div class="code-point"$point_hidden_m>
+        <p class="code-point-row"><span class="code-point-label-text">$label_point:</span>
+          <span class="code-point-text">$point_text</span></p>
+        <button type="button" class="button button-small" onclick="openPointPicker(this)">$label_choose_point</button>
+        <p class="hint code-help">$hint_point</p>
+        <input type="hidden" class="code-anchor-point" value="$anchor_point">
+        <input type="hidden" class="code-anchor-point-where" value="$anchor_point_where">
+        <input type="hidden" class="code-anchor-point-label-text" value="$anchor_point_label_text">
+        <input type="hidden" class="code-anchor-point-page" value="$anchor_point_page">
       </div>
-      <p class="hint codice-aiuto">$hint_position</p>
-      <p class="hint codice-aiuto">$hint_consent</p>
+      <p class="hint code-help">$hint_position</p>
+      <p class="hint code-help">$hint_consent</p>
 
-      <p class="campo-titolo" aria-hidden="true">$label_code</p>
-      <textarea class="codice-testo" rows="8" spellcheck="false" aria-label="$label_code" placeholder="&lt;script src=&quot;https://servizio.esempio.com/script.js&quot; async&gt;&lt;/script&gt;">$code</textarea>
+      <p class="field-title" aria-hidden="true">$label_code</p>
+      <textarea class="code-text" rows="8" spellcheck="false" aria-label="$label_code" placeholder="&lt;script src=&quot;https://servizio.esempio.com/script.js&quot; async&gt;&lt;/script&gt;">$code</textarea>
     </div>
   </details>

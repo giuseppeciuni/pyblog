@@ -55,28 +55,28 @@ def test_panel_by_state():
     """Each state offers its own buttons, and only those make sense."""
     print("\nil pannello segue lo stato dell'articolo")
     draft = server.editor_page(load_article(SLUG), "TOKEN")
-    check("una bozza si apre come bozza", 'data-stato="draft"' in draft)
-    for button in ("btn-pubblica", "btn-salva-bozza", "btn-anteprima", "btn-aggiorna"):
+    check("una bozza si apre come bozza", 'data-state="draft"' in draft)
+    for button in ("btn-publish", "btn-save-draft", "btn-preview", "btn-update"):
         check(f"la pagina ha {button}", f'id="{button}"' in draft)
     check("la tendina dello stato non c'è più", 'id="status"' not in draft)
     check('"Salva e chiudi" non c\'è più', "saveAndClose" not in draft)
     check("Elimina sta in fondo alla barra, dopo la traduzione",
-          draft.rfind("btn-elimina-articolo") > draft.rfind("translation-section"))
+          draft.rfind("btn-delete-article") > draft.rfind("translation-section"))
     check("c'è il link per tornare agli articoli",
-          re.search(r'class="[^"]*\btorna-articoli\b[^"]*" href="/admin"', draft) is not None)
+          re.search(r'class="[^"]*\bback-to-articles\b[^"]*" href="/admin"', draft) is not None)
 
     new = server.editor_page(None, "TOKEN")
     check("un articolo nuovo è una bozza, senza Elimina",
-          'data-stato="draft"' in new and "btn-elimina-articolo" not in new)
+          'data-state="draft"' in new and "btn-delete-article" not in new)
 
     odd = server.editor_page({"slug": SLUG, "title": "x", "status": "boh"}, "TOKEN")
-    check("uno stato sconosciuto si apre come bozza", 'data-stato="draft"' in odd)
+    check("uno stato sconosciuto si apre come bozza", 'data-state="draft"' in odd)
 
     article = load_article(SLUG)
     article["status"] = "published"
     save_article(article)
     published = server.editor_page(load_article(SLUG), "TOKEN")
-    check("un articolo pubblicato si apre come pubblicato", 'data-stato="published"' in published)
+    check("un articolo pubblicato si apre come pubblicato", 'data-state="published"' in published)
     check("con il link alla sua pagina", f'href="/posts/{SLUG}.html"' in published)
     article["status"] = "draft"
     save_article(article)

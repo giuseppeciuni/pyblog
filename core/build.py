@@ -547,7 +547,7 @@ def wrap_for_consent(code, category):
     """
     if category == "necessary" or not consent_enabled():
         return code
-    return '<template data-pb-consenso="' + category + '">' + code + "</template>"
+    return '<template data-pb-consent="' + category + '">' + code + "</template>"
 
 
 def consent_categories_used(article=None):
@@ -593,7 +593,7 @@ def consent_banner_html(language, categories):
     switches = []
     for category in categories:
         switches.append(
-            f'        <label class="consenso-voce"><input type="checkbox" data-categoria="{category}"> '
+            f'        <label class="consent-item"><input type="checkbox" data-category="{category}"> '
             f'<span><strong>{T("consent_" + category, language)}</strong> '
             f'{T("consent_" + category + "_hint", language)}</span></label>')
     return render.render(
@@ -748,8 +748,8 @@ def anchored_code(snippet):
     category = snippet_consent(snippet)
     consent = ""
     if category != "necessary" and consent_enabled():
-        consent = ' data-pb-consenso="' + category + '"'
-    return (f'<template data-pb-ancora="{esc(selector)}" data-pb-dove="{side}"{consent}>'
+        consent = ' data-pb-consent="' + category + '"'
+    return (f'<template data-pb-anchor="{esc(selector)}" data-pb-where="{side}"{consent}>'
             + code + "</template>")
 
 
@@ -865,7 +865,7 @@ def site_header(language="it", nav_extra="", is_home=False):
     work = work_link(language)
     if work is not None:
         nav_extra = ((nav_extra.strip() + "\n      " if nav_extra.strip() else "")
-                     + f'<a class="nav-lavoro" href="{esc(work[0])}">{esc(work[1])}</a>')
+                     + f'<a class="nav-work" href="{esc(work[0])}">{esc(work[1])}</a>')
 
     link_titolo = f'<a href="{prefix}/">{esc(CONFIG["site_title"])}</a>'
     if is_home:
@@ -906,7 +906,7 @@ def site_footer(language="it", consent_active=False):
     link_social = social_profile_links()
     riga_social = ""
     if len(link_social) > 0:
-        riga_social = ('\n    <p class="pie-social">'
+        riga_social = ('\n    <p class="foot-social">'
                        + " &middot; ".join(link_social) + "</p>")
 
     return render.render(
@@ -955,7 +955,7 @@ def consent_footer_link(language, active):
     """
     if not active:
         return ""
-    return (' &middot; <button type="button" class="link-preferenze" data-consenso="apri">'
+    return (' &middot; <button type="button" class="link-preferences" data-consent="open">'
             + T("consent_preferences", language) + "</button>")
 
 
@@ -1147,20 +1147,20 @@ def generate_table_of_contents(html_content_value, language="it"):
 
     # Only the list: the article page shows it twice, in the sidebar on a
     # wide screen and folded at the top of the text on a phone.
-    index_html = '<ul class="toc-lista">' + "".join(toc_items) + "</ul>"
+    index_html = '<ul class="toc-list-box">' + "".join(toc_items) + "</ul>"
     return modified_content, index_html
 
 
 def toc_sidebar_html(toc_list, language):
     """The table of contents as the last box of the article's sidebar."""
-    return ('      <nav class="box box-indice" aria-label="' + esc(T("toc_index", language)) + '">\n'
-            '        <h2 class="box-titolo">' + T("in_this_article", language) + "</h2>\n"
+    return ('      <nav class="box box-toc-index" aria-label="' + esc(T("toc_index", language)) + '">\n'
+            '        <h2 class="box-title">' + T("in_this_article", language) + "</h2>\n"
             "        " + toc_list + "\n      </nav>")
 
 
 def toc_phone_html(toc_list, language):
     """The table of contents folded at the top of the text, for narrow screens."""
-    return ('        <details class="toc-telefono">\n'
+    return ('        <details class="toc-phone">\n'
             "          <summary>" + T("toc_index", language) + "</summary>\n"
             "          " + toc_list + "\n        </details>\n")
 
@@ -1380,9 +1380,9 @@ def share_row(page_url, language="it"):
     """
     if CONFIG.get("share_buttons", True) is not True:
         return ""
-    return ('        <div class="condividi">\n'
-            f'          <button type="button" class="condividi-copia" data-url="{esc(page_url)}" '
-            f'data-fatto="{esc(T("share_copied", language))}">'
+    return ('        <div class="share">\n'
+            f'          <button type="button" class="share-copy" data-url="{esc(page_url)}" '
+            f'data-done="{esc(T("share_copied", language))}">'
             f'{T("share_copy", language)}</button>\n'
             "        </div>\n")
 
@@ -1430,9 +1430,9 @@ def work_invitation(language="it"):
     if work is None:
         return ""
     link, label, text = work
-    return ('        <aside class="invito-lavoro">\n'
+    return ('        <aside class="invite-work">\n'
             f'          <p>{esc(text)}</p>\n'
-            f'          <a class="invito-pulsante" href="{esc(link)}">{esc(label)} &rarr;</a>\n'
+            f'          <a class="invite-button" href="{esc(link)}">{esc(label)} &rarr;</a>\n'
             "        </aside>\n")
 
 
@@ -1455,7 +1455,7 @@ def original_note(art, language="it"):
     site = link.split("//", 1)[1].split("/", 1)[0]
     if site.lower().startswith("www."):
         site = site[4:]
-    return (f'        <p class="pubblicato-origine">{T("published_in_source", language)} '
+    return (f'        <p class="published-source">{T("published_in_source", language)} '
             f'<a href="{esc(link)}" rel="noopener">{esc(site)}</a></p>\n')
 
 
@@ -1496,7 +1496,7 @@ def repository_link(art, language):
     label = T("lab_code", language)
     if "github.com" in link.lower():
         label = T("lab_code_github", language)
-    return f'<a class="lab-codice" href="{esc(link)}" rel="noopener">{label} &rarr;</a>'
+    return f'<a class="lab-code" href="{esc(link)}" rel="noopener">{label} &rarr;</a>'
 
 
 def starting_article(art, all_articles, language):
@@ -1525,11 +1525,11 @@ def lab_box(art, all_articles, language="it"):
         start_link = (f'<a href="{article_url(start, language)}">'
                       f'{esc(title_in_language(start, language))}</a>')
     if art.get("kind") == "practical":
-        rows = [f'          <p class="lab-etichetta">{T("level_practice", language)}</p>']
+        rows = [f'          <p class="lab-label-text">{T("level_practice", language)}</p>']
         if start_link != "":
             rows.append(f'          <p>{T("practice_intro", language)} {start_link}</p>')
     elif is_lab(art):
-        rows = [f'          <p class="lab-etichetta">{T("lab", language)}</p>']
+        rows = [f'          <p class="lab-label-text">{T("lab", language)}</p>']
         link = repository_link(art, language)
         if link != "":
             rows.append("          <p>" + link + "</p>")
@@ -1571,7 +1571,7 @@ def other_levels(art, all_articles, language="it"):
     for other in group:
         if other.get("slug") == art.get("slug"):
             continue
-        row = (f'<span class="lab-etichetta">{T(labels[other.get("kind") or ""], language)}</span> '
+        row = (f'<span class="lab-label-text">{T(labels[other.get("kind") or ""], language)}</span> '
                f'<a href="{article_url(other, language)}">'
                f'{esc(title_in_language(other, language))}</a>')
         if is_lab(other) and repository_link(other, language) != "":
@@ -1579,7 +1579,7 @@ def other_levels(art, all_articles, language="it"):
         rows.append("            <li>" + row + "</li>")
     if len(rows) == 0:
         return ""
-    return ('        <aside class="lab-box lab-fine">\n'
+    return ('        <aside class="lab-box lab-finish">\n'
             f'          <p>{T("levels_title", language)}</p>\n'
             "          <ul>\n" + "\n".join(rows) + "\n          </ul>\n        </aside>\n")
 
@@ -1595,7 +1595,7 @@ def labs_home_html(articles, language="it", limit=3):
         return ""
     rows = []
     for art in labs[:limit]:
-        row = (f'<a class="lab-home-titolo" href="{article_url(art, language)}">'
+        row = (f'<a class="lab-home-title" href="{article_url(art, language)}">'
                f'{esc(title_in_language(art, language))}</a>')
         stack = str(art.get("stack", "") or "").strip()
         if stack != "":
@@ -1608,7 +1608,7 @@ def labs_home_html(articles, language="it", limit=3):
         "public/home_section.html", css_class="home-labs", id_title="titolo-labs",
         title=T("labs", language),
         content=('        <ul class="labs-home">\n' + "\n".join(rows) + "\n        </ul>\n"
-                   f'        <p class="labs-home-tutti"><a href="{labs_page_url(language)}">'
+                   f'        <p class="labs-home-all"><a href="{labs_page_url(language)}">'
                    f'{T("labs_all", language)} &rarr;</a></p>\n')).rstrip("\n")
 
 
@@ -1680,9 +1680,9 @@ def series_box(art, all_articles, language="it"):
     place = T("series_part", language).replace("{n}", str(series["position"] + 1)) \
         .replace("{tot}", str(len(series["parts"])))
     return (
-        f'        <nav class="serie-box" aria-label="{T("series", language)}">\n'
-        f'          <p><span class="serie-etichetta">{T("series", language)}</span> '
-        f'<a class="serie-nome" href="{series_page_url(series["slug"], language)}">'
+        f'        <nav class="series-box" aria-label="{T("series", language)}">\n'
+        f'          <p><span class="series-label-text">{T("series", language)}</span> '
+        f'<a class="series-name" href="{series_page_url(series["slug"], language)}">'
         f'{esc(series["name"])}</a> &middot; {place}</p>\n'
         f'          <details>\n            <summary>{T("series_all_f", language)}</summary>\n'
         f'            <ol>\n' + "\n".join(rows) + '\n            </ol>\n          </details>\n'
@@ -1924,8 +1924,8 @@ def topics_bar(articles, language, current_tag=""):
         current = ""
         if tag == current_tag:
             current = ' aria-current="page"'
-        items.append(f'      <a class="argomento" href="{prefix}{tag_slug}.html"{current}>'
-                     f'{esc(tag)} <span class="argomento-conteggio">{count}</span></a>')
+        items.append(f'      <a class="topic" href="{prefix}{tag_slug}.html"{current}>'
+                     f'{esc(tag)} <span class="topic-count">{count}</span></a>')
     if len(items) == 0:
         return ""
     return render.render("public/topics_bar.html", aria=esc(T("topics", language)),
@@ -1940,7 +1940,7 @@ def sidebar_box(css_class, title, content):
     html_box = render.render("public/sidebar_box.html", css_class=css_class,
                              title=titolo, content=block(content))
     if titolo == "":
-        html_box = html_box.replace('        <h2 class="box-titolo"></h2>\n', "")
+        html_box = html_box.replace('        <h2 class="box-title"></h2>\n', "")
     return html_box
 
 
@@ -1957,7 +1957,7 @@ def avatar_html(css_class):
     photo = seo_data().get("author_image", "")
     if photo != "":
         return f'<img class="{css_class}" src="{esc(photo)}" alt="" loading="lazy">'
-    return (f'<span class="{css_class} avatar-iniziali" aria-hidden="true">'
+    return (f'<span class="{css_class} avatar-initials" aria-hidden="true">'
             f'{esc(author_initials(CONFIG.get("author", "")))}</span>')
 
 
@@ -1971,15 +1971,15 @@ def profile_box(language):
     """
     seo = seo_data()
     role = author_role(language) or site_subtitle(language)
-    lines = ['        <div class="profilo">' + avatar_html("profilo-foto")
-             + '<div><p class="profilo-nome">' + esc(CONFIG.get("author", ""))
-             + '</p><p class="profilo-ruolo">' + esc(role) + "</p></div></div>"]
+    lines = ['        <div class="profile">' + avatar_html("profile-photo")
+             + '<div><p class="profile-name">' + esc(CONFIG.get("author", ""))
+             + '</p><p class="profile-role">' + esc(role) + "</p></div></div>"]
     bio = author_bio(language)
     if bio != "":
-        lines.append('        <p class="profilo-bio">' + esc(bio) + "</p>")
+        lines.append('        <p class="profile-bio">' + esc(bio) + "</p>")
     author_url = seo.get("author_url", "")
     if author_url != "":
-        lines.append(f'        <p class="profilo-link"><a href="{esc(author_url)}" rel="me">'
+        lines.append(f'        <p class="profile-link"><a href="{esc(author_url)}" rel="me">'
                      f'{T("who_am", language)} &rarr;</a></p>')
     return sidebar_box("box-profilo", T("who_writes", language), "\n".join(lines))
 
@@ -2020,10 +2020,10 @@ def explore_box(language):
     for card in cards:
         slug = card_slug(card.get("title", ""))
         items.append(f'          <li><a href="{prefix}{slug}.html">{esc(card.get("title", ""))}</a>'
-                     f'<span class="esplora-estratto">{esc(excerpt_words(card.get("content", ""), 12))}'
+                     f'<span class="explore-excerpt">{esc(excerpt_words(card.get("content", ""), 12))}'
                      "</span></li>")
     return sidebar_box("box-esplora", T("explore", language),
-                       '        <ul class="esplora-lista">\n' + "\n".join(items) + "\n        </ul>")
+                       '        <ul class="explore-list-box">\n' + "\n".join(items) + "\n        </ul>")
 
 
 def topics_box(articles, language):
@@ -2034,12 +2034,12 @@ def topics_box(articles, language):
         tag_slug = slugify(tag)
         if tag_slug == "":
             continue
-        pieces.append(f'<a class="argomento" href="{prefix}{tag_slug}.html">{esc(tag)} '
-                      f'<span class="argomento-conteggio">{count}</span></a>')
+        pieces.append(f'<a class="topic" href="{prefix}{tag_slug}.html">{esc(tag)} '
+                      f'<span class="topic-count">{count}</span></a>')
     if len(pieces) == 0:
         return ""
     return sidebar_box("box-argomenti", T("topics", language),
-                       '        <p class="nuvola">' + "".join(pieces) + "</p>")
+                       '        <p class="tooltip-cloud">' + "".join(pieces) + "</p>")
 
 
 def follow_box(language):
@@ -2048,7 +2048,7 @@ def follow_box(language):
     for link in social_profile_links():
         items.append("          <li>" + link + "</li>")
     return sidebar_box("box-segui", T("follow_me", language),
-                       '        <ul class="segui-lista">\n' + "\n".join(items) + "\n        </ul>")
+                       '        <ul class="follow-list-box">\n' + "\n".join(items) + "\n        </ul>")
 
 
 def sidebar_ads(page_kind, article):
@@ -2056,7 +2056,7 @@ def sidebar_ads(page_kind, article):
     code = custom_code_block("sidebar", page_kind, article)
     if code == "":
         return ""
-    return '      <div class="annuncio annuncio-barra">\n' + code + "\n      </div>"
+    return '      <div class="ad ad-bar">\n' + code + "\n      </div>"
 
 
 def build_sidebar(language, page_kind, articles, article=(), toc_html="",
@@ -2139,24 +2139,24 @@ def pagination_html(page, total, language):
         return f"{prefix}/{folder}/{number}.html"
 
     if page > 1:
-        previous = (f'<a class="paginazione-freccia" href="{address(page - 1)}" rel="prev">'
+        previous = (f'<a class="pagination-arrow" href="{address(page - 1)}" rel="prev">'
                     f'{T("page_more_than_recenti", language)}</a>')
     else:
-        previous = '<span class="paginazione-vuoto"></span>'
+        previous = '<span class="pagination-empty"></span>'
     if page < total:
-        following = (f'<a class="paginazione-freccia" href="{address(page + 1)}" rel="next">'
+        following = (f'<a class="pagination-arrow" href="{address(page + 1)}" rel="next">'
                      f'{T("page_less_than_recenti", language)}</a>')
     else:
-        following = '<span class="paginazione-vuoto"></span>'
+        following = '<span class="pagination-empty"></span>'
 
     numbers = []
     for number in pages_to_show(page, total):
         if number is None:
-            numbers.append('<span class="paginazione-salto">&hellip;</span>')
+            numbers.append('<span class="pagination-jump">&hellip;</span>')
         elif number == page:
-            numbers.append(f'<span class="paginazione-numero" aria-current="page">{number}</span>')
+            numbers.append(f'<span class="pagination-number" aria-current="page">{number}</span>')
         else:
-            numbers.append(f'<a class="paginazione-numero" href="{address(number)}">{number}</a>')
+            numbers.append(f'<a class="pagination-number" href="{address(number)}">{number}</a>')
     return render.render(
         "public/pagination.html",
         aria=esc(T("pages", language)),
@@ -2229,12 +2229,12 @@ def generate_article_page(art, language="it", all_articles=None):
     # title and the cover, and half way down, between two paragraphs.
     start_code = custom_code_block("article_start", "article", art)
     if start_code != "":
-        start_code = ('        <div class="annuncio annuncio-testo">\n' + start_code
+        start_code = ('        <div class="ad ad-text">\n' + start_code
                       + "\n        </div>\n")
     middle_code = custom_code_block("article_middle", "article", art)
     if middle_code != "":
         content = insert_in_middle(
-            content, '<div class="annuncio annuncio-testo">' + middle_code + "</div>")
+            content, '<div class="ad ad-text">' + middle_code + "</div>")
 
     # The cover inside the article, under the title and the date.
     #
@@ -2287,13 +2287,13 @@ def generate_article_page(art, language="it", all_articles=None):
             language_switcher = (
                 f'<div class="language-switcher">'
                 f'<a href="{link_it}">Italiano</a>'
-                f'<span class="lingua-attiva">English</span>'
+                f'<span class="language-active">English</span>'
                 f'</div>'
             )
         else:
             language_switcher = (
                 f'<div class="language-switcher">'
-                f'<span class="lingua-attiva">Italiano</span>'
+                f'<span class="language-active">Italiano</span>'
                 f'<a href="{link_en}">English</a>'
                 f'</div>'
             )
@@ -2360,7 +2360,7 @@ def generate_article_page(art, language="it", all_articles=None):
     ] if x != "")
 
     head_extra = (
-        '  <link id="hljs-tema" rel="stylesheet" '
+        '  <link id="hljs-theme" rel="stylesheet" '
         'href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">\n'
         '  <script type="application/ld+json">'
         + json.dumps(jsonld_data, ensure_ascii=False) + "</script>")
@@ -2548,7 +2548,7 @@ def biography_home_html(language):
     The biography on the homepage: the photo, its first lines and the link to
     the whole of it. A box in the sidebar, a section in the main column.
     """
-    photo = biography_photo_html("bio-foto")
+    photo = biography_photo_html("bio-photo")
     if photo != "":
         photo = photo + "\n          "
     # The sidebar is narrow: fewer words, or the box outgrows the others.
@@ -2563,9 +2563,9 @@ def biography_home_html(language):
         read=T("read_biography", language),
     )
     if biography_settings()["position"] == "sidebar":
-        return sidebar_box("box-biografia", T("biography", language), inner)
-    return render.render("public/home_section.html", css_class="home-biografia",
-                         id_title="titolo-biografia", title=T("biography", language),
+        return sidebar_box("box-biography", T("biography", language), inner)
+    return render.render("public/home_section.html", css_class="home-biography",
+                         id_title="title-biography", title=T("biography", language),
                          content=inner).rstrip("\n")
 
 
@@ -2622,22 +2622,22 @@ def projects_home_html(language):
             name = f'<a href="{esc(link)}">{name}</a>'
         image = ""
         if item["image"] != "":
-            image = (f'<img class="progetto-immagine" src="{esc(item["image"])}" '
+            image = (f'<img class="project-picture" src="{esc(item["image"])}" '
                      'alt="" loading="lazy">\n            ')
         description = item["description"]
         if language != main_language() and item["description_en"] != "":
             description = item["description_en"]
         if description != "":
-            description = f'<p class="progetto-descrizione">{esc(description)}</p>\n          '
+            description = f'<p class="project-description">{esc(description)}</p>\n          '
         rows.append(render.render("public/project.html", picture=image, name=name,
                                   description=description).rstrip("\n"))
     if projects_settings()["position"] == "sidebar":
         return sidebar_box("box-progetti", T("projects", language),
-                           '        <ul class="progetti-lista">\n' + "\n".join(rows)
+                           '        <ul class="projects-list-box">\n' + "\n".join(rows)
                            + "\n        </ul>")
     return render.render("public/home_section.html", css_class="home-progetti",
-                         id_title="titolo-progetti", title=T("projects", language),
-                         content='        <ul class="progetti-griglia">\n' + "\n".join(rows)
+                         id_title="title-projects", title=T("projects", language),
+                         content='        <ul class="projects-grid">\n' + "\n".join(rows)
                          + "\n        </ul>\n").rstrip("\n")
 
 
@@ -2679,8 +2679,8 @@ def newsletter_after_article(language):
     current = newsletter.settings()
     if not current["enabled"] or not current["after_article"]:
         return ""
-    return ('    <aside class="newsletter-articolo" aria-labelledby="nl-articolo-titolo">\n'
-            f'      <h2 id="nl-articolo-titolo">{esc(newsletter_title(language))}</h2>\n'
+    return ('    <aside class="newsletter-article" aria-labelledby="nl-article-title">\n'
+            f'      <h2 id="nl-article-title">{esc(newsletter_title(language))}</h2>\n'
             + newsletter_form(language, "articolo") + "\n    </aside>\n")
 
 
@@ -2711,7 +2711,7 @@ def generate_biography_page(language="it", articles=None):
         articles = []
     title_value = T("biography", language)
     content = biography_content(language)
-    photo = biography_photo_html("bio-pagina-foto")
+    photo = biography_photo_html("bio-page-photo")
     if photo != "":
         photo = photo + "\n        "
     prefix = language_url_prefix(language)
@@ -2835,7 +2835,7 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
         if index_value == 2 and len(page_articles) > 3:
             feed_code = custom_code_block("home_feed", "home", ())
             if feed_code != "":
-                rows.append('      <div class="annuncio annuncio-elenco">\n'
+                rows.append('      <div class="ad ad-list">\n'
                             + feed_code + "\n      </div>")
 
     if len(rows) > 0:
@@ -3133,9 +3133,9 @@ def generate_404_page(articles=None):
             feed_items.append(
                 f'        <li><a href="{post_prefix}{art["slug"]}.html">'
                 f'{esc(title_in_language(art, language))}</a>'
-                f'<span class="errore-404-data">{format_date(art["date"], language)}</span></li>')
+                f'<span class="failure-404-data">{format_date(art["date"], language)}</span></li>')
         if len(feed_items) > 0:
-            latest_block = ('      <section class="errore-404-ultimi">\n'
+            latest_block = ('      <section class="failure-404-latest">\n'
                             f'        <h2>{T("latest_articles", language)}</h2>\n'
                             "        <ul>\n" + "\n".join(feed_items)
                             + "\n        </ul>\n      </section>\n")

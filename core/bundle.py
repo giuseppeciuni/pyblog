@@ -26,6 +26,7 @@ DEFAULT_BUNDLE_NAME = "pyblog_standalone.py"
 # to follow if anyone opens it.
 BUNDLED_MODULES = (
     ("core", "core/__init__.py"),
+    ("core.legacy_names", "core/legacy_names.py"),
     ("core.config", "core/config.py"),
     ("core.i18n", "core/i18n.py"),
     ("core.render", "core/render.py"),

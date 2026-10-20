@@ -364,6 +364,29 @@ def migrate_legacy_paths(data):
     return data, changed
 
 
+def migrate_legacy_selectors(data):
+    """
+    Rewrite the points chosen on the page for external code: they are CSS
+    selectors of the public site, and its classes went from Italian to
+    English ("article.articolo-copertina" becomes "article.article-cover").
+    Return (data, changed).
+    """
+    from core.legacy_names import LEGACY_PUBLIC_NAMES
+    changed = False
+    snippets = data.get("custom_code")
+    if not isinstance(snippets, list):
+        return data, False
+    for snippet in snippets:
+        if not isinstance(snippet, dict) or not isinstance(snippet.get("anchor_selector"), str):
+            continue
+        old = snippet["anchor_selector"]
+        new = re.sub(r"(?<=[.#])([A-Za-z][\w-]*)", lambda m: LEGACY_PUBLIC_NAMES.get(m.group(1), m.group(1)), old)
+        if new != old:
+            snippet["anchor_selector"] = new
+            changed = True
+    return data, changed
+
+
 def migrate_config_schema(data):
     """
     Convert a configuration dictionary from the old Italian schema to the
@@ -499,7 +522,8 @@ def load_config():
     # so the migration happens transparently on the first load.
     saved_config, migrata = migrate_config_schema(saved_config)
     saved_config, moved = migrate_legacy_paths(saved_config)
-    if migrata or moved:
+    saved_config, renamed = migrate_legacy_selectors(saved_config)
+    if migrata or moved or renamed:
         write_json_atomically(CONFIG_FILE, saved_config)
         print("config.json migrated to the new English schema.")
 

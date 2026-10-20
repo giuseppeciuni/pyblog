@@ -91,22 +91,22 @@ def test_administration():
     try:
         art = load_article(slug)
         editor = server.editor_page(art, "TOKEN")
-        check("l'editor si apre nello stato programmato", 'data-stato="scheduled"' in editor)
+        check("l'editor si apre nello stato programmato", 'data-state="scheduled"' in editor)
         check("e dice quando esce, con l'ora da localizzare",
-              re.search(r'<span id="programmato-quando">esce il <time class="ora-locale" datetime="[^"]+">', editor) is not None)
+              re.search(r'<span id="scheduled-when">esce il <time class="now-local" datetime="[^"]+">', editor) is not None)
         check("i dati per il JavaScript hanno il momento", '"publish_at": "' + normalized_moment(FUTURE) + '"' in editor)
         draft = server.editor_page(None, "TOKEN")
-        check("un articolo nuovo ha il pulsante per programmarlo", 'id="btn-programma"' in draft)
+        check("un articolo nuovo ha il pulsante per programmarlo", 'id="btn-schedule"' in draft)
         elenco = server.admin_page(load_articles(), "TOKEN")
-        check("nell'elenco ha la sua etichetta", 'pill-programmato' in elenco)
-        check("e il filtro dei programmati compare", re.search(r'data-filtro="s" onclick="filterByStatus\(this\)">', elenco) is not None)
+        check("nell'elenco ha la sua etichetta", 'pill-scheduled' in elenco)
+        check("e il filtro dei programmati compare", re.search(r'data-filter="s" onclick="filterByStatus\(this\)">', elenco) is not None)
         check("il riepilogo li conta", "Programmati: 1" in elenco)
         check("il suo menu può pubblicarlo subito o annullare",
               "Pubblica ora" in elenco and "Annulla la programmazione" in elenco)
     finally:
         delete_article(slug)
     elenco = server.admin_page(load_articles(), "TOKEN")
-    check("senza programmati il filtro resta nascosto", 'data-filtro="s" onclick="filterByStatus(this)" hidden>' in elenco)
+    check("senza programmati il filtro resta nascosto", 'data-filter="s" onclick="filterByStatus(this)" hidden>' in elenco)
 
 
 def test_site():

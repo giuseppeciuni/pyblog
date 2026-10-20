@@ -70,7 +70,7 @@ def test_lab_page():
     page_html = build.generate_article_page(LAB, "it", ARTICLES_FIXTURE)
     box = page_html.split('<aside class="lab-box"')[1].split("</aside>")[0]
     check("apre con il link al progetto su GitHub",
-          '<a class="lab-codice" href="https://github.com/esempio/lab" rel="noopener">'
+          '<a class="lab-code" href="https://github.com/esempio/lab" rel="noopener">'
           'Il codice su GitHub' in box, box)
     check("dice con cosa e' fatto, senza far passare codice HTML",
           "Fatto con: Python 3.12, &lt;LiteLLM&gt;" in box)
@@ -87,11 +87,11 @@ def test_lab_page():
     check("un indirizzo non valido non diventa un link", "<a " not in box, box)
 
     theory = build.generate_article_page(THEORY, "it", ARTICLES_FIXTURE)
-    end = theory.split('class="lab-box lab-fine"')[1].split("</aside>")[0]
+    end = theory.split('class="lab-box lab-finish"')[1].split("</aside>")[0]
     check("l'articolo di riferimento segnala il suo lab in fondo al testo",
           '<a href="/posts/articolo-2.html">Lab uno</a>' in end
           and "https://github.com/esempio/lab" in end
-          and theory.index("lab-fine") > theory.index('class="post-content"'))
+          and theory.index("lab-finish") > theory.index('class="post-content"'))
     check("un articolo senza lab non ha riquadri",
           "lab-box" not in build.generate_article_page(ARTICLES_FIXTURE[0], "it", ARTICLES_FIXTURE))
 
@@ -127,9 +127,9 @@ def test_home_and_create_lab():
     print("\ni lab in home e il pulsante che ne crea uno")
     build.note_labs(ARTICLES_FIXTURE)
     home = build.generate_homepage(ARTICLES_FIXTURE, "it")
-    section = home.split('class="home-sezione home-labs"')[1].split("</section>")[0]
+    section = home.split('class="home-section home-labs"')[1].split("</section>")[0]
     check("la home ha la sezione Labs con i lab, il codice e il link a tutti",
-          '<a class="lab-home-titolo" href="/posts/articolo-2.html">Lab uno</a>' in section
+          '<a class="lab-home-title" href="/posts/articolo-2.html">Lab uno</a>' in section
           and "https://github.com/esempio/lab" in section and "Python 3.12" in section
           and '<a href="/labs.html">Tutti i lab' in section, section[:500])
     check("sta prima dell'elenco degli articoli",
@@ -148,24 +148,24 @@ def test_home_and_create_lab():
         elenco = server.admin_page(ARTICLES_FIXTURE, "csrf")
     finally:
         server.load_articles = originale
-    schede = theory.split('<nav class="tema-schede"')[1].split("</nav>")[0]
+    schede = theory.split('<nav class="theme-cards"')[1].split("</nav>")[0]
     check("sopra l'editor ci sono le parti del tema: la teoria, corrente, e i suoi lab",
-          '<span class="scheda-tema" aria-current="page"><span class="scheda-nome">Teoria</span>'
-          in schede and '<a class="scheda-tema" href="/edit?slug=articolo-2"' in schede
+          '<span class="card-theme" aria-current="page"><span class="card-name">Teoria</span>'
+          in schede and '<a class="card-theme" href="/edit?slug=articolo-2"' in schede
           and schede.index("Teoria") < schede.index("articolo-2"), schede)
     check("e i link che aggiungono quello che manca",
-          'id="link-crea-lab" href="/edit?lab_of=articolo-1">+ Lab</a>' in schede
+          'id="link-create-lab" href="/edit?lab_of=articolo-1">+ Lab</a>' in schede
           and 'href="/edit?lab_of=articolo-1&amp;kind=practical">+ In pratica</a>' in schede)
-    lab_cards = lab.split('<nav class="tema-schede"')[1].split("</nav>")[0]
+    lab_cards = lab.split('<nav class="theme-cards"')[1].split("</nav>")[0]
     check("dal lab si torna alla teoria con una scheda",
-          '<a class="scheda-tema" href="/edit?slug=articolo-1"' in lab_cards
-          and 'aria-current="page"><span class="scheda-nome">Lab</span>' in lab_cards)
+          '<a class="card-theme" href="/edit?slug=articolo-1"' in lab_cards
+          and 'aria-current="page"><span class="card-name">Lab</span>' in lab_cards)
     check("il nuovo articolo si apre come lab gia' legato, con i tag dell'articolo",
           '<option value="lab" selected>' in new
           and '<option value="articolo-1" selected>' in new
           and 'id="tags" value="AI, Python"' in new and "Nuovo lab di: Articolo 1" in new
-          and '<div id="campi-lab" class="card-lab" >' in new
-          and '<span class="scheda-stato">nuovo</span>' in new)
+          and '<div id="fields-lab" class="card-lab" >' in new
+          and '<span class="card-state">nuovo</span>' in new)
     originale = server.load_articles
     server.load_articles = lambda: ARTICLES_FIXTURE
     try:
@@ -194,17 +194,17 @@ def test_three_levels():
           "In pratica" in opening
           and 'La versione per chi decide di <a href="/posts/articolo-1.html">Articolo 1</a>'
           in opening, opening)
-    end = page_html.split('class="lab-box lab-fine"')[1].split("</aside>")[0]
+    end = page_html.split('class="lab-box lab-finish"')[1].split("</aside>")[0]
     check("e in fondo porta all'idea e al lab dello stesso tema",
           "L'idea</span> <a href=\"/posts/articolo-1.html\">" in end
           and "Lab</span> <a href=\"/posts/articolo-2.html\">" in end
           and "articolo-7" not in end, end)
     idea_page = build.generate_article_page(THEORY, "it", tutti)
-    end = idea_page.split('class="lab-box lab-fine"')[1].split("</aside>")[0]
+    end = idea_page.split('class="lab-box lab-finish"')[1].split("</aside>")[0]
     check("l'idea porta alla versione pratica e poi al lab, in quest'ordine",
           end.index("articolo-7.html") < end.index("articolo-2.html"))
     lab = build.generate_article_page(LAB, "it", tutti)
-    end = lab.split('class="lab-box lab-fine"')[1].split("</aside>")[0]
+    end = lab.split('class="lab-box lab-finish"')[1].split("</aside>")[0]
     check("il lab porta all'idea e alla versione pratica",
           "articolo-1.html" in end and "articolo-7.html" in end)
     home = build.generate_homepage(tutti, "it")
@@ -214,7 +214,7 @@ def test_three_levels():
           "articolo-7.html" not in build.generate_labs_page(tutti, "it")
           .split('<div class="articles-list">')[1].split("</section>")[0])
     check("un lab senza articolo di riferimento non ha il riquadro in fondo",
-          "lab-fine" not in build.generate_article_page(LAB_WITHOUT, "it", tutti))
+          "lab-finish" not in build.generate_article_page(LAB_WITHOUT, "it", tutti))
 
 
 def test_english():
@@ -250,7 +250,7 @@ def test_original():
     check("sotto il titolo c'e' la riga con il sito e il link",
           'Pubblicato in origine su <a href="https://www.startupbusiness.it/rubrica/pezzo/" '
           'rel="noopener">startupbusiness.it</a>' in page_html
-          and page_html.index("pubblicato-origine") < page_html.index('class="post-content"'))
+          and page_html.index("published-source") < page_html.index('class="post-content"'))
     check("senza la spunta l'indirizzo canonico resta quello di questa pagina",
           'rel="canonical" href="' + CONFIG["base_url"] + '/posts/articolo-5.html"' in page_html)
     elsewhere["original_canonical"] = True
@@ -260,13 +260,13 @@ def test_original():
     fake_value = article(6, original_url="javascript:alert(1)", original_canonical=True)
     page_html = build.generate_article_page(fake_value, "it", [fake_value])
     check("un indirizzo non valido non mostra nulla e non tocca il canonico",
-          "pubblicato-origine" not in page_html and "javascript:" not in page_html)
+          "published-source" not in page_html and "javascript:" not in page_html)
     saved = article_from_data({"title": "T", "original_url": " https://x.it/a ",
                                  "original_canonical": "si"}, "t")
     check("i campi vengono salvati puliti",
           saved["original_url"] == "https://x.it/a" and saved["original_canonical"] is False)
     check("un articolo normale non ha la riga",
-          "pubblicato-origine" not in build.generate_article_page(THEORY, "it", ARTICLES_FIXTURE))
+          "published-source" not in build.generate_article_page(THEORY, "it", ARTICLES_FIXTURE))
 
 
 def test_sharing():
@@ -274,16 +274,16 @@ def test_sharing():
     CONFIG["base_url"] = "https://esempio.it"
     art = article(8, title="Costi & modelli")
     page_html = build.generate_article_page(art, "it", [art])
-    line = page_html.split('<div class="condividi">')[1].split("</div>")[0]
+    line = page_html.split('<div class="share">')[1].split("</div>")[0]
     check("sul sito c'e' solo il pulsante che copia il link",
-          'class="condividi-copia" data-url="https://esempio.it/posts/articolo-8.html" '
-          'data-fatto="Link copiato">Copia il link</button>' in line and "<a " not in line, line)
+          'class="share-copy" data-url="https://esempio.it/posts/articolo-8.html" '
+          'data-done="Link copiato">Copia il link</button>' in line and "<a " not in line, line)
     check("nessun link ad altre piattaforme nella pagina pubblica",
           "linkedin.com" not in page_html and "ycombinator" not in page_html
           and "reddit.com" not in page_html and "twitter.com" not in page_html)
     CONFIG["share_buttons"] = False
     check("spento dalla configurazione non compare",
-          'class="condividi"' not in build.generate_article_page(art, "it", [art]))
+          'class="share"' not in build.generate_article_page(art, "it", [art]))
     CONFIG["share_buttons"] = True
     originale = server.load_articles
     server.load_articles = lambda: [art]
@@ -292,7 +292,7 @@ def test_sharing():
     finally:
         server.load_articles = originale
     check("la condivisione sulle piattaforme sta nell'editor, per gli articoli pubblicati",
-          '<details class="condividi-admin solo-pubblicato">' in editor
+          '<details class="share-admin only-published">' in editor
           and all(f'id="share-{n}"' in editor for n in ("linkedin", "hn", "reddit", "x"))
           and '"public_base": "https://esempio.it"' in editor)
     script = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
@@ -311,8 +311,8 @@ def test_editor():
         server.load_articles = originale
     check("il tipo e i campi del lab hanno i valori dell'articolo",
           '<option value="lab" selected>' in page_html
-          and '<div id="campi-lab" class="card-lab" >' in page_html
-          and '<div id="campi-riferimento" >' in page_html
+          and '<div id="fields-lab" class="card-lab" >' in page_html
+          and '<div id="fields-reference" >' in page_html
           and 'id="repo_url" value="https://github.com/esempio/lab"' in page_html
           and 'id="stack" value="Python 3.12, &lt;LiteLLM&gt;"' in page_html)
     choice = page_html.split('<select id="lab_of"')[1].split("</select>")[0]
@@ -322,40 +322,40 @@ def test_editor():
           and 'value="articolo-2"' not in choice, choice)
     check("su un articolo normale i campi del lab sono nascosti",
           '<option value="" selected>' in normal
-          and '<div id="campi-lab" class="card-lab" hidden>' in normal
-          and '<div id="campi-riferimento" hidden>' in normal)
+          and '<div id="fields-lab" class="card-lab" hidden>' in normal
+          and '<div id="fields-reference" hidden>' in normal)
     def group(nome):
-        return page_html.split('id="gruppo-' + nome + '"')[1].split('<details class="gruppo-editor"')[0]
+        return page_html.split('id="group-' + nome + '"')[1].split('<details class="group-editor"')[0]
     check("la colonna e' fatta di cinque gruppi, solo Dettagli aperto",
-          page_html.count('<details class="gruppo-editor"') == 5
-          and '<details class="gruppo-editor" id="gruppo-dettagli" open>' in page_html
-          and page_html.count('<details class="gruppo-editor" id="gruppo-') == 5
-          and page_html.count('class="gruppo-editor" id="gruppo-dettagli" open') == 1
-          and 'id="gruppo-serie" open' not in page_html)
+          page_html.count('<details class="group-editor"') == 5
+          and '<details class="group-editor" id="group-details" open>' in page_html
+          and page_html.count('<details class="group-editor" id="group-') == 5
+          and page_html.count('class="group-editor" id="group-details" open') == 1
+          and 'id="group-series" open' not in page_html)
     check("ogni campo sta nel gruppo che gli compete",
-          'id="slug"' in group("dettagli") and 'id="tags"' in group("dettagli")
-          and 'id="image"' in group("dettagli")
-          and 'id="series"' in group("serie") and 'id="kind"' in group("serie")
-          and 'id="repo_url"' not in group("serie")
-          and 'id="description"' in group("anteprima") and 'id="reader_preview"' in group("anteprima")
-          and 'id="translation_authorized"' in group("inglese") and 'id="editor-en"' in group("inglese")
-          and 'id="original_url"' in group("avanzate") and 'id="lista-codice-proprio"' in group("avanzate")
-          and 'id="btn-versioni"' in group("avanzate"))
+          'id="slug"' in group("details") and 'id="tags"' in group("details")
+          and 'id="image"' in group("details")
+          and 'id="series"' in group("series") and 'id="kind"' in group("series")
+          and 'id="repo_url"' not in group("series")
+          and 'id="description"' in group("preview") and 'id="reader_preview"' in group("preview")
+          and 'id="translation_authorized"' in group("english") and 'id="editor-en"' in group("english")
+          and 'id="original_url"' in group("advanced") and 'id="list-box-code-own"' in group("advanced")
+          and 'id="btn-versions"' in group("advanced"))
     check("il progetto del lab sta sopra il titolo, nella colonna del testo",
-          page_html.index('id="campi-lab"') < page_html.index('id="title"') < page_html.index('id="editor"'))
+          page_html.index('id="fields-lab"') < page_html.index('id="title"') < page_html.index('id="editor"'))
     check("tutto il resto sta nel pannello Dettagli, che si apre da un pulsante",
-          'id="btn-dettagli" aria-expanded="false"' in page_html
-          and page_html.index('id="pannello-dettagli"') < page_html.index('id="gruppo-dettagli"')
-          and page_html.index('id="pannello-pubblica"') < page_html.index('id="title"'))
+          'id="btn-details" aria-expanded="false"' in page_html
+          and page_html.index('id="panel-details"') < page_html.index('id="group-details"')
+          and page_html.index('id="panel-publish"') < page_html.index('id="title"'))
     check("i pulsanti per pubblicare restano fuori dai gruppi",
-          page_html.index('id="pannello-pubblica"') < page_html.index('<details class="gruppo-editor"')
-          and 'id="btn-pubblica"' not in "".join(group(n) for n in
-                                                  ("dettagli", "serie", "anteprima", "inglese", "avanzate")))
+          page_html.index('id="panel-publish"') < page_html.index('<details class="group-editor"')
+          and 'id="btn-publish"' not in "".join(group(n) for n in
+                                                  ("details", "series", "preview", "english", "advanced")))
     script = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
     check("il pannello si apre, si chiude e si chiude con Esc",
           "function toggleDetails(apri)" in script and "evento.key === 'Escape'" in script)
     check("un gruppo chiuso dice cosa contiene",
-          'id="riepilogo-serie"' in page_html and "function updateGroupSummaries()" in script
+          'id="summary-series"' in page_html and "function updateGroupSummaries()" in script
           and "rememberOpenGroups();" in script)
     check("il salvataggio manda i campi del lab",
           "kind: document.getElementById('kind').value" in script

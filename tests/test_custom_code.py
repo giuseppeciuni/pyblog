@@ -235,7 +235,7 @@ def test_position_on_page():
         menu = page_html.split('<nav class="site-nav"', 1)[-1].split("</nav>", 1)[0]
         check(f"{path_value}: 'nel menu' sta dentro il <nav>", "MARCA-MENU" in menu)
         check(f"{path_value}: 'nel menu' sta dopo RSS e prima della lingua",
-              menu.find(">RSS</a>") < menu.find("MARCA-MENU") < menu.find("nav-lingua"))
+              menu.find(">RSS</a>") < menu.find("MARCA-MENU") < menu.find("nav-language"))
     check("'nel menu' esce una volta sola per pagina",
           leggi("output/index.html").count("MARCA-MENU") == 1)
 
@@ -436,28 +436,28 @@ def test_consent():
 
     home = leggi("output/index.html")
     check("le statistiche arrivano trattenute",
-          '<template data-pb-consenso="statistics"><!-- MARCA-STATISTICHE --></template>' in home)
+          '<template data-pb-consent="statistics"><!-- MARCA-STATISTICHE --></template>' in home)
     check("la pubblicità arriva trattenuta",
-          '<template data-pb-consenso="marketing"><!-- MARCA-PUBBLICITA --></template>' in home)
+          '<template data-pb-consent="marketing"><!-- MARCA-PUBBLICITA --></template>' in home)
     home_only = home.find("MARCA-SOLO-HOME")
     check("il codice necessario parte subito",
           home_only != -1 and "<template" not in home[home_only - 40:home_only])
     check("Google Analytics aspetta anche lui",
-          '<template data-pb-consenso="statistics"><script async '
+          '<template data-pb-consent="statistics"><script async '
           'src="https://www.googletagmanager.com/gtag/js?id=G-PROVA12345"' in home)
     check("i valori di Consent Mode vengono prima di ogni tag di Google",
           -1 < home.find("gtag('consent', 'default'") < home.find("gtag/js?id=G-PROVA12345"))
-    check("il banner è nella pagina", 'id="pb-consenso"' in home)
+    check("il banner è nella pagina", 'id="pb-consent"' in home)
     check("chiede le due categorie usate",
-          'data-categoria="statistics"' in home and 'data-categoria="marketing"' in home)
+          'data-category="statistics"' in home and 'data-category="marketing"' in home)
     check("site.js riceve versione e categorie",
           '"consent": {"version": 3, "categories": ["statistics", "marketing"]}' in home)
     check("il banner porta all'informativa", 'href="https://example.org/privacy"' in home)
-    check("il piè di pagina permette di cambiare idea", 'data-consenso="apri"' in home)
+    check("il piè di pagina permette di cambiare idea", 'data-consent="open"' in home)
     check("in inglese il banner è in inglese",
           "Cookies and privacy" in leggi("output/en/index.html"))
     check("il codice proprio dell'articolo aspetta il suo consenso",
-          '<template data-pb-consenso="marketing"><!-- MARCA-MIO-META --></template>'
+          '<template data-pb-consent="marketing"><!-- MARCA-MIO-META --></template>'
           in leggi(f"output/posts/{TICKED}.html"))
 
     ads = OUTPUT_DIR / "ads.txt"
@@ -470,8 +470,8 @@ def test_consent():
     save_config(config)
     build()
     home = leggi("output/index.html")
-    check("senza codici da trattenere il banner non esce", 'id="pb-consenso"' not in home)
-    check("e il piè di pagina non offre preferenze", 'data-consenso="apri"' not in home)
+    check("senza codici da trattenere il banner non esce", 'id="pb-consent"' not in home)
+    check("e il piè di pagina non offre preferenze", 'data-consent="open"' not in home)
 
     # Banner off: everything runs as written, and ads.txt goes away.
     config["consent"]["enabled"] = False
@@ -480,7 +480,7 @@ def test_consent():
     save_config(config)
     build()
     home = leggi("output/index.html")
-    check("a banner spento niente viene trattenuto", "data-pb-consenso" not in home)
+    check("a banner spento niente viene trattenuto", "data-pb-consent" not in home)
     check("a banner spento Analytics parte subito",
           '<script async src="https://www.googletagmanager.com/gtag/js?id=G-PROVA12345">' in home)
     check("a banner spento nessun Consent Mode", "gtag('consent', 'default'" not in home)
