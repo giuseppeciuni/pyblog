@@ -85,16 +85,19 @@ def clear_cache():
     _TEMPLATE_CACHE.clear()
 
 
-def render(name, **context):
+def render(template_name, **context):
     """
     Render a template with the given context and return the resulting text.
+
+    The first parameter has a name no template uses: a placeholder called
+    "name" arrives in **context like any other.
 
     We use substitute(), not safe_substitute(): a placeholder with no value is
     a mistake, and it should fail loudly at build time rather than leave a
     stray "$something" in a published page. A literal dollar sign inside a
     template must therefore be written "$$".
     """
-    return load_template(name).substitute(**context)
+    return load_template(template_name).substitute(**context)
 
 
 def esc(value):

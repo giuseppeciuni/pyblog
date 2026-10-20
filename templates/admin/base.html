@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>$titolo_pagina</title>
+<title>$title_page</title>
 <link href="$bootstrap_css" rel="stylesheet">
 <link rel="stylesheet" href="/admin-static/common.css$v_common">
 <link rel="stylesheet" href="/admin-static/admin.css$v_admin_css">
 $head_extra</head>
-<body class="$classe_body">
+<body class="$css_class_body">
 $skip_content<div class="guscio">
 $navbar<main id="contenuto" class="guscio-main" tabindex="-1">
-$contenuto
+$content
 </main>
 </div>
 
@@ -25,11 +25,11 @@ $contenuto
       <div class="modal-header">
         <h2 class="modal-title h5" id="pb-confirm-title"></h2>
         <button type="button" class="btn-close" data-bs-dismiss="modal"
-                aria-label="$label_chiudi"></button>
+                aria-label="$label_close"></button>
       </div>
       <div class="modal-body" id="pb-confirm-body"></div>
       <div class="modal-footer">
-        <button type="button" class="pulsante" data-bs-dismiss="modal">$label_annulla</button>
+        <button type="button" class="pulsante" data-bs-dismiss="modal">$label_cancel</button>
         <button type="button" class="pulsante pulsante-primario" id="pb-confirm-ok"></button>
       </div>
     </div>

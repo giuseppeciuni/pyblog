@@ -598,17 +598,17 @@ def consent_banner_html(language, categories):
             f'{T("consent_" + category + "_hint", language)}</span></label>')
     return render.render(
         "public/consent_banner.html",
-        titolo=T("consent_title", language),
-        testo=esc(text),
+        title=T("consent_title", language),
+        text=esc(text),
         privacy=privacy,
-        label_necessari=T("consent_necessary", language),
-        hint_necessari=T("consent_necessary_hint", language),
-        voci="\n".join(switches),
-        chiudi=esc(T("consent_close", language)),
-        rifiuta=T("consent_refuse", language),
-        personalizza=T("consent_customize", language),
-        salva=T("consent_save", language),
-        accetta=T("consent_accept", language),
+        label_needed_pl=T("consent_necessary", language),
+        hint_needed_pl=T("consent_necessary_hint", language),
+        entries="\n".join(switches),
+        close=esc(T("consent_close", language)),
+        refuse=T("consent_refuse", language),
+        customize=T("consent_customize", language),
+        save=T("consent_save", language),
+        accept=T("consent_accept", language),
     ).rstrip("\n")
 
 
@@ -877,23 +877,23 @@ def site_header(language="it", nav_extra="", is_home=False):
         "public/header.html",
         skip_content=T("skip_content", language),
         url_home=prefix + "/",
-        titolo_sito=titolo_sito,
-        sottotitolo=esc(site_subtitle(language)),
+        title_site=titolo_sito,
+        subtitle=esc(site_subtitle(language)),
         label_menu=T("menu", language),
         aria_menu=esc(T("menu_main", language)),
         label_home=T("home", language),
-        label_articoli=T("articles", language),
-        url_archivio=prefix + "/" + archive_file_name(language),
-        label_archivio=T("archive", language),
+        label_articles=T("articles", language),
+        url_archive=prefix + "/" + archive_file_name(language),
+        label_archive=T("archive", language),
         url_feed=feed_url(language),
-        voci_extra=("\n      " + nav_extra.strip()) if nav_extra.strip() else "",
-        url_altra_lingua=language_url_prefix(other_language) + "/",
-        altra_lingua=other_language,
-        altra_lingua_label=other_language.upper(),
-        altra_lingua_nome=esc(LANGUAGE_NAMES[other_language][other_language].capitalize()),
+        entries_extra=("\n      " + nav_extra.strip()) if nav_extra.strip() else "",
+        url_other_f_language=language_url_prefix(other_language) + "/",
+        other_f_language=other_language,
+        other_f_language_label=other_language.upper(),
+        other_f_language_name=esc(LANGUAGE_NAMES[other_language][other_language].capitalize()),
         title_rss=esc(T("rss_title", language)),
-        aria_tema=esc(T("change_theme", language)),
-        title_tema=esc(T("theme_light_dark", language)),
+        aria_theme=esc(T("change_theme", language)),
+        title_theme=esc(T("theme_light_dark", language)),
     ).rstrip("\n")
 
 
@@ -911,14 +911,14 @@ def site_footer(language="it", consent_active=False):
 
     return render.render(
         "public/footer.html",
-        anno=datetime.now().year,
-        autore=esc(CONFIG["author"]),
-        url_archivio=prefix + "/" + archive_file_name(language),
-        label_archivio=T("archive", language),
+        year=datetime.now().year,
+        author=esc(CONFIG["author"]),
+        url_archive=prefix + "/" + archive_file_name(language),
+        label_archive=T("archive", language),
         url_feed=feed_url(language),
         title_rss=esc(T("rss_title", language)),
-        link_preferenze=consent_footer_link(language, consent_active),
-        riga_social=riga_social,
+        link_preferences=consent_footer_link(language, consent_active),
+        row_html_social=riga_social,
     ).rstrip("\n")
 
 
@@ -1024,20 +1024,20 @@ def render_page(language, titolo_pagina, contenuto, meta_extra="",
         lang=language,
         favicon=favicon_link(),
         analytics=analytics,
-        titolo_pagina=titolo_pagina,
+        title_page=titolo_pagina,
         meta_extra=block(meta_extra),
         feed_links=block(feed_links),
         head_extra=block(head_extra),
         body_open=block(body_open),
         header=site_header(language, nav_extra, is_home),
         after_header=block(after_header),
-        contenuto=block(contenuto),
+        content=block(contenuto),
         before_footer=block(before_footer),
         footer=site_footer(language, len(categories) > 0),
         script_extra=block(script_extra),
-        versione_css=asset_version("common.css", "style.css"),
-        versione_js=asset_version("site.js"),
-        tipo_pagina=page_kind,
+        version_css=asset_version("common.css", "style.css"),
+        version_js=asset_version("site.js"),
+        kind_page=page_kind,
     )
 
 
@@ -1062,13 +1062,13 @@ def comments_block(art, language=None):
         g = CONFIG["giscus"]
         return render.render(
             "public/comments_giscus.html",
-            titolo=T("comments", language),
+            title=T("comments", language),
             repo=esc(g["repo"]),
             repo_id=esc(g["repo_id"]),
             category=esc(g["category"]),
             category_id=esc(g["category_id"]),
             theme=esc(g["theme"]),
-            lingua=esc(language),
+            language=esc(language),
         ).rstrip("\n")
 
     if sistema == "disqus":
@@ -1079,7 +1079,7 @@ def comments_block(art, language=None):
         embed_url = f"https://{d['shortname']}.disqus.com/embed.js"
         return render.render(
             "public/comments_disqus.html",
-            titolo=T("comments", language),
+            title=T("comments", language),
             noscript=T("comments_disqus_noscript", language),
             page_url=js(page_url),
             identifier=js(art["slug"]),
@@ -1312,8 +1312,8 @@ def generate_related_block(article, all_articles, language="it"):
     feed_items = [article_row(art, language) for art in visibili]
     return render.render(
         "public/related.html",
-        titolo_sezione=T("articles_related", language),
-        lista="\n".join(feed_items),
+        title_section_of=T("articles_related", language),
+        list_items="\n".join(feed_items),
     ).rstrip("\n")
 
 
@@ -1363,10 +1363,10 @@ def generate_author_box(language="it"):
 
     return render.render(
         "public/author_box.html",
-        foto=photo_block,
+        photo=photo_block,
         written_from=T("written_from", language),
-        nome=name_html,
-        ruolo=role_row,
+        name=name_html,
+        role=role_row,
         bio=bio_row,
         social=social_row,
     )
@@ -1605,9 +1605,9 @@ def labs_home_html(articles, language="it", limit=3):
             row = row + "\n            " + link
         rows.append("          <li>\n            " + row + "\n          </li>")
     return render.render(
-        "public/home_sezione.html", classe="home-labs", id_titolo="titolo-labs",
-        titolo=T("labs", language),
-        contenuto=('        <ul class="labs-home">\n' + "\n".join(rows) + "\n        </ul>\n"
+        "public/home_section.html", css_class="home-labs", id_title="titolo-labs",
+        title=T("labs", language),
+        content=('        <ul class="labs-home">\n' + "\n".join(rows) + "\n        </ul>\n"
                    f'        <p class="labs-home-tutti"><a href="{labs_page_url(language)}">'
                    f'{T("labs_all", language)} &rarr;</a></p>\n')).rstrip("\n")
 
@@ -1622,7 +1622,7 @@ def generate_labs_page(articles, language="it"):
         label_home=T("home", language),
         label_labs=T("labs", language),
         intro=T("labs_intro", language),
-        lista="\n".join(article_row(art, language) for art in labs),
+        list_items="\n".join(article_row(art, language) for art in labs),
     )
     contenuto = two_columns(principale, build_sidebar(language, "other", articles), language)
     url_canonico = CONFIG["base_url"].rstrip("/") + labs_page_url(language)
@@ -1701,14 +1701,14 @@ def generate_series_page(slug, series, language="it", all_articles=None):
     visibili = articles_visible_in_language(series["articles"], language)
     rows = ["<li>\n" + article_row(art, language) + "\n</li>" for art in visibili]
     principale = render.render(
-        "public/serie.html",
+        "public/series.html",
         url_home=prefix + "/",
         label_home=T("home", language),
-        label_serie=T("series", language),
-        nome_serie=esc(series["name"]),
-        conteggio=len(visibili),
-        label_conteggio=T("series_count", language),
-        lista="\n".join(rows),
+        label_series=T("series", language),
+        name_series=esc(series["name"]),
+        count=len(visibili),
+        label_count=T("series_count", language),
+        list_items="\n".join(rows),
     )
     contenuto = two_columns(principale, build_sidebar(language, "other", all_articles),
                             language)
@@ -1749,8 +1749,8 @@ def generate_article_nav(art, all_articles, language="it"):
                 f'<a class="article-nav-link{css}" href="{post_prefix}{neighbor["slug"]}.html">'
                 f'<span class="article-nav-label">{arrow.format(T(label, language))}</span>'
                 f'<span class="article-nav-title">{esc(title_in_language(neighbor, language))}</span></a>')
-        return render.render("public/article_nav.html", precedente=blocks[0],
-                             successivo=blocks[1])
+        return render.render("public/article_nav.html", previous=blocks[0],
+                             next_m=blocks[1])
     visibili = articles_visible_in_language(all_articles, language)
     posizione = -1
     for index_value in range(len(visibili)):
@@ -1783,8 +1783,8 @@ def generate_article_nav(art, all_articles, language="it"):
 
     return render.render(
         "public/article_nav.html",
-        precedente=newer_block,
-        successivo=older_block,
+        previous=newer_block,
+        next_m=older_block,
     )
 
 
@@ -1886,16 +1886,16 @@ def article_row(art, language, lead=False):
                 + T("read_article", language) + " &rarr;</span>\n")
     return render.render(
         "public/article_row.html",
-        classe=css_class,
+        css_class=css_class,
         url=article_url(art, language),
-        miniatura=article_thumbnail(art),
-        etichetta=label,
+        thumbnail=article_thumbnail(art),
+        label_text=label,
         tags=article_tags_line(art, language),
-        titolo=esc(title_value),
+        title=esc(title_value),
         data=format_date(art["date"], language),
-        tempo_lettura=compute_reading_time(content, language),
-        estratto=esc(article_excerpt(art, language, words)),
-        leggi=read,
+        time_reading=compute_reading_time(content, language),
+        excerpt=esc(article_excerpt(art, language, words)),
+        read=read,
     ).rstrip("\n")
 
 
@@ -1929,7 +1929,7 @@ def topics_bar(articles, language, current_tag=""):
     if len(items) == 0:
         return ""
     return render.render("public/topics_bar.html", aria=esc(T("topics", language)),
-                         voci="\n".join(items))
+                         entries="\n".join(items))
 
 
 def sidebar_box(css_class, title, content):
@@ -1937,8 +1937,8 @@ def sidebar_box(css_class, title, content):
     titolo = ""
     if title != "":
         titolo = title
-    html_box = render.render("public/sidebar_box.html", classe=css_class,
-                             titolo=titolo, contenuto=block(content))
+    html_box = render.render("public/sidebar_box.html", css_class=css_class,
+                             title=titolo, content=block(content))
     if titolo == "":
         html_box = html_box.replace('        <h2 class="box-titolo"></h2>\n', "")
     return html_box
@@ -2000,7 +2000,7 @@ def home_intro_html(language):
     if seo_data().get("author_image", "") != "":
         avatar = avatar_html("home-avatar") + "\n        "
     return render.render("public/home_intro.html", avatar=avatar,
-                         contenuto_intro=add_lazy_loading(home_content)).rstrip("\n")
+                         content_intro=add_lazy_loading(home_content)).rstrip("\n")
 
 
 def home_intro_position():
@@ -2097,12 +2097,12 @@ def two_columns(principale, barra, language, argomenti="", main_has_id=True):
     if main_has_id:
         attributi = ' id="content"'
     return render.render(
-        "public/layout_colonne.html",
-        argomenti=block(argomenti),
-        attributi_main=attributi,
-        principale=block(principale),
-        aria_barra=esc(T("bar_side", language)),
-        barra=block(barra),
+        "public/layout_columns.html",
+        topics=block(argomenti),
+        attributes_main=attributi,
+        main=block(principale),
+        aria_bar=esc(T("bar_side", language)),
+        bar=block(barra),
     )
 
 
@@ -2160,9 +2160,9 @@ def pagination_html(page, total, language):
     return render.render(
         "public/pagination.html",
         aria=esc(T("pages", language)),
-        precedente=previous,
-        numeri="".join(numbers),
-        successiva=following,
+        previous=previous,
+        numbers="".join(numbers),
+        next=following,
     )
 
 
@@ -2252,7 +2252,7 @@ def generate_article_page(art, language="it", all_articles=None):
                 "public/article_cover.html",
                 url=esc(cover_url),
                 alt=esc(title_value),
-                titolo_zoom=esc(T("zoom_picture", language)),
+                title_zoom=esc(T("zoom_picture", language)),
             )
 
     # "Related articles" block (in both languages).
@@ -2370,17 +2370,17 @@ def generate_article_page(art, language="it", all_articles=None):
         language_switcher=language_switcher,
         url_home=prefix + "/",
         label_home=T("home", language),
-        titolo=esc(title_value),
+        title=esc(title_value),
         data=format_date(art["date"], language),
-        tempo_lettura=reading_time,
+        time_reading=reading_time,
         tags_html=tags_html,
-        originale=original_note(art, language),
-        copertina=block(cover_block),
-        serie=series_box(art, all_articles, language) + lab_box(art, all_articles, language),
-        codice_inizio_testo=start_code,
-        toc_telefono=toc_phone,
-        contenuto_articolo=content,
-        codice_fine_testo=block(custom_code_block("article_end", "article", art)),
+        original=original_note(art, language),
+        cover=block(cover_block),
+        series=series_box(art, all_articles, language) + lab_box(art, all_articles, language),
+        code_beginning_text=start_code,
+        toc_phone=toc_phone,
+        content_article=content,
+        code_finish_text=block(custom_code_block("article_end", "article", art)),
         author_box=(share_row(page_url, language)
                     + other_levels(art, all_articles, language)
                     + work_invitation(language) + generate_author_box(language) + newsletter_after_article(language)),
@@ -2556,17 +2556,17 @@ def biography_home_html(language):
     if biography_settings()["position"] == "sidebar":
         words = 30
     inner = render.render(
-        "public/biografia_breve.html",
-        foto=photo,
-        estratto=esc(excerpt_words(biography_content(language), words)),
-        url_pagina=biography_page_url(language),
-        leggi=T("read_biography", language),
+        "public/biography_short.html",
+        photo=photo,
+        excerpt=esc(excerpt_words(biography_content(language), words)),
+        url_page=biography_page_url(language),
+        read=T("read_biography", language),
     )
     if biography_settings()["position"] == "sidebar":
         return sidebar_box("box-biografia", T("biography", language), inner)
-    return render.render("public/home_sezione.html", classe="home-biografia",
-                         id_titolo="titolo-biografia", titolo=T("biography", language),
-                         contenuto=inner).rstrip("\n")
+    return render.render("public/home_section.html", css_class="home-biografia",
+                         id_title="titolo-biografia", title=T("biography", language),
+                         content=inner).rstrip("\n")
 
 
 def projects_settings(config=None):
@@ -2629,15 +2629,15 @@ def projects_home_html(language):
             description = item["description_en"]
         if description != "":
             description = f'<p class="progetto-descrizione">{esc(description)}</p>\n          '
-        rows.append(render.render("public/progetto.html", immagine=image, nome=name,
-                                  descrizione=description).rstrip("\n"))
+        rows.append(render.render("public/project.html", picture=image, name=name,
+                                  description=description).rstrip("\n"))
     if projects_settings()["position"] == "sidebar":
         return sidebar_box("box-progetti", T("projects", language),
                            '        <ul class="progetti-lista">\n' + "\n".join(rows)
                            + "\n        </ul>")
-    return render.render("public/home_sezione.html", classe="home-progetti",
-                         id_titolo="titolo-progetti", titolo=T("projects", language),
-                         contenuto='        <ul class="progetti-griglia">\n' + "\n".join(rows)
+    return render.render("public/home_section.html", css_class="home-progetti",
+                         id_title="titolo-progetti", title=T("projects", language),
+                         content='        <ul class="progetti-griglia">\n' + "\n".join(rows)
                          + "\n        </ul>\n").rstrip("\n")
 
 
@@ -2652,11 +2652,11 @@ def newsletter_form(language, place):
                    f'{T("consent_privacy", language)}</a></p>\n')
     return render.render(
         "public/newsletter_form.html",
-        testo=esc(text),
-        lingua=language,
+        text=esc(text),
+        language=language,
         id="nl-" + place,
         label_email=esc(T("nl_email_label", language)),
-        iscriviti=T("nl_subscribe", language),
+        subscribe=T("nl_subscribe", language),
         privacy=privacy,
     ).rstrip("\n")
 
@@ -2691,12 +2691,12 @@ def newsletter_message_page(language, title, text, action=""):
     """
     prefix = language_url_prefix(language)
     principale = render.render(
-        "public/newsletter_pagina.html",
-        titolo=esc(title),
-        testo=esc(text),
-        azione=block(action),
+        "public/newsletter_page.html",
+        title=esc(title),
+        text=esc(text),
+        action=block(action),
         url_home=prefix + "/",
-        torna_home=T("back_to_homepage", language),
+        back_to_home=T("back_to_homepage", language),
     )
     contenuto = ('  <main id="content" class="main-content">\n' + principale
                  + '  </main>\n')
@@ -2719,9 +2719,9 @@ def generate_biography_page(language="it", articles=None):
         "public/card_page.html",
         url_home=prefix + "/",
         label_home=T("home", language),
-        titolo=esc(title_value),
-        contenuto_card=photo + add_lazy_loading(content),
-        torna_home=T("back_to_homepage", language),
+        title=esc(title_value),
+        content_card=photo + add_lazy_loading(content),
+        back_to_home=T("back_to_homepage", language),
     )
     contenuto = two_columns(principale, build_sidebar(language, "card", articles), language)
     url_canonico = CONFIG["base_url"] + biography_page_url(language)
@@ -2774,9 +2774,9 @@ def generate_card_page(card, language="it", articles=None):
         "public/card_page.html",
         url_home=prefix + "/",
         label_home=T("home", language),
-        titolo=esc(title_value),
-        contenuto_card=add_lazy_loading(content),
-        torna_home=T("back_to_homepage", language),
+        title=esc(title_value),
+        content_card=add_lazy_loading(content),
+        back_to_home=T("back_to_homepage", language),
     )
     contenuto = two_columns(principale, build_sidebar(language, "card", articles), language)
 
@@ -2845,11 +2845,11 @@ def generate_homepage(articles, language="it", page=1, totale_pagine=1):
 
     articles_block = render.render(
         "public/home_articles.html",
-        titolo_sezione=T("articles", language),
-        placeholder_ricerca=esc(T("search_articles", language)),
-        aria_ricerca=esc(T("search", language)),
-        lista=lista,
-        paginazione=block(pagination_html(page, totale_pagine, language)),
+        title_section_of=T("articles", language),
+        placeholder_search_box=esc(T("search_articles", language)),
+        aria_search_box=esc(T("search", language)),
+        list_items=lista,
+        pagination=block(pagination_html(page, totale_pagine, language)),
     )
 
     # The introduction lives in the sidebar, or above the articles when the
@@ -3047,9 +3047,9 @@ def generate_archive_page(articles, language="it"):
         "public/archive.html",
         url_home=prefix + "/",
         label_home=T("home", language),
-        label_archivio=T("archive", language),
-        titolo_archivio=T("archive_title", language),
-        corpo=body,
+        label_archive=T("archive", language),
+        title_archive=T("archive_title", language),
+        body=body,
     )
     contenuto = two_columns(principale, build_sidebar(language, "other", articles),
                             language, argomenti=topics_bar(articles, language))
@@ -3091,10 +3091,10 @@ def generate_tag_page(tag_name, tag_articles, language="it", all_articles=None):
         url_home=prefix + "/",
         label_home=T("home", language),
         label_tag=T("tag", language),
-        nome_tag=esc(tag_name),
-        conteggio=len(visibili),
-        label_conteggio=T("tag_count", language),
-        lista="\n".join(rows),
+        name_tag=esc(tag_name),
+        count=len(visibili),
+        label_count=T("tag_count", language),
+        list_items="\n".join(rows),
     )
     contenuto = two_columns(principale, build_sidebar(language, "other", all_articles),
                             language, argomenti=topics_bar(all_articles, language, tag_name))
@@ -3142,12 +3142,12 @@ def generate_404_page(articles=None):
 
     contenuto = render.render(
         "public/404.html",
-        testo=T("failure_404", language),
+        text=T("failure_404", language),
         url_home=prefix + "/",
-        label_cerca=T("search_in_the_site", language),
-        placeholder_ricerca=esc(T("search_articles", language)),
+        label_search=T("search_in_the_site", language),
+        placeholder_search_box=esc(T("search_articles", language)),
         latest_articles=latest_block,
-        torna_home=T("back_to_homepage", language),
+        back_to_home=T("back_to_homepage", language),
     )
     return render_page(
         language,
@@ -3572,10 +3572,10 @@ def generate_training_rights_page(language="it"):
         "public/training_rights.html",
         url_home=prefix + "/",
         label_home=T("home", language),
-        titolo=T("training_title", language),
+        title=T("training_title", language),
         statement=statement,
-        blocco_contatto=contact_block,
-        blocco_licenza=license_block,
+        lock_contact=contact_block,
+        lock_licence=license_block,
     )
 
     meta_extra = "\n".join([

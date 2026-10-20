@@ -5,91 +5,91 @@
 <nav class="sezioni-elenco pannello" id="sezione-elenco" aria-labelledby="sezioni-elenco-titolo">
   <div class="pannello-testata">
     <div>
-      <h1 class="pagina-titolo" id="sezioni-elenco-titolo">$titolo_impostazioni</h1>
-      <p class="pagina-sottotitolo">$pannello_sottotitolo</p>
+      <h1 class="pagina-titolo" id="sezioni-elenco-titolo">$title_settings_page</h1>
+      <p class="pagina-sottotitolo">$panel_subtitle</p>
     </div>
     <div class="campo pannello-cerca" role="search">
-      <label for="cerca-impostazioni">$label_cerca_impostazione</label>
-      <input type="search" class="campo-input" id="cerca-impostazioni" placeholder="$ph_cerca_impostazione"
+      <label for="cerca-impostazioni">$label_search_setting</label>
+      <input type="search" class="campo-input" id="cerca-impostazioni" placeholder="$ph_search_setting"
              autocomplete="off" oninput="filterSettings()" aria-describedby="pannello-nessuna">
     </div>
   </div>
   <div id="pannello-gruppi">
-$elenco_sezioni
+$list_sections
   </div>
-  <p class="elenco-vuoto" id="pannello-nessuna" role="status" hidden>$nessuna_impostazione</p>
-  <p class="pannello-avanzate">$avanzate_invito <a href="#avanzate">$avanzate_link</a></p>
+  <p class="elenco-vuoto" id="pannello-nessuna" role="status" hidden>$none_f_setting</p>
+  <p class="pannello-avanzate">$advanced_invitation <a href="#avanzate">$advanced_link</a></p>
 </nav>
 
 <section class="sezione" id="sezione-sito" data-sezione="sito" aria-labelledby="titolo-sito" hidden>
-$testata_sito
+$section_header_sito
   <div class="gruppo">
-    <h2>$label_gr_sito</h2>
+    <h2>$label_grp_site</h2>
     <div class="campo">
-      <label for="site_title">$label_titolo_sito</label>
-      <input class="campo-input" type="text" id="site_title" value="$valore_titolo_sito" placeholder="$ph_site_title">
+      <label for="site_title">$label_title_site</label>
+      <input class="campo-input" type="text" id="site_title" value="$value_title_site" placeholder="$ph_site_title">
     </div>
     <div class="campo">
-      <label for="subtitle">$label_sottotitolo</label>
-      <input class="campo-input" type="text" id="subtitle" value="$valore_sottotitolo" placeholder="$ph_subtitle">
+      <label for="subtitle">$label_subtitle</label>
+      <input class="campo-input" type="text" id="subtitle" value="$value_subtitle" placeholder="$ph_subtitle">
     </div>
     <div class="campo">
-      <label for="base_url">$label_dominio</label>
-      <input class="campo-input" type="url" id="base_url" value="$valore_dominio" placeholder="$ph_base_url" aria-describedby="base_url-aiuto">
-      <p class="aiuto" id="base_url-aiuto">$hint_dominio</p>
+      <label for="base_url">$label_domain</label>
+      <input class="campo-input" type="url" id="base_url" value="$value_domain" placeholder="$ph_base_url" aria-describedby="base_url-aiuto">
+      <p class="aiuto" id="base_url-aiuto">$hint_domain</p>
     </div>
     <div class="campo">
-      <label for="admin_url">$label_indirizzo_admin</label>
-      <input class="campo-input" type="url" id="admin_url" value="$valore_indirizzo_admin"
+      <label for="admin_url">$label_address_admin</label>
+      <input class="campo-input" type="url" id="admin_url" value="$value_address_admin"
              placeholder="https://admin.tuodominio.it" aria-describedby="admin_url-aiuto">
-      <p class="aiuto" id="admin_url-aiuto">$hint_indirizzo_admin</p>
+      <p class="aiuto" id="admin_url-aiuto">$hint_address_admin</p>
     </div>
     <div class="campo">
-      <label for="language">$label_lingua_principale</label>
+      <label for="language">$label_language_main</label>
       <select class="campo-input" id="language" aria-describedby="language-aiuto">
-        <option value="it" $sel_lingua_it>Italiano</option>
-        <option value="en" $sel_lingua_en>English</option>
+        <option value="it" $sel_language_it>Italiano</option>
+        <option value="en" $sel_language_en>English</option>
       </select>
-      <p class="aiuto" id="language-aiuto">$hint_lingua_principale</p>
+      <p class="aiuto" id="language-aiuto">$hint_language_main</p>
     </div>
   </div>
 
   <div class="gruppo">
-    <h2>$label_gr_autore</h2>
+    <h2>$label_grp_author</h2>
     <p class="aiuto">$hint_seo</p>
     <div class="campi-due">
       <div class="campo">
-        <label for="author">$label_autore</label>
-        <input class="campo-input" type="text" id="author" value="$valore_autore" placeholder="$ph_author">
+        <label for="author">$label_author</label>
+        <input class="campo-input" type="text" id="author" value="$value_author" placeholder="$ph_author">
       </div>
       <div class="campo">
-        <label for="seo_author_role">$label_seo_autore_ruolo</label>
-        <input class="campo-input" type="text" id="seo_author_role" value="$valore_seo_autore_ruolo" placeholder="$ph_seo_author_role" aria-describedby="seo_author_role-aiuto">
-        <p class="aiuto" id="seo_author_role-aiuto">$hint_seo_autore_ruolo</p>
+        <label for="seo_author_role">$label_seo_author_role</label>
+        <input class="campo-input" type="text" id="seo_author_role" value="$value_seo_author_role" placeholder="$ph_seo_author_role" aria-describedby="seo_author_role-aiuto">
+        <p class="aiuto" id="seo_author_role-aiuto">$hint_seo_author_role</p>
       </div>
     </div>
     <div class="campo">
-      <label for="seo_author_bio">$label_seo_autore_bio</label>
-      <textarea class="campo-input" id="seo_author_bio" rows="3" placeholder="$ph_seo_author_bio" aria-describedby="seo_author_bio-aiuto">$valore_seo_autore_bio</textarea>
-      <p class="aiuto" id="seo_author_bio-aiuto">$hint_seo_autore_bio</p>
+      <label for="seo_author_bio">$label_seo_author_bio</label>
+      <textarea class="campo-input" id="seo_author_bio" rows="3" placeholder="$ph_seo_author_bio" aria-describedby="seo_author_bio-aiuto">$value_seo_author_bio</textarea>
+      <p class="aiuto" id="seo_author_bio-aiuto">$hint_seo_author_bio</p>
     </div>
     <div class="campo">
-      <label for="seo_author_image">$label_seo_autore_immagine</label>
-      <input class="campo-input" type="url" id="seo_author_image" value="$valore_seo_autore_immagine" placeholder="$ph_seo_author_image">
+      <label for="seo_author_image">$label_seo_author_picture</label>
+      <input class="campo-input" type="url" id="seo_author_image" value="$value_seo_author_picture" placeholder="$ph_seo_author_image">
     </div>
     <div class="campo">
-      <label for="seo_author_url">$label_seo_autore_url</label>
-      <input class="campo-input" type="url" id="seo_author_url" value="$valore_seo_autore_url" placeholder="$ph_seo_author_url" aria-describedby="seo_author_url-aiuto">
-      <p class="aiuto" id="seo_author_url-aiuto">$hint_seo_autore_url</p>
+      <label for="seo_author_url">$label_seo_author_url</label>
+      <input class="campo-input" type="url" id="seo_author_url" value="$value_seo_author_url" placeholder="$ph_seo_author_url" aria-describedby="seo_author_url-aiuto">
+      <p class="aiuto" id="seo_author_url-aiuto">$hint_seo_author_url</p>
     </div>
     <div class="campo">
-      <label for="seo_profili">$label_seo_profili</label>
-      <textarea class="campo-input" id="seo_profili" rows="4" aria-describedby="seo_profili-aiuto" placeholder="https://github.com/tuonome&#10;https://www.linkedin.com/in/tuonome&#10;https://x.com/tuonome">$valore_seo_profili</textarea>
-      <p class="aiuto" id="seo_profili-aiuto">$hint_seo_profili</p>
+      <label for="seo_profili">$label_seo_profiles</label>
+      <textarea class="campo-input" id="seo_profili" rows="4" aria-describedby="seo_profili-aiuto" placeholder="https://github.com/tuonome&#10;https://www.linkedin.com/in/tuonome&#10;https://x.com/tuonome">$value_seo_profiles</textarea>
+      <p class="aiuto" id="seo_profili-aiuto">$hint_seo_profiles</p>
     </div>
     <div class="campo">
       <label for="seo_twitter">$label_seo_twitter</label>
-      <input class="campo-input" type="text" id="seo_twitter" value="$valore_seo_twitter" placeholder="$ph_seo_twitter" aria-describedby="seo_twitter-aiuto">
+      <input class="campo-input" type="text" id="seo_twitter" value="$value_seo_twitter" placeholder="$ph_seo_twitter" aria-describedby="seo_twitter-aiuto">
       <p class="aiuto" id="seo_twitter-aiuto">$hint_seo_twitter</p>
     </div>
   </div>
@@ -97,61 +97,61 @@ $testata_sito
   <!-- The same three texts for the pages in the other language. Empty, those
        pages show the text in the main language, as before. -->
   <div class="gruppo">
-    <h2>$label_gr_altra_lingua</h2>
-    <p class="aiuto">$hint_altra_lingua</p>
+    <h2>$label_grp_other_f_language</h2>
+    <p class="aiuto">$hint_other_f_language</p>
     <div class="translation-bar">
-      <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="translateSiteTexts(this)">$icona_ai$label_traduci_italiano</button>
+      <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="translateSiteTexts(this)">$icon_ai$label_translate_italian</button>
       <span id="sito-en-status" class="hint" role="status"></span>
     </div>
     <div class="campo">
-      <label for="subtitle_en">$label_sottotitolo_en</label>
-      <input class="campo-input" type="text" id="subtitle_en" value="$valore_sottotitolo_en" lang="$codice_altra_lingua">
+      <label for="subtitle_en">$label_subtitle_en</label>
+      <input class="campo-input" type="text" id="subtitle_en" value="$value_subtitle_en" lang="$code_other_f_language">
     </div>
     <div class="campo">
-      <label for="seo_author_role_en">$label_ruolo_en</label>
-      <input class="campo-input" type="text" id="seo_author_role_en" value="$valore_ruolo_en" lang="$codice_altra_lingua">
+      <label for="seo_author_role_en">$label_role_en</label>
+      <input class="campo-input" type="text" id="seo_author_role_en" value="$value_role_en" lang="$code_other_f_language">
     </div>
     <div class="campo">
       <label for="seo_author_bio_en">$label_bio_en</label>
-      <textarea class="campo-input" id="seo_author_bio_en" rows="3" lang="$codice_altra_lingua">$valore_bio_en</textarea>
+      <textarea class="campo-input" id="seo_author_bio_en" rows="3" lang="$code_other_f_language">$value_bio_en</textarea>
     </div>
   </div>
 
   <div class="gruppo">
-    <h2>$label_gr_immagini</h2>
+    <h2>$label_grp_pictures</h2>
     <div class="campo">
       <label for="seo_logo">$label_seo_logo</label>
-      <input class="campo-input" type="url" id="seo_logo" value="$valore_seo_logo" placeholder="$ph_seo_logo">
+      <input class="campo-input" type="url" id="seo_logo" value="$value_seo_logo" placeholder="$ph_seo_logo">
     </div>
     <div class="campo">
       <label for="seo_favicon">$label_seo_favicon</label>
-      <input class="campo-input" type="text" id="seo_favicon" value="$valore_seo_favicon" aria-describedby="seo_favicon-aiuto">
+      <input class="campo-input" type="text" id="seo_favicon" value="$value_seo_favicon" aria-describedby="seo_favicon-aiuto">
       <p class="aiuto" id="seo_favicon-aiuto">$hint_seo_favicon</p>
     </div>
     <div class="campo">
-      <label for="max_image_width">$label_larghezza_immagini</label>
+      <label for="max_image_width">$label_width_pictures</label>
       <input class="campo-input" type="number" id="max_image_width" min="0" step="100" inputmode="numeric"
-             value="$valore_larghezza_immagini" aria-describedby="max_image_width-aiuto">
-      <p class="aiuto" id="max_image_width-aiuto">$hint_larghezza_immagini</p>
+             value="$value_width_pictures" aria-describedby="max_image_width-aiuto">
+      <p class="aiuto" id="max_image_width-aiuto">$hint_width_pictures</p>
     </div>
   </div>
 </section>
 
 <section class="sezione" id="sezione-home" data-sezione="home" aria-labelledby="titolo-home" hidden>
-$testata_home
+$section_header_home
   <div class="gruppo">
-    <h2 id="titolo-presentazione">$label_parte_alta</h2>
-    <p class="aiuto" id="presentazione-aiuto">$hint_parte_alta</p>
+    <h2 id="titolo-presentazione">$label_part_top</h2>
+    <p class="aiuto" id="presentazione-aiuto">$hint_part_top</p>
     <div id="editor-home" aria-labelledby="titolo-presentazione" aria-describedby="presentazione-aiuto"></div>
-    <div class="video-bar" role="group" aria-label="$label_inserisci">
-      <span class="video-bar-titolo" aria-hidden="true">$label_inserisci</span>
-      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_image" onclick="document.getElementById('file-image').click()">$label_carica_immagine</button>
+    <div class="video-bar" role="group" aria-label="$label_insert">
+      <span class="video-bar-titolo" aria-hidden="true">$label_insert</span>
+      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_image" onclick="document.getElementById('file-image').click()">$label_upload_picture</button>
       <button type="button" class="pulsante pulsante-piccolo" onclick="openMediaPicker('editor')">$label_from_library</button>
       <button type="button" class="pulsante pulsante-piccolo" id="image-details-button" hidden onclick="openImageDetails()">$label_image_details</button>
       <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_youtube" onclick="insertYoutube()">$label_youtube</button>
-      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_video" onclick="document.getElementById('file-video').click()">$label_carica_video</button>
-      <input type="file" id="file-image" aria-label="$label_carica_immagine" accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml, .svg, .png, .jpg, .jpeg, .gif, .webp" hidden onchange="uploadImage()">
-      <input type="file" id="file-video" aria-label="$label_carica_video" accept="video/mp4, video/webm, .mp4, .webm" hidden onchange="uploadVideo()">
+      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_video" onclick="document.getElementById('file-video').click()">$label_upload_video</button>
+      <input type="file" id="file-image" aria-label="$label_upload_picture" accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml, .svg, .png, .jpg, .jpeg, .gif, .webp" hidden onchange="uploadImage()">
+      <input type="file" id="file-video" aria-label="$label_upload_video" accept="video/mp4, video/webm, .mp4, .webm" hidden onchange="uploadVideo()">
       <span id="upload-status" class="hint" role="status"></span>
       <p class="image-alt-status" id="image-alt-status" role="status" hidden>
         <span id="image-alt-status-text"></span>
@@ -159,85 +159,85 @@ $testata_home
       </p>
     </div>
     <div class="preview-bar">
-      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_preview" onclick="togglePreview()">$label_mostra_anteprima_home</button>
-      <span class="hint">$hint_come_appare</span>
+      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_preview" onclick="togglePreview()">$label_show_preview_home</button>
+      <span class="hint">$hint_how_appears</span>
     </div>
-    <iframe id="preview-iframe" class="preview-frame" title="$label_mostra_anteprima_home" style="display:none"></iframe>
+    <iframe id="preview-iframe" class="preview-frame" title="$label_show_preview_home" style="display:none"></iframe>
   </div>
 
   <div class="gruppo">
-    <h2 id="titolo-presentazione-en">$label_presentazione_inglese</h2>
-    <p class="aiuto" id="presentazione-en-aiuto">$hint_presentazione_en</p>
+    <h2 id="titolo-presentazione-en">$label_introduction_english</h2>
+    <p class="aiuto" id="presentazione-en-aiuto">$hint_introduction_en</p>
     <div class="translation-bar">
-      <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="translateHome(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_traduci_italiano</button>
+      <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="translateHome(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_translate_italian</button>
       <span id="home-en-status" class="hint" role="status"></span>
     </div>
     <div id="editor-home-en" aria-labelledby="titolo-presentazione-en" aria-describedby="presentazione-en-aiuto"></div>
   </div>
 
   <div class="gruppo">
-    <h2>$label_gr_disposizione</h2>
+    <h2>$label_grp_layout_section</h2>
     <p class="aiuto">$hint_layout</p>
     <div class="campo">
-      <label for="home_intro_position">$label_intro_posizione</label>
+      <label for="home_intro_position">$label_intro_position</label>
       <select class="campo-input" id="home_intro_position" aria-describedby="home_intro_position-aiuto">
-        <option value="sidebar" $sel_intro_barra>$label_intro_barra</option>
-        <option value="top" $sel_intro_sopra>$label_intro_sopra</option>
+        <option value="sidebar" $sel_intro_bar>$label_intro_bar</option>
+        <option value="top" $sel_intro_above>$label_intro_above</option>
       </select>
-      <p class="aiuto" id="home_intro_position-aiuto">$hint_intro_posizione</p>
+      <p class="aiuto" id="home_intro_position-aiuto">$hint_intro_position</p>
     </div>
     <div class="campo-spunta">
-      <input type="checkbox" id="home_featured" aria-describedby="home_featured-aiuto" $checked_home_evidenza>
+      <input type="checkbox" id="home_featured" aria-describedby="home_featured-aiuto" $checked_home_featured>
       <div>
-        <label for="home_featured">$label_home_evidenza</label>
-        <p class="aiuto" id="home_featured-aiuto">$hint_home_evidenza</p>
+        <label for="home_featured">$label_home_featured</label>
+        <p class="aiuto" id="home_featured-aiuto">$hint_home_featured</p>
       </div>
     </div>
     <div class="campi-due">
       <div class="campo">
-        <label for="home_excerpt_words">$label_parole_anteprima</label>
-        <input class="campo-input" type="number" id="home_excerpt_words" min="10" max="200" value="$valore_parole_anteprima" aria-describedby="home_excerpt_words-aiuto">
-        <p class="aiuto" id="home_excerpt_words-aiuto">$hint_parole_anteprima</p>
+        <label for="home_excerpt_words">$label_words_preview</label>
+        <input class="campo-input" type="number" id="home_excerpt_words" min="10" max="200" value="$value_words_preview" aria-describedby="home_excerpt_words-aiuto">
+        <p class="aiuto" id="home_excerpt_words-aiuto">$hint_words_preview</p>
       </div>
       <div class="campo">
-        <label for="articoli_per_pagina">$label_articoli_per_pagina</label>
-        <input class="campo-input" type="number" id="articoli_per_pagina" min="0" value="$valore_articoli_per_pagina" aria-describedby="articoli_per_pagina-aiuto">
-        <p class="aiuto" id="articoli_per_pagina-aiuto">$hint_articoli_per_pagina</p>
+        <label for="articoli_per_pagina">$label_articles_for_page</label>
+        <input class="campo-input" type="number" id="articoli_per_pagina" min="0" value="$value_articles_for_page" aria-describedby="articoli_per_pagina-aiuto">
+        <p class="aiuto" id="articoli_per_pagina-aiuto">$hint_articles_for_page</p>
       </div>
     </div>
   </div>
 
   <div class="gruppo">
-    <h2>$label_gr_pagina_articolo</h2>
+    <h2>$label_grp_page_article</h2>
     <div class="campo-spunta">
-      <input type="checkbox" id="article_cover" aria-describedby="article_cover-aiuto" $checked_copertina_articolo>
+      <input type="checkbox" id="article_cover" aria-describedby="article_cover-aiuto" $checked_cover_article>
       <div>
-        <label for="article_cover">$label_copertina_articolo</label>
-        <p class="aiuto" id="article_cover-aiuto">$hint_copertina_articolo</p>
+        <label for="article_cover">$label_cover_article</label>
+        <p class="aiuto" id="article_cover-aiuto">$hint_cover_article</p>
       </div>
     </div>
     <div class="campo-spunta">
-      <input type="checkbox" id="share_buttons" aria-describedby="share_buttons-aiuto" $checked_copia_link>
+      <input type="checkbox" id="share_buttons" aria-describedby="share_buttons-aiuto" $checked_copy_link>
       <div>
-        <label for="share_buttons">$label_copia_link</label>
-        <p class="aiuto" id="share_buttons-aiuto">$hint_copia_link</p>
+        <label for="share_buttons">$label_copy_link</label>
+        <p class="aiuto" id="share_buttons-aiuto">$hint_copy_link</p>
       </div>
     </div>
   </div>
 </section>
 
 <section class="sezione" id="sezione-biografia" data-sezione="biografia" aria-labelledby="titolo-biografia" hidden>
-$testata_biografia
+$section_header_biografia
   <div class="gruppo">
     <div class="campo-spunta">
       <input type="checkbox" id="bio_enabled" aria-describedby="bio_enabled-aiuto" $checked_bio>
       <div>
-        <label for="bio_enabled">$label_bio_attiva</label>
-        <p class="aiuto" id="bio_enabled-aiuto">$hint_bio_attiva</p>
+        <label for="bio_enabled">$label_bio_active_f</label>
+        <p class="aiuto" id="bio_enabled-aiuto">$hint_bio_active_f</p>
       </div>
     </div>
     <div class="campo">
-      <label for="bio_position">$label_posizione_home</label>
+      <label for="bio_position">$label_position_home</label>
       <select class="campo-input" id="bio_position">
         <option value="sidebar" $sel_bio_sidebar>$label_pos_sidebar</option>
         <option value="top" $sel_bio_top>$label_pos_top</option>
@@ -247,33 +247,33 @@ $testata_biografia
   </div>
 
   <div class="gruppo">
-    <h2><label for="bio_photo">$label_bio_foto</label></h2>
+    <h2><label for="bio_photo">$label_bio_photo</label></h2>
     <div class="campo-foto">
       <img class="foto-anteprima" id="bio-photo-preview" alt="" hidden>
       <div class="campo">
-        <input class="campo-input" type="text" id="bio_photo" value="$valore_bio_foto" aria-describedby="bio_photo-aiuto" oninput="updateBioPhotoPreview()">
-        <p class="aiuto" id="bio_photo-aiuto">$hint_bio_foto</p>
+        <input class="campo-input" type="text" id="bio_photo" value="$value_bio_photo" aria-describedby="bio_photo-aiuto" oninput="updateBioPhotoPreview()">
+        <p class="aiuto" id="bio_photo-aiuto">$hint_bio_photo</p>
         <div class="azioni">
-          <button type="button" class="pulsante" onclick="document.getElementById('file-bio-photo').click()">$label_carica_foto</button>
-          <button type="button" class="pulsante pulsante-testo" id="bio-photo-remove" onclick="removeBioPhoto()" hidden>$label_rimuovi</button>
+          <button type="button" class="pulsante" onclick="document.getElementById('file-bio-photo').click()">$label_upload_photo</button>
+          <button type="button" class="pulsante pulsante-testo" id="bio-photo-remove" onclick="removeBioPhoto()" hidden>$label_remove</button>
           <span id="bio-photo-status" class="hint" role="status"></span>
         </div>
-        <input type="file" id="file-bio-photo" aria-label="$label_carica_foto" hidden onchange="uploadBioPhoto()"
+        <input type="file" id="file-bio-photo" aria-label="$label_upload_photo" hidden onchange="uploadBioPhoto()"
                accept="image/png, image/jpeg, image/gif, image/webp, .png, .jpg, .jpeg, .gif, .webp">
       </div>
     </div>
   </div>
 
   <div class="gruppo">
-    <h2 id="titolo-bio-testo">$label_bio_testo</h2>
+    <h2 id="titolo-bio-testo">$label_bio_text</h2>
     <div id="editor-bio" aria-labelledby="titolo-bio-testo"></div>
   </div>
 
   <div class="gruppo">
-    <h2 id="titolo-bio-en">$label_bio_testo_en</h2>
-    <p class="aiuto" id="bio-en-aiuto">$hint_bio_testo_en</p>
+    <h2 id="titolo-bio-en">$label_bio_text_en</h2>
+    <p class="aiuto" id="bio-en-aiuto">$hint_bio_text_en</p>
     <div class="translation-bar">
-      <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="translateBiography(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_traduci_italiano</button>
+      <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="translateBiography(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_translate_italian</button>
       <span id="bio-en-status" class="hint" role="status"></span>
     </div>
     <div id="editor-bio-en" aria-labelledby="titolo-bio-en" aria-describedby="bio-en-aiuto"></div>
@@ -281,79 +281,79 @@ $testata_biografia
 </section>
 
 <section class="sezione" id="sezione-progetti" data-sezione="progetti" aria-labelledby="titolo-progetti" hidden>
-$testata_progetti
+$section_header_progetti
   <div class="gruppo">
     <div class="campo-spunta">
-      <input type="checkbox" id="projects_enabled" aria-describedby="projects_enabled-aiuto" $checked_progetti>
+      <input type="checkbox" id="projects_enabled" aria-describedby="projects_enabled-aiuto" $checked_projects>
       <div>
-        <label for="projects_enabled">$label_progetti_attivi</label>
-        <p class="aiuto" id="projects_enabled-aiuto">$hint_progetti_attivi</p>
+        <label for="projects_enabled">$label_projects_active_pl</label>
+        <p class="aiuto" id="projects_enabled-aiuto">$hint_projects_active_pl</p>
       </div>
     </div>
     <div class="campo">
-      <label for="projects_position">$label_posizione_home</label>
+      <label for="projects_position">$label_position_home</label>
       <select class="campo-input" id="projects_position">
-        <option value="sidebar" $sel_progetti_sidebar>$label_pos_sidebar</option>
-        <option value="top" $sel_progetti_top>$label_pos_top</option>
-        <option value="bottom" $sel_progetti_bottom>$label_pos_bottom</option>
+        <option value="sidebar" $sel_projects_sidebar>$label_pos_sidebar</option>
+        <option value="top" $sel_projects_top>$label_pos_top</option>
+        <option value="bottom" $sel_projects_bottom>$label_pos_bottom</option>
       </select>
     </div>
   </div>
   <div id="lista-progetti" class="lista-progetti">
-$progetti_html
+$projects_html
   </div>
-  <p class="aiuto" id="progetti-vuoto-nota"$progetti_vuoto_nascosto>$label_progetti_vuoto</p>
+  <p class="aiuto" id="progetti-vuoto-nota"$projects_empty_m_hidden_m>$label_projects_empty_m</p>
   <div class="azioni">
-    <button type="button" class="pulsante" onclick="addProject()">$label_progetto_aggiungi</button>
+    <button type="button" class="pulsante" onclick="addProject()">$label_project_add</button>
   </div>
-  <input type="file" id="file-progetto" aria-label="$label_carica_immagine" hidden onchange="uploadProjectImage()"
+  <input type="file" id="file-progetto" aria-label="$label_upload_picture" hidden onchange="uploadProjectImage()"
          accept="image/png, image/jpeg, image/gif, image/webp, .png, .jpg, .jpeg, .gif, .webp">
   <!-- The blank card of "Add a project": inert until cloned. -->
   <template id="progetto-modello">
-$progetto_modello
+$project_template
   </template>
 </section>
 
 <section class="sezione" id="sezione-pagine" data-sezione="pagine" aria-labelledby="titolo-pagine" hidden>
-$testata_pagine
+$section_header_pagine
   <div class="gruppo">
-    <h2>$label_lavoro_titolo</h2>
+    <h2>$label_job_title</h2>
     <div class="campo-spunta">
-      <input type="checkbox" id="work_enabled" aria-describedby="work_enabled-aiuto" $checked_lavoro>
+      <input type="checkbox" id="work_enabled" aria-describedby="work_enabled-aiuto" $checked_job>
       <div>
-        <label for="work_enabled">$label_lavoro_attivo</label>
-        <p class="aiuto" id="work_enabled-aiuto">$hint_lavoro_attivo</p>
+        <label for="work_enabled">$label_job_active</label>
+        <p class="aiuto" id="work_enabled-aiuto">$hint_job_active</p>
       </div>
     </div>
     <div class="campo">
-      <label for="work_url">$label_lavoro_url</label>
-      <input class="campo-input" type="text" id="work_url" value="$valore_lavoro_url" aria-describedby="work_url-aiuto">
-      <p class="aiuto" id="work_url-aiuto">$hint_lavoro_url</p>
+      <label for="work_url">$label_job_url</label>
+      <input class="campo-input" type="text" id="work_url" value="$value_job_url" aria-describedby="work_url-aiuto">
+      <p class="aiuto" id="work_url-aiuto">$hint_job_url</p>
     </div>
     <div class="campo">
-      <label for="work_label">$label_lavoro_label</label>
-      <input class="campo-input" type="text" id="work_label" value="$valore_lavoro_label" placeholder="$ph_lavoro_label">
+      <label for="work_label">$label_job_label</label>
+      <input class="campo-input" type="text" id="work_label" value="$value_job_label" placeholder="$ph_job_label">
     </div>
     <div class="campo">
-      <label for="work_label_en">$label_lavoro_label_en</label>
-      <input class="campo-input" type="text" id="work_label_en" value="$valore_lavoro_label_en" placeholder="$ph_lavoro_label_en">
+      <label for="work_label_en">$label_job_label_en</label>
+      <input class="campo-input" type="text" id="work_label_en" value="$value_job_label_en" placeholder="$ph_job_label_en">
     </div>
     <div class="campo">
-      <label for="work_text">$label_lavoro_testo</label>
-      <input class="campo-input" type="text" id="work_text" value="$valore_lavoro_testo" placeholder="$ph_lavoro_testo">
+      <label for="work_text">$label_job_text</label>
+      <input class="campo-input" type="text" id="work_text" value="$value_job_text" placeholder="$ph_job_text">
     </div>
     <div class="campo">
-      <label for="work_text_en">$label_lavoro_testo_en</label>
-      <input class="campo-input" type="text" id="work_text_en" value="$valore_lavoro_testo_en" placeholder="$ph_lavoro_testo_en">
+      <label for="work_text_en">$label_job_text_en</label>
+      <input class="campo-input" type="text" id="work_text_en" value="$value_job_text_en" placeholder="$ph_job_text_en">
     </div>
   </div>
   <div class="gruppo">
     <p class="aiuto">$hint_card_home</p>
     <div class="campo-spunta">
-      <input type="checkbox" id="home_cards_enabled" aria-describedby="home_cards_enabled-aiuto" $checked_card_home_attiva>
+      <input type="checkbox" id="home_cards_enabled" aria-describedby="home_cards_enabled-aiuto" $checked_card_home_active_f>
       <div>
-        <label for="home_cards_enabled">$label_card_home_attiva</label>
-        <p class="aiuto" id="home_cards_enabled-aiuto">$hint_card_home_attiva</p>
+        <label for="home_cards_enabled">$label_card_home_active_f</label>
+        <p class="aiuto" id="home_cards_enabled-aiuto">$hint_card_home_active_f</p>
       </div>
     </div>
   </div>
@@ -361,12 +361,12 @@ $card_html
 </section>
 
 <section class="sezione" id="sezione-commenti" data-sezione="commenti" aria-labelledby="titolo-commenti" hidden>
-$testata_commenti
+$section_header_commenti
   <div class="gruppo">
     <div class="campo">
-      <label for="commenti">$label_sistema_commenti</label>
+      <label for="commenti">$label_fix_comments</label>
       <select class="campo-input" id="commenti" onchange="updateCommentGroups()">
-        <option value="none" $sel_commenti_nessuno>$label_commenti_nessuno</option>
+        <option value="none" $sel_comments_nobody>$label_comments_nobody</option>
         <option value="giscus" $sel_giscus>Giscus (GitHub)</option>
         <option value="disqus" $sel_disqus>Disqus</option>
       </select>
@@ -376,31 +376,31 @@ $testata_commenti
       <div class="campi-due">
         <div class="campo">
           <label for="giscus_repo">Repo</label>
-          <input class="campo-input" type="text" id="giscus_repo" value="$valore_giscus_repo" placeholder="tuonome/tuorepo">
+          <input class="campo-input" type="text" id="giscus_repo" value="$value_giscus_repo" placeholder="tuonome/tuorepo">
         </div>
         <div class="campo">
           <label for="giscus_repo_id">Repo ID</label>
-          <input class="campo-input" type="text" id="giscus_repo_id" value="$valore_giscus_repo_id">
+          <input class="campo-input" type="text" id="giscus_repo_id" value="$value_giscus_repo_id">
         </div>
         <div class="campo">
           <label for="giscus_category">Category</label>
-          <input class="campo-input" type="text" id="giscus_category" value="$valore_giscus_category">
+          <input class="campo-input" type="text" id="giscus_category" value="$value_giscus_category">
         </div>
         <div class="campo">
           <label for="giscus_category_id">Category ID</label>
-          <input class="campo-input" type="text" id="giscus_category_id" value="$valore_giscus_category_id">
+          <input class="campo-input" type="text" id="giscus_category_id" value="$value_giscus_category_id">
         </div>
       </div>
       <div class="campo">
-        <label for="giscus_theme">$label_tema</label>
-        <input class="campo-input" type="text" id="giscus_theme" value="$valore_giscus_theme" aria-describedby="giscus_theme-aiuto">
+        <label for="giscus_theme">$label_theme</label>
+        <input class="campo-input" type="text" id="giscus_theme" value="$value_giscus_theme" aria-describedby="giscus_theme-aiuto">
         <p class="aiuto" id="giscus_theme-aiuto">light / dark</p>
       </div>
     </div>
     <div class="gruppo-commenti" id="gruppo-disqus">
       <div class="campo">
         <label for="disqus_shortname">Shortname Disqus</label>
-        <input class="campo-input" type="text" id="disqus_shortname" value="$valore_disqus_shortname" aria-describedby="disqus_shortname-aiuto">
+        <input class="campo-input" type="text" id="disqus_shortname" value="$value_disqus_shortname" aria-describedby="disqus_shortname-aiuto">
         <p class="aiuto" id="disqus_shortname-aiuto">$hint_disqus</p>
       </div>
     </div>
@@ -408,62 +408,62 @@ $testata_commenti
 </section>
 
 <section class="sezione" id="sezione-newsletter" data-sezione="newsletter" aria-labelledby="titolo-newsletter" hidden>
-$testata_newsletter
+$section_header_newsletter
   <div class="gruppo">
     <div class="campo-spunta">
       <input type="checkbox" id="nl_enabled" aria-describedby="nl_enabled-aiuto" $checked_nl>
       <div>
-        <label for="nl_enabled">$label_nl_attiva</label>
-        <p class="aiuto" id="nl_enabled-aiuto">$hint_nl_attiva</p>
+        <label for="nl_enabled">$label_nl_active_f</label>
+        <p class="aiuto" id="nl_enabled-aiuto">$hint_nl_active_f</p>
       </div>
     </div>
     <fieldset class="campo-gruppo">
-      <legend>$label_nl_dove</legend>
-      <label class="campo-spunta"><input type="checkbox" id="nl_in_sidebar" $checked_nl_barra> <span>$label_nl_barra</span></label>
-      <label class="campo-spunta"><input type="checkbox" id="nl_after_article" $checked_nl_articolo> <span>$label_nl_articolo</span></label>
+      <legend>$label_nl_where</legend>
+      <label class="campo-spunta"><input type="checkbox" id="nl_in_sidebar" $checked_nl_bar> <span>$label_nl_bar</span></label>
+      <label class="campo-spunta"><input type="checkbox" id="nl_after_article" $checked_nl_article> <span>$label_nl_article</span></label>
     </fieldset>
     <div class="campo">
-      <label for="nl_title">$label_nl_titolo</label>
-      <input class="campo-input" type="text" id="nl_title" value="$valore_nl_titolo" placeholder="$ph_nl_titolo" aria-describedby="nl-testi-aiuto">
+      <label for="nl_title">$label_nl_title</label>
+      <input class="campo-input" type="text" id="nl_title" value="$value_nl_title" placeholder="$ph_nl_title" aria-describedby="nl-testi-aiuto">
     </div>
     <div class="campo">
-      <label for="nl_text">$label_nl_testo</label>
-      <textarea class="campo-input" id="nl_text" rows="2" placeholder="$ph_nl_testo" aria-describedby="nl-testi-aiuto">$valore_nl_testo</textarea>
-      <p class="aiuto" id="nl-testi-aiuto">$hint_nl_testi</p>
+      <label for="nl_text">$label_nl_text</label>
+      <textarea class="campo-input" id="nl_text" rows="2" placeholder="$ph_nl_text" aria-describedby="nl-testi-aiuto">$value_nl_text</textarea>
+      <p class="aiuto" id="nl-testi-aiuto">$hint_nl_texts_of</p>
     </div>
     <div class="campo-spunta">
-      <input type="checkbox" id="nl_send_on_publish" aria-describedby="nl_send_on_publish-aiuto" $checked_nl_invio>
+      <input type="checkbox" id="nl_send_on_publish" aria-describedby="nl_send_on_publish-aiuto" $checked_nl_sending>
       <div>
-        <label for="nl_send_on_publish">$label_nl_invio</label>
-        <p class="aiuto" id="nl_send_on_publish-aiuto">$hint_nl_invio</p>
+        <label for="nl_send_on_publish">$label_nl_sending</label>
+        <p class="aiuto" id="nl_send_on_publish-aiuto">$hint_nl_sending</p>
       </div>
     </div>
   </div>
 
   <div class="gruppo">
-    <h2>$label_gr_nl_spedizione</h2>
-    <p class="aiuto">$hint_gr_nl_spedizione</p>
+    <h2>$label_grp_nl_shipping</h2>
+    <p class="aiuto">$hint_grp_nl_shipping</p>
     <div class="campi-due">
       <div class="campo">
-        <label for="nl_sender_name">$label_nl_mittente_nome</label>
-        <input class="campo-input" type="text" id="nl_sender_name" value="$valore_nl_mittente_nome" aria-describedby="nl_sender_name-aiuto">
-        <p class="aiuto" id="nl_sender_name-aiuto">$hint_nl_mittente_nome</p>
+        <label for="nl_sender_name">$label_nl_sender_name</label>
+        <input class="campo-input" type="text" id="nl_sender_name" value="$value_nl_sender_name" aria-describedby="nl_sender_name-aiuto">
+        <p class="aiuto" id="nl_sender_name-aiuto">$hint_nl_sender_name</p>
       </div>
       <div class="campo">
-        <label for="nl_sender_email">$label_nl_mittente_email</label>
-        <input class="campo-input" type="email" id="nl_sender_email" value="$valore_nl_mittente_email" placeholder="blog@tuodominio.it">
+        <label for="nl_sender_email">$label_nl_sender_email</label>
+        <input class="campo-input" type="email" id="nl_sender_email" value="$value_nl_sender_email" placeholder="blog@tuodominio.it">
       </div>
       <div class="campo">
         <label for="nl_smtp_host">$label_nl_smtp_host</label>
-        <input class="campo-input" type="text" id="nl_smtp_host" value="$valore_nl_smtp_host" placeholder="smtp-relay.brevo.com">
+        <input class="campo-input" type="text" id="nl_smtp_host" value="$value_nl_smtp_host" placeholder="smtp-relay.brevo.com">
       </div>
       <div class="campo">
         <label for="nl_smtp_port">$label_nl_smtp_port</label>
-        <input class="campo-input" type="number" id="nl_smtp_port" min="1" max="65535" value="$valore_nl_smtp_port" aria-describedby="nl_smtp_port-aiuto">
+        <input class="campo-input" type="number" id="nl_smtp_port" min="1" max="65535" value="$value_nl_smtp_port" aria-describedby="nl_smtp_port-aiuto">
         <p class="aiuto" id="nl_smtp_port-aiuto">$hint_nl_smtp_port</p>
       </div>
       <div class="campo">
-        <label for="nl_smtp_security">$label_nl_smtp_sicurezza</label>
+        <label for="nl_smtp_security">$label_nl_smtp_security</label>
         <select class="campo-input" id="nl_smtp_security">
           <option value="starttls" $sel_nl_starttls>$label_nl_starttls</option>
           <option value="ssl" $sel_nl_ssl>$label_nl_ssl</option>
@@ -471,8 +471,8 @@ $testata_newsletter
         </select>
       </div>
       <div class="campo">
-        <label for="nl_smtp_user">$label_nl_smtp_utente</label>
-        <input class="campo-input" type="text" id="nl_smtp_user" value="$valore_nl_smtp_utente" autocomplete="off">
+        <label for="nl_smtp_user">$label_nl_smtp_user</label>
+        <input class="campo-input" type="text" id="nl_smtp_user" value="$value_nl_smtp_user" autocomplete="off">
       </div>
     </div>
     <div class="campo">
@@ -481,28 +481,28 @@ $testata_newsletter
       <p class="aiuto" id="nl_smtp_password-aiuto">$hint_nl_smtp_password</p>
     </div>
     <div class="azioni">
-      <button type="button" class="pulsante" onclick="sendNewsletterTest(this)" aria-describedby="nl-prova-aiuto">$label_nl_prova</button>
+      <button type="button" class="pulsante" onclick="sendNewsletterTest(this)" aria-describedby="nl-prova-aiuto">$label_nl_test</button>
       <span class="hint" id="nl-prova-stato" role="status"></span>
     </div>
-    <p class="aiuto" id="nl-prova-aiuto">$hint_nl_prova</p>
+    <p class="aiuto" id="nl-prova-aiuto">$hint_nl_test</p>
   </div>
 
   <div class="gruppo">
-    <h2>$label_gr_nl_iscritti</h2>
-    <p class="aiuto">$nl_conteggio</p>
-$nl_ultimo
-$nl_elenco
-    <div class="azioni"><a class="pulsante pulsante-piccolo" href="/newsletter-subscribers.csv">$label_nl_esporta</a></div>
+    <h2>$label_grp_nl_subscribers</h2>
+    <p class="aiuto">$nl_count</p>
+$nl_last
+$nl_list
+    <div class="azioni"><a class="pulsante pulsante-piccolo" href="/newsletter-subscribers.csv">$label_nl_export</a></div>
   </div>
 </section>
 
 <section class="sezione" id="sezione-traduzione" data-sezione="traduzione" aria-labelledby="titolo-traduzione" hidden>
-$testata_traduzione
+$section_header_traduzione
   <div class="gruppo">
-    <h2>$label_traduzione</h2>
-    <p class="aiuto">$hint_traduzione</p>
+    <h2>$label_translation_of</h2>
+    <p class="aiuto">$hint_translation_of</p>
     <div class="campo">
-      <label for="translation_service">$label_servizio_traduzione</label>
+      <label for="translation_service">$label_service_translation_of</label>
       <select class="campo-input" id="translation_service" onchange="updateTranslationGroups()">
         <option value="deepl" $sel_deepl>DeepL</option>
         <option value="google" $sel_google>Google Translate</option>
@@ -513,64 +513,64 @@ $testata_traduzione
     </div>
     <div class="translation-group" id="gruppo-deepl">
       <div class="campo">
-        <label for="deepl_api_key">$label_chiave_api DeepL</label>
-        <input class="campo-input" type="password" id="deepl_api_key" value="$valore_deepl_key" placeholder="$ph_lascia_vuoto" autocomplete="off" aria-describedby="deepl_api_key-aiuto">
+        <label for="deepl_api_key">$label_key_api DeepL</label>
+        <input class="campo-input" type="password" id="deepl_api_key" value="$value_deepl_key" placeholder="$ph_leave_empty_m" autocomplete="off" aria-describedby="deepl_api_key-aiuto">
         <p class="aiuto" id="deepl_api_key-aiuto">https://www.deepl.com/pro-api</p>
       </div>
     </div>
     <div class="translation-group" id="gruppo-google">
       <div class="campo">
-        <label for="google_api_key">$label_chiave_api Google Cloud Translation</label>
-        <input class="campo-input" type="password" id="google_api_key" value="$valore_google_key" placeholder="$ph_lascia_vuoto" autocomplete="off">
+        <label for="google_api_key">$label_key_api Google Cloud Translation</label>
+        <input class="campo-input" type="password" id="google_api_key" value="$value_google_key" placeholder="$ph_leave_empty_m" autocomplete="off">
       </div>
     </div>
     <div class="translation-group" id="gruppo-llm">
       <div class="campo">
-        <label for="llm_api_key">$label_chiave_api Anthropic</label>
-        <input class="campo-input" type="password" id="llm_api_key" value="$valore_llm_key" placeholder="$ph_lascia_vuoto" autocomplete="off">
+        <label for="llm_api_key">$label_key_api Anthropic</label>
+        <input class="campo-input" type="password" id="llm_api_key" value="$value_llm_key" placeholder="$ph_leave_empty_m" autocomplete="off">
       </div>
       <div class="campi-due">
         <div class="campo">
           <label for="llm_endpoint">$label_endpoint</label>
-          <input class="campo-input" type="text" id="llm_endpoint" value="$valore_llm_endpoint">
+          <input class="campo-input" type="text" id="llm_endpoint" value="$value_llm_endpoint">
         </div>
         <div class="campo">
-          <label for="llm_modello">$label_modello</label>
-          <input class="campo-input" type="text" id="llm_modello" value="$valore_llm_modello">
+          <label for="llm_modello">$label_template</label>
+          <input class="campo-input" type="text" id="llm_modello" value="$value_llm_template">
         </div>
       </div>
     </div>
     <div class="translation-group" id="gruppo-openai">
       <div class="campo">
-        <label for="openai_api_key">$label_chiave_api OpenAI</label>
-        <input class="campo-input" type="password" id="openai_api_key" value="$valore_openai_key" placeholder="$ph_lascia_vuoto" autocomplete="off" aria-describedby="openai_api_key-aiuto">
+        <label for="openai_api_key">$label_key_api OpenAI</label>
+        <input class="campo-input" type="password" id="openai_api_key" value="$value_openai_key" placeholder="$ph_leave_empty_m" autocomplete="off" aria-describedby="openai_api_key-aiuto">
         <p class="aiuto" id="openai_api_key-aiuto">https://platform.openai.com/api-keys</p>
       </div>
       <div class="campo">
-        <label for="openai_modello">$label_modello</label>
-        <input class="campo-input" type="text" id="openai_modello" value="$valore_openai_modello" aria-describedby="openai_modello-aiuto">
+        <label for="openai_modello">$label_template</label>
+        <input class="campo-input" type="text" id="openai_modello" value="$value_openai_template" aria-describedby="openai_modello-aiuto">
         <p class="aiuto" id="openai_modello-aiuto">gpt-4o-mini, gpt-4o</p>
       </div>
     </div>
     <div class="translation-group" id="gruppo-deepseek">
       <div class="campo">
-        <label for="deepseek_api_key">$label_chiave_api DeepSeek</label>
-        <input class="campo-input" type="password" id="deepseek_api_key" value="$valore_deepseek_key" placeholder="$ph_lascia_vuoto" autocomplete="off" aria-describedby="deepseek_api_key-aiuto">
+        <label for="deepseek_api_key">$label_key_api DeepSeek</label>
+        <input class="campo-input" type="password" id="deepseek_api_key" value="$value_deepseek_key" placeholder="$ph_leave_empty_m" autocomplete="off" aria-describedby="deepseek_api_key-aiuto">
         <p class="aiuto" id="deepseek_api_key-aiuto">https://platform.deepseek.com</p>
       </div>
       <div class="campo">
-        <label for="deepseek_modello">$label_modello</label>
-        <input class="campo-input" type="text" id="deepseek_modello" value="$valore_deepseek_modello" aria-describedby="deepseek_modello-aiuto">
+        <label for="deepseek_modello">$label_template</label>
+        <input class="campo-input" type="text" id="deepseek_modello" value="$value_deepseek_template" aria-describedby="deepseek_modello-aiuto">
         <p class="aiuto" id="deepseek_modello-aiuto">deepseek-chat</p>
       </div>
     </div>
   </div>
 
   <div class="gruppo">
-    <h2>$label_gr_aiuti_ai</h2>
+    <h2>$label_grp_helpers_ai</h2>
     <div class="campo">
       <label for="seo_backlink_site">$label_backlink</label>
-      <input class="campo-input" type="text" id="seo_backlink_site" value="$valore_backlink"
+      <input class="campo-input" type="text" id="seo_backlink_site" value="$value_backlink"
              placeholder="startupbusiness.it" aria-describedby="seo_backlink_site-aiuto">
       <p class="aiuto" id="seo_backlink_site-aiuto">$hint_backlink</p>
     </div>
@@ -578,12 +578,12 @@ $testata_traduzione
 </section>
 
 <section class="sezione" id="sezione-statistiche" data-sezione="statistiche" aria-labelledby="titolo-statistiche" hidden>
-$testata_statistiche
+$section_header_statistiche
   <div class="gruppo">
     <h2>$label_analytics</h2>
     <div class="campo">
       <label for="analytics_id">$label_ga_id</label>
-      <input class="campo-input" type="text" id="analytics_id" value="$valore_analytics" placeholder="$ph_analytics_id" aria-describedby="analytics_id-aiuto">
+      <input class="campo-input" type="text" id="analytics_id" value="$value_analytics" placeholder="$ph_analytics_id" aria-describedby="analytics_id-aiuto">
       <p class="aiuto" id="analytics_id-aiuto">$hint_analytics</p>
     </div>
   </div>
@@ -592,11 +592,11 @@ $testata_statistiche
     <div class="campi-due">
       <div class="campo">
         <label for="umami_url">$label_umami_url</label>
-        <input class="campo-input" type="url" id="umami_url" value="$valore_umami_url" placeholder="$ph_umami_url" aria-describedby="umami-aiuto">
+        <input class="campo-input" type="url" id="umami_url" value="$value_umami_url" placeholder="$ph_umami_url" aria-describedby="umami-aiuto">
       </div>
       <div class="campo">
         <label for="umami_website_id">$label_umami_id</label>
-        <input class="campo-input" type="text" id="umami_website_id" value="$valore_umami_id" placeholder="$ph_umami_website_id" aria-describedby="umami-aiuto">
+        <input class="campo-input" type="text" id="umami_website_id" value="$value_umami_id" placeholder="$ph_umami_website_id" aria-describedby="umami-aiuto">
       </div>
     </div>
     <p class="aiuto" id="umami-aiuto">$hint_umami</p>
@@ -604,49 +604,49 @@ $testata_statistiche
 </section>
 
 <section class="sezione" id="sezione-codici" data-sezione="codici" aria-labelledby="titolo-codici" hidden>
-$testata_codici
+$section_header_codici
   <div class="gruppo">
-    <h2>$label_codice_titolo</h2>
-    <p class="aiuto">$hint_codice</p>
-$guida_codici
+    <h2>$label_code_title</h2>
+    <p class="aiuto">$hint_code</p>
+$guide_codes
     <div id="lista-codice" class="lista-codice">
-$codice_html
+$code_html
     </div>
-    <p class="hint" id="codice-vuoto-nota" hidden>$label_codice_vuoto</p>
+    <p class="hint" id="codice-vuoto-nota" hidden>$label_code_empty_m</p>
     <div class="azioni">
-      <button type="button" class="pulsante" id="btn-aggiungi-codice" onclick="openCodeTemplates()">$label_codice_aggiungi</button>
+      <button type="button" class="pulsante" id="btn-aggiungi-codice" onclick="openCodeTemplates()">$label_code_add</button>
     </div>
     <!-- The ready-made templates. The author picks a service and types its id;
          admin.js writes the code with the recommended position, pages and
          consent. "Your own code" is the empty card. -->
     <div class="codice-modelli" id="codice-modelli" hidden>
-      <label for="modello-codice">$label_codice_modelli</label>
+      <label for="modello-codice">$label_code_templates</label>
       <select id="modello-codice" onchange="updateCodeTemplateFields()">
-        <option value="libero">$label_modello_libero</option>
+        <option value="libero">$label_template_free</option>
         <optgroup label="Google">
           <option value="ga4">Google Analytics 4</option>
           <option value="gtm">Google Tag Manager</option>
-          <option value="adsense_auto">$label_modello_adsense_auto</option>
-          <option value="adsense_unita">$label_modello_adsense_unita</option>
-          <option value="google_ads">$label_modello_google_ads</option>
+          <option value="adsense_auto">$label_template_adsense_auto</option>
+          <option value="adsense_unita">$label_template_adsense_unit_ad</option>
+          <option value="google_ads">$label_template_google_ads</option>
         </optgroup>
-        <optgroup label="$label_modello_altri">
+        <optgroup label="$label_template_others">
           <option value="meta_pixel">Meta Pixel (Facebook, Instagram)</option>
           <option value="clarity">Microsoft Clarity</option>
         </optgroup>
       </select>
       <div id="modello-campi"></div>
-      <p class="hint">$hint_codice_modelli</p>
+      <p class="hint">$hint_code_templates</p>
       <div class="azioni">
-        <button type="button" class="pulsante pulsante-primario" onclick="createCodeFromTemplate()">$label_codice_crea</button>
-        <button type="button" class="pulsante" onclick="closeCodeTemplates()">$label_annulla_scelta</button>
+        <button type="button" class="pulsante pulsante-primario" onclick="createCodeFromTemplate()">$label_code_create</button>
+        <button type="button" class="pulsante" onclick="closeCodeTemplates()">$label_cancel_choice</button>
       </div>
     </div>
     <!-- The blank card the templates start from. A <template> is inert: its
          content is not in the page, so the card inside is never collected when
          saving. -->
     <template id="codice-modello">
-$codice_modello
+$code_template
     </template>
   </div>
 
@@ -654,41 +654,41 @@ $codice_modello
     <h2><label for="ads_txt">$label_ads_txt</label></h2>
     <p class="aiuto" id="ads_txt-aiuto">$hint_ads_txt</p>
     <textarea class="campo-input campo-mono" id="ads_txt" rows="3" spellcheck="false" aria-describedby="ads_txt-aiuto"
-              placeholder="google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0">$valore_ads_txt</textarea>
+              placeholder="google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0">$value_ads_txt</textarea>
   </div>
 </section>
 
 <section class="sezione" id="sezione-cookie" data-sezione="cookie" aria-labelledby="titolo-cookie" hidden>
-$testata_cookie
+$section_header_cookie
   <div class="gruppo">
-    <p class="aiuto">$hint_consenso</p>
+    <p class="aiuto">$hint_consent</p>
     <div class="campo-spunta">
-      <input type="checkbox" id="consent_enabled" $checked_consenso>
-      <div><label for="consent_enabled">$label_consenso_attivo</label></div>
+      <input type="checkbox" id="consent_enabled" $checked_consent>
+      <div><label for="consent_enabled">$label_consent_active</label></div>
     </div>
     <div class="campo">
-      <label for="consent_text">$label_consenso_testo</label>
-      <textarea class="campo-input" id="consent_text" rows="3" placeholder="$ph_consenso_testo" aria-describedby="consent_text-aiuto">$valore_consenso_testo</textarea>
-      <p class="aiuto" id="consent_text-aiuto">$hint_consenso_testo</p>
+      <label for="consent_text">$label_consent_text</label>
+      <textarea class="campo-input" id="consent_text" rows="3" placeholder="$ph_consent_text" aria-describedby="consent_text-aiuto">$value_consent_text</textarea>
+      <p class="aiuto" id="consent_text-aiuto">$hint_consent_text</p>
     </div>
     <div class="campo">
-      <label for="consent_text_en">$label_consenso_testo_en</label>
-      <textarea class="campo-input" id="consent_text_en" rows="3" placeholder="$ph_consenso_testo_en" aria-describedby="consent_text_en-aiuto">$valore_consenso_testo_en</textarea>
-      <p class="aiuto" id="consent_text_en-aiuto">$hint_consenso_testo</p>
+      <label for="consent_text_en">$label_consent_text_en</label>
+      <textarea class="campo-input" id="consent_text_en" rows="3" placeholder="$ph_consent_text_en" aria-describedby="consent_text_en-aiuto">$value_consent_text_en</textarea>
+      <p class="aiuto" id="consent_text_en-aiuto">$hint_consent_text</p>
     </div>
     <div class="campo">
-      <label for="consent_privacy_url">$label_consenso_privacy</label>
-      <input class="campo-input" type="text" id="consent_privacy_url" value="$valore_consenso_privacy" placeholder="$ph_consenso_privacy">
+      <label for="consent_privacy_url">$label_consent_privacy</label>
+      <input class="campo-input" type="text" id="consent_privacy_url" value="$value_consent_privacy" placeholder="$ph_consent_privacy">
     </div>
     <div class="consenso-rinnova">
-      <button type="button" class="pulsante" onclick="renewConsent()" aria-describedby="rinnova-aiuto">$label_consenso_rinnova</button>
-      <p class="aiuto" id="rinnova-aiuto">$hint_consenso_rinnova</p>
+      <button type="button" class="pulsante" onclick="renewConsent()" aria-describedby="rinnova-aiuto">$label_consent_renew</button>
+      <p class="aiuto" id="rinnova-aiuto">$hint_consent_renew</p>
     </div>
   </div>
 </section>
 
 <section class="sezione" id="sezione-ai" data-sezione="ai" aria-labelledby="titolo-ai" hidden>
-$testata_ai
+$section_header_ai
   <div class="gruppo">
     <p class="aiuto">$hint_ai_training</p>
     <div class="campo">
@@ -701,32 +701,32 @@ $testata_ai
     </div>
     <div class="campo" id="gruppo-ai-licenza" style="display:none">
       <label for="ai_training_contact_email">$label_ai_email</label>
-      <input class="campo-input" type="email" id="ai_training_contact_email" value="$valore_ai_email" placeholder="licensing@tuodominio.it" aria-describedby="ai_training_contact_email-aiuto">
+      <input class="campo-input" type="email" id="ai_training_contact_email" value="$value_ai_email" placeholder="licensing@tuodominio.it" aria-describedby="ai_training_contact_email-aiuto">
       <p class="aiuto" id="ai_training_contact_email-aiuto">$hint_ai_email</p>
     </div>
     <div class="campo">
       <label for="ai_training_license_url">$label_ai_license_url</label>
-      <input class="campo-input" type="text" id="ai_training_license_url" value="$valore_ai_license_url" aria-describedby="ai_training_license_url-aiuto">
+      <input class="campo-input" type="text" id="ai_training_license_url" value="$value_ai_license_url" aria-describedby="ai_training_license_url-aiuto">
       <p class="aiuto" id="ai_training_license_url-aiuto">$hint_ai_license_url</p>
     </div>
     <div class="campo">
       <label for="ai_training_statement">$label_ai_statement</label>
-      <textarea class="campo-input" id="ai_training_statement" rows="3" aria-describedby="ai_training_statement-aiuto">$valore_ai_statement</textarea>
+      <textarea class="campo-input" id="ai_training_statement" rows="3" aria-describedby="ai_training_statement-aiuto">$value_ai_statement</textarea>
       <p class="aiuto" id="ai_training_statement-aiuto">$hint_ai_statement</p>
     </div>
-    <p class="aiuto">$nota_ai_standard</p>
+    <p class="aiuto">$note_text_ai_standard</p>
   </div>
 </section>
 
 <section class="sezione" id="sezione-avanzate" data-sezione="avanzate" aria-labelledby="titolo-avanzate" hidden>
-$testata_avanzate
+$section_header_avanzate
   <div class="gruppo">
-    <h2><label for="config-raw">$label_config_avanzata</label></h2>
-    <p class="aiuto" id="config-raw-aiuto">$hint_config_avanzata</p>
+    <h2><label for="config-raw">$label_config_advanced_f</label></h2>
+    <p class="aiuto" id="config-raw-aiuto">$hint_config_advanced_f</p>
     <textarea class="campo-input campo-mono" id="config-raw" rows="20" spellcheck="false" aria-describedby="config-raw-aiuto"></textarea>
     <div class="azioni">
-      <button type="button" class="pulsante pulsante-primario" onclick="saveRawConfig(this)">$label_salva_config_raw</button>
-      <button type="button" class="pulsante" onclick="restoreRawConfig()">$label_ripristina</button>
+      <button type="button" class="pulsante pulsante-primario" onclick="saveRawConfig(this)">$label_save_config_raw</button>
+      <button type="button" class="pulsante" onclick="restoreRawConfig()">$label_restore</button>
       <span id="config-raw-status" class="hint" role="status"></span>
     </div>
   </div>
@@ -735,9 +735,9 @@ $testata_avanzate
 <div class="barra-salva" id="barra-salva">
   <div class="barra-salva-info">
     <span class="barra-salva-stato" id="save-status" role="status"></span>
-    <span class="barra-salva-nota" id="salva-nota">$nota_salva</span>
-    <button type="button" class="pulsante pulsante-testo" id="annulla-modifiche" onclick="discardConfigChanges()" hidden>$label_annulla_modifiche</button>
+    <span class="barra-salva-nota" id="salva-nota">$note_text_save</span>
+    <button type="button" class="pulsante pulsante-testo" id="annulla-modifiche" onclick="discardConfigChanges()" hidden>$label_cancel_changes_made</button>
   </div>
-  <button type="button" class="pulsante pulsante-primario" id="salva-impostazioni" aria-describedby="salva-nota" onclick="saveConfig(this)">$label_salva_rigenera</button>
+  <button type="button" class="pulsante pulsante-primario" id="salva-impostazioni" aria-describedby="salva-nota" onclick="saveConfig(this)">$label_save_rebuild</button>
 </div>
 </div>

@@ -2,33 +2,33 @@
 
   <div class="pagina-testata">
     <div>
-      <h1 class="pagina-titolo">$titolo</h1>
-      <p class="pagina-sottotitolo">$riepilogo</p>
+      <h1 class="pagina-titolo">$title</h1>
+      <p class="pagina-sottotitolo">$overview</p>
     </div>
     <div class="azioni">
       <input type="file" id="libreria-file" hidden multiple accept="image/*,video/mp4,video/webm"
              onchange="uploadToLibrary(this)">
       <button type="button" class="pulsante pulsante-primario" id="libreria-carica"
-              onclick="document.getElementById('libreria-file').click()">$label_carica</button>
+              onclick="document.getElementById('libreria-file').click()">$label_upload</button>
     </div>
   </div>
 
   <div class="elenco-strumenti">
-    <div class="segmenti" role="group" aria-label="$label_mostra" id="filtro-media">
-      <button type="button" class="segmento" aria-pressed="true" data-filtro="tutti" onclick="filterMedia(this)">$label_tutti<span class="segmento-conta">$totale</span></button>
-      <button type="button" class="segmento" aria-pressed="false" data-filtro="1" onclick="filterMedia(this)">$label_usati<span class="segmento-conta">$usati</span></button>
-      <button type="button" class="segmento" aria-pressed="false" data-filtro="0" onclick="filterMedia(this)">$label_non_usati<span class="segmento-conta">$non_usati</span></button>
+    <div class="segmenti" role="group" aria-label="$label_show" id="filtro-media">
+      <button type="button" class="segmento" aria-pressed="true" data-filtro="tutti" onclick="filterMedia(this)">$label_all<span class="segmento-conta">$total</span></button>
+      <button type="button" class="segmento" aria-pressed="false" data-filtro="1" onclick="filterMedia(this)">$label_used_pl<span class="segmento-conta">$used_pl</span></button>
+      <button type="button" class="segmento" aria-pressed="false" data-filtro="0" onclick="filterMedia(this)">$label_not_used_pl<span class="segmento-conta">$not_used_pl</span></button>
     </div>
-    <label for="cerca-media" class="vh">$label_cerca</label>
-    <input type="search" class="campo-input elenco-cerca" id="cerca-media" placeholder="$label_cerca" oninput="filterMedia()">
-    <button type="button" class="pulsante" onclick="deleteUnusedMedia(this)"$pulizia_nascosta>$label_pulizia</button>
+    <label for="cerca-media" class="vh">$label_search</label>
+    <input type="search" class="campo-input elenco-cerca" id="cerca-media" placeholder="$label_search" oninput="filterMedia()">
+    <button type="button" class="pulsante" onclick="deleteUnusedMedia(this)"$cleanup_hidden_f>$label_cleanup</button>
   </div>
   <p class="hint" id="libreria-stato" role="status"></p>
 
   <ul class="libreria-griglia" id="libreria-griglia">
-$schede
+$cards
   </ul>
-  <p class="elenco-vuoto" id="libreria-vuota"$vuota_nascosta>$label_vuota</p>
-  <p class="elenco-vuoto" id="libreria-nessun-risultato" hidden>$label_nessun_risultato</p>
-  <p class="aiuto">$hint_cestino</p>
+  <p class="elenco-vuoto" id="libreria-vuota"$empty_f_hidden_f>$label_empty_f</p>
+  <p class="elenco-vuoto" id="libreria-nessun-risultato" hidden>$label_no_one_outcome</p>
+  <p class="aiuto">$hint_trash</p>
 </div>

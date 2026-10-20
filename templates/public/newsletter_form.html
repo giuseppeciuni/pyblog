@@ -1,6 +1,6 @@
         <form class="newsletter-modulo" action="/subscribe" method="post">
-          <p class="newsletter-testo">$testo</p>
-          <input type="hidden" name="language" value="$lingua">
+          <p class="newsletter-testo">$text</p>
+          <input type="hidden" name="language" value="$language">
           <div class="newsletter-trappola" aria-hidden="true">
             <label for="$id-website">Website</label>
             <input type="text" id="$id-website" name="website" tabindex="-1" autocomplete="off">
@@ -9,6 +9,6 @@
           <div class="newsletter-riga">
             <input class="campo-input" type="email" id="$id-email" name="email" required
                    autocomplete="email" placeholder="$label_email">
-            <button class="pulsante pulsante-primario" type="submit">$iscriviti</button>
+            <button class="pulsante pulsante-primario" type="submit">$subscribe</button>
           </div>
 $privacy        </form>

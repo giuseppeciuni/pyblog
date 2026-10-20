@@ -1,12 +1,12 @@
-  <div class="gruppo card-config" data-indice="$indice">
+  <div class="gruppo card-config" data-indice="$toc_index">
     <div class="campo-spunta">
-      <input type="checkbox" class="card-attiva" id="card-attiva-$indice" $checked>
-      <div><label for="card-attiva-$indice">$label_mostra</label></div>
+      <input type="checkbox" class="card-attiva" id="card-attiva-$toc_index" $checked>
+      <div><label for="card-attiva-$toc_index">$label_show</label></div>
     </div>
     <div class="campo">
-      <label for="card-titolo-$indice">$label_titolo</label>
-      <input class="campo-input card-title" type="text" id="card-titolo-$indice" value="$titolo">
+      <label for="card-titolo-$toc_index">$label_title</label>
+      <input class="campo-input card-title" type="text" id="card-titolo-$toc_index" value="$title">
     </div>
-    <p class="campo-titolo" id="card-contenuto-$indice">$label_contenuto</p>
-    <div class="card-editor" id="card-editor-$indice" aria-labelledby="card-contenuto-$indice"></div>
+    <p class="campo-titolo" id="card-contenuto-$toc_index">$label_content</p>
+    <div class="card-editor" id="card-editor-$toc_index" aria-labelledby="card-contenuto-$toc_index"></div>
   </div>

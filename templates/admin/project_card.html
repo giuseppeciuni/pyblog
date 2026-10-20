@@ -1,32 +1,32 @@
   <div class="gruppo progetto-config">
     <div class="progetto-testata">
-      <label class="campo-spunta"><input type="checkbox" class="progetto-visibile" $checked> <span>$label_visibile</span></label>
+      <label class="campo-spunta"><input type="checkbox" class="progetto-visibile" $checked> <span>$label_visible</span></label>
       <div class="progetto-azioni">
-        <button type="button" class="pulsante pulsante-icona" onclick="moveProject(this, -1)" aria-label="$label_su" title="$label_su">$icona_su</button>
-        <button type="button" class="pulsante pulsante-icona" onclick="moveProject(this, 1)" aria-label="$label_giu" title="$label_giu">$icona_giu</button>
-        <button type="button" class="pulsante pulsante-testo voce-pericolo" onclick="removeProject(this)">$label_elimina</button>
+        <button type="button" class="pulsante pulsante-icona" onclick="moveProject(this, -1)" aria-label="$label_on_top" title="$label_on_top">$icon_on_top</button>
+        <button type="button" class="pulsante pulsante-icona" onclick="moveProject(this, 1)" aria-label="$label_down" title="$label_down">$icon_down</button>
+        <button type="button" class="pulsante pulsante-testo voce-pericolo" onclick="removeProject(this)">$label_delete</button>
       </div>
     </div>
-    <label class="campo-etichettato"><span class="etichetta">$label_nome</span>
-      <input type="text" class="progetto-nome" value="$nome" maxlength="120"></label>
+    <label class="campo-etichettato"><span class="etichetta">$label_name</span>
+      <input type="text" class="progetto-nome" value="$name" maxlength="120"></label>
     <div class="campo">
-      <label class="campo-etichettato"><span class="etichetta">$label_descrizione</span>
-        <textarea class="progetto-descrizione" rows="2" maxlength="240">$descrizione</textarea></label>
-      <p class="aiuto">$hint_descrizione</p>
+      <label class="campo-etichettato"><span class="etichetta">$label_description</span>
+        <textarea class="progetto-descrizione" rows="2" maxlength="240">$description</textarea></label>
+      <p class="aiuto">$hint_description</p>
     </div>
-    <label class="campo-etichettato"><span class="etichetta">$label_descrizione_en</span>
-      <textarea class="progetto-descrizione-en" rows="2" maxlength="240">$descrizione_en</textarea></label>
+    <label class="campo-etichettato"><span class="etichetta">$label_description_en</span>
+      <textarea class="progetto-descrizione-en" rows="2" maxlength="240">$description_en</textarea></label>
     <div class="campo">
       <label class="campo-etichettato"><span class="etichetta">$label_link</span>
         <input type="url" class="progetto-link" value="$link" placeholder="https://"></label>
       <p class="aiuto">$hint_link</p>
     </div>
     <div class="campo">
-      <label class="campo-etichettato"><span class="etichetta">$label_immagine</span>
-        <input type="text" class="progetto-immagine" value="$immagine" oninput="updateProjectPreview(this.closest('.progetto-config'))"></label>
-      <p class="aiuto">$hint_immagine</p>
+      <label class="campo-etichettato"><span class="etichetta">$label_picture</span>
+        <input type="text" class="progetto-immagine" value="$picture" oninput="updateProjectPreview(this.closest('.progetto-config'))"></label>
+      <p class="aiuto">$hint_picture</p>
       <div class="azioni">
-        <button type="button" class="pulsante" onclick="chooseProjectImage(this)">$label_carica</button>
+        <button type="button" class="pulsante" onclick="chooseProjectImage(this)">$label_upload</button>
         <span class="hint progetto-stato" role="status"></span>
       </div>
       <img class="progetto-anteprima" alt="" hidden>

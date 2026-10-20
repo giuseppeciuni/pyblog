@@ -1,54 +1,54 @@
 <div class="editor-wrap">
 <div class="editor-testata">
-  <a class="sezione-occhiello torna-articoli" href="/admin">$label_torna_articoli</a>
-  <h1 class="pagina-titolo">$titolo_pagina_h1</h1>
+  <a class="sezione-occhiello torna-articoli" href="/admin">$label_back_to_articles</a>
+  <h1 class="pagina-titolo">$title_page_h1</h1>
 </div>
 <div class="editor-barra">
-  <nav class="tema-schede" aria-label="$label_schede_tema">
-$schede_tema
+  <nav class="tema-schede" aria-label="$label_cards_theme">
+$cards_theme
   </nav>
   <button type="button" class="pulsante" id="btn-dettagli" aria-expanded="false"
-          aria-controls="pannello-dettagli" onclick="toggleDetails()">$label_dettagli</button>
+          aria-controls="pannello-dettagli" onclick="toggleDetails()">$label_details</button>
 </div>
 
   <!-- Publishing. Every button is in the page; the state of the article,
        in data-stato, decides which ones show. admin.js changes it after
        publishing or taking back, without reloading. -->
-  <div class="pannello-pubblica" id="pannello-pubblica" data-stato="$stato">
+  <div class="pannello-pubblica" id="pannello-pubblica" data-stato="$state">
     <p class="stato-articolo">
       <span class="stato-pallino" aria-hidden="true"></span>
-      <span class="solo-bozza"><strong>$label_stato_bozza</strong> &middot; $hint_stato_bozza</span>
-      <span class="solo-pubblicato"><strong>$label_stato_pubblicato</strong> &middot;
-        <a id="link-online" href="$url_online" target="_blank" rel="noopener">$label_vedi_online<span class="icona-esterna" aria-hidden="true"></span></a></span>
-      <span class="solo-programmato"><strong>$label_stato_programmato</strong> &middot;
-        <span id="programmato-quando">$esce_il</span></span>
+      <span class="solo-bozza"><strong>$label_state_draft</strong> &middot; $hint_state_draft</span>
+      <span class="solo-pubblicato"><strong>$label_state_published</strong> &middot;
+        <a id="link-online" href="$url_online" target="_blank" rel="noopener">$label_see_online<span class="icona-esterna" aria-hidden="true"></span></a></span>
+      <span class="solo-programmato"><strong>$label_state_scheduled</strong> &middot;
+        <span id="programmato-quando">$goes_out_the</span></span>
     </p>
     <button type="button" id="btn-pubblica" class="pulsante pulsante-primario pulsante-largo solo-bozza"
-            title="$tip_pubblica" onclick="publishArticle(this)">$label_pubblica</button>
+            title="$tip_publish" onclick="publishArticle(this)">$label_publish</button>
     <button type="button" id="btn-aggiorna" class="pulsante pulsante-primario pulsante-largo solo-pubblicato"
-            title="$tip_aggiorna" onclick="updateArticle(this)">$label_aggiorna</button>
+            title="$tip_update" onclick="updateArticle(this)">$label_update</button>
     <button type="button" id="btn-salva-programmato" class="pulsante pulsante-primario pulsante-largo solo-programmato"
-            onclick="saveScheduled(this)">$label_salva_modifiche</button>
+            onclick="saveScheduled(this)">$label_save_changes_made</button>
     <div class="riga-azioni">
       <button type="button" id="btn-salva-bozza" class="pulsante solo-bozza"
-              title="$tip_save_draft" onclick="saveDraft(this)">$label_salva_bozza</button>
+              title="$tip_save_draft" onclick="saveDraft(this)">$label_save_draft</button>
       <button type="button" id="btn-anteprima" class="pulsante"
-              title="$tip_anteprima" onclick="previewArticle()">$label_anteprima<span class="icona-esterna" aria-hidden="true"></span></button>
+              title="$tip_preview_page" onclick="previewArticle()">$label_preview<span class="icona-esterna" aria-hidden="true"></span></button>
     </div>
-$spunta_avvisa
+$tick_notify
     <span id="autosave-status" class="pb-autosave" role="status" aria-live="polite"></span>
     <div class="azioni-secondarie">
-      <button type="button" class="pulsante pulsante-testo pulsante-piccolo link-azione solo-pubblicato" onclick="unpublishArticle(this)">$label_ritira</button>
-      <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-programmato" onclick="publishNow(this)">$label_pubblica_ora</button>
-      <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-programmato" onclick="cancelSchedule(this)">$label_programma_annulla</button>
+      <button type="button" class="pulsante pulsante-testo pulsante-piccolo link-azione solo-pubblicato" onclick="unpublishArticle(this)">$label_withdraw</button>
+      <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-programmato" onclick="publishNow(this)">$label_publish_now</button>
+      <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-programmato" onclick="cancelSchedule(this)">$label_schedule_cancel</button>
       <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-bozza" id="btn-programma"
-              aria-expanded="false" aria-controls="programma-modulo" onclick="toggleScheduleForm(this)">$label_programma</button>
+              aria-expanded="false" aria-controls="programma-modulo" onclick="toggleScheduleForm(this)">$label_schedule</button>
       <button type="button" class="pulsante pulsante-testo pulsante-piccolo solo-programmato" id="btn-programma-cambia"
-              aria-expanded="false" aria-controls="programma-modulo" onclick="toggleScheduleForm(this)">$label_programma_cambia</button>
+              aria-expanded="false" aria-controls="programma-modulo" onclick="toggleScheduleForm(this)">$label_schedule_change</button>
     </div>
     <details class="condividi-admin solo-pubblicato">
-      <summary>$label_condividi</summary>
-      <p class="hint">$hint_condividi</p>
+      <summary>$label_share</summary>
+      <p class="hint">$hint_share</p>
       <div class="condividi-admin-link">
         <a id="share-linkedin" class="pulsante pulsante-piccolo" target="_blank" rel="noopener" href="#">LinkedIn</a>
         <a id="share-hn" class="pulsante pulsante-piccolo" target="_blank" rel="noopener" href="#">Hacker News</a>
@@ -57,11 +57,11 @@ $spunta_avvisa
       </div>
     </details>
     <div class="programma-modulo" id="programma-modulo" hidden>
-      <label for="publish_at">$label_programma_quando</label>
+      <label for="publish_at">$label_schedule_when</label>
       <input type="datetime-local" id="publish_at" aria-describedby="publish_at-aiuto">
-      <p class="hint" id="publish_at-aiuto">$hint_programma</p>
+      <p class="hint" id="publish_at-aiuto">$hint_schedule</p>
       <button type="button" class="pulsante pulsante-primario pulsante-piccolo" id="btn-programma-conferma"
-              onclick="scheduleArticle(this)">$label_programma_conferma</button>
+              onclick="scheduleArticle(this)">$label_schedule_confirm</button>
     </div>
   </div>
 
@@ -70,28 +70,28 @@ $spunta_avvisa
   <!-- MAIN COLUMN: article title and content -->
   <div class="editor-main">
     <div id="campi-lab" class="card-lab" $lab_hidden>
-      <p class="card-lab-titolo">$label_lab_progetto</p>
+      <p class="card-lab-titolo">$label_lab_project</p>
       <label for="repo_url">$label_lab_repo</label>
-      <input type="url" id="repo_url" value="$valore_repo" placeholder="https://github.com/...">
+      <input type="url" id="repo_url" value="$value_repo" placeholder="https://github.com/...">
       <label for="stack">$label_lab_stack</label>
-      <input type="text" id="stack" value="$valore_stack" placeholder="Python 3.12, LiteLLM">
-      <label for="run_steps">$label_lab_comandi</label>
+      <input type="text" id="stack" value="$value_stack" placeholder="Python 3.12, LiteLLM">
+      <label for="run_steps">$label_lab_commands</label>
       <textarea id="run_steps" rows="3" spellcheck="false"
-                placeholder="git clone https://github.com/...&#10;cd progetto&#10;python3 main.py">$valore_comandi</textarea>
+                placeholder="git clone https://github.com/...&#10;cd progetto&#10;python3 main.py">$value_commands</textarea>
     </div>
 
-    <label for="title">$label_titolo</label>
-    <input type="text" id="title" value="$valore_titolo" placeholder="">
+    <label for="title">$label_title</label>
+    <input type="text" id="title" value="$value_title" placeholder="">
 
     <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
-      <label class="mb-0" id="etichetta-contenuto">$label_contenuto</label>
+      <label class="mb-0" id="etichetta-contenuto">$label_content</label>
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_import_docx"
                 id="btn-importa-docx" onclick="document.getElementById('file-docx').click()">
           <svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
-          $label_importa_word
+          $label_import_from_word
         </button>
-        <input type="file" id="file-docx" accept=".docx" style="display:none" aria-label="$label_importa_word"
+        <input type="file" id="file-docx" accept=".docx" style="display:none" aria-label="$label_import_from_word"
                onchange="importDocx()">
         <span id="docx-status" class="hint"></span>
       </div>
@@ -99,16 +99,16 @@ $spunta_avvisa
     <p class="hint" style="margin:0.2rem 0 0">$hint_docx</p>
     <div id="editor" aria-labelledby="etichetta-contenuto"></div>
 
-    <div class="video-bar" role="group" aria-label="$label_inserisci">
-      <span class="video-bar-titolo" aria-hidden="true">$label_inserisci</span>
-      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_image" onclick="document.getElementById('file-image').click()">$label_carica_immagine</button>
+    <div class="video-bar" role="group" aria-label="$label_insert">
+      <span class="video-bar-titolo" aria-hidden="true">$label_insert</span>
+      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_image" onclick="document.getElementById('file-image').click()">$label_upload_picture</button>
       <button type="button" class="pulsante pulsante-piccolo" onclick="openMediaPicker('editor')">$label_from_library</button>
       <button type="button" class="pulsante pulsante-piccolo" id="image-details-button" hidden onclick="openImageDetails()">$label_image_details</button>
       <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_youtube" onclick="insertYoutube()">$label_youtube</button>
-      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_video" onclick="document.getElementById('file-video').click()">$label_carica_video</button>
-      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_table" onclick="insertTable()">$label_tabella</button>
-      <input type="file" id="file-image" aria-label="$label_carica_immagine" accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml, .svg, .png, .jpg, .jpeg, .gif, .webp" style="display:none" onchange="uploadImage()">
-      <input type="file" id="file-video" aria-label="$label_carica_video" accept="video/mp4, video/webm, .mp4, .webm" style="display:none" onchange="uploadVideo()">
+      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_video" onclick="document.getElementById('file-video').click()">$label_upload_video</button>
+      <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_table" onclick="insertTable()">$label_table</button>
+      <input type="file" id="file-image" aria-label="$label_upload_picture" accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml, .svg, .png, .jpg, .jpeg, .gif, .webp" style="display:none" onchange="uploadImage()">
+      <input type="file" id="file-video" aria-label="$label_upload_video" accept="video/mp4, video/webm, .mp4, .webm" style="display:none" onchange="uploadVideo()">
       <span id="upload-status" class="hint"></span>
       <p class="image-alt-status" id="image-alt-status" role="status" hidden>
         <span id="image-alt-status-text"></span>
@@ -120,40 +120,40 @@ $spunta_avvisa
   <!-- DETAILS: everything about the article that is not its text, in a
        panel that opens from the Details button. -->
   <div class="dettagli-velo" id="dettagli-velo" onclick="toggleDetails(false)"></div>
-  <aside class="editor-sidebar" id="pannello-dettagli" aria-label="$label_dettagli">
+  <aside class="editor-sidebar" id="pannello-dettagli" aria-label="$label_details">
     <div class="dettagli-testa">
-      <h2>$label_dettagli</h2>
+      <h2>$label_details</h2>
       <button type="button" class="pulsante pulsante-testo" id="btn-dettagli-chiudi"
-              onclick="toggleDetails(false)">$label_chiudi</button>
+              onclick="toggleDetails(false)">$label_close</button>
     </div>
 
     <!-- The fields of the article, gathered by what they are for. A closed
          group says what it holds, so the column reads at a glance. -->
     <details class="gruppo-editor" id="gruppo-dettagli" open>
-      <summary><span class="gruppo-titolo">$label_sezione_metadati</span><span class="gruppo-riepilogo" id="riepilogo-dettagli"></span></summary>
+      <summary><span class="gruppo-titolo">$label_section_of_metadata</span><span class="gruppo-riepilogo" id="riepilogo-dettagli"></span></summary>
       <div class="gruppo-corpo">
-    <label for="slug">$label_indirizzo</label>
-    <input type="text" id="slug" value="$valore_slug" placeholder="auto" aria-describedby="slug-aiuto">
-    <p class="hint" id="slug-aiuto">$hint_indirizzo</p>
+    <label for="slug">$label_address</label>
+    <input type="text" id="slug" value="$value_slug" placeholder="auto" aria-describedby="slug-aiuto">
+    <p class="hint" id="slug-aiuto">$hint_address</p>
 
     <label for="tags">$label_tag</label>
-    <input type="text" id="tags" value="$valore_tag" placeholder="AI, Python">
+    <input type="text" id="tags" value="$value_tag" placeholder="AI, Python">
 
-    <label for="image">$label_immagine</label>
-    <p class="hint" style="margin:0 0 0.3rem" id="image-aiuto">$hint_immagine</p>
+    <label for="image">$label_picture</label>
+    <p class="hint" style="margin:0 0 0.3rem" id="image-aiuto">$hint_picture</p>
     <div class="campo-copertina">
-      <input type="text" id="image" value="$valore_immagine"
-             placeholder="$ph_immagine" aria-describedby="image-aiuto" oninput="updateCoverPreview()">
+      <input type="text" id="image" value="$value_picture"
+             placeholder="$ph_picture" aria-describedby="image-aiuto" oninput="updateCoverPreview()">
       <div class="copertina-azioni">
         <button type="button" class="pulsante pulsante-piccolo"
-                onclick="document.getElementById('file-cover').click()">$label_carica_copertina</button>
+                onclick="document.getElementById('file-cover').click()">$label_upload_cover</button>
         <button type="button" class="pulsante pulsante-piccolo"
                 onclick="openMediaPicker('cover')">$label_from_library</button>
         <button type="button" class="pulsante pulsante-testo pulsante-pericolo pulsante-piccolo" id="btn-rimuovi-cover" hidden
-                onclick="removeCoverImage()">$label_rimuovi_copertina</button>
+                onclick="removeCoverImage()">$label_remove_cover</button>
         <span id="cover-status" class="hint"></span>
       </div>
-      <input type="file" id="file-cover" style="display:none" aria-label="$label_carica_copertina" onchange="uploadCoverImage()"
+      <input type="file" id="file-cover" style="display:none" aria-label="$label_upload_cover" onchange="uploadCoverImage()"
              accept="image/png, image/jpeg, image/gif, image/webp, .png, .jpg, .jpeg, .gif, .webp">
       <img id="cover-preview" class="copertina-anteprima" alt="" hidden>
     </div>
@@ -162,60 +162,60 @@ $spunta_avvisa
     </details>
 
     <details class="gruppo-editor" id="gruppo-serie">
-      <summary><span class="gruppo-titolo">$label_gruppo_serie</span><span class="gruppo-riepilogo" id="riepilogo-serie"></span></summary>
+      <summary><span class="gruppo-titolo">$label_group_series</span><span class="gruppo-riepilogo" id="riepilogo-serie"></span></summary>
       <div class="gruppo-corpo">
-    <label for="series">$label_serie</label>
+    <label for="series">$label_series</label>
     <div class="riga-serie">
-      <input type="text" id="series" value="$valore_serie" list="serie-esistenti" aria-describedby="serie-aiuto">
-      <input type="number" id="series_number" value="$valore_serie_numero" min="1" step="1"
-             aria-label="$label_serie_numero" placeholder="$label_serie_numero">
+      <input type="text" id="series" value="$value_series" list="serie-esistenti" aria-describedby="serie-aiuto">
+      <input type="number" id="series_number" value="$value_series_number" min="1" step="1"
+             aria-label="$label_series_number" placeholder="$label_series_number">
     </div>
-    <datalist id="serie-esistenti">$serie_esistenti</datalist>
-    <p class="hint" id="serie-aiuto">$hint_serie</p>
+    <datalist id="serie-esistenti">$series_existing</datalist>
+    <p class="hint" id="serie-aiuto">$hint_series</p>
 
-    <label for="kind">$label_tipo</label>
+    <label for="kind">$label_kind</label>
     <select id="kind" class="campo-input" aria-describedby="tipo-aiuto" onchange="toggleKindFields()">
-      <option value="" $sel_tipo_articolo>$label_tipo_articolo</option>
-      <option value="practical" $sel_tipo_pratica>$label_tipo_pratica</option>
-      <option value="lab" $sel_tipo_lab>$label_tipo_lab</option>
+      <option value="" $sel_kind_article>$label_kind_article</option>
+      <option value="practical" $sel_kind_practice>$label_kind_practice</option>
+      <option value="lab" $sel_kind_lab>$label_kind_lab</option>
     </select>
-    <p class="hint" id="tipo-aiuto">$hint_tipo</p>
-    <div id="campi-riferimento" $riferimento_hidden>
-      <label for="lab_of">$label_lab_di</label>
-      <select id="lab_of" class="campo-input">$opzioni_lab_di</select>
+    <p class="hint" id="tipo-aiuto">$hint_kind</p>
+    <div id="campi-riferimento" $reference_hidden>
+      <label for="lab_of">$label_lab_of</label>
+      <select id="lab_of" class="campo-input">$options_lab_of</select>
     </div>
       </div>
     </details>
 
     <details class="gruppo-editor" id="gruppo-anteprima">
-      <summary><span class="gruppo-titolo">$label_gruppo_anteprima</span><span class="gruppo-riepilogo" id="riepilogo-anteprima"></span></summary>
+      <summary><span class="gruppo-titolo">$label_group_preview</span><span class="gruppo-riepilogo" id="riepilogo-anteprima"></span></summary>
       <div class="gruppo-corpo">
     <div class="card-campo">
-      <h2><label for="reader_preview">$label_anteprima_lettori</label></h2>
-      <p class="hint" style="margin:0 0 0.3rem" id="reader_preview-aiuto">$hint_anteprima</p>
-      <textarea id="reader_preview" rows="6" maxlength="900" aria-describedby="reader_preview-aiuto" oninput="updatePreviewCounter()">$valore_anteprima</textarea>
+      <h2><label for="reader_preview">$label_preview_readers</label></h2>
+      <p class="hint" style="margin:0 0 0.3rem" id="reader_preview-aiuto">$hint_preview</p>
+      <textarea id="reader_preview" rows="6" maxlength="900" aria-describedby="reader_preview-aiuto" oninput="updatePreviewCounter()">$value_preview</textarea>
       <div class="d-flex justify-content-between align-items-center" style="margin-top:0.2rem">
         <span class="hint" id="preview-counter"></span>
-        <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="generatePreview(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_genera_anteprima</button>
+        <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="generatePreview(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_generate_preview</button>
       </div>
       <span id="preview-status" class="hint"></span>
     </div>
 
     <div class="card-campo">
-      <h2><label for="description">$label_descrizione_seo</label></h2>
-      <p class="hint" style="margin:0 0 0.3rem" id="description-aiuto">$hint_descrizione</p>
-      <textarea id="description" rows="6" maxlength="320" aria-describedby="description-aiuto" oninput="updateDescriptionCounter()">$valore_descrizione</textarea>
+      <h2><label for="description">$label_description_seo</label></h2>
+      <p class="hint" style="margin:0 0 0.3rem" id="description-aiuto">$hint_description</p>
+      <textarea id="description" rows="6" maxlength="320" aria-describedby="description-aiuto" oninput="updateDescriptionCounter()">$value_description</textarea>
       <div class="d-flex justify-content-between align-items-center" style="margin-top:0.2rem">
         <span class="hint" id="description-counter"></span>
-        <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="suggestDescription(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_suggerisci</button>
+        <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="suggestDescription(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_suggest</button>
       </div>
       <span id="description-status" class="hint"></span>
     </div>
 
     <div class="card-campo">
-      <h2>$label_analisi_seo</h2>
-      <p class="hint" style="margin:0 0 0.3rem">$hint_analisi_seo</p>
-      <button type="button" id="seo-analyze-btn" class="pulsante pulsante-ai pulsante-piccolo" onclick="analyzeSeo()"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_analizza</button>
+      <h2>$label_analysis_seo</h2>
+      <p class="hint" style="margin:0 0 0.3rem">$hint_analysis_seo</p>
+      <button type="button" id="seo-analyze-btn" class="pulsante pulsante-ai pulsante-piccolo" onclick="analyzeSeo()"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_analyze</button>
       <span id="seo-status" class="hint"></span>
       <div id="seo-results" style="display:none"></div>
     </div>
@@ -224,40 +224,40 @@ $spunta_avvisa
     </details>
 
     <details class="gruppo-editor" id="gruppo-inglese">
-      <summary><span class="gruppo-titolo">$label_versione_inglese</span><span class="gruppo-riepilogo" id="riepilogo-inglese"></span></summary>
+      <summary><span class="gruppo-titolo">$label_version_english</span><span class="gruppo-riepilogo" id="riepilogo-inglese"></span></summary>
       <div class="gruppo-corpo">
     <div class="translation-section">
       <label class="riga-flag">
         <input type="checkbox" id="translation_authorized" onchange="updateTranslationSection()">
-        $label_autorizza
+        $label_authorize
       </label>
 
       <div id="translation-block" style="display:none">
         <div class="translation-bar">
-          <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="translateArticle(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_traduci</button>
+          <button type="button" class="pulsante pulsante-ai pulsante-piccolo" onclick="translateArticle(this)"><svg class="icona" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>$label_translate</button>
           <span id="translation-status" class="hint"></span>
         </div>
 
-        <label for="title_en">$label_titolo ($codice_traduzione)</label>
+        <label for="title_en">$label_title ($code_translation_of)</label>
         <input type="text" id="title_en">
 
-        <label for="description_en">$label_descrizione_seo ($codice_traduzione)</label>
+        <label for="description_en">$label_description_seo ($code_translation_of)</label>
         <input type="text" id="description_en" maxlength="160">
 
-        <label for="preview_en">$label_anteprima_lettori ($codice_traduzione)</label>
+        <label for="preview_en">$label_preview_readers ($code_translation_of)</label>
         <textarea id="preview_en" rows="3" maxlength="900"></textarea>
 
-        <label id="etichetta-contenuto-en">$label_contenuto ($codice_traduzione)</label>
+        <label id="etichetta-contenuto-en">$label_content ($code_translation_of)</label>
         <div id="editor-en" aria-labelledby="etichetta-contenuto-en"></div>
 
         <div class="translation-bar" style="margin-top:1rem">
-          <button type="button" class="pulsante pulsante-piccolo" onclick="previewTranslation()">$label_anteprima_en<span class="icona-esterna" aria-hidden="true"></span></button>
-          <span class="hint">$hint_anteprima_en</span>
+          <button type="button" class="pulsante pulsante-piccolo" onclick="previewTranslation()">$label_preview_en<span class="icona-esterna" aria-hidden="true"></span></button>
+          <span class="hint">$hint_preview_en</span>
         </div>
 
         <label class="riga-flag" style="margin-top:1rem">
           <input type="checkbox" id="translation_confirmed">
-          $label_conferma_traduzione
+          $label_confirm_translation_of
         </label>
       </div>
     </div>
@@ -266,46 +266,46 @@ $spunta_avvisa
     </details>
 
     <details class="gruppo-editor" id="gruppo-avanzate">
-      <summary><span class="gruppo-titolo">$label_gruppo_avanzate</span><span class="gruppo-riepilogo" id="riepilogo-avanzate">$riepilogo_avanzate</span></summary>
+      <summary><span class="gruppo-titolo">$label_group_advanced</span><span class="gruppo-riepilogo" id="riepilogo-avanzate">$overview_advanced</span></summary>
       <div class="gruppo-corpo">
-    <label for="original_url">$label_originale</label>
-    <input type="url" id="original_url" value="$valore_originale" placeholder="https://..."
+    <label for="original_url">$label_original</label>
+    <input type="url" id="original_url" value="$value_original" placeholder="https://..."
            aria-describedby="originale-aiuto">
-    <p class="hint" id="originale-aiuto">$hint_originale</p>
+    <p class="hint" id="originale-aiuto">$hint_original</p>
     <div class="campo-spunta">
-      <input type="checkbox" id="original_canonical" $originale_canonico_checked
+      <input type="checkbox" id="original_canonical" $original_canonical_checked
              aria-describedby="originale-canonico-aiuto">
-      <div><label for="original_canonical">$label_originale_canonico</label>
-        <p class="hint" id="originale-canonico-aiuto">$hint_originale_canonico</p></div>
+      <div><label for="original_canonical">$label_original_canonical</label>
+        <p class="hint" id="originale-canonico-aiuto">$hint_original_canonical</p></div>
     </div>
 
     <div class="card-campo">
-      <h2>$label_codice_titolo</h2>
-      <p class="hint" style="margin:0 0 0.3rem">$hint_codice</p>
-      <div id="lista-codice-articolo">$codice_articolo_html</div>
+      <h2>$label_code_title</h2>
+      <p class="hint" style="margin:0 0 0.3rem">$hint_code</p>
+      <div id="lista-codice-articolo">$code_article_html</div>
 
-      <h3 class="codice-proprio-titolo">$label_codice_proprio</h3>
-      <p class="hint" style="margin:0 0 0.3rem">$hint_codice_proprio</p>
+      <h3 class="codice-proprio-titolo">$label_code_own</h3>
+      <p class="hint" style="margin:0 0 0.3rem">$hint_code_own</p>
       <div id="lista-codice-proprio" class="lista-codice">
-$codice_proprio_html
+$code_own_html
       </div>
-      <button type="button" class="pulsante pulsante-piccolo" onclick="addOwnCode()">$label_codice_proprio_aggiungi</button>
+      <button type="button" class="pulsante pulsante-piccolo" onclick="addOwnCode()">$label_code_own_add</button>
       <!-- The blank card of the button: inert until cloned, see the Settings. -->
       <template id="codice-proprio-modello">
-$codice_proprio_modello
+$code_own_template
       </template>
     </div>
 
     <div class="versioni-riga">
       <button type="button" class="pulsante pulsante-piccolo" id="btn-versioni" onclick="openVersions()"
-              aria-describedby="versioni-aiuto"$versioni_nascosto>$label_versioni</button>
-      <p class="hint" id="versioni-aiuto"$versioni_nascosto>$hint_versioni</p>
+              aria-describedby="versioni-aiuto"$versions_hidden_m>$label_versions</button>
+      <p class="hint" id="versioni-aiuto"$versions_hidden_m>$hint_versions</p>
     </div>
 
       </div>
     </details>
 
-    $bottone_elimina
+    $button_el_delete
   </aside>
 </div>
 </div>

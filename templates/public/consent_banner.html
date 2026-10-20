@@ -1,17 +1,17 @@
   <div class="consenso" id="pb-consenso" role="dialog" aria-modal="false" aria-labelledby="pb-consenso-titolo" hidden>
     <div class="consenso-interno">
-      <button type="button" class="pulsante pulsante-icona pulsante-testo consenso-chiudi" data-consenso="rifiuta" aria-label="$chiudi" title="$chiudi">&times;</button>
-      <p class="consenso-titolo" id="pb-consenso-titolo">$titolo</p>
-      <p class="consenso-testo">$testo$privacy</p>
+      <button type="button" class="pulsante pulsante-icona pulsante-testo consenso-chiudi" data-consenso="rifiuta" aria-label="$close" title="$close">&times;</button>
+      <p class="consenso-titolo" id="pb-consenso-titolo">$title</p>
+      <p class="consenso-testo">$text$privacy</p>
       <div class="consenso-scelte" id="pb-consenso-scelte" hidden>
-        <label class="consenso-voce"><input type="checkbox" checked disabled> <span><strong>$label_necessari</strong> $hint_necessari</span></label>
-$voci
+        <label class="consenso-voce"><input type="checkbox" checked disabled> <span><strong>$label_needed_pl</strong> $hint_needed_pl</span></label>
+$entries
       </div>
       <div class="consenso-pulsanti">
-        <button type="button" class="pulsante pulsante-primario consenso-pulsante" data-consenso="rifiuta">$rifiuta</button>
-        <button type="button" class="pulsante consenso-pulsante" data-consenso="personalizza">$personalizza</button>
-        <button type="button" class="pulsante consenso-pulsante" data-consenso="salva" hidden>$salva</button>
-        <button type="button" class="pulsante pulsante-primario consenso-pulsante consenso-primario" data-consenso="accetta">$accetta</button>
+        <button type="button" class="pulsante pulsante-primario consenso-pulsante" data-consenso="rifiuta">$refuse</button>
+        <button type="button" class="pulsante consenso-pulsante" data-consenso="personalizza">$customize</button>
+        <button type="button" class="pulsante consenso-pulsante" data-consenso="salva" hidden>$save</button>
+        <button type="button" class="pulsante pulsante-primario consenso-pulsante consenso-primario" data-consenso="accetta">$accept</button>
       </div>
     </div>
   </div>
