@@ -18,13 +18,32 @@ every setting, every `config.json` key) is in the **[MANUAL.en.md](MANUAL.en.md)
 
 ```
   Readers  ──https──▶  nginx  ──▶  static pages in /opt/pyblog/output
-  You      ──https──▶  nginx  ──▶  PyBlog (Python) on 127.0.0.1:8000  →  /admin
+  You      ──https──▶  nginx  ──▶  PyBlog (Python) on 127.0.0.1:8000  →  the administration
 ```
 
 - Readers receive ready-made HTML pages, served by nginx: fast, and no
   program for anyone to attack.
-- You log into `https://yourdomain.com/admin` with your password, write and
-  save: PyBlog regenerates the pages and nginx shows them right away.
+- You log into the administration with your password, write and save:
+  PyBlog regenerates the pages and nginx shows them right away.
+
+**One address or two: choose now**
+
+The administration can live in one of two places. The tutorial follows both;
+where they differ, the steps say **Variant A** or **Variant B**.
+
+| | Variant A: one address | Variant B: administration on its own address |
+|---|---|---|
+| Public site | `https://yourdomain.com` | `https://yourdomain.com` |
+| Administration | `https://yourdomain.com/admin` | `https://admin.yourdomain.com` |
+| DNS records | `@` and `www` | `@`, `www` and `admin` |
+| nginx file | `nginx.conf.example` | `nginx.separate-admin.conf.example` |
+| Good for | starting quickly, a site with no outside code | a site with analytics, ads or chat widgets (**recommended**) |
+
+Why Variant B is safer: the code of outside services on the public pages
+(Google Analytics, AdSense, a chat widget) runs on the site's address. If
+the administration answers on that same address, that code could read what
+you see while logged in, API keys included. On two addresses the browser
+keeps them apart. You can start with A and move to B later (step 7.4).
 
 **What you need**
 
@@ -64,16 +83,18 @@ records:
 |---|---|---|
 | A | `@` (that is `yourdomain.com`) | the server's IP address |
 | A | `www` | the server's IP address |
+| A | `admin` (**Variant B only**) | the server's IP address |
 
-If the server also has an IPv6 address, add two identical `AAAA` records.
+If the server also has an IPv6 address, add the same records as `AAAA`.
 
 **Check** (it can take a few minutes, sometimes a few hours):
 
 ```bash
 $ getent hosts yourdomain.com www.yourdomain.com
+$ getent hosts admin.yourdomain.com     # Variant B only
 ```
 
-Your server's IP must appear, twice.
+Your server's IP must appear for every name.
 
 ### 1.3 Turn on the firewall
 
@@ -196,10 +217,10 @@ with `sudo journalctl -u pyblog -n 50 --no-pager`.
 
 ## Part 4 — Publish the site with nginx
 
-### 4.1 Install PyBlog's configuration
+The project contains both nginx configurations, ready to use: they only need
+your domain and the site's folder. Follow **4.1 or 4.2**, not both.
 
-The project contains a ready-made nginx configuration: it only needs your
-domain and the site's folder.
+### 4.1 Variant A: one address
 
 ```bash
 $ sudo cp /opt/pyblog/nginx.conf.example /etc/nginx/sites-available/pyblog
@@ -211,12 +232,39 @@ $ sudo nginx -t && sudo systemctl reload nginx
 ```
 
 What this configuration does: it serves the pages of `output/` directly,
-passes only the administration routes (`/admin`, `/login`, `/config`...) to
-PyBlog, allows one login attempt per second and shows the site's 404 page
-for addresses that do not exist.
+passes only the administration routes (`/admin`, `/login`, `/config`,
+`/edit`, `/media-library`...) to PyBlog, allows one login attempt per second and
+shows the site's 404 page for addresses that do not exist.
 
-**Check:** `nginx -t` says `syntax is ok` and `test is successful`. Open
-`http://yourdomain.com` in the browser: you see the example site.
+### 4.2 Variant B: the administration at admin.yourdomain.com
+
+```bash
+$ sudo cp /opt/pyblog/nginx.separate-admin.conf.example /etc/nginx/sites-available/pyblog
+$ sudo sed -i 's/mysite\.com/yourdomain.com/g; s#/path/to/pyblog/output#/opt/pyblog/output#' \
+      /etc/nginx/sites-available/pyblog
+$ sudo ln -s /etc/nginx/sites-available/pyblog /etc/nginx/sites-enabled/pyblog
+$ sudo rm -f /etc/nginx/sites-enabled/default
+$ sudo nginx -t && sudo systemctl reload nginx
+```
+
+The same `sed` also turns `admin.mysite.com` into `admin.yourdomain.com`.
+The file has two blocks:
+
+- **the public site** (`yourdomain.com`, `www.yourdomain.com`): only the
+  static pages and the newsletter forms. The old addresses of the
+  administration (`/admin`, `/login`...) are sent on to the new one;
+- **the administration** (`admin.yourdomain.com`): everything goes to
+  PyBlog, with the limit on login attempts. There is no list of routes to
+  keep up to date: a new page of the administration works without touching
+  nginx.
+
+The separation is switched on in step 6.2, from the Settings. Until then the
+administration answers on both addresses, so the order of the steps cannot
+lock you out.
+
+**Check (both variants):** `nginx -t` says `syntax is ok` and
+`test is successful`. Open `http://yourdomain.com` in the browser: you see
+the example site.
 
 ---
 
@@ -224,13 +272,26 @@ for addresses that do not exist.
 
 Your password travels from the administration: HTTPS is a must.
 
+**Variant A:**
+
 ```bash
 $ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+```
+
+**Variant B** (one certificate for all three names):
+
+```bash
+$ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com -d admin.yourdomain.com
 ```
 
 Certbot asks for an email (for expiry notices), gets Let's Encrypt's free
 certificate, adds HTTPS to the nginx configuration and the automatic switch
 from `http` to `https`. Renewal is automatic.
+
+> **Behind Cloudflare** (orange cloud) certbot cannot validate the domain
+> this way. Use a Cloudflare *Origin Certificate* instead and point
+> `ssl_certificate` / `ssl_certificate_key` at it in both server blocks; set
+> the SSL mode to *Full (strict)*.
 
 **Check:**
 
@@ -247,7 +308,9 @@ must end with `Congratulations, all simulated renewals succeeded`. Then open
 
 ### 6.1 Log in
 
-Open **`https://yourdomain.com/admin`** and enter the password of step 2.3.
+Open **`https://yourdomain.com/admin`** (Variant A) or
+**`https://admin.yourdomain.com/admin`** (Variant B) and enter the password
+of step 2.3.
 On the left is the menu: Articles, New article, Settings, and at the bottom
 the tools and your account. On a phone the menu is a bar at the bottom of
 the screen. The administration speaks Italian or English: the language item
@@ -267,6 +330,20 @@ Go to **Settings → Site and author** and fill in:
 
 Click **Save and update the site** at the bottom of the page.
 
+**Variant B only — switch on the separate address.** Still in **Site and
+author**, write `https://admin.yourdomain.com` in **Address of the
+administration** and save. Before saving, PyBlog checks that the address
+really leads to it (if nginx or the certificate is not ready yet, it says so
+and saves nothing); then it takes you to the new address, where you log in
+again. From now on:
+
+- `https://yourdomain.com/admin` sends you on to `https://admin.yourdomain.com`;
+- the administration's address does not show the site's pages.
+
+If you ever lock yourself out, the administration always answers on the
+server itself: from your computer `ssh -L 8000:127.0.0.1:8000 user@SERVER-IP`,
+then open `http://localhost:8000/admin` and empty the field.
+
 ### 6.3 The first page
 
 - **Homepage**: write the introduction with the visual editor and choose
@@ -282,8 +359,15 @@ unsaved changes, the browser asks you first.
 
 1. **New article** in the menu.
 2. Write the title and the text. For a Word document that is already
-   written, use **Import from Word (.docx)**.
-3. In the right-hand column: **Save draft** to keep it to yourself,
+   written, use **Import from Word (.docx)**: headings, lists, tables and
+   pictures arrive in the editor, and the editor shows the same spacing the
+   page will have.
+3. Pictures: click one to resize it, align it, or give it an **alternative
+   text and caption** (the button appears on the picture). The alternative
+   text is what Google Images reads.
+4. **Details** opens the panel with the description, tags, series, cover and
+   translation. **Widen** gives the text the whole width of the screen.
+5. In the strip at the top: **Save draft** to keep it to yourself,
    **Preview** to see it as it is, **Publish** to put it online.
 
 **Check:** open `https://yourdomain.com`: the article is there, at the top of
@@ -318,7 +402,7 @@ need an SMTP account (your mail provider's, or Brevo, Mailgun, Amazon SES).
 In **Settings → Newsletter** tick **Turn on the newsletter**, fill in
 **Sending the emails**, click **Send a test email** and save. Put the SMTP
 password in `/etc/pyblog.env` as `PYBLOG_SMTP_PASSWORD=...` (then `sudo
-systemctl restart pyblog`). The nginx configuration of step 4.1 already
+systemctl restart pyblog`). The nginx configuration of step 4.1 or 4.2 already
 passes the form to PyBlog. All the details in chapter 8b of the manual.
 
 ---
@@ -328,7 +412,10 @@ passes the form to PyBlog. All the details in chapter 8b of the manual.
 ### 7.1 Backups
 
 From the menu, **Download the backup** gives you a `.zip` file with
-articles, images and settings. For an automatic backup every night on the
+articles, images and settings; **Restore a backup** puts one back (it checks
+the whole file first and saves the current state, so you can change your
+mind). PyBlog also keeps a few automatic backups, made before every
+restore and every update. For an automatic backup every night on the
 server:
 
 ```bash
@@ -357,6 +444,13 @@ $ sudo systemctl start pyblog
 
 ### 7.2 Updating PyBlog
 
+**From the menu (easiest):** **Updates** shows the installed version and
+what is new. **Update now** saves an automatic backup, downloads the new
+code, tries it in a separate process (and goes back by itself if it does
+not start), restarts PyBlog and rebuilds the site. Then you log in again.
+
+**By hand:**
+
 ```bash
 $ cd /opt/pyblog
 $ sudo -u pyblog git pull
@@ -364,9 +458,14 @@ $ sudo systemctl restart pyblog
 $ sudo -u pyblog python3 pyblog.py build
 ```
 
+All three commands, in this order. **The restart is not optional:** PyBlog
+keeps the pages of the administration in memory, while the CSS is read from
+disk. After a `git pull` without a restart the administration mixes old
+pages with the new style and looks completely wrong.
+
 Articles, settings and password are left untouched. If a new version changes
-`nginx.conf.example`, compare it with your file in
-`/etc/nginx/sites-available/pyblog` (the CHANGELOG says so).
+`nginx.conf.example` or `nginx.separate-admin.conf.example`, compare it with
+your file in `/etc/nginx/sites-available/pyblog` (the CHANGELOG says so).
 
 ### 7.3 If something goes wrong
 
@@ -374,12 +473,29 @@ Articles, settings and password are left untouched. If a new version changes
 |---|---|---|
 | **502 Bad Gateway** on `/admin` | PyBlog is off | `sudo systemctl restart pyblog`, then `sudo journalctl -u pyblog -n 50 --no-pager` |
 | **403 Forbidden** on the site | nginx cannot read `output/` | `sudo chmod 755 /opt/pyblog /opt/pyblog/output` |
-| The administration with no colours or buttons | nginx does not pass `/admin-static/` to PyBlog | redo step 4.1 with the new configuration |
+| The administration with no colours or buttons | nginx does not pass `/admin-static/` to PyBlog | redo step 4.1 or 4.2 with the new configuration |
+| After an update the administration looks completely wrong | PyBlog was not restarted after `git pull` | `sudo systemctl restart pyblog` |
+| Variant B: "does not answer as PyBlog" when saving the address | nginx or the certificate for `admin.` is not ready | check steps 1.2, 4.2 and 5, then save again |
+| Variant B: locked out of the administration | the address saved is wrong | `ssh -L 8000:127.0.0.1:8000 user@SERVER-IP`, open `http://localhost:8000/admin`, empty **Address of the administration** |
 | An administration page answers 404 | a new route is missing from the nginx configuration | compare `/etc/nginx/sites-available/pyblog` with `nginx.conf.example` |
 | Certbot fails | the domain does not point at the server yet | redo the check of step 1.2 and try again |
 | "Too many attempts" at login | protection against password guessing | wait: the lock affects only your address and grows with each mistake |
 | Forgotten password | — | `cd /opt/pyblog && sudo -u pyblog python3 pyblog.py password` |
 | Changes do not show | the browser shows the old copy | hard reload (Ctrl+F5); from the menu **Rebuild the site** recreates every page |
+
+### 7.4 Moving from one address to two
+
+Started with Variant A and now the site has analytics or ads? Moving costs
+five minutes and nothing is lost:
+
+1. DNS: add the `admin` record of step 1.2 and wait for the check.
+2. nginx: do step 4.2 (it replaces the file of 4.1).
+3. HTTPS: run the Variant B command of Part 5; certbot adds `admin.` to the
+   certificate.
+4. Settings: the Variant B paragraph of step 6.2.
+
+Old bookmarks of the administration keep working: they are sent on to the
+new address.
 
 ---
 

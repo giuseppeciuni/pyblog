@@ -24,9 +24,10 @@ PyBlog is a static blog generator written in **pure Python**, with not one exter
 - **Bilingual with AI translation.** Write in one language, translate to the other with one click (DeepL, Google, Claude, OpenAI or DeepSeek). The site becomes bilingual with a language switcher and a per-article English preview.
 - **Full SEO, including author E-E-A-T.** Meta description, canonical, hreflang, Open Graph, Twitter Card, JSON-LD with a full schema.org Person (photo, job title, `sameAs` profiles), sitemap.xml, robots.txt, RSS, and even llms.txt for AI crawlers.
 - **A complete reader experience out of the box.** Pagination, per-year archive, table of contents, related articles, prev/next navigation, author box, auto-generated favicon, dark mode that follows the system preference, keyboard-accessible focus states.
-- **Hardened by default.** PBKDF2 password hashing, CSRF tokens on every state-changing request, sessions that expire, login rate limiting, upload size limits with magic-byte and SVG checks, path-traversal protection, security headers with a Content-Security-Policy, editor bound to localhost, Secure session cookies behind HTTPS, API keys via environment variables. Docker and systemd examples included.
+- **Hardened by default.** The administration can live on an address of its own (`admin.yourdomain.com`), apart from the outside code of the public pages. PBKDF2 password hashing, CSRF tokens on every state-changing request, sessions that expire, login rate limiting, upload size limits with magic-byte and SVG checks, path-traversal protection, security headers with a Content-Security-Policy, editor bound to localhost, Secure session cookies behind HTTPS, API keys via environment variables. Docker and systemd examples included.
 - **SEO & backlink analysis with AI.** One click in the editor returns keywords, suggested tags, title variants, backlink anchor texts, internal links, FAQ for AI answer engines and article-specific advice.
 - **Built-in analytics.** Google Analytics 4 or self-hosted Umami (cookie-free), enabled from Settings; tutorial and docker-compose included.
+- **Runs itself.** A media library, one-click backup and restore from the menu, and one-click updates that test the new version before switching to it.
 - **Your data.** Articles are plain JSON files. No lock-in, one-click backup.
 
 ## Screenshots
@@ -64,6 +65,11 @@ python3 pyblog.py build      # generate the site
 python3 pyblog.py serve      # start the editor on localhost:8000
 ```
 
+**On a server**, follow [`TUTORIAL.en.md`](TUTORIAL.en.md): from an empty
+Ubuntu server to the site online with HTTPS, with nginx in either of its two
+setups — the administration at `yourdomain.com/admin`, or on its own address
+at `admin.yourdomain.com`.
+
 ## How it works
 
 ```
@@ -84,31 +90,44 @@ You write in the editor → PyBlog saves the article as JSON and regenerates all
 ```
 pyblog.py              entry point: argument parsing and dispatch only
 core/
-  config.py            CONFIG_DEFAULT, load/save of config.json, schema migration,
-                       language layout (main language at the root, the other in a subfolder)
-  i18n.py              UI_TRANSLATIONS and the T() lookup
+  config.py            CONFIG_DEFAULT, load/save of config.json, migration of old
+                       settings, language layout (main language at the root)
+  i18n.py              the interface texts in Italian and English, and T()
   render.py            the template engine (string.Template) with a cache,
                        plus esc() for HTML and js() for JavaScript
-  articles.py          slugs, articles on disk, uploads and their validation,
-                       Markdown import/export
+  articles.py          slugs, articles on disk, versions, uploads and their
+                       validation, Markdown import/export
+  images.py            image checks and optimisation on upload
+  media_library.py     the Media page: every uploaded file, where it is used
+  docx_import.py       Word .docx -> HTML, written on zipfile and xml.etree
   ai.py                translation (DeepL, Google, Claude, OpenAI, DeepSeek),
                        SEO description and reader preview, SEO analysis
+  newsletter.py        subscriptions with double opt-in, emails over SMTP
   auth.py              password (PBKDF2), sessions, CSRF tokens, login rate limiting
-  docx_import.py       Word .docx -> HTML, written on zipfile and xml.etree
   build.py             generation of the whole static site
+  settings_panel.py    the Settings panel: sections, groups, what is missing
+  backup.py            backups to download, restore, automatic backups
+  updates.py           checking for and installing a new version (git)
+  legacy_names.py      old class names, to migrate saved CSS selectors
   server.py            the HTTP handler and the administration pages
   bundle.py            builds the single-file distribution
 templates/
   base.html            the shared layout of every public page
-  public/*.html        article, homepage, archive, tag, card, 404, training rights
-  admin/*.html         admin layout, dashboard, editor, settings, login, password
+  public/*.html        article, homepage, archive, tag, series, labs, card pages,
+                       newsletter, 404...
+  admin/*.html         dashboard, editor, settings, media, restore, updates, login...
 static/
   common.css           design tokens shared by the public site and the admin area
   style.css            the public site
   admin.css            the administration area
-  site.js              theme and client-side search (copied into output/)
+  site.js              theme, search, consent banner (copied into output/)
   admin.js             the whole editor: Quill, uploads, tables, SEO panel, fetch calls
+tests/                 the test suite, one file per area (python3 tests/test_x.py)
 test_docx/             .docx fixtures and the tests for the Word importer
+nginx.conf.example     nginx with the administration at yourdomain.com/admin
+nginx.separate-admin.conf.example
+                       nginx with the administration at admin.yourdomain.com
+pyblog.service.example the systemd unit
 posts/                 the articles, one JSON file each
 output/                the generated static site (this is what nginx serves)
 config.json            the site configuration (created on the first save)
@@ -146,7 +165,7 @@ hand: it is there for scripts, for a first run, and for after you have edited
 ### The single-file version
 
 `python3 pyblog.py bundle` writes **`pyblog_standalone.py`**: one script with
-the nine modules, the 29 templates and the CSS/JavaScript embedded as strings,
+every module, every template and the CSS/JavaScript embedded as strings,
 for people who would rather download a single file than a folder. It supports
 every command except `bundle` itself, and produces byte-for-byte the same site.
 
@@ -172,19 +191,21 @@ A `.docx` is a ZIP of XML parts, so PyBlog reads it with `zipfile` and
 
 | Word | Becomes |
 |---|---|
-| Heading 1-4 (and the localised styles, e.g. `Titolo 2`) | `<h1>`-`<h4>` |
+| Headings (and the localised styles, e.g. `Titolo 2`) | `<h2>`-`<h6>`: the highest level used becomes `<h2>` |
 | Bold, italic, underline, strikethrough | `<strong> <em> <u> <s>` |
 | Formatting carried by a paragraph or character style | the same tags |
 | Centre / right / justified alignment | the editor's `ql-align-*` classes |
 | Bulleted and numbered lists, including one level of nesting | `<ul>` / `<ol>` |
 | Tables | `<table class="article-table">`, first row as header |
-| Embedded images (PNG, JPEG, GIF, WebP) | saved to `media/`, `<img loading="lazy">` |
+| Embedded images (PNG, JPEG, GIF, WebP) | saved to `media/`, `<img loading="lazy">`, with their alt text |
+| A caption under a picture ("Insert caption") | `<figure>` with `<figcaption>` |
 | Hyperlinks to http, https and mailto | `<a href="...">` |
-| Line breaks | `<br>` |
+| Line breaks inside a paragraph | separate lines, the way the editor writes them |
 | Tracked insertions | ordinary text |
 
-The first Heading 1 becomes the article title and is removed from the body,
-because it becomes the page's `<h1>`. If there is none, the file name is used.
+The document's Title (or its first Heading 1) becomes the article title and
+is removed from the body, because it becomes the page's `<h1>`. If there is
+none, the file name is used.
 
 **What is dropped, and why**
 
@@ -212,11 +233,14 @@ capped at 30 MB.
 - WYSIWYG editor (Quill): fonts, sizes, colors, alignment
 - Import from Word (.docx): headings, formatting, nested lists, tables with merged cells, images with alt text, footnotes, links, text boxes
 - Buttons that follow the state of the article: Save draft and Publish for a draft, Update and Unpublish for a published one; a preview of the real page that saves nothing; autosave of drafts, Ctrl+S, unsaved-changes warning
-- Resizable images by dragging the corners; PNG/JPEG/SVG upload
+- Resizable images by dragging the corners; PNG/JPEG/GIF/WebP/SVG upload, or pick one already in the Media library
+- Alternative text and caption for every picture (from Word too), with a count of the pictures still missing one
+- The editor grows with the text and keeps the page's spacing; **Widen** gives it the whole screen
 - Syntax-highlighted code blocks (Python, JS and more)
 - Tables (manual or paste from Word), YouTube videos and video upload
 - Strikethrough, subscript/superscript, checklists, indentation
 - Live preview with the real site styling
+- Series of articles and "labs" (a practical companion to an article, with its repository)
 
 **Publishing & SEO**
 - Static HTML: homepage, articles, tag pages, RSS feed
@@ -234,12 +258,17 @@ capped at 30 MB.
 
 **Administration**
 - Password-protected admin area (PBKDF2 hashing, expiring sessions, CSRF tokens); wrong passwords lock out only the address that types them
-- Dashboard with article list, status, search, edit, delete
+- Dashboard with article list, status, search, edit, delete; scheduled publishing and the version history of every article
+- Settings grouped in one panel that shows what is filled in and what is missing
+- Media library: every uploaded file, where it is used, and cleanup of the unused ones
 - Editor with a sidebar, responsive and mobile friendly
 - Advanced section to edit config.json directly, with validation
 - External code and ads: ready-made templates for Google Analytics, Tag Manager, AdSense, Google Ads, Meta Pixel and Clarity; ad positions (sidebar, start and middle of the article, between the articles); per-article choices and code of a single article's own; ads.txt
 - Built-in cookie banner: statistics and advertising start only after consent, with Google Consent Mode
-- One-click backup/export of all content as a ZIP
+- One-click backup/export of all content as a ZIP, and restore from the menu (the current state is saved first)
+- One-click updates: the new version is tried in a separate process before switching to it
+- The administration at an address of its own (`admin.yourdomain.com`), checked before it is saved
+- Newsletter: double opt-in subscriptions and an email for every new article
 
 **Reading**
 - Browser-side full-text search with snippets and highlighting
@@ -265,13 +294,26 @@ Only **Python 3.8 or higher**. No `pip install`, no virtualenv.
 
 The documentation is in two files, in English and in Italian:
 
-- **[`TUTORIAL.en.md`](TUTORIAL.en.md)** ([italiano](TUTORIAL.md)) — step by step, from an empty Ubuntu server to the site online with HTTPS: install, configure, start, first article, backups and updates
+- **[`TUTORIAL.en.md`](TUTORIAL.en.md)** ([italiano](TUTORIAL.md)) — step by step, from an empty Ubuntu server to the site online with HTTPS: install, nginx with the administration at `/admin` or at `admin.yourdomain.com`, first article, backups and updates
 - **[`MANUAL.en.md`](MANUAL.en.md)** ([italiano](MANUALE.md)) — the complete manual: every way to install it, every page of the administration, every setting and every `config.json` key, external code, cookie banner, comments, analytics, translation, import/export, security and troubleshooting
 - **`config.example.json`** — configuration template with all fields
+- **`nginx.conf.example`** and **`nginx.separate-admin.conf.example`** — the two nginx setups, ready to copy
+- **[`CHANGELOG.md`](CHANGELOG.md)** — what changed in every version, and what to check when you update
 
 ## Production deployment
 
-PyBlog runs on an Ubuntu server with nginx as a "gatekeeper": it serves the static pages to the public and forwards only the admin area to Python. When you publish an article, the pages regenerate themselves — no rsync, no manual deploy. The step-by-step guide with systemd and certbot (HTTPS) is [`TUTORIAL.en.md`](TUTORIAL.en.md).
+PyBlog runs on an Ubuntu server with nginx as a "gatekeeper": it serves the static pages to the public and forwards only the admin area to Python. When you publish an article, the pages regenerate themselves — no rsync, no manual deploy.
+
+Two nginx setups are ready to copy:
+
+| | Administration at | File |
+|---|---|---|
+| **A — one address** | `https://yourdomain.com/admin` | `nginx.conf.example` |
+| **B — its own address** (recommended with analytics, ads or widgets) | `https://admin.yourdomain.com` | `nginx.separate-admin.conf.example` |
+
+The step-by-step guide for both, with systemd and certbot (HTTPS), is [`TUTORIAL.en.md`](TUTORIAL.en.md).
+
+After updating with `git pull`, restart PyBlog (`sudo systemctl restart pyblog`): it keeps the administration's pages in memory. The **Updates** item of the menu does it all by itself.
 
 ## Comments
 
