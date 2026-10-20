@@ -140,7 +140,7 @@ ADMIN_GET_ROUTES = ("/admin", "/config", "/edit", "/change-password",
                     "/preview", "/export", "/pick-point", "/versions",
                     "/version", "/newsletter-subscribers.csv", "/restore",
                     "/automatic-backup", "/media-library", "/updates",
-                    "/updates-status")
+                    "/updates-status", "/media-library-items")
 
 
 # ---------------------------------------------------------------------------
@@ -194,6 +194,8 @@ JS_TRANSLATION_KEYS = (
     "js_media_elimina_usato", "js_media_pulizia_corpo", "js_media_caricamento",
     "upd_controllo", "upd_installazione", "upd_riavvio", "upd_riavviato", "upd_conferma_titolo",
     "upd_conferma_corpo", "admin_aggiorna_ora", "upd_offline",
+    "js_media_picker_title", "js_media_picker_search", "js_media_picker_empty",
+    "js_media_picker_loading", "js_media_picker_error",
     "js_media_recovered",
     # Settings
     "admin_codice_titolo", "admin_codice_elimina",
@@ -704,6 +706,19 @@ def file_size_text(size):
     return f"{size / (1024 * 1024):.1f} MB"
 
 
+def media_library_items():
+    """
+    The uploaded files for the editor's picker, newest first: name, address,
+    kind and how many places use each. The addresses are built from names
+    the library already checked, so they can go into the editor as they are.
+    """
+    uses = media_library.media_uses()
+    items = [{"name": item["name"], "url": "/media/" + item["name"], "kind": item["kind"],
+              "size": file_size_text(item["size"]), "used": len(uses.get(item["name"], []))}
+             for item in media_library.media_files()]
+    return {"ok": True, "items": items}
+
+
 def library_page(csrf):
     """
     The media library: every uploaded file with where it is used, to copy
@@ -1145,6 +1160,7 @@ def editor_page(art, csrf, starts_from=None, new_kind="lab"):
         label_importa_word=T("admin_importa_word", la),
         hint_docx=T("admin_docx_hint", la),
         tip_upload_image=esc(T("tip_upload_image", la)),
+        label_from_library=T("admin_from_media_library", la),
         label_carica_immagine=T("admin_carica_immagine", la),
         tip_youtube=esc(T("tip_youtube", la)),
         label_youtube=T("admin_inserisci_youtube", la),
@@ -1991,6 +2007,7 @@ def config_page(csrf):
         label_parte_alta=T("admin_parte_alta_home", la),
         hint_parte_alta=T("admin_parte_alta_hint", la),
         tip_upload_image=esc(T("tip_upload_image", la)),
+        label_from_library=T("admin_from_media_library", la),
         label_carica_immagine=T("admin_carica_immagine", la),
         tip_youtube=esc(T("tip_youtube", la)),
         label_youtube=T("admin_inserisci_youtube", la),
@@ -2741,6 +2758,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(restore_page(csrf))
         elif route == "/media-library":
             self._send(library_page(csrf))
+        elif route == "/media-library-items":
+            self._send_json(media_library_items())
         elif route == "/updates":
             self._send(updates_page(csrf))
         elif route == "/updates-status":

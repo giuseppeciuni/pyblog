@@ -743,6 +743,154 @@ function uploadMediaFile(idCampoFile, limiteMb, messaggioInizio, messaggioFine,
     });
 }
 
+/* --- Choosing from the media library ---------------------------------------- */
+
+// A file already uploaded goes into the text, or becomes the cover, without
+// being uploaded again. The window is built the first time it is needed,
+// so it works on every page with an editor; it is a <dialog>, which keeps
+// the focus inside and closes with Esc.
+
+var mediaPickerTarget = 'editor';
+var mediaPickerRange = null;
+var mediaPickerItems = [];
+
+function mediaPickerDialog() {
+  var dialog = document.getElementById('media-picker');
+  if (dialog) { return dialog; }
+  dialog = document.createElement('dialog');
+  dialog.id = 'media-picker';
+  dialog.className = 'media-picker';
+  dialog.setAttribute('aria-labelledby', 'media-picker-title');
+
+  var header = document.createElement('div');
+  header.className = 'media-picker-header';
+  var title = document.createElement('h2');
+  title.id = 'media-picker-title';
+  title.textContent = t('js_media_picker_title');
+  var close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'pulsante pulsante-piccolo';
+  close.textContent = t('admin_chiudi');
+  close.addEventListener('click', function() { dialog.close(); });
+  header.appendChild(title);
+  header.appendChild(close);
+
+  var label = document.createElement('label');
+  label.className = 'vh';
+  label.htmlFor = 'media-picker-search';
+  label.textContent = t('js_media_picker_search');
+  var search = document.createElement('input');
+  search.type = 'search';
+  search.id = 'media-picker-search';
+  search.className = 'campo-input';
+  search.placeholder = t('js_media_picker_search');
+  search.addEventListener('input', renderMediaPicker);
+
+  var status = document.createElement('p');
+  status.id = 'media-picker-status';
+  status.className = 'elenco-vuoto';
+  status.setAttribute('role', 'status');
+
+  var grid = document.createElement('ul');
+  grid.id = 'media-picker-grid';
+  grid.className = 'media-picker-grid';
+
+  dialog.appendChild(header);
+  dialog.appendChild(label);
+  dialog.appendChild(search);
+  dialog.appendChild(status);
+  dialog.appendChild(grid);
+  document.body.appendChild(dialog);
+  return dialog;
+}
+
+// target is 'editor' (the text, at the cursor) or 'cover' (the cover field).
+function openMediaPicker(target) {
+  mediaPickerTarget = target;
+  mediaPickerRange = null;
+  if (target === 'editor' && PB_MAIN_QUILL) {
+    // The window takes the focus: remember where the cursor was.
+    mediaPickerRange = PB_MAIN_QUILL.getSelection() || { index: Math.max(0, PB_MAIN_QUILL.getLength() - 1) };
+  }
+  var dialog = mediaPickerDialog();
+  document.getElementById('media-picker-search').value = '';
+  document.getElementById('media-picker-grid').innerHTML = '';
+  document.getElementById('media-picker-status').textContent = t('js_media_picker_loading');
+  document.getElementById('media-picker-status').hidden = false;
+  dialog.showModal();
+  fetch('/media-library-items', { credentials: 'same-origin', cache: 'no-store' })
+    .then(function(response) { return response.json(); })
+    .then(function(result) {
+      mediaPickerItems = result.items || [];
+      renderMediaPicker();
+    })
+    .catch(function() {
+      document.getElementById('media-picker-status').textContent = t('js_media_picker_error');
+    });
+}
+
+function renderMediaPicker() {
+  var grid = document.getElementById('media-picker-grid');
+  var status = document.getElementById('media-picker-status');
+  var query = document.getElementById('media-picker-search').value.trim().toLowerCase();
+  grid.innerHTML = '';
+  var shown = 0;
+  mediaPickerItems.forEach(function(item) {
+    // A cover is a picture: videos are not offered for it.
+    if (mediaPickerTarget === 'cover' && item.kind !== 'image') { return; }
+    if (query !== '' && item.name.toLowerCase().indexOf(query) === -1) { return; }
+    var entry = document.createElement('li');
+    var choice = document.createElement('button');
+    choice.type = 'button';
+    choice.className = 'media-picker-item';
+    var preview;
+    if (item.kind === 'video') {
+      preview = document.createElement('video');
+      preview.preload = 'metadata';
+      preview.muted = true;
+    } else {
+      preview = document.createElement('img');
+      preview.alt = '';
+      preview.loading = 'lazy';
+    }
+    preview.src = item.url;
+    var name = document.createElement('span');
+    name.className = 'media-picker-name';
+    name.textContent = item.name;
+    var details = document.createElement('span');
+    details.className = 'media-picker-size';
+    details.textContent = item.size;
+    choice.appendChild(preview);
+    choice.appendChild(name);
+    choice.appendChild(details);
+    choice.addEventListener('click', function() { chooseMedia(item); });
+    entry.appendChild(choice);
+    grid.appendChild(entry);
+    shown++;
+  });
+  status.hidden = shown > 0;
+  status.textContent = t('js_media_picker_empty');
+}
+
+function chooseMedia(item) {
+  document.getElementById('media-picker').close();
+  if (mediaPickerTarget === 'cover') {
+    document.getElementById('image').value = item.url;
+    updateCoverPreview();
+    if (typeof markEditorDirty === 'function') { markEditorDirty(); }
+    return;
+  }
+  if (!PB_MAIN_QUILL) { return; }
+  // The addresses come from names the server checked: safe in the markup.
+  var html = item.kind === 'video'
+    ? '<video controls src="' + item.url + '"></video><p><br></p>'
+    : '<img src="' + item.url + '"><p><br></p>';
+  var index = mediaPickerRange ? mediaPickerRange.index : 0;
+  PB_MAIN_QUILL.focus();
+  PB_MAIN_QUILL.clipboard.dangerouslyPasteHTML(index, html, 'user');
+  PB_MAIN_QUILL.setSelection(index + 1, 0);
+}
+
 /* --- The cover image ------------------------------------------------------ */
 
 // Uploads a file and puts its address in the cover field.

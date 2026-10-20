@@ -138,6 +138,12 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Pictures already uploaded go into the text in one click.** "From media",
+  next to "Upload image" in the article editor and in the homepage
+  introduction, opens the thumbnails of the media library with a search;
+  the chosen picture or video goes in at the cursor. The same button next
+  to the cover picks the cover. A picture used twice used to be uploaded
+  twice. **nginx:** the single-address example adds `media-library-items`.
 - **Updates from the administration, and a version number.** PyBlog now
   has a version (1.0.0, in `core/__init__.py`), and Tools → Updates says
   whether a new one is out: on a git installation, the titles of the

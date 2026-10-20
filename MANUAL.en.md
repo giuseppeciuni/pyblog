@@ -501,7 +501,8 @@ open. **Close** or Esc shuts it.
   latest three. To write the lab of an existing article use **Create the
   lab of this article**, in the article's editor or in its menu in the
   list: a new article opens, already set as a lab and tied to that one.
-- **Cover image:** upload a file or paste an address. It shows in the
+- **Cover image:** upload a file, choose one already uploaded with **From
+  media**, or paste an address. It shows in the
   homepage list, at the top of the article and in social previews.
 - **Reader preview:** the text under the title in the lists; left empty, the
   first words of the article are used.
@@ -516,8 +517,11 @@ headings, bulleted, numbered and checkbox lists, indentation, alignment,
 quotes, code blocks, links, images, videos. **Hover a button** and a bubble
 says what it does.
 
-Under the editor, **Insert:** **Upload image**, **Insert YouTube video**,
-**Upload a video**, **Insert table**.
+Under the editor, **Insert:** **Upload image**, **From media**, **Insert
+YouTube video**, **Upload a video**, **Insert table**. **From media** opens
+the thumbnails of the files already uploaded (with a search by name): one
+click and the picture or the video goes in at the cursor, without uploading
+it again.
 
 - **Images:** PNG, JPEG, GIF, WebP and SVG (SVGs stay sharp at any zoom:
   ideal for diagrams), up to 10 MB; JPEGs that are too large are scaled down

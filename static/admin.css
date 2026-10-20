@@ -640,6 +640,27 @@ select.campo-input { padding-right:2rem; }
 .media-azioni { display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem; }
 #libreria-stato:empty { display:none; }
 
+/* The window that picks a file from the media library. */
+.media-picker { width:min(56rem, calc(100vw - 2rem)); max-height:calc(100vh - 3rem); padding:1.25rem;
+                border:1px solid var(--a-bordo); border-radius:12px; background:var(--a-superficie);
+                color:var(--a-testo); box-sizing:border-box; }
+.media-picker[open] { display:flex; flex-direction:column; gap:0.75rem; }
+.media-picker::backdrop { background:rgba(15, 20, 25, 0.45); }
+.media-picker-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.media-picker-header h2 { margin:0; font-size:1.125rem; font-weight:650; }
+.media-picker-grid { list-style:none; margin:0; padding:0; overflow-y:auto; display:grid;
+                     grid-template-columns:repeat(auto-fill, minmax(9rem, 1fr)); gap:0.75rem; }
+.media-picker-item { width:100%; display:flex; flex-direction:column; gap:0.25rem; padding:0.5rem;
+                     background:var(--a-superficie); border:1px solid var(--a-bordo); border-radius:10px;
+                     text-align:left; cursor:pointer; font:inherit; color:inherit; }
+.media-picker-item:hover { border-color:var(--a-accento); background:#f5f9fe; }
+.media-picker-item:focus-visible { outline:3px solid var(--a-accento); outline-offset:2px; }
+.media-picker-item :is(img, video) { width:100%; aspect-ratio:4 / 3; object-fit:cover; border-radius:6px;
+                                      background:#eef0f3; pointer-events:none; }
+.media-picker-name { font-size:0.8125rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.media-picker-size { font-size:0.75rem; color:var(--a-testo-2); }
+#media-picker-status[hidden] { display:none; }
+
 /* The automatic backups on the restore page. */
 .lista-backup { list-style:none; margin:0; padding:0; }
 .lista-backup li { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.5rem 1rem;

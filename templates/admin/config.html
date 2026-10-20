@@ -146,6 +146,7 @@ $testata_home
     <div class="video-bar" role="group" aria-label="$label_inserisci">
       <span class="video-bar-titolo" aria-hidden="true">$label_inserisci</span>
       <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_image" onclick="document.getElementById('file-image').click()">$label_carica_immagine</button>
+      <button type="button" class="pulsante pulsante-piccolo" onclick="openMediaPicker('editor')">$label_from_library</button>
       <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_youtube" onclick="insertYoutube()">$label_youtube</button>
       <button type="button" class="pulsante pulsante-piccolo" data-tooltip="$tip_upload_video" onclick="document.getElementById('file-video').click()">$label_carica_video</button>
       <input type="file" id="file-image" aria-label="$label_carica_immagine" accept="image/png, image/jpeg, image/gif, image/webp, image/svg+xml, .svg, .png, .jpg, .jpeg, .gif, .webp" hidden onchange="uploadImage()">

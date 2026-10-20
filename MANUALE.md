@@ -501,7 +501,8 @@ ricorda quali hai lasciato aperti. Si chiude con **Chiudi** o con Esc.
   il lab di questo articolo**, nell'editor dell'articolo o nel suo menu
   nell'elenco: si apre un articolo nuovo già impostato come lab e legato a
   quello.
-- **Immagine di copertina:** carichi un file o incolli un indirizzo. Appare
+- **Immagine di copertina:** carichi un file, la scegli tra quelli già
+  caricati con **Dai media**, o incolli un indirizzo. Appare
   nell'elenco della home, in cima all'articolo e nelle anteprime social.
 - **Anteprima per i lettori:** il testo sotto il titolo negli elenchi; vuoto,
   si usano le prime parole dell'articolo.
@@ -516,8 +517,11 @@ titoli, elenchi puntati, numerati e con caselle, rientri, allineamento,
 citazioni, blocchi di codice, link, immagini, video. **Passa il mouse su un
 pulsante** e una nuvoletta dice cosa fa.
 
-Sotto l'editor, **Inserisci:** **Carica immagine**, **Inserisci video
-YouTube**, **Carica un video**, **Inserisci tabella**.
+Sotto l'editor, **Inserisci:** **Carica immagine**, **Dai media**,
+**Inserisci video YouTube**, **Carica un video**, **Inserisci tabella**.
+**Dai media** apre le miniature dei file già caricati (con una ricerca per
+nome): un clic e l'immagine o il video entra nel punto del cursore, senza
+caricarlo di nuovo.
 
 - **Immagini:** PNG, JPEG, GIF, WebP e SVG (le SVG restano nitide a ogni
   ingrandimento: ideali per i diagrammi), fino a 10 MB; le JPEG troppo
