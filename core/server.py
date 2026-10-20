@@ -1473,7 +1473,7 @@ def custom_code_card(snippet, index_value, la, own=False, open_card=False):
         "name_shown": esc(shown_name),
         "summary_text": esc(snippet_summary(snippet, la, own)),
         "state": T("admin_code_active", la) if enabled else T("admin_code_off_m", la),
-        "css_class_off_m": "" if enabled else " spento",
+        "css_class_off_m": "" if enabled else " off",
         "checked": checked_if(enabled),
         "label_active": T("admin_code_active", la),
         "label_delete": T("admin_code_delete", la),

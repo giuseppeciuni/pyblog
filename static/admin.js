@@ -131,7 +131,7 @@ function pbConfirm(titolo, corpo, etichettaConferma, kind, quandoConfermato) {
   var conferma = vecchio.cloneNode(false);
   conferma.textContent = etichettaConferma;
   // The buttons of the shared family: a deleting action is red.
-  conferma.className = 'pulsante button-primary' + (kind === 'danger' ? ' button-danger' : '');
+  conferma.className = 'button button-primary' + (kind === 'danger' ? ' button-danger' : '');
   vecchio.parentNode.replaceChild(conferma, vecchio);
 
   var istanza = bootstrap.Modal.getOrCreateInstance(finestra);
@@ -830,7 +830,7 @@ function imageDetailsDialog() {
   [['image-details-alt', 'js_image_alt_label', 'js_image_alt_hint', 'textarea'],
    ['image-details-caption', 'js_image_caption_label', 'js_image_caption_hint', 'input']].forEach(function(field) {
     var wrapper = document.createElement('div');
-    wrapper.className = 'campo';
+    wrapper.className = 'field';
     var label = document.createElement('label');
     label.htmlFor = field[0];
     label.textContent = t(field[1]);
@@ -840,7 +840,7 @@ function imageDetailsDialog() {
     if (field[3] === 'textarea') { control.rows = 2; } else { control.type = 'text'; }
     control.setAttribute('aria-describedby', field[0] + '-hint');
     var hint = document.createElement('p');
-    hint.className = 'aiuto';
+    hint.className = 'help';
     hint.id = field[0] + '-hint';
     hint.textContent = t(field[2]);
     wrapper.appendChild(label);
@@ -849,15 +849,15 @@ function imageDetailsDialog() {
     dialog.appendChild(wrapper);
   });
   var actions = document.createElement('div');
-  actions.className = 'azioni';
+  actions.className = 'actions';
   var save = document.createElement('button');
   save.type = 'button';
-  save.className = 'pulsante button-primary';
+  save.className = 'button button-primary';
   save.textContent = t('js_image_details_apply');
   save.addEventListener('click', applyImageDetails);
   var cancel = document.createElement('button');
   cancel.type = 'button';
-  cancel.className = 'pulsante';
+  cancel.className = 'button';
   cancel.textContent = t('admin_cancel');
   cancel.addEventListener('click', function() { dialog.close(); });
   actions.appendChild(save);
@@ -949,7 +949,7 @@ function mediaPickerDialog() {
   title.textContent = t('js_media_picker_title');
   var close = document.createElement('button');
   close.type = 'button';
-  close.className = 'pulsante button-small';
+  close.className = 'button button-small';
   close.textContent = t('admin_close');
   close.addEventListener('click', function() { dialog.close(); });
   header.appendChild(title);
@@ -5058,7 +5058,7 @@ function describeBlock(el) {
   if (c.contains('articles-section')) { return t('js_pd_list'); }
   if (c.contains('articles-head')) { return t('js_pd_masthead_area_list'); }
   if (c.contains('art-row')) { return puntoT('js_pd_article_n', { n: pointOrdinal(el) }); }
-  if (c.contains('paginazione')) { return t('js_pd_pagination'); }
+  if (c.contains('pagination')) { return t('js_pd_pagination'); }
   if (c.contains('box')) {
     var titolo = el.querySelector('.box-title');
     if (titolo && titolo.textContent.trim() !== '') {
@@ -5077,7 +5077,7 @@ function describeBlock(el) {
   if (c.contains('article-nav')) { return t('js_pd_navigation'); }
   if (c.contains('post-back')) { return t('js_pd_return'); }
   if (c.contains('related-articles')) { return t('js_pd_related'); }
-  if (c.contains('commenti')) { return t('js_pd_comments'); }
+  if (c.contains('comments')) { return t('js_pd_comments'); }
   if (genitore && genitore.classList.contains('post-content')) {
     var n = pointOrdinal(el);
     if (nome === 'p') {
