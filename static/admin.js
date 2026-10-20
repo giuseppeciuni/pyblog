@@ -198,6 +198,30 @@ function attachImageOverlay(quillInstance) {
     } else if (typeof formatter.repositionOverlay === 'function') {
       formatter.repositionOverlay();
     }
+    clipToEditor();
+  }
+
+  // The box is drawn on the editor's container, not inside the text, so
+  // nothing cuts it: in an editor that scrolls inside (the homepage ones),
+  // an image scrolled half out of sight had its box over the rest of the
+  // page. Here the box is cut at the edges of the text area, with a little
+  // room for the corner handles and the alignment buttons that stick out.
+  function clipToEditor() {
+    var overlay = formatter.overlay;
+    if (!overlay || !overlay.getBoundingClientRect) { return; }
+    var box = overlay.getBoundingClientRect();
+    var area = quillInstance.root.getBoundingClientRect();
+    var room = 14;
+    var cut = {
+      top: Math.max(0, area.top - room - box.top),
+      right: Math.max(0, box.right - area.right - room),
+      bottom: Math.max(0, box.bottom - area.bottom - room),
+      left: Math.max(0, area.left - room - box.left)
+    };
+    var hidden = cut.top + cut.bottom >= box.height || cut.left + cut.right >= box.width;
+    overlay.style.visibility = hidden ? 'hidden' : '';
+    overlay.style.clipPath = (cut.top || cut.right || cut.bottom || cut.left) ?
+      'inset(' + cut.top + 'px ' + cut.right + 'px ' + cut.bottom + 'px ' + cut.left + 'px)' : '';
   }
 
   // We wait for the browser to finish repainting: before the repaint
@@ -229,6 +253,7 @@ function attachImageOverlay(quillInstance) {
   // 4) Window resizing and editor scrolling.
   window.addEventListener('resize', repositionAfterPaint);
   quillInstance.root.addEventListener('scroll', repositionAfterPaint);
+  window.addEventListener('scroll', repositionAfterPaint, { passive: true });
 }
 
 /* --- Quill: recovering images pasted from Word ---------------------------- */
@@ -2285,6 +2310,10 @@ function initEditorPage() {
   installUnsavedChangesGuard();
   installSaveShortcut();
   rememberOpenGroups();
+  followPublishBar();
+  var wideSaved = null;
+  try { wideSaved = localStorage.getItem('pb-editor-wide'); } catch (err) { wideSaved = null; }
+  if (wideSaved === '1') { toggleWideEditor(true); }
   updateShareLinks();
   document.getElementById('title').addEventListener('input', updateShareLinks);
 }
@@ -5327,6 +5356,36 @@ function removeSubscriber(buttonEl) {
 // In the editor: whether the subscribers hear about this article.
 // Opens and closes the Details panel. It slides over the page from the
 // right on a wide screen and covers a phone's; Escape and the veil close it.
+// Widen: the text takes the whole width of the screen, for big images and
+// wide tables. The choice is remembered in this browser.
+function toggleWideEditor(wide) {
+  var buttonEl = document.getElementById('btn-widen');
+  if (!buttonEl) { return; }
+  if (typeof wide !== 'boolean') { wide = !document.body.classList.contains('editor-wide'); }
+  document.body.classList.toggle('editor-wide', wide);
+  buttonEl.setAttribute('aria-pressed', wide ? 'true' : 'false');
+  buttonEl.textContent = buttonEl.getAttribute(wide ? 'data-label-narrow' : 'data-label-widen');
+  try { localStorage.setItem('pb-editor-wide', wide ? '1' : '0'); } catch (err) { /* private window */ }
+}
+
+// The editor's toolbar stays in sight under the publishing strip, which is
+// sticky too and changes height (scheduling form, sharing link...): its
+// height goes into a CSS variable. On a phone the strip is at the bottom.
+function followPublishBar() {
+  var bar = document.getElementById('panel-publish');
+  if (!bar) { return; }
+  function measure() {
+    var top = 0;
+    if (window.matchMedia('(min-width: 861px)').matches) {
+      top = Math.ceil(bar.getBoundingClientRect().height + parseFloat(getComputedStyle(bar).top || 0));
+    }
+    document.documentElement.style.setProperty('--editor-toolbar-top', top + 'px');
+  }
+  measure();
+  if (window.ResizeObserver) { new ResizeObserver(measure).observe(bar); }
+  window.addEventListener('resize', measure);
+}
+
 function toggleDetails(openIt) {
   var panel = document.getElementById('panel-details');
   var buttonEl = document.getElementById('btn-details');

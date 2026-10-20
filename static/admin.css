@@ -367,8 +367,18 @@ html:has(body.page-config) { scroll-padding-bottom:7rem; }
 .table-editor-actions button { border:1px solid #d4d4d8; background:#fff; border-radius:var(--pb-radius-sm); padding:0.35rem 1rem; font-size:0.85rem; cursor:pointer; }
 .table-editor-actions .table-editor-save { background:var(--pb-viola); color:#fff; border-color:var(--pb-viola); }
 .table-editor-actions .table-editor-save:hover { background:var(--pb-viola-scuro); }
-#editor { height:420px; background:#fff; margin-top:0.3rem; }
-#editor-en { height:300px; background:#fff; margin-top:0.3rem; }
+#editor, #editor-en { background:#fff; margin-top:0.3rem; }
+/* The article's editors grow with the text instead of scrolling inside a
+   box: the page scrolls, as in any word processor. An image taller than a
+   fixed box could never be seen whole, and its resize frame, drawn by
+   blot-formatter outside the scrolling area, ended up over the rest of the
+   page. The buttons of the toolbar stay in sight while scrolling, just under
+   the publishing strip (its height is --publish-bar-height, kept by admin.js). */
+#editor .ql-editor { min-height:420px; }
+#editor-en .ql-editor { min-height:300px; }
+#editor.ql-container, #editor-en.ql-container { height:auto; }
+#editor .ql-editor, #editor-en .ql-editor { height:auto; overflow-y:visible; }
+.editor-main .ql-toolbar.ql-snow { position:sticky; top:var(--editor-toolbar-top, 0px); z-index:15; background:#fff; }
 .translation-section { margin-top:1rem; padding-top:1rem; border-top:1px solid #e4e4e7; }
 .translation-section h2 { font-size:0.95rem; text-transform:uppercase; letter-spacing:0.03em; color:#666; }
 .row-flag { display:flex; align-items:flex-start; gap:0.5rem; font-weight:600; cursor:pointer; font-size:0.88rem; margin-top:0.5rem; }
@@ -943,10 +953,17 @@ select.field-input { padding-right:2rem; }
 a.card-theme:hover { background:#f4f4f5; }
 a.card-theme:focus-visible { outline:3px solid var(--a-accento); outline-offset:-3px; }
 #btn-details { flex:none; margin-bottom:0.25rem; }
+.editor-bar-buttons { display:flex; gap:0.5rem; flex:none; }
+#btn-widen { margin-bottom:0.25rem; }
+#btn-widen[aria-pressed="true"] { border-color:var(--a-accento); color:var(--a-accento); }
+/* Widen: the text takes the whole width next to the menu. */
+body.editor-wide .editor-wrap { max-width:none; }
 @media (max-width: 860px) {
   /* On a phone the button gets its own line, so the tabs keep the width. */
   .editor-bar { flex-wrap:wrap; justify-content:flex-end; }
   .theme-cards { order:2; flex:1 1 100%; }
+  /* On a phone the text already takes the whole width. */
+  #btn-widen { display:none; }
 }
 
 /* The project of a lab sits above its title: it is what makes it a lab. */
@@ -975,7 +992,9 @@ body.details-open { overflow:hidden; }
 @media (min-width: 861px) {
   .panel-publish { flex-direction:row; flex-wrap:wrap; align-items:center; gap:0.5rem 0.75rem;
     background:#fafafa; border:1px solid #e4e4e7; border-radius:10px; padding:0.6rem 0.9rem;
-    margin-bottom:1.25rem; position:sticky; top:0.5rem; z-index:20; }
+    margin-bottom:1.25rem; position:sticky; top:0.5rem; z-index:20;
+    /* The gap above the strip is filled, so the text does not show through it. */
+    box-shadow:0 -0.5rem 0 var(--a-sfondo); }
   .panel-publish .state-article { order:1; flex:1 1 12rem; }
   .panel-publish .pb-autosave { order:2; }
   .panel-publish .actions-secondary { order:3; flex-direction:row; flex-wrap:wrap; }

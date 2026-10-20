@@ -7,8 +7,13 @@
   <nav class="theme-cards" aria-label="$label_cards_theme">
 $cards_theme
   </nav>
+  <div class="editor-bar-buttons">
+  <button type="button" class="button" id="btn-widen" aria-pressed="false" data-tooltip="$tip_widen"
+          data-label-widen="$label_widen" data-label-narrow="$label_narrow"
+          onclick="toggleWideEditor()">$label_widen</button>
   <button type="button" class="button" id="btn-details" aria-expanded="false"
           aria-controls="panel-details" onclick="toggleDetails()">$label_details</button>
+  </div>
 </div>
 
   <!-- Publishing. Every button is in the page; the state of the article,
@@ -112,7 +117,7 @@ $tick_notify
       <span id="upload-status" class="hint"></span>
       <p class="image-alt-status" id="image-alt-status" role="status" hidden>
         <span id="image-alt-status-text"></span>
-        <button type="button" class="button-text" onclick="describeNextImage()">$label_image_alt_fix</button>
+        <button type="button" class="button button-text" onclick="describeNextImage()">$label_image_alt_fix</button>
       </p>
     </div>
   </div>

@@ -354,6 +354,15 @@ def test_editor():
     script = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
     check("il pannello si apre, si chiude e si chiude con Esc",
           "function toggleDetails(openIt)" in script and "evt.key === 'Escape'" in script)
+    css = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.css").read_text()
+    check("l'editor si allarga, e la scelta resta nel browser",
+          'id="btn-widen" aria-pressed="false"' in page_html and "function toggleWideEditor(wide)" in script
+          and "'pb-editor-wide'" in script and "body.editor-wide .editor-wrap { max-width:none; }" in css)
+    check("l'editor cresce col testo, con i pulsanti sempre in vista",
+          "#editor.ql-container, #editor-en.ql-container { height:auto; }" in css
+          and "position:sticky; top:var(--editor-toolbar-top, 0px)" in css and "function followPublishBar()" in script)
+    check("il riquadro di un'immagine non esce dall'editor",
+          "function clipToEditor()" in script and "overlay.style.clipPath" in script)
     check("un gruppo chiuso dice cosa contiene",
           'id="summary-series"' in page_html and "function updateGroupSummaries()" in script
           and "rememberOpenGroups();" in script)
