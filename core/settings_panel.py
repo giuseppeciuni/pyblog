@@ -40,9 +40,10 @@ GROUPS = [
 SECTIONS = [
     {"id": "sito", "group": "sito", "label": "admin_sez_sito",
      "keywords": "titolo title dominio domain url lingua language autore author "
-                 "foto photo seo logo favicon linkedin social"},
+                 "foto photo seo logo favicon linkedin social immagini images larghezza width"},
     {"id": "home", "group": "sito", "label": "admin_sez_home",
-     "keywords": "homepage presentazione introduction disposizione layout copertina cover"},
+     "keywords": "homepage presentazione introduction disposizione layout copertina cover "
+                 "condividi share copia link"},
     {"id": "biografia", "group": "sito", "label": "admin_sez_biografia",
      "keywords": "bio about chi sono who am i"},
     {"id": "progetti", "group": "sito", "label": "admin_sez_progetti",
@@ -55,7 +56,8 @@ SECTIONS = [
     {"id": "newsletter", "group": "lettori", "label": "admin_sez_newsletter",
      "keywords": "email mail iscritti subscribers smtp"},
     {"id": "traduzione", "group": "lettori", "label": "admin_sez_traduzione",
-     "keywords": "translation inglese english deepl google claude openai deepseek chiave key api"},
+     "keywords": "translation inglese english deepl google claude openai deepseek chiave key api "
+                 "seo backlink anchor ai"},
     {"id": "statistiche", "group": "servizi", "label": "admin_sez_statistiche",
      "keywords": "analytics google ga4 gtag umami visite visits"},
     {"id": "codici", "group": "servizi", "label": "admin_sez_codici",

@@ -82,6 +82,32 @@ def test_descrizione_delle_sezioni():
           and nomi.index("core.settings_panel") < nomi.index("core.server"))
 
 
+def test_tutto_dall_interfaccia():
+    """
+    Every setting of config.json can be changed from the Settings: the form
+    sends it when saving. A setting added to CONFIG_DEFAULT without a field
+    would only be reachable by editing the file, and this check says so.
+    """
+    print("\ntutto dall'interfaccia")
+    import re
+    js = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
+    inizio = js.index("function saveConfig")
+    corpo = js[inizio:js.index("\n}\n", inizio)]
+    principali = set(re.findall(r"^    (\w+):", corpo, re.M))
+    annidate = set(re.findall(r"^      (\w+):", corpo, re.M))
+    # The language of the admin changes from the menu; home_order is a
+    # leftover of the single-column homepage, read by nothing any more.
+    fuori = {"admin_language", "home_order"}
+    mancanti = [k for k in CONFIG_DEFAULT if k not in principali and k not in fuori]
+    check("ogni impostazione principale ha il suo campo", mancanti == [], str(mancanti))
+    mancanti = [k for k in CONFIG_DEFAULT["seo"] if k not in annidate]
+    check("e anche ogni dato dell'autore", mancanti == [], str(mancanti))
+    pagina = server.config_page("TOKEN")
+    for campo in ("max_image_width", "share_buttons", "seo_backlink_site"):
+        check(f"il campo {campo} è nella pagina, con l'etichetta",
+              f'id="{campo}"' in pagina and f'for="{campo}"' in pagina)
+
+
 def test_sito_finito():
     """A finished site has no warnings at all."""
     print("\nun sito finito")
@@ -335,6 +361,7 @@ def test_pagine():
 
 def main():
     test_descrizione_delle_sezioni()
+    test_tutto_dall_interfaccia()
     test_sito_finito()
     test_sito_e_home()
     test_testi_nell_altra_lingua()

@@ -616,8 +616,10 @@ was last saved. If you leave with unsaved changes, the browser asks you.
   fills all three from the main text; left empty, the pages in the other
   language show the main text. On a site whose introduction is already
   translated, the panel points out the ones missing.
-- **Logo and icon:** the site's logo and a custom favicon (left empty, PyBlog
-  generates one with the title's initial).
+- **Logo, icon and images:** the site's logo, a custom favicon (left empty,
+  PyBlog generates one with the title's initial) and the **widest an uploaded
+  image is kept**: wider photos are scaled down to it (1600 pixels to start
+  with; 0 = never).
 
 ### 5.2 Homepage
 
@@ -629,7 +631,8 @@ was last saved. If you leave with unsaved changes, the browser asks you.
   top) or **above the articles**; **highlight the latest article** (bigger,
   with its cover); the **excerpt length** for articles without a preview; how
   many **articles per page** (0 = all on one page).
-- **Article page:** whether to show the cover at the top of the article.
+- **Article page:** whether to show the cover at the top of the article,
+  and the **Copy the link** button under the text.
 
 ### 5.3 Biography
 
@@ -683,6 +686,10 @@ The service (DeepL, Google Translate, Anthropic Claude, OpenAI, DeepSeek) and
 its key, plus endpoint and model where needed. Without a key translation
 stays off and the site works anyway. The same service also does the editor's
 AI helpers. See [10](#10-two-languages-and-automatic-translation).
+
+In **The editor's AI helpers** type the **site where you republish your
+articles** (a magazine that picks them up, for instance): the SEO analysis
+suggests anchor texts and links meant for that site.
 
 ### 5.8 Analytics
 

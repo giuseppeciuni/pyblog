@@ -3870,6 +3870,11 @@ function saveConfig(pulsante) {
   if (isNaN(articoliPerPagina) || articoliPerPagina < 0) {
     articoliPerPagina = 10;
   }
+  // 0 means "never scale down"; anything unreadable keeps the usual 1600.
+  var larghezzaImmagini = parseInt(document.getElementById('max_image_width').value, 10);
+  if (isNaN(larghezzaImmagini) || larghezzaImmagini < 0) {
+    larghezzaImmagini = 1600;
+  }
 
   var config = {
     site_title: document.getElementById('site_title').value,
@@ -3886,6 +3891,8 @@ function saveConfig(pulsante) {
     articles_per_page: articoliPerPagina,
     home_featured: document.getElementById('home_featured').checked,
     article_cover: document.getElementById('article_cover').checked,
+    share_buttons: document.getElementById('share_buttons').checked,
+    max_image_width: larghezzaImmagini,
     seo: {
       author_url: document.getElementById('seo_author_url').value.trim(),
       author_image: document.getElementById('seo_author_image').value.trim(),
@@ -3896,7 +3903,8 @@ function saveConfig(pulsante) {
       social_profiles: profiliSocial,
       logo: document.getElementById('seo_logo').value.trim(),
       twitter_site: document.getElementById('seo_twitter').value.trim(),
-      favicon: document.getElementById('seo_favicon').value.trim()
+      favicon: document.getElementById('seo_favicon').value.trim(),
+      backlink_site: document.getElementById('seo_backlink_site').value.trim()
     },
     home_content: quillHome.root.innerHTML,
     home_content_en: quillHomeEn.root.innerHTML,

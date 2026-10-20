@@ -619,8 +619,10 @@ chiede.
   automaticamente** li riempie tutti e tre dal testo principale; vuoti, le
   pagine nell'altra lingua mostrano il testo principale. Su un sito che ha
   già la presentazione tradotta, il pannello segnala quelli che mancano.
-- **Logo e icona:** il logo del sito e una favicon personalizzata (vuota,
-  PyBlog ne genera una con l'iniziale del titolo).
+- **Logo, icona e immagini:** il logo del sito, una favicon personalizzata
+  (vuota, PyBlog ne genera una con l'iniziale del titolo) e la **larghezza
+  massima delle immagini caricate**: le foto più larghe vengono ridotte a
+  quella misura (1600 pixel di partenza; 0 = mai).
 
 ### 5.2 Home page
 
@@ -634,7 +636,7 @@ chiede.
   per gli articoli senza anteprima; quanti **articoli per pagina** (0 =
   tutti in una pagina).
 - **Pagina dell'articolo:** mostrare o no la copertina in cima
-  all'articolo.
+  all'articolo, e il pulsante **Copia il link** sotto il testo.
 
 ### 5.3 Biografia
 
@@ -688,6 +690,10 @@ Il servizio (DeepL, Google Translate, Anthropic Claude, OpenAI, DeepSeek) e
 la sua chiave, più endpoint e modello dove servono. Senza chiave la
 traduzione resta spenta e il sito funziona lo stesso. Lo stesso servizio fa
 anche gli aiuti di AI dell'editor. Vedi [10](#10-due-lingue-e-traduzione-automatica).
+
+In **Aiuti di AI dell'editor** scrivi il **sito dove ripubblichi gli
+articoli** (una testata che li riprende, per esempio): l'analisi SEO
+propone anchor text e link pensati per quel sito.
 
 ### 5.8 Statistiche
 

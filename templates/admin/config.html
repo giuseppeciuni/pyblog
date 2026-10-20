@@ -122,6 +122,12 @@ $testata_sito
       <input class="campo-input" type="text" id="seo_favicon" value="$valore_seo_favicon" aria-describedby="seo_favicon-aiuto">
       <p class="aiuto" id="seo_favicon-aiuto">$hint_seo_favicon</p>
     </div>
+    <div class="campo">
+      <label for="max_image_width">$label_larghezza_immagini</label>
+      <input class="campo-input" type="number" id="max_image_width" min="0" step="100" inputmode="numeric"
+             value="$valore_larghezza_immagini" aria-describedby="max_image_width-aiuto">
+      <p class="aiuto" id="max_image_width-aiuto">$hint_larghezza_immagini</p>
+    </div>
   </div>
 </section>
 
@@ -196,6 +202,13 @@ $testata_home
       <div>
         <label for="article_cover">$label_copertina_articolo</label>
         <p class="aiuto" id="article_cover-aiuto">$hint_copertina_articolo</p>
+      </div>
+    </div>
+    <div class="campo-spunta">
+      <input type="checkbox" id="share_buttons" aria-describedby="share_buttons-aiuto" $checked_copia_link>
+      <div>
+        <label for="share_buttons">$label_copia_link</label>
+        <p class="aiuto" id="share_buttons-aiuto">$hint_copia_link</p>
       </div>
     </div>
   </div>
@@ -538,6 +551,16 @@ $testata_traduzione
         <input class="campo-input" type="text" id="deepseek_modello" value="$valore_deepseek_modello" aria-describedby="deepseek_modello-aiuto">
         <p class="aiuto" id="deepseek_modello-aiuto">deepseek-chat</p>
       </div>
+    </div>
+  </div>
+
+  <div class="gruppo">
+    <h2>$label_gr_aiuti_ai</h2>
+    <div class="campo">
+      <label for="seo_backlink_site">$label_backlink</label>
+      <input class="campo-input" type="text" id="seo_backlink_site" value="$valore_backlink"
+             placeholder="startupbusiness.it" aria-describedby="seo_backlink_site-aiuto">
+      <p class="aiuto" id="seo_backlink_site-aiuto">$hint_backlink</p>
     </div>
   </div>
 </section>
