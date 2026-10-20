@@ -3188,6 +3188,65 @@ function translateSiteTexts(pulsante) {
   prossima(0);
 }
 
+/* --- Restoring a backup -------------------------------------------------- */
+
+// The archive goes as it is, not inside a form: with videos it can weigh
+// hundreds of megabytes, and the server writes it straight to a file.
+function restoreBackup(pulsante) {
+  var campo = document.getElementById('file-ripristino');
+  if (!campo.files || campo.files.length === 0) {
+    pbStatus('ripristino-stato', t('js_scegli_backup'));
+    return;
+  }
+  var file = campo.files[0];
+  pbConfirm(t('js_ripristino_titolo'), t('js_ripristino_corpo'), t('js_ripristino_conferma'),
+            'danger', function() {
+    pbBusy(pulsante, true);
+    pbStatus('ripristino-stato', t('js_ripristino_in_corso'));
+    pbFetch('/ripristina', { method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file })
+      .then(function(risposta) { return risposta.json(); })
+      .then(function(esito) { showRestoreResult(pulsante, esito); })
+      .catch(function() {
+        pbBusy(pulsante, false);
+        pbStatus('ripristino-stato', '');
+        pbToast(t('js_ripristino_errore_rete'), 'danger');
+      });
+  });
+}
+
+// One of the automatic backups, to undo a restore.
+function restoreAutomatic(pulsante, nome) {
+  pbConfirm(t('js_ripristino_titolo'), t('js_ripristino_automatico_corpo'), t('js_ripristino_conferma'),
+            'danger', function() {
+    pbBusy(pulsante, true);
+    pbStatus('ripristino-stato', t('js_ripristino_in_corso'));
+    pbPostJson('/ripristina-automatico', { file: nome })
+      .then(function(esito) { showRestoreResult(pulsante, esito); })
+      .catch(function() {
+        pbBusy(pulsante, false);
+        pbStatus('ripristino-stato', '');
+        pbToast(t('js_ripristino_errore_rete'), 'danger');
+      });
+  });
+}
+
+function showRestoreResult(pulsante, esito) {
+  pbBusy(pulsante, false);
+  pbStatus('ripristino-stato', '');
+  if (!esito || esito.ok !== true) {
+    pbToast(t('js_error_prefix') + (esito && esito.error ? esito.error : ''), 'danger');
+    return;
+  }
+  var testo = t('js_ripristino_fatto').replace('{a}', esito.articles).replace('{m}', esito.media);
+  if (esito.ignored && esito.ignored.length > 0) {
+    testo = testo + ' ' + t('js_ripristino_ignorati').replace('{n}', esito.ignored.length);
+  }
+  pbStatus('ripristino-stato', testo);
+  pbToast(testo, 'success');
+  // The list of automatic backups has one more: the page shows it.
+  setTimeout(function() { window.location.reload(); }, 2500);
+}
+
 /* --- Settings: the biography's photo ------------------------------------- */
 
 function updateBioPhotoPreview() {

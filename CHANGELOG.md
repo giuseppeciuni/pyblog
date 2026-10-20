@@ -138,6 +138,18 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **A backup can be put back from the menu.** "Restore a backup" takes the
+  archive of "Download the backup" and puts articles, earlier versions,
+  settings, media and subscribers back, then rebuilds the site. It used to
+  mean unpacking it on the server by hand. The archive is checked whole
+  before anything is touched: only the names a backup can hold, a ceiling
+  on every file, valid JSON, pictures that really are pictures, SVGs
+  without their active parts. The current state is saved first as an
+  automatic backup (the last five are kept), and one click puts it back.
+  Videos are copied a megabyte at a time, never held in memory.
+  **nginx:** the single-address example adds `ripristina`,
+  `ripristina-automatico` and `backup-automatico` to the routes sent to
+  Python.
 - **Every setting has its field.** Three settings could only be changed by
   editing config.json: the widest an uploaded image is kept, the "Copy the
   link" button on articles, and the site the SEO analysis writes backlinks

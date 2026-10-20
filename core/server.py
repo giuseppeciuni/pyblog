@@ -13,6 +13,7 @@ CSRF token bound to that session, and a size limit on the request body.
 import http.server
 import json
 import mimetypes
+import os
 import pathlib
 import secrets
 import tempfile
@@ -20,11 +21,10 @@ import threading
 import time
 import urllib.parse
 import urllib.request
-import zipfile
 from datetime import datetime, timezone
 
 from core import build as build_module
-from core import i18n, newsletter, render, settings_panel
+from core import backup, i18n, newsletter, render, settings_panel
 from core.ai import (analyze_article_seo, generate_reader_preview,
                      generate_seo_description, translate_text)
 from core.articles import (MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, SlugTakenError,
@@ -112,6 +112,8 @@ MAX_JSON_BODY = 32 * 1024 * 1024      # 32 MB
 # A Word document is text and a handful of images; anything past this is not
 # an article. The cap is checked before the body is read.
 MAX_DOCX_BODY = 30 * 1024 * 1024      # 30 MB
+# A backup holds every medium of the site, videos included.
+MAX_BACKUP_BODY = 2 * 1024 * 1024 * 1024   # 2 GB
 
 # The POST endpoints of the logged-in author. Every one of them is checked
 # against the CSRF token, and so is any route added later: do_POST checks the
@@ -124,7 +126,7 @@ CSRF_PROTECTED_ROUTES = (
     "/rebuild", "/upload", "/admin-language", "/change-password",
     "/translate", "/generate-description", "/generate-preview", "/analyze-seo",
     "/import-docx", "/preview", "/newsletter-prova", "/newsletter-rimuovi",
-    "/verifica-indirizzo-admin",
+    "/verifica-indirizzo-admin", "/ripristina", "/ripristina-automatico",
 )
 
 # The files the administration area serves from static/. Naming them makes
@@ -134,7 +136,8 @@ ADMIN_STATIC_FILES = ("common.css", "admin.css", "admin.js")
 # The GET routes handled by the administration, as opposed to the static site.
 ADMIN_GET_ROUTES = ("/admin", "/config", "/edit", "/change-password",
                     "/preview", "/export", "/scegli-punto", "/versioni",
-                    "/versione", "/newsletter-iscritti.csv")
+                    "/versione", "/newsletter-iscritti.csv", "/ripristina",
+                    "/backup-automatico")
 
 
 # ---------------------------------------------------------------------------
@@ -181,6 +184,9 @@ JS_TRANSLATION_KEYS = (
     "js_translated_site_texts", "js_write_site_texts_first",
     "js_admin_url_non_valido", "js_admin_url_irraggiungibile",
     "js_admin_url_conferma_titolo", "js_admin_url_conferma_corpo", "js_admin_url_conferma",
+    "js_scegli_backup", "js_ripristino_titolo", "js_ripristino_corpo", "js_ripristino_conferma",
+    "js_ripristino_automatico_corpo", "js_ripristino_in_corso", "js_ripristino_fatto",
+    "js_ripristino_ignorati", "js_ripristino_errore_rete",
     "js_media_recovered",
     # Settings
     "admin_codice_titolo", "admin_codice_elimina",
@@ -378,6 +384,7 @@ ICON_SETTINGS = ('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0
                  'a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>')
 ICON_REBUILD = '<path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/>'
 ICON_BACKUP = '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>'
+ICON_RESTORE = '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>'
 ICON_BLOG = ('<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>')
 ICON_PASSWORD = ('<rect x="4" y="11" width="16" height="10" rx="2"/>'
                  '<path d="M8 11V7a4 4 0 0 1 8 0v4"/>')
@@ -463,6 +470,10 @@ def admin_navbar(active_page, language, articles_count=None):
         desc_vedi_sito=T("admin_vedi_sito_desc", language),
         icona_backup=icon(ICON_BACKUP),
         label_backup=T("admin_scarica_backup", language),
+        icona_ripristino=icon(ICON_RESTORE),
+        label_ripristino=T("admin_ripristina_backup", language),
+        desc_ripristino=T("admin_ripristina_backup_desc", language),
+        corrente_ripristino=' aria-current="page"' if active_page == "restore" else "",
         icona_blog=icon(ICON_BLOG),
         label_vedi_blog=T("admin_vedi_blog", language),
         label_nuova_scheda=T("admin_nuova_scheda", language),
@@ -601,6 +612,48 @@ def change_password_page(csrf, error_message="", success_message=""):
     )
     return admin_page_shell(T("admin_cambia_password", la), contenuto, la,
                             csrf=csrf, navbar=admin_navbar("password", la))
+
+
+def restore_page(csrf):
+    """
+    The page that puts a backup back: from a file, or from one of the
+    automatic backups saved before every restore, which is how a restore
+    is undone.
+    """
+    la = admin_language()
+    rows = []
+    for item in backup.automatic_backups():
+        when = item["date"].strftime("%d/%m/%Y %H:%M:%S")
+        if item["size"] < 1024 * 1024:
+            size = f'{max(1, round(item["size"] / 1024))} KB'
+        else:
+            size = f'{item["size"] / (1024 * 1024):.1f} MB'
+        rows.append(
+            f'      <li><span class="backup-quando">{when} · {size}</span>'
+            f'<span class="backup-azioni">'
+            f'<a class="pulsante pulsante-piccolo" href="/backup-automatico?file={esc(item["name"])}">'
+            f'{T("admin_scarica", la)}</a>'
+            f'<button type="button" class="pulsante pulsante-piccolo" '
+            f'onclick="restoreAutomatic(this, \'{js_attr(item["name"])}\')">'
+            f'{T("admin_ripristina_questo", la)}</button></span></li>')
+    if rows:
+        listing = '    <ul class="lista-backup">\n' + "\n".join(rows) + "\n    </ul>"
+    else:
+        listing = f'    <p class="elenco-vuoto">{T("admin_nessun_backup_automatico", la)}</p>'
+    contenuto = render.render(
+        "admin/restore.html",
+        titolo=T("admin_ripristina_backup", la),
+        sottotitolo=T("admin_ripristino_sottotitolo", la),
+        label_da_file=T("admin_ripristino_da_file", la),
+        hint_da_file=T("admin_ripristino_da_file_hint", la),
+        label_scegli_file=T("admin_ripristino_scegli", la),
+        label_ripristina=T("admin_ripristina_ora", la),
+        label_automatici=T("admin_backup_automatici", la),
+        hint_automatici=T("admin_backup_automatici_hint", la),
+        elenco_automatici=listing,
+    )
+    return admin_page_shell(T("admin_ripristina_backup", la), contenuto, la, csrf=csrf,
+                            navbar=admin_navbar("restore", la), page_data={"page": "restore"})
 
 
 def setup_steps_html(articles, la):
@@ -2512,6 +2565,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 # CSP, which would block the CDNs the public pages use.
                 self._send(generate_article_page(art, preview_language),
                            with_csp=False, sandbox=True)
+        elif route == "/ripristina":
+            self._send(restore_page(csrf))
+        elif route == "/backup-automatico":
+            path_value = backup.automatic_backup_path(query.get("file", [""])[0])
+            if path_value is None:
+                self.send_error(404)
+                return
+            self._send_download(path_value, "application/zip")
         elif route == "/export":
             # Downloads a ZIP backup with all the articles and the configuration.
             self._handle_export()
@@ -2677,27 +2738,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         a few videos it can be hundreds of megabytes.
         """
         archive = tempfile.SpooledTemporaryFile(max_size=32 * 1024 * 1024)
-        with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            # We add every JSON file of the articles.
-            if POSTS_DIR.exists():
-                for path_value in sorted(POSTS_DIR.glob("*.json")):
-                    zip_file.write(path_value, "posts/" + path_value.name)
-                # The newsletter's subscribers, when there are any.
-                if newsletter.SUBSCRIBERS_FILE.exists():
-                    zip_file.write(newsletter.SUBSCRIBERS_FILE, "subscribers.json")
-                # The earlier versions of the articles come along.
-                for path_value in sorted(POSTS_DIR.glob(".history/*/*.json")):
-                    zip_file.write(path_value, path_value.relative_to(POSTS_DIR.parent).as_posix())
-            # We add the configuration, if it exists.
-            if CONFIG_FILE.exists():
-                zip_file.write(CONFIG_FILE, "config.json")
-            # The uploaded images and videos, under the path they are
-            # published at, so unpacking the archive in output/ restores them.
-            if MEDIA_DIR.exists():
-                for path_value in sorted(MEDIA_DIR.iterdir()):
-                    if path_value.is_file() and not path_value.name.startswith("."):
-                        zip_file.write(path_value, "media/" + path_value.name,
-                                       compress_type=zipfile.ZIP_STORED)
+        backup.write_backup(archive)
 
         size = archive.tell()
         archive.seek(0)
@@ -2779,6 +2820,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if route == "/preview":
             self._handle_preview_post()
             return
+        if route == "/ripristina":
+            self._handle_restore_upload()
+            return
 
         data, error = self._read_json_body()
         if error is not None:
@@ -2799,6 +2843,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             "/rebuild": self._api_rebuild,
             "/newsletter-prova": self._api_newsletter_test,
             "/verifica-indirizzo-admin": self._api_check_admin_address,
+            "/ripristina-automatico": self._api_restore_automatic,
             "/newsletter-rimuovi": self._api_newsletter_remove,
         }
         handler = handlers.get(route)
@@ -2809,6 +2854,85 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send_json(handler(data))
         except Exception as error:
             self._send_json({"ok": False, "error": str(error)})
+
+    def _send_download(self, path_value, content_type):
+        """Send a file as a download, a megabyte at a time."""
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Disposition", 'attachment; filename="' + path_value.name + '"')
+        self.send_header("Content-Length", str(path_value.stat().st_size))
+        self._no_store()
+        self._security_headers(False)
+        self.end_headers()
+        with open(path_value, "rb") as source:
+            while True:
+                chunk = source.read(1024 * 1024)
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
+
+    def _handle_restore_upload(self):
+        """
+        Receive a backup archive and put it back.
+
+        The browser sends the file as it is, not as a form: an archive with
+        videos can weigh hundreds of megabytes, and it goes straight to a
+        temporary file next to the others instead of into memory.
+        """
+        la = admin_language()
+        length = self._content_length(MAX_BACKUP_BODY)
+        if length is None:
+            self._send_json({"ok": False, "error": T("err_file_too_large", la).replace(
+                "{n}", str(MAX_BACKUP_BODY // (1024 * 1024)))})
+            return
+        if length == 0:
+            self._send_json({"ok": False, "error": T("err_no_file_received", la)})
+            return
+        backup.BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(dir=str(backup.BACKUPS_DIR), suffix=".caricato")
+        try:
+            with os.fdopen(descriptor, "wb") as target:
+                remaining = length
+                while remaining > 0:
+                    chunk = self.rfile.read(min(remaining, 1024 * 1024))
+                    if not chunk:
+                        break
+                    target.write(chunk)
+                    remaining -= len(chunk)
+            if remaining > 0:
+                self._send_json({"ok": False, "error": T("err_malformed_upload", la)})
+                return
+            self._send_json(self._restore_from(pathlib.Path(temporary)))
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+
+    def _api_restore_automatic(self, data):
+        """Put back one of the automatic backups, to undo a restore."""
+        path_value = backup.automatic_backup_path(data.get("file", ""))
+        if path_value is None:
+            return {"ok": False, "error": T("err_backup_not_found", admin_language())}
+        return self._restore_from(path_value)
+
+    def _restore_from(self, path_value):
+        """
+        Check an archive, save the current state, put the archive back and
+        rebuild the site, all under the build lock: no save and no build can
+        run in the middle.
+        """
+        la = admin_language()
+        with BUILD_LOCK:
+            try:
+                content = backup.read_backup(path_value)
+                saved = backup.save_automatic_backup()
+                summary = backup.restore_backup(content)
+            except backup.BackupError as error:
+                return {"ok": False, "error": T(str(error), la)}
+            reload_global_config()
+            build()
+        summary["ok"] = True
+        summary["automatic"] = saved.name
+        return summary
 
     def _api_check_admin_address(self, data):
         """

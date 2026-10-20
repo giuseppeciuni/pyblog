@@ -333,8 +333,17 @@ by `build`.
   30 3 * * * find /var/backups -name 'pyblog-*.tar.gz' -mtime +30 -delete
   ```
 
-- **Restoring:** stop the service, extract the archive into `/opt/pyblog`,
-  `chown -R pyblog:pyblog /opt/pyblog`, `build`, start it again.
+- **Restoring from the menu:** **Restore a backup** takes the `.zip` from
+  "Download the backup". Before touching anything PyBlog checks the whole
+  archive (only articles, versions, settings, subscribers and media of the
+  accepted types; everything else is left out and reported) and saves the
+  current state in `backups/`, among the **automatic backups** (the last
+  five are kept): **Put this back** undoes a wrong restore. What the backup
+  does not hold stays as it is, and the address of the administration does
+  not change, even when the backup comes from another server.
+- **Restoring by hand:** stop the service, extract the archive into
+  `/opt/pyblog`, `chown -R pyblog:pyblog /opt/pyblog`, `build`, start it
+  again.
 
 ---
 

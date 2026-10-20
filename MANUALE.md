@@ -331,8 +331,17 @@ Da salvare: `posts/`, `config.json`, `admin_password.txt`,
   30 3 * * * find /var/backups -name 'pyblog-*.tar.gz' -mtime +30 -delete
   ```
 
-- **Ripristino:** ferma il servizio, scompatta l'archivio in `/opt/pyblog`,
-  `chown -R pyblog:pyblog /opt/pyblog`, `build`, riavvia.
+- **Ripristino dal menu:** **Ripristina un backup** prende lo `.zip` di
+  "Scarica il backup". Prima di toccare qualcosa PyBlog controlla tutto
+  l'archivio (solo articoli, versioni, impostazioni, iscritti e file
+  multimediali dei tipi accettati; tutto il resto viene lasciato fuori e
+  segnalato) e salva lo stato di adesso in `backups/`, tra i **backup
+  automatici** (restano gli ultimi cinque): **Rimetti questo** annulla un
+  ripristino sbagliato. Quello che il backup non contiene resta com'è, e
+  l'indirizzo dell'amministrazione non cambia, anche se il backup viene da
+  un altro server.
+- **Ripristino a mano:** ferma il servizio, scompatta l'archivio in
+  `/opt/pyblog`, `chown -R pyblog:pyblog /opt/pyblog`, `build`, riavvia.
 
 ---
 

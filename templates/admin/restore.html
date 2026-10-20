@@ -1,0 +1,29 @@
+<div class="pagina pagina-stretta pagina-piccola">
+  <div class="pagina-testata">
+    <div>
+      <h1 class="pagina-titolo">$titolo</h1>
+      <p class="pagina-sottotitolo">$sottotitolo</p>
+    </div>
+  </div>
+
+  <div class="gruppo">
+    <h2>$label_da_file</h2>
+    <p class="aiuto" id="ripristino-aiuto">$hint_da_file</p>
+    <div class="campo">
+      <label for="file-ripristino">$label_scegli_file</label>
+      <input type="file" class="campo-input" id="file-ripristino" accept=".zip,application/zip"
+             aria-describedby="ripristino-aiuto">
+    </div>
+    <div class="azioni">
+      <button type="button" class="pulsante pulsante-primario" id="pulsante-ripristino"
+              onclick="restoreBackup(this)">$label_ripristina</button>
+      <span class="hint" id="ripristino-stato" role="status"></span>
+    </div>
+  </div>
+
+  <div class="gruppo">
+    <h2>$label_automatici</h2>
+    <p class="aiuto">$hint_automatici</p>
+$elenco_automatici
+  </div>
+</div>
