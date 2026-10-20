@@ -25,7 +25,7 @@ from core.config import BASE_DIR, MEDIA_DIR, load_config
 # Deleted media wait here for a month before they are gone for good: a
 # picture deleted by mistake can still be put back by hand. The folder sits
 # next to the automatic backups, outside what nginx publishes.
-TRASH_DIR = BASE_DIR / "backups" / "media-eliminati"
+TRASH_DIR = BASE_DIR / "backups" / "deleted-media"
 TRASH_DAYS = 30
 
 # How a medium is named in an article or in the settings, relative or with

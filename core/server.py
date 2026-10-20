@@ -126,9 +126,9 @@ CSRF_PROTECTED_ROUTES = (
     "/save", "/delete", "/save-config", "/save-config-raw", "/toggle-status",
     "/rebuild", "/upload", "/admin-language", "/change-password",
     "/translate", "/generate-description", "/generate-preview", "/analyze-seo",
-    "/import-docx", "/preview", "/newsletter-prova", "/newsletter-rimuovi",
-    "/verifica-indirizzo-admin", "/ripristina", "/ripristina-automatico",
-    "/libreria-elimina", "/aggiorna", "/aggiornamenti-auto",
+    "/import-docx", "/preview", "/newsletter-test", "/newsletter-remove",
+    "/check-admin-address", "/restore", "/restore-automatic",
+    "/media-library-delete", "/update", "/updates-auto",
 )
 
 # The files the administration area serves from static/. Naming them makes
@@ -137,10 +137,10 @@ ADMIN_STATIC_FILES = ("common.css", "admin.css", "admin.js")
 
 # The GET routes handled by the administration, as opposed to the static site.
 ADMIN_GET_ROUTES = ("/admin", "/config", "/edit", "/change-password",
-                    "/preview", "/export", "/scegli-punto", "/versioni",
-                    "/versione", "/newsletter-iscritti.csv", "/ripristina",
-                    "/backup-automatico", "/libreria", "/aggiornamenti",
-                    "/aggiornamenti-stato")
+                    "/preview", "/export", "/pick-point", "/versions",
+                    "/version", "/newsletter-subscribers.csv", "/restore",
+                    "/automatic-backup", "/media-library", "/updates",
+                    "/updates-status")
 
 
 # ---------------------------------------------------------------------------
@@ -434,7 +434,7 @@ def admin_navbar(active_page, language, articles_count=None):
          T("admin_articoli", language), str(articles_count), True),
         ("new", "/edit", ICON_NEW, T("admin_nuovo_articolo_titolo", language),
          T("admin_nuovo", language), "", True),
-        ("media", "/libreria", ICON_MEDIA, T("admin_libreria", language),
+        ("media", "/media-library", ICON_MEDIA, T("admin_libreria", language),
          T("admin_libreria", language), "", False),
         ("config", "/config", ICON_SETTINGS, T("admin_impostazioni", language),
          T("admin_impostazioni", language), "", True),
@@ -802,7 +802,7 @@ def restore_page(csrf):
         rows.append(
             f'      <li><span class="backup-quando">{when} · {size}</span>'
             f'<span class="backup-azioni">'
-            f'<a class="pulsante pulsante-piccolo" href="/backup-automatico?file={esc(item["name"])}">'
+            f'<a class="pulsante pulsante-piccolo" href="/automatic-backup?file={esc(item["name"])}">'
             f'{T("admin_scarica", la)}</a>'
             f'<button type="button" class="pulsante pulsante-piccolo" '
             f'onclick="restoreAutomatic(this, {js_attr(item["name"])})">'
@@ -2689,7 +2689,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         """
         with PING_LOCK:
             known = nonce != "" and nonce in PING_NONCES
-        payload = json.dumps({"pyblog": True, "questo": known}).encode("utf-8")
+        payload = json.dumps({"pyblog": True, "same": known}).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(payload)))
@@ -2737,15 +2737,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 # CSP, which would block the CDNs the public pages use.
                 self._send(generate_article_page(art, preview_language),
                            with_csp=False, sandbox=True)
-        elif route == "/ripristina":
+        elif route == "/restore":
             self._send(restore_page(csrf))
-        elif route == "/libreria":
+        elif route == "/media-library":
             self._send(library_page(csrf))
-        elif route == "/aggiornamenti":
+        elif route == "/updates":
             self._send(updates_page(csrf))
-        elif route == "/aggiornamenti-stato":
-            self._send_json(updates_state(query.get("forza", [""])[0] == "1"))
-        elif route == "/backup-automatico":
+        elif route == "/updates-status":
+            self._send_json(updates_state(query.get("force", [""])[0] == "1"))
+        elif route == "/automatic-backup":
             path_value = backup.automatic_backup_path(query.get("file", [""])[0])
             if path_value is None:
                 self.send_error(404)
@@ -2754,9 +2754,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         elif route == "/export":
             # Downloads a ZIP backup with all the articles and the configuration.
             self._handle_export()
-        elif route == "/scegli-punto":
+        elif route == "/pick-point":
             self._handle_point_page(query)
-        elif route == "/newsletter-iscritti.csv":
+        elif route == "/newsletter-subscribers.csv":
             data = newsletter.subscribers_csv().encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/csv; charset=utf-8")
@@ -2766,10 +2766,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._security_headers(False)
             self.end_headers()
             self.wfile.write(data)
-        elif route == "/versioni":
+        elif route == "/versions":
             # The earlier versions of an article, for the editor's window.
             self._send_json({"ok": True, "versions": list_versions(query.get("slug", [""])[0])})
-        elif route == "/versione":
+        elif route == "/version":
             version = load_version(query.get("slug", [""])[0], query.get("id", [""])[0])
             if version is None:
                 self._send_json({"ok": False, "error": T("err_article_not_found", admin_language())})
@@ -2998,7 +2998,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if route == "/preview":
             self._handle_preview_post()
             return
-        if route == "/ripristina":
+        if route == "/restore":
             self._handle_restore_upload()
             return
 
@@ -3019,13 +3019,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
             "/save-config": self._api_save_config,
             "/save-config-raw": self._api_save_config_raw,
             "/rebuild": self._api_rebuild,
-            "/newsletter-prova": self._api_newsletter_test,
-            "/verifica-indirizzo-admin": self._api_check_admin_address,
-            "/ripristina-automatico": self._api_restore_automatic,
-            "/libreria-elimina": self._api_delete_media,
-            "/aggiorna": self._api_update,
-            "/aggiornamenti-auto": self._api_automatic_check,
-            "/newsletter-rimuovi": self._api_newsletter_remove,
+            "/newsletter-test": self._api_newsletter_test,
+            "/check-admin-address": self._api_check_admin_address,
+            "/restore-automatic": self._api_restore_automatic,
+            "/media-library-delete": self._api_delete_media,
+            "/update": self._api_update,
+            "/updates-auto": self._api_automatic_check,
+            "/newsletter-remove": self._api_newsletter_remove,
         }
         handler = handlers.get(route)
         if handler is None:
@@ -3160,13 +3160,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
                                              headers={"User-Agent": "PyBlog"})
             with urllib.request.urlopen(request, timeout=8) as response:
                 answer = json.loads(response.read(2048).decode("utf-8"))
-            same = isinstance(answer, dict) and answer.get("questo") is True
+            same = isinstance(answer, dict) and answer.get("same") is True
         except Exception:
             same = False
         finally:
             with PING_LOCK:
                 PING_NONCES.discard(nonce)
-        return {"ok": True, "raggiunge": same}
+        return {"ok": True, "reaches": same}
 
     def _csrf_token_ok(self, route):
         """

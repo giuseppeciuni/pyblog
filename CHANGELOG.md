@@ -18,7 +18,7 @@ All notable changes to PyBlog are documented in this file.
   `nginx.separate-admin.conf.example` has the two server blocks. The
   Settings panel warns while the site has outside code and the editor
   shares its address. **nginx:** the single-address example adds
-  `verifica-indirizzo-admin` and `pyblog-ping` to the routes sent to Python.
+  `check-admin-address` and `pyblog-ping` to the routes sent to Python.
 - **The article preview is isolated.** It is shown with the code of outside
   services, as readers will see it; it now runs in a sandbox of its own, so
   that code cannot reach the editor's session.
@@ -148,8 +148,7 @@ All notable changes to PyBlog are documented in this file.
   place. The check runs at most twice a day, only while the administration
   is open, and can be switched off; the Articles page shows a notice when
   an update is waiting. **nginx:** the single-address example adds
-  `aggiornamenti`, `aggiornamenti-stato`, `aggiorna` and
-  `aggiornamenti-auto` to the routes sent to Python.
+  `updates`, `updates-status`, `update` and `updates-auto` to the routes sent to Python.
 - **A media library.** "Media" in the menu shows every uploaded file with
   its preview and where it is used: the articles (drafts too) and the
   settings, each a link. Uploaded pictures used to be invisible: nothing
@@ -157,8 +156,8 @@ All notable changes to PyBlog are documented in this file.
   to delete one was by hand on the server. Files can be uploaded several at
   once (same checks as the editor), their address copied, and the unused
   ones cleared out in one go. A deleted file waits 30 days in
-  `backups/media-eliminati/` before it is gone. **nginx:** the
-  single-address example adds `libreria` and `libreria-elimina` to the
+  `backups/deleted-media/` before it is gone. **nginx:** the
+  single-address example adds `media-library` and `media-library-delete` to the
   routes sent to Python.
 - **A backup can be put back from the menu.** "Restore a backup" takes the
   archive of "Download the backup" and puts articles, earlier versions,
@@ -169,8 +168,8 @@ All notable changes to PyBlog are documented in this file.
   without their active parts. The current state is saved first as an
   automatic backup (the last five are kept), and one click puts it back.
   Videos are copied a megabyte at a time, never held in memory.
-  **nginx:** the single-address example adds `ripristina`,
-  `ripristina-automatico` and `backup-automatico` to the routes sent to
+  **nginx:** the single-address example adds `restore`,
+  `restore-automatic` and `automatic-backup` to the routes sent to
   Python.
 - **Every setting has its field.** Three settings could only be changed by
   editing config.json: the widest an uploaded image is kept, the "Copy the
@@ -436,6 +435,16 @@ All notable changes to PyBlog are documented in this file.
 
 ### Breaking changes
 
+- **The administration's addresses are in English.** `/scegli-punto`,
+  `/versioni`, `/versione`, `/newsletter-prova`, `/newsletter-rimuovi` and
+  `/newsletter-iscritti.csv` are now `/pick-point`, `/versions`,
+  `/version`, `/newsletter-test`, `/newsletter-remove` and
+  `/newsletter-subscribers.csv`, like every page added since. **nginx with
+  the single-address setup:** copy the `location ~ ^/(...)$` line of
+  `nginx.conf.example` again, or those pages answer 404. The setup with the
+  administration at its own address needs nothing. The automatic backups
+  are now `pyblog-auto-….zip` (the old names are still recognised) and the
+  deleted media wait in `backups/deleted-media/`.
 - **Public CSS classes and HTML ids are now in English.** Every class and id
   used in the generated site (article cards, author box, breadcrumbs,
   article navigation, archive list, search box, table of contents, and

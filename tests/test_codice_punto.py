@@ -128,9 +128,9 @@ def test_pagina_senza_codici():
     check("e subito dopo i codici tornano",
           "traccia()" in build.generate_article_page(articoli[0], "it", articoli))
     check("la rotta è tra quelle dell'amministrazione, che chiedono l'accesso",
-          "/scegli-punto" in server.ADMIN_GET_ROUTES)
+          "/pick-point" in server.ADMIN_GET_ROUTES)
     nginx = (pathlib.Path(__file__).resolve().parent.parent / "nginx.conf.example").read_text()
-    check("nginx la porta a Python", "scegli-punto" in nginx)
+    check("nginx la porta a Python", "|pick-point|" in nginx)
 
 
 def test_scheda():

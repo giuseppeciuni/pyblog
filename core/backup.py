@@ -42,7 +42,9 @@ KEEP_AUTOMATIC = 5
 POST_ENTRY = re.compile(r"posts/([a-z0-9-]+)\.json")
 VERSION_ENTRY = re.compile(r"posts/\.history/([a-z0-9-]+)/(\d{8}T\d{6}Z)\.json")
 MEDIA_ENTRY = re.compile(r"media/([^/]+)")
-AUTOMATIC_NAME = re.compile(r"pyblog-automatico-\d{8}-\d{6}\.zip")
+# The old Italian prefix is still recognised, for the backups made before
+# the names went English.
+AUTOMATIC_NAME = re.compile(r"pyblog-(?:auto|automatico)-\d{8}-\d{6}\.zip")
 
 # Ceilings on what one file of the archive may unpack to. A video has the
 # upload limit of its kind, checked separately.
@@ -89,7 +91,7 @@ def save_automatic_backup():
     Return the path of the new archive.
     """
     BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
-    name = "pyblog-automatico-" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".zip"
+    name = "pyblog-auto-" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".zip"
     path_value = BACKUPS_DIR / name
     descriptor, temporary = tempfile.mkstemp(dir=str(BACKUPS_DIR), suffix=".tmp")
     try:
@@ -259,7 +261,7 @@ def _swap_folder(new_folder, current):
     out of the way first and only deleted once the new one is in place; if
     the move fails, the old one goes back.
     """
-    old = current.with_name("." + current.name + ".prima-del-ripristino")
+    old = current.with_name("." + current.name + ".before-restore")
     if old.exists():
         shutil.rmtree(old)
     if current.exists():
@@ -285,7 +287,7 @@ def restore_backup(content):
     a backup from another server must not move the editor to an address
     that does not lead here.
     """
-    staging = tempfile.mkdtemp(dir=str(BASE_DIR), prefix=".ripristino-")
+    staging = tempfile.mkdtemp(dir=str(BASE_DIR), prefix=".restore-")
     try:
         if content["posts"]:
             posts = os.path.join(staging, "posts")

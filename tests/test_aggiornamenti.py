@@ -157,14 +157,14 @@ def test_pagine():
     print("\nle pagine")
     pagina = server.updates_page("TOKEN")
     check("il menu porta agli aggiornamenti, con la versione",
-          'aria-current="page" href="/aggiornamenti"' in pagina
+          'aria-current="page" href="/updates"' in pagina
           and server.T("admin_versione", "it").replace("{v}", updates.__version__) in pagina)
     check("il controllo automatico si spegne con la sua casella",
           'id="controllo-automatico"' in pagina and 'for="controllo-automatico"' in pagina)
     articoli = server.admin_page([], "TOKEN")
     check("la pagina Articoli ha il posto per l'avviso, nascosto finché non serve",
           'id="avviso-aggiornamento" role="status" hidden' in articoli)
-    check("aggiornare chiede il token CSRF", "/aggiorna" in server.CSRF_PROTECTED_ROUTES)
+    check("aggiornare chiede il token CSRF", "/update" in server.CSRF_PROTECTED_ROUTES)
     veri = (updates.update, updates.restart)
     riavvii = []
     try:

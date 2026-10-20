@@ -41,7 +41,7 @@ CHANGELOG_URL = f"https://github.com/{REPOSITORY}/blob/main/CHANGELOG.md"
 
 # The last check and the author's choice, next to config.json. Not part of
 # the configuration: a backup put back must not carry another server's.
-STATE_FILE = BASE_DIR / ".aggiornamenti.json"
+STATE_FILE = BASE_DIR / ".updates.json"
 CHECK_EVERY = 12 * 3600
 
 VERSION_LINE = re.compile(r'^__version__\s*=\s*"(\d+(?:\.\d+){1,3})"', re.M)

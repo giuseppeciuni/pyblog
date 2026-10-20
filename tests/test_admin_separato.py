@@ -116,15 +116,15 @@ def test_richieste():
 
         stato, testata, corpo = request(base, "/pyblog-ping?n=inventata", "admin.ciunix.com")
         check("il segnale di vita non riconosce una parola che non ha inventato lui",
-              stato == 200 and json.loads(corpo) == {"pyblog": True, "questo": False})
+              stato == 200 and json.loads(corpo) == {"pyblog": True, "same": False})
 
         gestore = server.Handler.__new__(server.Handler)
         CONFIG["admin_language"] = "it"
         check("un indirizzo che porta a questo editor viene riconosciuto",
-              gestore._api_check_admin_address({"url": base}) == {"ok": True, "raggiunge": True})
+              gestore._api_check_admin_address({"url": base}) == {"ok": True, "reaches": True})
         check("un indirizzo che non risponde no",
               gestore._api_check_admin_address({"url": "http://127.0.0.1:9"})
-              == {"ok": True, "raggiunge": False})
+              == {"ok": True, "reaches": False})
         check("un indirizzo scritto male viene rifiutato prima di chiedere",
               gestore._api_check_admin_address({"url": "http://127.0.0.1:9/x"})["ok"] is False)
         check("dopo il controllo la parola viene dimenticata", len(server.PING_NONCES) == 0)
@@ -152,11 +152,18 @@ def test_impostazioni():
           'id="admin_url"' in pagina and 'for="admin_url"' in pagina)
     js = (pathlib.Path(__file__).resolve().parent.parent / "static" / "admin.js").read_text()
     check("prima di salvare un indirizzo nuovo, lo fa provare al server",
-          "pbPostJson('/verifica-indirizzo-admin'" in js
+          "pbPostJson('/check-admin-address'" in js
           and "checkAdminAddress(pulsante, indirizzoAdmin)" in js)
     nginx = (pathlib.Path(__file__).resolve().parent.parent / "nginx.conf.example").read_text()
-    check("con l'admin sull'indirizzo del sito, nginx porta anche il controllo a Python",
-          "verifica-indirizzo-admin" in nginx and "pyblog-ping" in nginx)
+    # Every page of the administration has to reach Python: a route left
+    # out of the single-address example answers 404 online.
+    import re
+    riga = re.search(r"location ~ \^/\(([^)]*)\)\$", nginx).group(1).replace("\\.", ".").split("|")
+    rotte = {r.lstrip("/") for r in server.ADMIN_GET_ROUTES + server.CSRF_PROTECTED_ROUTES}
+    rotte |= {"login", "logout", "set-password", "pyblog-ping"}
+    mancanti = sorted(rotte - set(riga))
+    check("con l'admin sull'indirizzo del sito, nginx porta a Python ogni rotta dell'admin",
+          mancanti == [], str(mancanti))
     esempio = (pathlib.Path(__file__).resolve().parent.parent / "nginx.separate-admin.conf.example")
     check("c'è l'esempio di nginx con l'admin a parte", esempio.is_file())
     if esempio.is_file():

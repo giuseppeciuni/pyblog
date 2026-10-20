@@ -254,8 +254,8 @@ UI_TRANSLATIONS = {
     "admin_media_non_usata": {"it": "Non usato da nessuna parte", "en": "Not used anywhere"},
     "admin_media_copia": {"it": "Copia l'indirizzo", "en": "Copy the address"},
     "admin_media_cestino_hint": {
-        "it": "Un file eliminato resta per 30 giorni nella cartella backups/media-eliminati del server, da dove si può rimettere a mano in output/media. Nell'elenco degli usi contano gli articoli (anche le bozze) e le impostazioni; le versioni precedenti degli articoli no.",
-        "en": "A deleted file stays for 30 days in the backups/media-eliminati folder of the server, from where it can be put back by hand into output/media. The list of uses counts the articles (drafts too) and the settings; the earlier versions of articles do not count."},
+        "it": "Un file eliminato resta per 30 giorni nella cartella backups/deleted-media del server, da dove si può rimettere a mano in output/media. Nell'elenco degli usi contano gli articoli (anche le bozze) e le impostazioni; le versioni precedenti degli articoli no.",
+        "en": "A deleted file stays for 30 days in the backups/deleted-media folder of the server, from where it can be put back by hand into output/media. The list of uses counts the articles (drafts too) and the settings; the earlier versions of articles do not count."},
     "admin_filtro_tutti": {"it": "Tutti", "en": "All"},
     "admin_altre_azioni": {"it": "Altre azioni per «{title}»", "en": "More actions for “{title}”"},
     "admin_anteprima_lingua": {"it": "Anteprima in {language}", "en": "Preview in {language}"},

@@ -3195,7 +3195,7 @@ function translateSiteTexts(pulsante) {
 function showUpdateNotice() {
   var avviso = document.getElementById('avviso-aggiornamento');
   if (!avviso) { return; }
-  fetch('/aggiornamenti-stato', { credentials: 'same-origin', cache: 'no-store' })
+  fetch('/updates-status', { credentials: 'same-origin', cache: 'no-store' })
     .then(function(risposta) { return risposta.json(); })
     .then(function(stato) {
       if (stato.available === true) {
@@ -3209,7 +3209,7 @@ function showUpdateNotice() {
 function checkUpdates(forza) {
   var riga = document.getElementById('aggiornamenti-stato');
   riga.textContent = t('upd_controllo');
-  fetch('/aggiornamenti-stato' + (forza ? '?forza=1' : ''), { credentials: 'same-origin', cache: 'no-store' })
+  fetch('/updates-status' + (forza ? '?force=1' : ''), { credentials: 'same-origin', cache: 'no-store' })
     .then(function(risposta) { return risposta.json(); })
     .then(function(stato) {
       riga.textContent = stato.message;
@@ -3233,7 +3233,7 @@ function installUpdate(pulsante) {
     var riga = document.getElementById('aggiornamenti-stato');
     pbBusy(pulsante, true);
     riga.textContent = t('upd_installazione');
-    pbPostJson('/aggiorna', {})
+    pbPostJson('/update', {})
       .then(function(esito) {
         if (esito.ok !== true) {
           pbBusy(pulsante, false);
@@ -3271,7 +3271,7 @@ function waitForRestart() {
 }
 
 function setAutomaticCheck(casella) {
-  pbPostJson('/aggiornamenti-auto', { on: casella.checked })
+  pbPostJson('/updates-auto', { on: casella.checked })
     .then(function(esito) { casella.checked = esito.auto === true; })
     .catch(function() { casella.checked = !casella.checked; });
 }
@@ -3312,7 +3312,7 @@ function copyMediaAddress(indirizzo) {
 
 function sendMediaDeletion(pulsante, nomi) {
   pbBusy(pulsante, true);
-  pbPostJson('/libreria-elimina', { names: nomi })
+  pbPostJson('/media-library-delete', { names: nomi })
     .then(function(esito) {
       if (esito.ok !== true) {
         pbBusy(pulsante, false);
@@ -3393,7 +3393,7 @@ function restoreBackup(pulsante) {
             'danger', function() {
     pbBusy(pulsante, true);
     pbStatus('ripristino-stato', t('js_ripristino_in_corso'));
-    pbFetch('/ripristina', { method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file })
+    pbFetch('/restore', { method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file })
       .then(function(risposta) { return risposta.json(); })
       .then(function(esito) { showRestoreResult(pulsante, esito); })
       .catch(function() {
@@ -3410,7 +3410,7 @@ function restoreAutomatic(pulsante, nome) {
             'danger', function() {
     pbBusy(pulsante, true);
     pbStatus('ripristino-stato', t('js_ripristino_in_corso'));
-    pbPostJson('/ripristina-automatico', { file: nome })
+    pbPostJson('/restore-automatic', { file: nome })
       .then(function(esito) { showRestoreResult(pulsante, esito); })
       .catch(function() {
         pbBusy(pulsante, false);
@@ -4109,10 +4109,10 @@ function checkAdminAddress(pulsante, indirizzo) {
     return;
   }
   pbBusy(pulsante, true);
-  pbPostJson('/verifica-indirizzo-admin', { url: indirizzo })
+  pbPostJson('/check-admin-address', { url: indirizzo })
     .then(function(dati) {
       pbBusy(pulsante, false);
-      if (!dati || dati.ok !== true || dati.raggiunge !== true) { return Promise.reject(); }
+      if (!dati || dati.ok !== true || dati.reaches !== true) { return Promise.reject(); }
       pbConfirm(t('js_admin_url_conferma_titolo'),
                 t('js_admin_url_conferma_corpo').replace('{indirizzo}', indirizzo),
                 t('js_admin_url_conferma'), 'primary', function() {
@@ -4528,7 +4528,7 @@ function loadPointPage() {
   document.getElementById('sp-elenco').innerHTML = '';
   document.getElementById('sp-conferma').disabled = true;
   var slug = document.getElementById('sp-pagina').value;
-  document.getElementById('sp-iframe').src = '/scegli-punto' + (slug ? '?slug=' + encodeURIComponent(slug) : '');
+  document.getElementById('sp-iframe').src = '/pick-point' + (slug ? '?slug=' + encodeURIComponent(slug) : '');
 }
 
 // The page has loaded in the frame: list its blocks, light them up on hover,
@@ -4819,7 +4819,7 @@ function openVersions() {
   var elenco = document.getElementById('fv-elenco');
   elenco.innerHTML = '';
   finestra.showModal();
-  fetch('/versioni?slug=' + encodeURIComponent(slugOriginale), { credentials: 'same-origin' })
+  fetch('/versions?slug=' + encodeURIComponent(slugOriginale), { credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
     .then(function(res) {
       var versioni = res.versions || [];
@@ -4858,7 +4858,7 @@ function showVersion(evento) {
   var pulsante = evento.currentTarget;
   var voci = document.querySelectorAll('#fv-elenco .fv-voce');
   for (var i = 0; i < voci.length; i++) { voci[i].setAttribute('aria-pressed', voci[i] === pulsante ? 'true' : 'false'); }
-  fetch('/versione?slug=' + encodeURIComponent(slugOriginale) + '&id=' + encodeURIComponent(pulsante.dataset.id),
+  fetch('/version?slug=' + encodeURIComponent(slugOriginale) + '&id=' + encodeURIComponent(pulsante.dataset.id),
         { credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
     .then(function(res) {
@@ -4943,7 +4943,7 @@ function newsletterData() {
 function sendNewsletterTest(pulsante) {
   pbBusy(pulsante, true);
   pbStatus('nl-prova-stato', '');
-  pbPostJson('/newsletter-prova', newsletterData())
+  pbPostJson('/newsletter-test', newsletterData())
     .then(function(res) {
       pbBusy(pulsante, false);
       if (res.ok) {
@@ -4961,7 +4961,7 @@ function sendNewsletterTest(pulsante) {
 function removeSubscriber(pulsante) {
   var email = pulsante.getAttribute('data-email');
   pbConfirm(t('js_nl_rimuovi_titolo'), email, t('admin_nl_rimuovi'), 'danger', function() {
-    pbPostJson('/newsletter-rimuovi', { email: email })
+    pbPostJson('/newsletter-remove', { email: email })
       .then(function(res) {
         if (res.ok) {
           pulsante.closest('li').remove();

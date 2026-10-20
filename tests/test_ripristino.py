@@ -197,7 +197,7 @@ def test_automatici():
         for i in range(backup.KEEP_AUTOMATIC + 2):
             path_value = backup.save_automatic_backup()
             # Same second: rename so each one is distinct, oldest first.
-            nuovo = path_value.with_name(f"pyblog-automatico-2026010{i}-120000.zip")
+            nuovo = path_value.with_name(f"pyblog-auto-2026010{i}-120000.zip")
             path_value.rename(nuovo)
             nomi.append(nuovo.name)
         backup.save_automatic_backup()
@@ -208,6 +208,10 @@ def test_automatici():
               backup.automatic_backup_path("../config.json") is None
               and backup.automatic_backup_path("pyblog-automatico-x.zip") is None)
         check("un nome vero sì", backup.automatic_backup_path(rimasti[0]) is not None)
+        vecchio = backup.BACKUPS_DIR / "pyblog-automatico-20250101-120000.zip"
+        vecchio.write_bytes(b"PK")
+        check("anche un backup con il vecchio nome italiano viene riconosciuto",
+              backup.automatic_backup_path(vecchio.name) is not None)
     finally:
         site.close()
 
@@ -217,8 +221,8 @@ def test_pagina_e_menu():
     pagina = server.restore_page("TOKEN")
     check("la pagina ha il campo del file con la sua etichetta",
           'id="file-ripristino"' in pagina and 'for="file-ripristino"' in pagina)
-    check("il menu porta alla pagina, e la segna", 'href="/ripristina"' in pagina
-          and 'aria-current="page" href="/ripristina"' in pagina)
+    check("il menu porta alla pagina, e la segna", 'href="/restore"' in pagina
+          and 'aria-current="page" href="/restore"' in pagina)
     site = Site()
     try:
         nome = backup.save_automatic_backup().name
@@ -227,8 +231,8 @@ def test_pagina_e_menu():
               f'onclick="restoreAutomatic(this, &quot;{nome}&quot;)"' in pagina)
     finally:
         site.close()
-    check("il ripristino chiede il token CSRF", "/ripristina" in server.CSRF_PROTECTED_ROUTES
-          and "/ripristina-automatico" in server.CSRF_PROTECTED_ROUTES)
+    check("il ripristino chiede il token CSRF", "/restore" in server.CSRF_PROTECTED_ROUTES
+          and "/restore-automatic" in server.CSRF_PROTECTED_ROUTES)
     check("il backup scaricato e quello automatico sono lo stesso archivio",
           "backup.write_backup(archive)" in pathlib.Path(server.__file__).read_text())
     nomi = [m for m, _ in __import__("core.bundle", fromlist=["x"]).BUNDLED_MODULES]

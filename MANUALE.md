@@ -435,7 +435,7 @@ articoli non contano.
 - **Elimina** chiede conferma, e se il file è usato dice dove: lì comparirà
   un'immagine mancante. **Elimina i non usati** fa pulizia in un colpo.
 - Un file eliminato non sparisce subito: resta 30 giorni in
-  `backups/media-eliminati/` sul server, da dove si rimette a mano in
+  `backups/deleted-media/` sul server, da dove si rimette a mano in
   `output/media/`.
 
 I filtri **Tutti / Usati / Non usati** e la ricerca per nome funzionano

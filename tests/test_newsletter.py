@@ -247,13 +247,13 @@ def test_amministrazione(porta):
     check("la sezione Newsletter c'è", 'id="sezione-newsletter"' in impostazioni)
     check("la password salvata non torna mai nella pagina", 'id="nl_smtp_password" value=""' in impostazioni)
     check("le rotte dell'amministrazione chiedono l'accesso e il token",
-          "/newsletter-iscritti.csv" in server.ADMIN_GET_ROUTES
-          and "/newsletter-prova" in server.CSRF_PROTECTED_ROUTES
-          and "/newsletter-rimuovi" in server.CSRF_PROTECTED_ROUTES)
+          "/newsletter-subscribers.csv" in server.ADMIN_GET_ROUTES
+          and "/newsletter-test" in server.CSRF_PROTECTED_ROUTES
+          and "/newsletter-remove" in server.CSRF_PROTECTED_ROUTES)
     nginx = (pathlib.Path(__file__).resolve().parent.parent / "nginx.conf.example").read_text()
     check("nginx porta a Python le rotte pubbliche, con un limite loro",
           "location ~ ^/(iscriviti|conferma|disiscrivi)$" in nginx and "zone=pyblog_newsletter" in nginx)
-    check("e quelle dell'amministrazione", "newsletter-prova|newsletter-rimuovi|newsletter-iscritti" in nginx)
+    check("e quelle dell'amministrazione", "newsletter-test|newsletter-remove|newsletter-subscribers" in nginx)
     editor = server.editor_page(None, "TOKEN")
     check("nell'editor di una bozza c'è la spunta per avvisare gli iscritti", 'id="notify_subscribers" checked' in editor)
     RICEVUTE.clear()

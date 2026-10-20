@@ -437,7 +437,7 @@ with the link to open them). Earlier versions of articles do not count.
 - **Delete** asks first, and if the file is used it says where: a missing
   picture will show there. **Delete the unused ones** clears out in one go.
 - A deleted file does not vanish at once: it stays 30 days in
-  `backups/media-eliminati/` on the server, from where it goes back by hand
+  `backups/deleted-media/` on the server, from where it goes back by hand
   into `output/media/`.
 
 The **All / In use / Unused** filters and the search by name work together.

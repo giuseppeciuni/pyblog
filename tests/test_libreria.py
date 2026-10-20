@@ -54,7 +54,7 @@ class Library:
         self.saved = (media_library.MEDIA_DIR, media_library.TRASH_DIR,
                       media_library.load_articles, media_library.load_config)
         media_library.MEDIA_DIR = root / "output" / "media"
-        media_library.TRASH_DIR = root / "backups" / "media-eliminati"
+        media_library.TRASH_DIR = root / "backups" / "deleted-media"
         media_library.load_articles = lambda: ARTICLES
         media_library.load_config = lambda: CONFIG
         media_library.MEDIA_DIR.mkdir(parents=True)
@@ -129,15 +129,15 @@ def test_pagina():
               and 'onclick="copyMediaAddress(&quot;/media/foto.png&quot;)"' in pagina,
               pagina[pagina.find("deleteMedia(this,"):][:60])
         check("il menu porta alla libreria e la segna",
-              'aria-current="page" href="/libreria"' in pagina)
+              'aria-current="page" href="/media-library"' in pagina)
         barra = pagina[pagina.index('class="barra-basso"'):]
-        check("ma la barra del telefono resta a quattro voci", 'href="/libreria"' not in barra
+        check("ma la barra del telefono resta a quattro voci", 'href="/media-library"' not in barra
               and barra.count('class="barra-voce"') == 4)
         media_library.delete_media(["dimenticata.png"])
         pagina = server.library_page("TOKEN")
         check("senza file inutilizzati, il pulsante della pulizia si nasconde",
               'onclick="deleteUnusedMedia(this)" hidden' in pagina)
-        check("l'eliminazione chiede il token CSRF", "/libreria-elimina" in server.CSRF_PROTECTED_ROUTES)
+        check("l'eliminazione chiede il token CSRF", "/media-library-delete" in server.CSRF_PROTECTED_ROUTES)
     finally:
         lib.close()
 
