@@ -7,16 +7,20 @@
 $entries
   </div>
   <div class="menu-spacer"></div>
+  <p class="menu-group" id="menu-site">$label_public_site</p>
+  <div class="menu-items" role="group" aria-labelledby="menu-site">
+    <a class="item" href="/" target="_blank" rel="noopener">$icon_blog<span class="item-text">$label_see_blog<span class="icon-external" aria-hidden="true"></span><span class="vh"> $label_new_f_card</span><span class="item-desc">$desc_see_site</span></span></a>
+    <button class="menu-rebuild" type="button" onclick="rebuildSite(this)" aria-describedby="menu-rebuild-help">$icon_rebuild<span>$label_rebuild</span></button>
+    <p class="menu-rebuild-help" id="menu-rebuild-help">$desc_rebuild</p>
+  </div>
   <p class="menu-group" id="menu-tools">$label_tools</p>
   <div class="menu-items" role="group" aria-labelledby="menu-tools">
-    <button class="item" type="button" onclick="rebuildSite(this)">$icon_rebuild<span class="item-text">$label_rebuild<span class="item-desc">$desc_rebuild</span></span></button>
     <a class="item" href="/export">$icon_backup<span class="item-text">$label_backup<span class="item-desc">$desc_backup</span></span></a>
     <a class="item"$current_item_restoring href="/restore">$icon_restoring<span class="item-text">$label_restoring<span class="item-desc">$desc_restoring</span></span></a>
     <a class="item"$current_item_updates href="/updates">$icon_updates<span class="item-text">$label_updates<span class="item-desc">$desc_updates</span></span></a>
   </div>
   <div class="menu-separator"></div>
   <div class="menu-items">
-    <a class="item" href="/" target="_blank" rel="noopener">$icon_blog<span class="item-text">$label_see_blog<span class="icon-external" aria-hidden="true"></span><span class="vh"> $label_new_f_card</span><span class="item-desc">$desc_see_site</span></span></a>
     <a class="item"$current_item_password href="/change-password">$icon_password<span class="item-text">$label_password</span></a>
     <button class="item" type="button" lang="$next_f_language" onclick="changeAdminLanguage('$next_f_language')" aria-describedby="menu-language-help">$icon_language<span class="item-text">$name_next_f_language</span></button>
     <span class="vh" id="menu-language-help">$label_language</span>

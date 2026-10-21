@@ -580,6 +580,17 @@ button:disabled { opacity: 0.65; cursor: default; }
 .item:has(.item-desc) .icon { align-self:flex-start; margin-top:0.15rem; }
 .item-count { margin-left:auto; font-size:0.8125rem; color:var(--a-text-2); font-weight:400; }
 .item-danger, .item-danger:hover { color:var(--a-danger); }
+/* Rebuilding is an action on the public site, not a page: a button of its
+   own, under "Open the site", where it no longer reads as one more tool. */
+.menu-rebuild { display:flex; align-items:center; gap:0.5rem; min-height:40px; margin:0.35rem 0 0;
+                padding:0 0.75rem; border:1px solid var(--a-border-field); border-radius:8px;
+                background:var(--a-surface); color:var(--a-accent-strong); font:inherit; font-size:0.9375rem;
+                font-weight:600; cursor:pointer; width:100%; text-align:left; }
+.menu-rebuild:hover { background:var(--a-active); }
+.menu-rebuild:focus-visible { outline:3px solid var(--a-accent); outline-offset:2px; }
+.menu-rebuild .icon { flex:none; }
+.menu-rebuild-help { margin:0.3rem 0 0.75rem; padding:0 0.75rem; font-size:0.75rem; line-height:1.3;
+                     color:var(--a-text-2); }
 .menu-veil, .bar-bottom { display:none; }
 
 /* Visible focus on everything the shell draws. */

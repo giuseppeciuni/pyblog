@@ -491,6 +491,7 @@ def admin_navbar(active_page, language, articles_count=None):
         entries="\n".join(menu_html),
         entries_bar="\n".join(bar_html),
         label_tools=T("admin_tools", language),
+        label_public_site=T("admin_menu_public_site", language),
         icon_rebuild=icon(ICON_REBUILD),
         label_rebuild=T("admin_rebuild", language),
         desc_rebuild=T("admin_rebuild_desc", language),

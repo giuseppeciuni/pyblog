@@ -230,6 +230,7 @@ UI_TRANSLATIONS = {
     "admin_menu": {"it": "Amministrazione", "en": "Administration"},
     "admin_skip_content": {"it": "Vai al contenuto", "en": "Skip to content"},
     "admin_tools": {"it": "Strumenti", "en": "Tools"},
+    "admin_menu_public_site": {"it": "Sito pubblico", "en": "Public site"},
     "admin_insert": {"it": "Inserisci", "en": "Insert"},
     "admin_rebuild_desc": {"it": "Ricrea le pagine pubbliche da articoli e impostazioni", "en": "Recreates the public pages from articles and settings"},
     "admin_backup_desc": {"it": "Articoli, immagini e impostazioni in un file .zip", "en": "Articles, images and settings in a .zip file"},

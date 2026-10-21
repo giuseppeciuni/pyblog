@@ -162,6 +162,13 @@ def test_menu():
             check(f"{language} / {name}: niente sotto-voci nel menu", len(below) == 0)
     config.CONFIG["admin_language"] = "it"
 
+    navbar = server.admin_navbar("dashboard", "it")
+    site_group = navbar[navbar.index('id="menu-site"'):navbar.index('id="menu-tools"')]
+    tools_group = navbar[navbar.index('id="menu-tools"'):]
+    check("«Rigenera il sito» è un pulsante del gruppo Sito pubblico, accanto ad «Apri il sito»",
+          'class="menu-rebuild"' in site_group and 'href="/"' in site_group
+          and "rebuildSite" not in tools_group)
+
     page_html = parse_page(server.login_page(""))
     check("il login non ha il menu",
           not any(e["attrs"].get("id") == "menu-admin" for e in page_html.elements))
