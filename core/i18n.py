@@ -569,16 +569,13 @@ UI_TRANSLATIONS = {
     "admin_forgot_password_link": {"it": "Password dimenticata?", "en": "Forgot your password?"},
     "admin_recovery_title": {"it": "Recupera la password", "en": "Recover your password"},
     "admin_recovery_invitation": {
-        "it": "Scrivi l'email per il recupero indicata nelle Impostazioni: ti mandiamo un link per scegliere una password nuova.",
-        "en": "Type the recovery email set in the Settings: we send you a link to choose a new password."},
+        "it": "Scrivi l'email di recupero: se è quella giusta, ti mandiamo un link per scegliere una password nuova.",
+        "en": "Type the recovery email: if it is the right one, we send you a link to choose a new password."},
     "admin_recovery_email": {"it": "Email", "en": "Email"},
     "admin_recovery_send": {"it": "Mandami il link", "en": "Send me the link"},
     "admin_recovery_sent": {
         "it": "Se l'indirizzo è quello giusto, tra poco ti arriva un'email con il link. Vale 30 minuti e funziona una volta sola; guarda anche nello spam.",
         "en": "If the address is the right one, an email with the link is on its way. It is valid for 30 minutes and works once; check the spam folder too."},
-    "admin_recovery_off": {
-        "it": "Il recupero via email non è attivo: servono l'email di recupero e il server di posta, in Impostazioni → Email e recupero password. Intanto puoi sceglierne una nuova sul server, con il comando: python3 pyblog.py password",
-        "en": "Recovery by email is not active: it needs the recovery email and the mail server, in Settings → Email and password recovery. Meanwhile you can choose a new one on the server, with the command: python3 pyblog.py password"},
     "admin_recovery_back": {"it": "Torna all'accesso", "en": "Back to the login"},
     "admin_reset_title": {"it": "Scegli una password nuova", "en": "Choose a new password"},
     "admin_reset_invalid": {

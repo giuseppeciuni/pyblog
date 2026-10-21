@@ -153,8 +153,14 @@ def test_through_the_server():
         try:
             CONFIG["recovery_email"] = ""
             _, page_html, _ = ask("/login?forgot=1")
-            check("senza email di recupero la pagina dice come fare dal server",
-                  "python3 pyblog.py password" in page_html)
+            check("senza email di recupero la pagina non svela niente: chiede l'email come sempre",
+                  'name="action" value="forgot"' in page_html and "pyblog.py password" not in page_html
+                  and "non è attivo" not in page_html and "notice-danger" not in page_html)
+            RECEIVED.clear()
+            state, page_html, _ = ask("/login", {"action": "forgot", "email": "chiunque@example.org"})
+            check("e risponde come sempre, senza mandare niente",
+                  state == 200 and html.escape(T("admin_recovery_sent", lang)[:40]) in page_html
+                  and RECEIVED == [])
             _, page_html, _ = ask("/login")
             check("la pagina di accesso porta al recupero", 'href="/login?forgot=1"' in page_html)
 

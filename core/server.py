@@ -639,19 +639,19 @@ def recovery_available():
 
 
 def recover_password_page(sent=False):
-    """The page that sends the recovery link, or says why it cannot."""
+    """
+    The page that sends the recovery link. It looks the same whether the
+    recovery is set up or not: it is open to anybody, and how the site is
+    configured is none of their business. The author finds out what is
+    missing in the Settings, on the card of "Email and password recovery".
+    """
     lang = admin_language()
-    if sent:
-        notice = alert_block(T("admin_recovery_sent", lang), "success")
-    elif not recovery_available():
-        notice = alert_block(T("admin_recovery_off", lang), "danger")
-    else:
-        notice = ""
+    notice = alert_block(T("admin_recovery_sent", lang), "success") if sent else ""
     content_html = render.render(
         "admin/recover_password.html",
         title=T("admin_recovery_title", lang),
         notice=notice,
-        form_hidden=" hidden" if sent or not recovery_available() else "",
+        form_hidden=" hidden" if sent else "",
         invitation=T("admin_recovery_invitation", lang),
         label_email=T("admin_recovery_email", lang),
         label_send=T("admin_recovery_send", lang),
