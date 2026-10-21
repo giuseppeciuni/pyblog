@@ -328,7 +328,10 @@ Vai in **Impostazioni → Sito e autore** e compila:
   resta l'esempio, Google non indicizza niente;
 - **Lingua principale del sito**: la lingua in cui scrivi;
 - in **Chi scrive**: il tuo nome e, se vuoi, ruolo, una breve biografia e i
-  tuoi profili (GitHub, LinkedIn...), uno per riga.
+  tuoi profili (GitHub, LinkedIn...), uno per riga;
+- **Email per il recupero della password**: dove arriva il link per
+  sceglierne una nuova se la dimentichi. Le email partono con la spedizione
+  impostata in **Newsletter** (passo 6.6), anche a newsletter spenta.
 
 Clicca **Salva e aggiorna il sito** in fondo alla pagina.
 
@@ -484,7 +487,7 @@ CHANGELOG lo dice).
 | Una pagina dell'amministrazione dà 404 | una rotta nuova non è nella configurazione di nginx | confronta `/etc/nginx/sites-available/pyblog` con `nginx.conf.example` |
 | Certbot fallisce | il dominio non punta ancora al server | rifai il controllo del passo 1.2 e riprova |
 | "Troppi tentativi" al login | protezione contro chi indovina password | aspetta: il blocco riguarda solo il tuo indirizzo e si allunga a ogni errore |
-| Password dimenticata | — | `cd /opt/pyblog && sudo -u pyblog python3 pyblog.py password` |
+| Password dimenticata | — | **Password dimenticata?** nella pagina di accesso manda un link all'email di recupero (Impostazioni → Sito e autore; le email partono con la spedizione della newsletter). Senza: `cd /opt/pyblog && sudo -u pyblog python3 pyblog.py password` |
 | Le modifiche non compaiono | il browser mostra la copia vecchia | ricarica forzata (Ctrl+F5); dal menu **Rigenera il sito** ricrea tutte le pagine |
 
 ### 7.4 Passare da un indirizzo a due

@@ -26,6 +26,9 @@ CONFIG_FILE = BASE_DIR / "config.json"  # the site configuration is stored here
 TEMPLATES_DIR = BASE_DIR / "templates"  # .html templates
 STATIC_DIR = BASE_DIR / "static"        # .css and .js sources
 PASSWORD_FILE = BASE_DIR / "admin_password.txt"
+# The link that lets the author choose a new password, while it is valid:
+# only the digest of its token, and when it expires.
+PASSWORD_RESET_FILE = BASE_DIR / ".password-reset.json"
 PORT = 8000
 
 
@@ -43,6 +46,7 @@ CONFIG_DEFAULT = {
     # code of outside services on the public pages (analytics, ads,
     # widgets) runs on another origin and cannot reach it.
     "admin_url": "",
+    "recovery_email": "",
     # Google Analytics 4 measurement ID (e.g. "G-XXXXXXXXXX").
     # Empty means no analytics script on the public pages.
     "analytics_id": "",

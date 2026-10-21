@@ -40,11 +40,12 @@ from core.auth import (create_session_token, csrf_token_for,
                        csrf_token_is_valid, destroy_all_sessions,
                        destroy_session, login_is_locked, login_lock_remaining,
                        password_is_set, record_failed_login,
-                       record_successful_login, session_is_valid, set_password,
-                       verify_password)
+                       record_successful_login, reset_email_allowed,
+                       reset_token_is_valid, session_is_valid, set_password,
+                       use_reset_token, create_reset_token, verify_password)
 from core.build import (BUILD_LOCK, build, compute_reading_time, format_date,
                         generate_article_page)
-from core.config import (CONFIG, CONFIG_FILE, MEDIA_DIR, OUTPUT_DIR, PORT,
+from core.config import (CONFIG, CONFIG_DEFAULT, CONFIG_FILE, MEDIA_DIR, OUTPUT_DIR, PORT,
                          POSTS_DIR, admin_address, admin_language, load_config,
                          main_language, reload_global_config, save_config,
                          secondary_language, url_host)
@@ -606,8 +607,85 @@ def login_page(error_message=""):
         failure=alert_block(error_message, "danger"),
         label_password=T("admin_password", lang),
         login=T("admin_login", lang),
+        label_forgot=T("admin_forgot_password_link", lang),
     )
     return admin_page_shell(T("admin_area_reserved", lang), content_html, lang)
+
+
+def recovery_email():
+    """The address the recovery link goes to, or "" when there is none."""
+    value = str(CONFIG.get("recovery_email", "") or "").strip()
+    return value if newsletter.valid_email(value) else ""
+
+
+def recovery_base():
+    """
+    Where the recovery link points: the administration's own address, or the
+    site's. Never the Host of the request: whoever asks for the link could
+    write any host there, and the email would carry the token to them.
+    """
+    own = admin_address()
+    if own != "":
+        return own
+    base = str(CONFIG.get("base_url", "") or "").strip().rstrip("/")
+    if base.startswith(("https://", "http://")) and base != CONFIG_DEFAULT["base_url"]:
+        return base
+    return ""
+
+
+def recovery_available():
+    """Tell whether a recovery link can be sent at all."""
+    return recovery_email() != "" and recovery_base() != "" and newsletter.can_send()
+
+
+def recover_password_page(sent=False):
+    """The page that sends the recovery link, or says why it cannot."""
+    lang = admin_language()
+    if sent:
+        notice = alert_block(T("admin_recovery_sent", lang), "success")
+    elif not recovery_available():
+        notice = alert_block(T("admin_recovery_off", lang), "danger")
+    else:
+        notice = ""
+    content_html = render.render(
+        "admin/recover_password.html",
+        title=T("admin_recovery_title", lang),
+        notice=notice,
+        form_hidden=" hidden" if sent or not recovery_available() else "",
+        invitation=T("admin_recovery_invitation", lang),
+        label_email=T("admin_recovery_email", lang),
+        label_send=T("admin_recovery_send", lang),
+        label_back=T("admin_recovery_back", lang),
+    )
+    return admin_page_shell(T("admin_recovery_title", lang), content_html, lang)
+
+
+def reset_password_page(token, error_message=""):
+    """The page to choose a new password, reached from the recovery link."""
+    lang = admin_language()
+    if not reset_token_is_valid(token):
+        content_html = render.render(
+            "admin/recover_password.html",
+            title=T("admin_reset_title", lang),
+            notice=alert_block(T("admin_reset_invalid", lang), "danger"),
+            form_hidden="",
+            invitation=T("admin_recovery_invitation", lang),
+            label_email=T("admin_recovery_email", lang),
+            label_send=T("admin_recovery_send", lang),
+            label_back=T("admin_recovery_back", lang),
+        )
+        return admin_page_shell(T("admin_reset_title", lang), content_html, lang)
+    content_html = render.render(
+        "admin/reset_password.html",
+        title=T("admin_reset_title", lang),
+        failure=alert_block(error_message, "danger"),
+        token=esc(token),
+        label_new_f=T("admin_new_f_password", lang),
+        label_confirm=T("admin_confirm_password", lang),
+        hint_length_of=T("admin_password_length_of", lang),
+        label_save=T("admin_reset_save", lang),
+    )
+    return admin_page_shell(T("admin_reset_title", lang), content_html, lang)
 
 
 def set_password_page(error_message=""):
@@ -2146,6 +2224,9 @@ def config_page(csrf):
         label_address_admin=T("admin_address_admin", lang),
         hint_address_admin=T("admin_address_admin_hint", lang),
         value_address_admin=esc(str(config.get("admin_url", "") or "")),
+        label_recovery_email=T("admin_recovery_email_label", lang),
+        hint_recovery_email=T("admin_recovery_email_hint", lang),
+        value_recovery_email=esc(str(config.get("recovery_email", "") or "")),
         ph_base_url=ph["base_url"],
         label_analytics=T("admin_analytics", lang),
         label_ga_id=T("admin_ga_id", lang),
@@ -2526,9 +2607,20 @@ class Handler(http.server.BaseHTTPRequestHandler):
         return client.startswith("127.") or client in ("::1", "::ffff:127.0.0.1")
 
     def _login_or_setup_page(self):
-        """Send the login page, or the password creation page on first run."""
+        """
+        Send the login page, or the password creation page on first run. The
+        recovery pages live on /login too (?forgot=1, ?reset=<token>): every
+        nginx configuration already sends /login to PyBlog, with its limit on
+        requests, so they need nothing new on the servers.
+        """
         if not password_is_set():
             self._send(set_password_page())
+            return
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        if "reset" in query:
+            self._send(reset_password_page(query["reset"][0]))
+        elif "forgot" in query:
+            self._send(recover_password_page())
         else:
             self._send(login_page())
 
@@ -3416,18 +3508,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
             current_config = load_config()
             # The moment the newsletter is switched on: only what is
             # published from then on goes to the subscribers.
-            new_password = data.get("newsletter")
-            if isinstance(new_password, dict):
+            new_newsletter = data.get("newsletter")
+            if isinstance(new_newsletter, dict):
                 old_value = current_config.get("newsletter", {})
                 if not isinstance(old_value, dict):
                     old_value = {}
                 since = old_value.get("enabled_since", "")
-                if new_password.get("enabled") is True and since == "":
+                if new_newsletter.get("enabled") is True and since == "":
                     since = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-                new_password["enabled_since"] = since
+                new_newsletter["enabled_since"] = since
                 # An empty password field keeps the saved password.
-                if new_password.get("smtp_password", "") == "" and old_value.get("smtp_password"):
-                    new_password["smtp_password"] = old_value["smtp_password"]
+                if new_newsletter.get("smtp_password", "") == "" and old_value.get("smtp_password"):
+                    new_newsletter["smtp_password"] = old_value["smtp_password"]
             for key in data:
                 current_config[key] = data[key]
             save_config(current_config)
@@ -3446,15 +3538,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # We try to parse the text as JSON: if it fails,
         # the error tells us the line and column of the problem.
         try:
-            config_validata = json.loads(config_text)
+            parsed_config = json.loads(config_text)
         except json.JSONDecodeError as json_error:
             return {"ok": False,
                     "error": T("err_invalid_json_prefix", lang) + str(json_error)}
         # It must be an object (a dictionary), not a list or anything else.
-        if not isinstance(config_validata, dict):
+        if not isinstance(parsed_config, dict):
             return {"ok": False, "error": T("err_config_must_be_object", lang)}
         with BUILD_LOCK:
-            save_config(config_validata)
+            save_config(parsed_config)
             reload_global_config()
             build()
         return {"ok": True}
@@ -3525,6 +3617,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 T("err_too_many_attempts", lang).replace("{n}", str(login_lock_remaining(client)))))
             return
         form = self._read_form()
+        action = form.get("action", [""])[0]
+        if action == "forgot":
+            self._handle_forgot_password(form)
+            return
+        if action == "reset":
+            self._handle_reset_password(form, client)
+            return
         password = form.get("password", [""])[0]
         if verify_password(password):
             record_successful_login(client)
@@ -3535,6 +3634,49 @@ class Handler(http.server.BaseHTTPRequestHandler):
             # A small pause: it slows automated attempts down even further.
             time.sleep(0.5)
             self._send(login_page(T("err_wrong_password", lang)))
+
+    def _handle_forgot_password(self, form):
+        """
+        Send the recovery link when the address typed is the recovery one.
+        The answer is the same either way, so the page cannot be used to find
+        out the address; at most one email goes every two minutes.
+        """
+        typed = form.get("email", [""])[0].strip().lower()
+        wanted = recovery_email().lower()
+        if (recovery_available() and typed != "" and secrets.compare_digest(typed, wanted)
+                and reset_email_allowed()):
+            link = recovery_base() + "/login?reset=" + create_reset_token()
+            try:
+                newsletter.send_password_recovery(recovery_email(), link, admin_language())
+            except Exception as error:
+                # The page says the same as always; the reason goes to the log.
+                print(f"Recovery email not sent: {error}")
+        self._send(recover_password_page(sent=True))
+
+    def _handle_reset_password(self, form, client):
+        """Set the new password from the recovery link, and log in."""
+        lang = admin_language()
+        token = form.get("token", [""])[0]
+        new_value = form.get("password", [""])[0]
+        confirmed = form.get("confirm", [""])[0]
+        if not reset_token_is_valid(token):
+            record_failed_login(client)
+            self._send(reset_password_page(token))
+            return
+        if len(new_value) < 6:
+            self._send(reset_password_page(token, T("err_new_password_too_short", lang)))
+            return
+        if new_value != confirmed:
+            self._send(reset_password_page(token, T("err_new_passwords_dont_match", lang)))
+            return
+        if not use_reset_token(token):
+            self._send(reset_password_page(token))
+            return
+        set_password(new_value)
+        # Whoever was logged in with the old password is logged out.
+        destroy_all_sessions()
+        record_successful_login(client)
+        self._redirect("/admin", cookie=self._session_cookie(create_session_token()))
 
     def _handle_change_password(self):
         """Change the password while logged in."""

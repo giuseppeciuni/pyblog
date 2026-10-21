@@ -1,4 +1,5 @@
 admin_password.txt
+.password-reset.json
 __pycache__/
 *.pyc
 output/

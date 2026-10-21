@@ -554,6 +554,37 @@ UI_TRANSLATIONS = {
     "admin_create_password_invitation": {"it": "Questo è il primo avvio. Scegli la password che proteggerà l'amministrazione del sito.",
         "en": "This is the first run. Choose the password that will protect the site's administration."},
     "admin_new_f_password": {"it": "Nuova password", "en": "New password"},
+    "admin_forgot_password_link": {"it": "Password dimenticata?", "en": "Forgot your password?"},
+    "admin_recovery_title": {"it": "Recupera la password", "en": "Recover your password"},
+    "admin_recovery_invitation": {
+        "it": "Scrivi l'email per il recupero indicata nelle Impostazioni: ti mandiamo un link per scegliere una password nuova.",
+        "en": "Type the recovery email set in the Settings: we send you a link to choose a new password."},
+    "admin_recovery_email": {"it": "Email", "en": "Email"},
+    "admin_recovery_send": {"it": "Mandami il link", "en": "Send me the link"},
+    "admin_recovery_sent": {
+        "it": "Se l'indirizzo è quello giusto, tra poco ti arriva un'email con il link. Vale 30 minuti e funziona una volta sola; guarda anche nello spam.",
+        "en": "If the address is the right one, an email with the link is on its way. It is valid for 30 minutes and works once; check the spam folder too."},
+    "admin_recovery_off": {
+        "it": "Il recupero via email non è attivo: servono l'email per il recupero (Impostazioni → Sito e autore) e la spedizione delle email (Impostazioni → Newsletter). Intanto puoi sceglierne una nuova sul server, con il comando: python3 pyblog.py password",
+        "en": "Recovery by email is not active: it needs the recovery email (Settings → Site and author) and the sending of emails (Settings → Newsletter). Meanwhile you can choose a new one on the server, with the command: python3 pyblog.py password"},
+    "admin_recovery_back": {"it": "Torna all'accesso", "en": "Back to the login"},
+    "admin_reset_title": {"it": "Scegli una password nuova", "en": "Choose a new password"},
+    "admin_reset_invalid": {
+        "it": "Questo link è scaduto o è già stato usato. Chiedine uno nuovo.",
+        "en": "This link has expired or has already been used. Ask for a new one."},
+    "admin_reset_save": {"it": "Salva la password ed entra", "en": "Save the password and log in"},
+    "admin_recovery_email_label": {"it": "Email per il recupero della password", "en": "Password recovery email"},
+    "admin_recovery_email_hint": {
+        "it": "Se dimentichi la password, qui arriva il link per sceglierne una nuova. Le email partono con la spedizione impostata in Newsletter → Spedizione delle email.",
+        "en": "If you forget your password, the link to choose a new one comes here. The emails go out with the sending set in Newsletter → Sending the emails."},
+    "mail_recovery_subject": {"it": "La password di {site}", "en": "The password of {site}"},
+    "mail_recovery_text": {
+        "it": "È stato chiesto di cambiare la password dell'amministrazione di {site}. Il link qui sotto vale 30 minuti e funziona una volta sola.",
+        "en": "A new password was asked for the administration of {site}. The link below is valid for 30 minutes and works once."},
+    "mail_recovery_ignore": {
+        "it": "Se non l'hai chiesto tu, ignora questa email: la password resta quella di prima.",
+        "en": "If you did not ask for it, ignore this email: the password stays as it was."},
+    "mail_recovery_button": {"it": "Scegli una password nuova", "en": "Choose a new password"},
     "admin_confirm_password": {"it": "Conferma password", "en": "Confirm password"},
     "admin_create_login": {"it": "Crea password e accedi", "en": "Create password and log in"},
     "admin_change_password": {"it": "Cambia password", "en": "Change password"},

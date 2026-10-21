@@ -326,7 +326,10 @@ Go to **Settings → Site and author** and fill in:
   left at the example value, Google indexes nothing;
 - **Main site language**: the language you write in;
 - in **Who writes**: your name and, if you like, job title, a short bio and
-  your profiles (GitHub, LinkedIn...), one per line.
+  your profiles (GitHub, LinkedIn...), one per line;
+- **Password recovery email**: where the link to choose a new password goes
+  if you forget it. The emails go with the sending settings of
+  **Newsletter** (step 6.6), even with the newsletter off.
 
 Click **Save and update the site** at the bottom of the page.
 
@@ -480,7 +483,7 @@ your file in `/etc/nginx/sites-available/pyblog` (the CHANGELOG says so).
 | An administration page answers 404 | a new route is missing from the nginx configuration | compare `/etc/nginx/sites-available/pyblog` with `nginx.conf.example` |
 | Certbot fails | the domain does not point at the server yet | redo the check of step 1.2 and try again |
 | "Too many attempts" at login | protection against password guessing | wait: the lock affects only your address and grows with each mistake |
-| Forgotten password | — | `cd /opt/pyblog && sudo -u pyblog python3 pyblog.py password` |
+| Forgotten password | — | **Forgot your password?** on the login page sends a link to the recovery email (Settings → Site and author; the emails go with the newsletter's sending settings). Without it: `cd /opt/pyblog && sudo -u pyblog python3 pyblog.py password` |
 | Changes do not show | the browser shows the old copy | hard reload (Ctrl+F5); from the menu **Rebuild the site** recreates every page |
 
 ### 7.4 Moving from one address to two

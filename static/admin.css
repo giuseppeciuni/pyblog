@@ -853,6 +853,8 @@ select.field-input { padding-right:2rem; }
 .access-container { width:100%; max-width:24rem; box-shadow:0 8px 24px rgba(0,0,0,0.06); }
 .access-brand-mark { margin:0; font-weight:700; color:var(--a-accent-strong); }
 .access-form { display:flex; flex-direction:column; gap:1.125rem; }
+.access-form[hidden] { display:none; }
+.access-link { margin:1rem 0 0; text-align:center; font-size:0.9375rem; }
 .page.page-small { max-width:40rem; }
 .notice { margin:0; padding:0.75rem 1rem; border-radius:8px; font-size:0.9375rem; border:1px solid; }
 .notice-danger { background:#fdecea; border-color:#f5c2bd; color:#8a1c12; }

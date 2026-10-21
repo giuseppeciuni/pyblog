@@ -4817,6 +4817,7 @@ function saveConfig(buttonEl) {
     author: document.getElementById('author').value,
     base_url: document.getElementById('base_url').value,
     admin_url: adminAddress,
+    recovery_email: document.getElementById('recovery_email').value.trim(),
     analytics_id: document.getElementById('analytics_id').value.trim(),
     umami_url: document.getElementById('umami_url').value.trim(),
     umami_website_id: document.getElementById('umami_website_id').value.trim(),

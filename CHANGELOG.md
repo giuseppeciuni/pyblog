@@ -144,6 +144,15 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Forgot your password? A link by email.** The login page has
+  **Forgot your password?**: it sends a link to the **Password recovery
+  email** of Settings → Site and author, with the sending settings of the
+  newsletter (the newsletter itself may be off). The link is valid for 30
+  minutes and once only, points at the site's (or the administration's)
+  own address and never at the Host of the request, and logs out every
+  session when the new password is saved. The answer is the same whether
+  the address is right or not, and at most one email goes every two
+  minutes. It all lives on `/login`: the nginx files need nothing new.
 - **Lighter pictures for every screen.** When a picture is uploaded, the
   browser also makes WebP versions of it at 480, 960 and 1600 pixels
   (never wider than the picture), kept in `media/_sizes/`. The pages offer

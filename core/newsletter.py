@@ -348,6 +348,30 @@ def send_confirmation(address, token, language, site_url):
         server.send_message(message(current, address, subject, text, html))
 
 
+def send_password_recovery(to, link, language):
+    """
+    The email with the link to choose a new administration password. It
+    goes with the sending settings of the newsletter, which is the one place
+    the site knows how to send email; the newsletter itself may be off.
+    """
+    current = settings()
+    site = CONFIG.get("site_title", "") or "PyBlog"
+    subject = T("mail_recovery_subject", language).replace("{site}", site)
+    lines = [T("mail_recovery_text", language).replace("{site}", site),
+             T("mail_recovery_ignore", language)]
+    text = "\n\n".join([lines[0], link, lines[1]])
+    html = email_html(language, subject, lines, T("mail_recovery_button", language), link, "")
+    with smtp_connection(current) as server:
+        server.send_message(message(current, to, subject, text, html))
+
+
+def can_send(current=None):
+    """Tell whether the sending of emails is set up, newsletter on or not."""
+    if current is None:
+        current = settings()
+    return current["smtp_host"] != "" and valid_email(current["sender_email"])
+
+
 def send_test(current, to):
     """A test email, to check the SMTP settings from the Settings page."""
     language = CONFIG.get("admin_language", "it")

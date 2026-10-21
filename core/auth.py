@@ -14,13 +14,14 @@ Everything here lives in memory only: restarting the server invalidates every
 session and resets the login rate limiter.
 """
 import hashlib
+import json
 import os
 import secrets
 import tempfile
 import threading
 import time
 
-from core.config import PASSWORD_FILE
+from core.config import PASSWORD_FILE, PASSWORD_RESET_FILE
 
 
 # How long a session stays valid, in seconds. After this the token is refused
@@ -311,3 +312,68 @@ def csrf_token_is_valid(session_token, submitted_token):
     if submitted_token is None or submitted_token == "":
         return False
     return secrets.compare_digest(expected, submitted_token)
+
+
+# ---------------------------------------------------------------------------
+# PASSWORD RECOVERY BY EMAIL
+# ---------------------------------------------------------------------------
+# A forgotten password used to mean a terminal on the server. Now the author
+# can ask for a link by email: it is valid for half an hour and once only.
+# The token travels in the email; on disk there is only its SHA-256, so a
+# copy of the folder (a backup, say) cannot be turned into a working link.
+# A new request replaces the previous link.
+
+RESET_MAX_AGE = 30 * 60
+# At most one email every two minutes: the form is open to anybody, and it
+# must not become a way to fill the author's mailbox.
+RESET_EMAIL_INTERVAL = 120
+_LAST_RESET_EMAIL = {"at": 0.0}
+_RESET_LOCK = threading.Lock()
+
+
+def _token_digest(token):
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def reset_email_allowed(now=None):
+    """Tell whether a recovery email may go now, and if so book the slot."""
+    now = time.time() if now is None else now
+    with _RESET_LOCK:
+        if now - _LAST_RESET_EMAIL["at"] < RESET_EMAIL_INTERVAL:
+            return False
+        _LAST_RESET_EMAIL["at"] = now
+        return True
+
+
+def create_reset_token(now=None):
+    """A new recovery token; the previous one stops working."""
+    now = time.time() if now is None else now
+    token = secrets.token_urlsafe(32)
+    write_private_file(PASSWORD_RESET_FILE, json.dumps(
+        {"digest": _token_digest(token), "expires": now + RESET_MAX_AGE}))
+    return token
+
+
+def reset_token_is_valid(token, now=None):
+    """Tell whether a recovery token is the current one and not expired."""
+    now = time.time() if now is None else now
+    if not isinstance(token, str) or token == "" or len(token) > 200:
+        return False
+    try:
+        data = json.loads(PASSWORD_RESET_FILE.read_text(encoding="utf-8"))
+        digest, expires = str(data["digest"]), float(data["expires"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+    return now < expires and secrets.compare_digest(digest, _token_digest(token))
+
+
+def use_reset_token(token, now=None):
+    """Check a recovery token and spend it: True only the first time."""
+    with _RESET_LOCK:
+        if not reset_token_is_valid(token, now):
+            return False
+        try:
+            PASSWORD_RESET_FILE.unlink()
+        except OSError:
+            return False
+        return True
