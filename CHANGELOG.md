@@ -6,6 +6,14 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **Faster on phones (PageSpeed).** The thumbnails of the lists told the
+  browser they took the whole screen, so a phone downloaded the 960-pixel
+  version of every 104-pixel thumbnail: now each says its real size. The
+  first picture of a list (the biggest thing a phone shows at once, the
+  LCP) is no longer lazy and is asked for first, like the cover of an
+  article. `site.js` is loaded after the page (`defer`): the few lines that
+  apply the dark theme before the first paint are now written in the page.
+  The class of `<body>` is `page-<kind>` instead of `pagina-<kind>`.
 - **The same picture is no longer saved again and again.** Importing a Word
   document a second time, or uploading a picture that is already there, used
   to save a new copy with a number at the end (`image1-1.png`). Now the file

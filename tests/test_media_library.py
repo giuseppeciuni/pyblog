@@ -243,6 +243,17 @@ def test_sizes():
         check("un'immagine di un altro sito resta com'è", '<img src="https://example.com/x.png">' in content)
         check("anche con l'indirizzo completo del sito",
               "srcset=" in build.responsive_attributes("https://www.ciunix.com/media/foto.png", "720px"))
+        row = build.article_thumbnail({"image": "/media/foto.png"})
+        check("la miniatura di una riga dice la sua misura vera: 104 pixel sul telefono",
+              'sizes="(max-width: 640px) 104px, 150px"' in row and 'loading="lazy"' in row, row)
+        first = build.article_thumbnail({"image": "/media/foto.png"}, lead=True, first=True)
+        check("la prima della lista arriva subito e per prima, senza lazy",
+              'fetchpriority="high"' in first and "lazy" not in first
+              and 'sizes="(max-width: 640px) 100vw, 260px"' in first, first)
+        base = (pathlib.Path(__file__).resolve().parent.parent / "templates" / "base.html").read_text()
+        check("site.js non trattiene più la prima pittura: il tema è nella pagina, lo script dopo",
+              '<script src="/site.js$version_js" defer></script>' in base
+              and "setAttribute('data-theme', 'dark')" in base)
         media_library.delete_media(["foto.png"])
         check("eliminando l'immagine se ne vanno anche le versioni",
               not (media_library.MEDIA_DIR / "_sizes" / "foto.png").exists())

@@ -6,11 +6,25 @@
   $favicon
   $analytics
   <title>$title_page</title>
+  <script>
+  // The theme before the first paint, so a dark page never flashes white;
+  // the rest of the site's script comes later (site.js, deferred).
+  (function() {
+    document.documentElement.classList.add('js');
+    try {
+      var saved = localStorage.getItem('pb-theme') || localStorage.getItem('pb-tema');
+      if (saved === 'dark' || (saved === null && window.matchMedia
+          && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (e) { }
+  })();
+  </script>
 $meta_extra  <link rel="stylesheet" href="/common.css$version_css">
   <link rel="stylesheet" href="/style.css$version_css">
-$feed_links$head_extra  <script src="/site.js$version_js"></script>
+$feed_links$head_extra  <script src="/site.js$version_js" defer></script>
 </head>
-<body class="pagina-$kind_page">
+<body class="page-$kind_page">
 $body_open  $header
 $after_header$content$before_footer  $footer
 $script_extra</body>

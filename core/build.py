@@ -217,7 +217,12 @@ def captioned_figures(html_content_value):
 # lighter versions: the text column (720 pixels, all the screen on a phone)
 # and the thumbnails of the lists (260 pixels, all the screen on a phone).
 SIZES_CONTENT = "(max-width: 760px) 100vw, 720px"
-SIZES_THUMBNAIL = "(max-width: 700px) 100vw, 260px"
+# The thumbnail of a row is 150 pixels wide (104 on a phone); the one of the
+# lead row 260, and all the screen on a phone, where it goes above the text.
+# Saying "all the screen" for every thumbnail made a phone download the
+# 960-pixel version of each 104-pixel picture.
+SIZES_THUMBNAIL = "(max-width: 640px) 104px, 150px"
+SIZES_THUMBNAIL_LEAD = "(max-width: 640px) 100vw, 260px"
 # An uploaded picture's name in its address, relative or with the domain.
 OWN_MEDIA_SOURCE = re.compile(r"^(?:https?://[^/]+)?/media/([A-Za-z0-9][A-Za-z0-9._-]*)$")
 IMAGE_TAG = re.compile(r"<img\b[^>]*>", re.IGNORECASE)
@@ -1878,7 +1883,7 @@ def article_tile_label(art):
     return title_value[0].upper()
 
 
-def article_thumbnail(art):
+def article_thumbnail(art, lead=False, first=False):
     """
     The cover as a thumbnail, or a tile with the article's first tag.
 
@@ -1888,8 +1893,13 @@ def article_thumbnail(art):
     """
     image_url = media_url(art.get("image", ""))
     if image_url != "":
+        # The first picture of a list is the biggest thing a phone shows
+        # at once (the LCP): it is asked for right away and first, not left
+        # to the lazy loading of the others.
+        loading = ' fetchpriority="high"' if first else ' loading="lazy"'
+        sizes = SIZES_THUMBNAIL_LEAD if lead else SIZES_THUMBNAIL
         return ('<img class="art-thumb-img" src="' + esc(image_url) + '"'
-                + responsive_attributes(image_url, SIZES_THUMBNAIL) + ' alt="" loading="lazy">')
+                + responsive_attributes(image_url, sizes) + ' alt=""' + loading + '>')
     return '<span class="art-tile">' + esc(article_tile_label(art)) + "</span>"
 
 
@@ -1907,7 +1917,7 @@ def article_tags_line(art, language):
     return '          <p class="art-tags">' + "".join(pieces) + "</p>\n"
 
 
-def article_row(art, language, lead=False):
+def article_row(art, language, lead=False, first=False):
     """
     One article in a list: thumbnail, tags, title, date and reading time, and
     the opening of the text.
@@ -1937,7 +1947,7 @@ def article_row(art, language, lead=False):
         "public/article_row.html",
         css_class=css_class,
         url=article_url(art, language),
-        thumbnail=article_thumbnail(art),
+        thumbnail=article_thumbnail(art, lead=lead, first=first),
         label_text=label,
         tags=article_tags_line(art, language),
         title=esc(title_value),
@@ -2879,7 +2889,7 @@ def generate_homepage(articles, language="it", page=1, total_pages=1):
     rows = []
     for index_value, art in enumerate(page_articles):
         lead = home_featured_enabled() and page == 1 and index_value == 0
-        rows.append(article_row(art, language, lead=lead))
+        rows.append(article_row(art, language, lead=lead, first=(page == 1 and index_value == 0)))
         # The "between the articles" custom code (an in-feed advertisement)
         # goes after the third one, once per page.
         if index_value == 2 and len(page_articles) > 3:

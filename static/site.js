@@ -17,23 +17,9 @@
 
 /* --- 1) Light/dark theme ------------------------------------------------- */
 
-// We apply the saved theme right away, before the page is painted.
-(function() {
-  // The stylesheet folds the phone menu only when this class is there: a
-  // browser without JavaScript keeps every link visible.
-  document.documentElement.classList.add('js');
-  try {
-    // The theme was saved as pb-tema before the names went English.
-    var savedValue = localStorage.getItem('pb-theme') || localStorage.getItem('pb-tema');
-    if (savedValue === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else if (savedValue === null && window.matchMedia
-               && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      // No saved choice: we respect the system preference.
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-  } catch (e) { }
-})();
+// The saved theme is applied by a few lines written into the <head> of
+// every page (base.html), before the page is painted: this file is loaded
+// with defer, after the page, so it no longer holds the first paint back.
 
 // Aligns the code blocks theme (highlight.js) with the site theme.
 // The link has id "hljs-theme" and only exists on the article pages.
