@@ -6,6 +6,13 @@ All notable changes to PyBlog are documented in this file.
 
 ### Bug fixes
 
+- **A site with no title still names its homepage link.** With the title
+  left empty (only the subtitle on show) the link of the header was an
+  empty `<a href="/">`: PageSpeed flagged it ("Links must have discernible
+  text"), and screen readers and AI agents had nothing to read. Now it
+  carries the author's name (or the domain) as `aria-label`, with nothing
+  changed on screen; the same name goes into the `WebSite` and publisher
+  data for Google, which said `"name": ""`.
 - **Faster on phones (PageSpeed).** The thumbnails of the lists told the
   browser they took the whole screen, so a phone downloaded the 960-pixel
   version of every 104-pixel thumbnail: now each says its real size. The

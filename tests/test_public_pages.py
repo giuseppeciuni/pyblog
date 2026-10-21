@@ -221,6 +221,30 @@ def test_image_addresses():
           'src="https://cdn.tld/b.png"' in fixed, fixed)
 
 
+def test_site_without_title():
+    """A site that shows no title still names the link to its homepage."""
+    print("\nsito senza titolo")
+    from core import build as build_module
+    from core.config import CONFIG
+    saved = dict(CONFIG)
+    try:
+        CONFIG["site_title"] = ""
+        CONFIG["author"] = "Giuseppe Ciuni"
+        header = build_module.site_header("it", is_home=True)
+        check("il link alla home ha un nome per gli screen reader",
+              '<a href="/" aria-label="Giuseppe Ciuni"></a>' in header, header[:400])
+        check("e il nome del sito per Google non è vuoto", build_module.site_name() == "Giuseppe Ciuni")
+        CONFIG["author"] = ""
+        CONFIG["base_url"] = "https://www.ciunix.com"
+        check("senza nome dell'autore, il dominio", build_module.site_name() == "www.ciunix.com")
+        CONFIG["site_title"] = "Inside the machine"
+        check("con il titolo, il link è il titolo",
+              '<a href="/">Inside the machine</a>' in build_module.site_header("it", is_home=True))
+    finally:
+        CONFIG.clear()
+        CONFIG.update(saved)
+
+
 def main():
     # Give an article a cover so the checks have something to look at, then
     # put it back exactly as it was.
@@ -241,6 +265,7 @@ def main():
         test_zoom_closes_everywhere()
         test_zoom_only_in_articles()
         test_image_addresses()
+        test_site_without_title()
     finally:
         if original == "":
             article = load_article(slug)

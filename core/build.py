@@ -161,6 +161,23 @@ def shared_url(url):
     return url
 
 
+def site_name():
+    """
+    What the site is called where a name cannot be missing: the title, or
+    the author's name, or the domain. A site can choose to show no title in
+    its header (only the subtitle), but the link to the homepage still needs
+    a name for a screen reader, and the data for Google a "name" that is
+    not empty.
+    """
+    title_value = str(CONFIG.get("site_title", "") or "").strip()
+    if title_value != "":
+        return title_value
+    author = str(CONFIG.get("author", "") or "").strip()
+    if author != "":
+        return author
+    return urllib.parse.urlsplit(str(CONFIG.get("base_url", "") or "")).hostname or ""
+
+
 def with_site_title(page_title):
     """
     The <title> of a page: its own title, a dot and the name of the site.
@@ -921,7 +938,12 @@ def site_header(language="it", nav_extra="", is_home=False):
         nav_extra = ((nav_extra.strip() + "\n      " if nav_extra.strip() else "")
                      + f'<a class="nav-work" href="{esc(work[0])}">{esc(work[1])}</a>')
 
-    title_link = f'<a href="{prefix}/">{esc(CONFIG["site_title"])}</a>'
+    shown_title = str(CONFIG.get("site_title", "") or "").strip()
+    if shown_title != "":
+        title_link = f'<a href="{prefix}/">{esc(shown_title)}</a>'
+    else:
+        # No title on show: the link keeps a name for screen readers.
+        title_link = f'<a href="{prefix}/" aria-label="{esc(site_name())}"></a>'
     if is_home:
         site_title_html = '<h1 class="site-title">' + title_link + "</h1>"
     else:
@@ -2369,7 +2391,7 @@ def generate_article_page(art, language="it", all_articles=None):
     # Enriched with image and keywords (tags) when available.
     # The author uses the full Person schema (url, photo, role, sameAs):
     # this is the "personal data" that strengthens Google's E-E-A-T signals.
-    publisher = {"@type": "Organization", "name": CONFIG["site_title"]}
+    publisher = {"@type": "Organization", "name": site_name()}
     site_logo = seo_data().get("logo", "")
     if site_logo != "":
         publisher["logo"] = {"@type": "ImageObject", "url": site_logo}
@@ -2976,7 +2998,7 @@ def generate_homepage(articles, language="it", page=1, total_pages=1):
     jsonld_home = json.dumps({
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": CONFIG["site_title"],
+        "name": site_name(),
         "description": site_subtitle(language),
         "url": base + "/",
         "inLanguage": language,
