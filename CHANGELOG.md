@@ -144,6 +144,13 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **An article goes online with its lighter pictures.** Publishing,
+  updating or scheduling an article first waits for the lighter versions of
+  every picture in it (text, English version and cover): the ones being
+  made are waited for, the missing ones are made then. The page built right
+  after already offers them. The strip says "Preparing the lighter versions
+  of the pictures…" meanwhile; after two minutes the article goes online
+  anyway. Drafts are saved at once, as before.
 - **Email and password recovery have a section of their own.** The mail
   server used to sit inside the Newsletter section and the recovery email
   inside "Site and author": now both are in **Settings → Email and password

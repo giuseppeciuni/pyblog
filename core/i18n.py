@@ -258,6 +258,7 @@ UI_TRANSLATIONS = {
     "admin_media_make_sizes_tip": {
         "it": "Prepara ogni immagine in WebP a 480, 960 e 1600 pixel: il sito le usa per caricare più in fretta, soprattutto sul telefono. Le immagini caricate da adesso le hanno già.",
         "en": "Prepares every picture as WebP at 480, 960 and 1600 pixels: the site uses them to load faster, on phones above all. Pictures uploaded from now on already have them."},
+    "js_images_preparing": {"it": "Preparo le versioni leggere delle immagini…", "en": "Preparing the lighter versions of the pictures…"},
     "js_media_making_sizes": {"it": "Versioni leggere: {i} di {n}…", "en": "Lighter versions: {i} of {n}…"},
     "js_media_shown_of": {"it": "Mostrati {shown} di {total}", "en": "Showing {shown} of {total}"},
     "admin_media_merge": {"it": "Unisci i doppioni ({n}, {size})", "en": "Merge the duplicates ({n}, {size})"},

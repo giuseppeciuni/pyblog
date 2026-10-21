@@ -743,7 +743,22 @@ function uploadChosenFile(fileFieldId, limitMb, stateId, startMessage) {
 // and the pages offer them in srcset.
 var IMAGE_SIZE_WIDTHS = [480, 960, 1600];
 
+// The versions being made right now, by address: asking twice for the same
+// picture waits for the work already under way instead of doing it again,
+// and publishing can wait for all of them (articleImagesReady).
+var IMAGE_SIZE_JOBS = {};
+
 function makeImageSizes(url) {
+  if (IMAGE_SIZE_JOBS[url]) { return IMAGE_SIZE_JOBS[url]; }
+  var job = makeImageSizesNow(url).then(function(done) {
+    delete IMAGE_SIZE_JOBS[url];
+    return done;
+  });
+  IMAGE_SIZE_JOBS[url] = job;
+  return job;
+}
+
+function makeImageSizesNow(url) {
   var match = /^\/media\/([A-Za-z0-9][A-Za-z0-9._-]*\.(?:jpe?g|png|webp))$/i.exec(url || '');
   if (!match) { return Promise.resolve(false); }
   var name = match[1];
@@ -789,22 +804,62 @@ function makeImageSizes(url) {
 // Word document saves its pictures on the server, where they cannot be
 // made), one after the other.
 function makeSizesForContent(rootEl) {
-  var wanted = {};
+  var wanted = [];
   var pictures = rootEl.querySelectorAll('img[src^="/media/"]');
-  for (var i = 0; i < pictures.length; i++) { wanted[pictures[i].getAttribute('src')] = true; }
-  if (Object.keys(wanted).length === 0) { return; }
-  fetch('/media-library-items', { credentials: 'same-origin', cache: 'no-store' })
+  for (var i = 0; i < pictures.length; i++) { wanted.push(pictures[i].getAttribute('src')); }
+  return makeSizesForUrls(wanted);
+}
+
+// The versions of the pictures at these addresses that have none yet, one
+// after the other. The promise ends when they are all done (or could not be).
+function makeSizesForUrls(urls) {
+  var wanted = {};
+  for (var i = 0; i < urls.length; i++) { wanted[urls[i]] = true; }
+  if (urls.length === 0) { return Promise.resolve(); }
+  return fetch('/media-library-items', { credentials: 'same-origin', cache: 'no-store' })
     .then(function(reply) { return reply.json(); })
     .then(function(outcome) {
       var todo = (outcome.items || []).filter(function(item) {
         return wanted[item.url] && item.resizable && !item.sized;
       });
-      var next = function(j) {
-        if (j < todo.length) { makeImageSizes(todo[j].url).then(function() { next(j + 1); }); }
-      };
-      next(0);
+      return new Promise(function(resolveIt) {
+        var next = function(j) {
+          if (j >= todo.length) { resolveIt(); return; }
+          makeImageSizes(todo[j].url).then(function() { next(j + 1); });
+        };
+        next(0);
+      });
     })
     .catch(function() { /* the pictures work without their versions */ });
+}
+
+// Before an article goes online (published, updated or scheduled), every
+// picture in it has its lighter versions: the ones being made are waited
+// for, and the ones that have none (a picture taken from the Media page, an
+// import still under way) are made now. The page built right after the save
+// offers them, instead of the full pictures until the next save. Two
+// minutes at most: a picture that cannot be done must not block publishing.
+var IMAGES_READY_LIMIT = 120000;
+
+function articleImagesReady() {
+  var urls = [];
+  [quill, quillEn].forEach(function(editor) {
+    if (!editor) { return; }
+    var pictures = editor.root.querySelectorAll('img[src]');
+    for (var i = 0; i < pictures.length; i++) { urls.push(pictures[i].getAttribute('src')); }
+  });
+  var coverField = document.getElementById('image');
+  if (coverField) { urls.push(coverField.value.trim()); }
+  // Our pictures only, written as /media/<name> even when the address has
+  // the site's domain in front.
+  urls = urls.map(function(u) {
+    var match = /^(?:https?:\/\/[^\/]+)?(\/media\/[A-Za-z0-9][A-Za-z0-9._-]*)$/.exec(u || '');
+    return match ? match[1] : '';
+  }).filter(function(u, i, all) { return u !== '' && all.indexOf(u) === i; });
+  var running = Object.keys(IMAGE_SIZE_JOBS).map(function(k) { return IMAGE_SIZE_JOBS[k]; });
+  var work = Promise.all(running).then(function() { return makeSizesForUrls(urls); });
+  var limit = new Promise(function(resolveIt) { setTimeout(resolveIt, IMAGES_READY_LIMIT); });
+  return Promise.race([work, limit]);
 }
 
 // The Media page's button: the versions of every picture that has none.
@@ -3084,9 +3139,9 @@ function localInputValue(iso) {
   if (!iso) { return ''; }
   var moment = new Date(iso);
   if (isNaN(moment.getTime())) { return ''; }
-  var due = function(n) { return (n < 10 ? '0' : '') + n; };
-  return moment.getFullYear() + '-' + due(moment.getMonth() + 1) + '-' + due(moment.getDate()) +
-    'T' + due(moment.getHours()) + ':' + due(moment.getMinutes());
+  var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+  return moment.getFullYear() + '-' + pad(moment.getMonth() + 1) + '-' + pad(moment.getDate()) +
+    'T' + pad(moment.getHours()) + ':' + pad(moment.getMinutes());
 }
 
 // "saturday 4 october, 09:00", in the language of the administration.
@@ -3102,9 +3157,9 @@ function formatMoment(iso) {
 // Every <time class="now-local"> written by the server shows UTC; here it
 // becomes the reader's own time.
 function localizeMoments(root) {
-  var tempi = (root || document).querySelectorAll('time.now-local');
-  for (var i = 0; i < tempi.length; i++) {
-    tempi[i].textContent = formatMoment(tempi[i].getAttribute('datetime'));
+  var timeEls = (root || document).querySelectorAll('time.now-local');
+  for (var i = 0; i < timeEls.length; i++) {
+    timeEls[i].textContent = formatMoment(timeEls[i].getAttribute('datetime'));
   }
 }
 document.addEventListener('DOMContentLoaded', function() { localizeMoments(); });
@@ -3112,10 +3167,10 @@ document.addEventListener('DOMContentLoaded', function() { localizeMoments(); })
 // Opens or closes the little form with the date and time. With no button
 // (null) it is closed, as after a save.
 function toggleScheduleForm(buttonEl, openIt) {
-  var modulo = document.getElementById('schedule-form');
-  if (!modulo) { return; }
-  if (openIt === undefined) { openIt = modulo.hidden; }
-  modulo.hidden = !openIt;
+  var formEl = document.getElementById('schedule-form');
+  if (!formEl) { return; }
+  if (openIt === undefined) { openIt = formEl.hidden; }
+  formEl.hidden = !openIt;
   var buttons = document.querySelectorAll('[aria-controls="schedule-form"]');
   for (var i = 0; i < buttons.length; i++) {
     buttons[i].setAttribute('aria-expanded', openIt ? 'true' : 'false');
@@ -3198,7 +3253,19 @@ function saveWithStatus(state, buttonEl, message) {
   savingNow = true;
   pbBusy(buttonEl, true);
 
-  pbPostJson('/save', articleData(state))
+  // What goes online waits for the lighter versions of its pictures; a
+  // draft is saved at once, nobody reads it yet.
+  var goesOnline = state === 'published' || state === 'scheduled';
+  var waitNotice = goesOnline ? setTimeout(function() {
+    setAutosaveIndicator(t('js_images_preparing'), false);
+  }, 400) : null;
+  var ready = goesOnline ? articleImagesReady() : Promise.resolve();
+
+  ready
+    .then(function() {
+      clearTimeout(waitNotice);
+      return pbPostJson('/save', articleData(state));
+    })
     .then(function(res) {
       savingNow = false;
       pbBusy(buttonEl, false);
@@ -3236,10 +3303,10 @@ function saveWithStatus(state, buttonEl, message) {
 // with the public page. Saving first, as the preview of the translation used
 // to, would put the half-done changes of a published article online.
 function previewArticle(lang) {
-  var modulo = document.createElement('form');
-  modulo.method = 'post';
-  modulo.action = '/preview';
-  modulo.target = '_blank';
+  var formEl = document.createElement('form');
+  formEl.method = 'post';
+  formEl.action = '/preview';
+  formEl.target = '_blank';
   var fields = {
     csrf_token: window.PB_CSRF,
     language: lang || pbPage('main_language', 'it'),
@@ -3250,11 +3317,11 @@ function previewArticle(lang) {
     fieldEl.type = 'hidden';
     fieldEl.name = itemName;
     fieldEl.value = fields[itemName];
-    modulo.appendChild(fieldEl);
+    formEl.appendChild(fieldEl);
   }
-  document.body.appendChild(modulo);
-  modulo.submit();
-  modulo.remove();
+  document.body.appendChild(formEl);
+  formEl.submit();
+  formEl.remove();
 }
 
 function previewTranslation() {

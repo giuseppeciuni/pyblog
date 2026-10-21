@@ -368,6 +368,10 @@ def test_editor():
           and ".image-details-on-picture {" in css)
     check("nell'editor paragrafi e titoli hanno gli stessi spazi della pagina",
           ":is(#editor, #editor-en) .ql-editor :is(p, ul, ol, pre, blockquote) { margin:1em 0; }" in css)
+    check("pubblicare, aggiornare e programmare aspettano le versioni leggere delle immagini",
+          "function articleImagesReady()" in script
+          and "var goesOnline = state === 'published' || state === 'scheduled';" in script
+          and "var IMAGE_SIZE_JOBS = {};" in script)
     check("il riquadro di un'immagine non esce dall'editor",
           "function clipToEditor()" in script and "overlay.style.clipPath" in script)
     check("un gruppo chiuso dice cosa contiene",

@@ -200,7 +200,7 @@ JS_TRANSLATION_KEYS = (
     "js_media_copied", "js_media_delete_title", "js_media_delete_body",
     "js_media_delete_used", "js_media_cleanup_body", "js_media_uploading",
     "js_media_merge_title", "js_media_merge_body", "js_media_merge_confirm", "js_media_shown_of",
-    "js_media_making_sizes",
+    "js_media_making_sizes", "js_images_preparing",
     "upd_checking", "upd_installation", "upd_restarting", "upd_restarted", "upd_confirm_title",
     "upd_confirm_body", "admin_update_now", "upd_offline",
     "js_media_picker_title", "js_media_picker_search", "js_media_picker_empty",
