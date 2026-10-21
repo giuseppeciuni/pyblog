@@ -54,10 +54,13 @@ SECTIONS = [
     {"id": "comments", "group": "readers", "label": "admin_section_comments",
      "keywords": "comments giscus disqus"},
     {"id": "newsletter", "group": "readers", "label": "admin_section_newsletter",
-     "keywords": "email mail iscritti subscribers smtp"},
+     "keywords": "iscritti subscribers"},
     {"id": "translation", "group": "readers", "label": "admin_section_translation_of",
      "keywords": "translation inglese english deepl google claude openai deepseek chiave key api "
                  "seo backlink anchor ai"},
+    {"id": "email", "group": "services", "label": "admin_section_email",
+     "keywords": "email mail posta smtp server mittente sender recupero recovery password "
+                 "dimenticata forgot brevo gmail"},
     {"id": "analytics", "group": "services", "label": "admin_section_analytics_section",
      "keywords": "analytics google ga4 gtag umami visite visits"},
     {"id": "code", "group": "services", "label": "admin_section_codes",
@@ -347,6 +350,24 @@ def _state_newsletter(config, lang):
     return [("ok", T("state_n_subscribers", lang).replace("{n}", str(confirmed)))]
 
 
+def _state_email(config, lang):
+    """
+    The sending of email serves two different things: the newsletter and the
+    recovery link. The card says what is missing for the one in use.
+    """
+    current = newsletter.settings(config)
+    recovery = _text(str(config.get("recovery_email", "") or ""))
+    can_send = newsletter.can_send(current)
+    states = []
+    if recovery == "":
+        states.append(("warn", T("state_email_no_recovery", lang)))
+    elif not can_send:
+        states.append(("warn", T("state_email_no_server", lang)))
+    if states:
+        return states
+    return [("ok", T("state_email_ready", lang))]
+
+
 def _state_translation(config, lang):
     translation = _dict(config, "translation")
     service = translation.get("service", "deepl")
@@ -423,6 +444,7 @@ STATE_FUNCTIONS = {
     "boxes": _state_cards,
     "comments": _state_comments,
     "newsletter": _state_newsletter,
+    "email": _state_email,
     "translation": _state_translation,
     "analytics": _state_analytics,
     "code": _state_code,

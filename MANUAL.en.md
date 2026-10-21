@@ -1045,7 +1045,8 @@ and password.
 
 **Turning it on.** In **Settings → Newsletter**: tick **Turn on the
 newsletter**, choose where the form shows (in the sidebar, at the end of
-every article), fill in **Sending the emails** and click **Send a test
+every article). The mail server is set in **Settings → Email and password
+recovery → Mail server**, which also has **Send a test
 email**: it goes to the sender address, with the values written there, even
 before saving. Then **Save and update the site**. The SMTP password is
 better kept in `/etc/pyblog.env` as `PYBLOG_SMTP_PASSWORD=...`: it takes

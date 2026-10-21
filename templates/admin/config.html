@@ -45,12 +45,6 @@ $section_header_site
       <p class="help" id="admin_url-help">$hint_address_admin</p>
     </div>
     <div class="field">
-      <label for="recovery_email">$label_recovery_email</label>
-      <input class="field-input" type="email" id="recovery_email" value="$value_recovery_email"
-             autocomplete="email" aria-describedby="recovery_email-help">
-      <p class="help" id="recovery_email-help">$hint_recovery_email</p>
-    </div>
-    <div class="field">
       <label for="language">$label_language_main</label>
       <select class="field-input" id="language" aria-describedby="language-help">
         <option value="it" $sel_language_it>Italiano</option>
@@ -461,50 +455,7 @@ $section_header_newsletter
   </div>
 
   <div class="group">
-    <h2>$label_grp_nl_shipping</h2>
-    <p class="help">$hint_grp_nl_shipping</p>
-    <div class="fields-two">
-      <div class="field">
-        <label for="nl_sender_name">$label_nl_sender_name</label>
-        <input class="field-input" type="text" id="nl_sender_name" value="$value_nl_sender_name" aria-describedby="nl_sender_name-help">
-        <p class="help" id="nl_sender_name-help">$hint_nl_sender_name</p>
-      </div>
-      <div class="field">
-        <label for="nl_sender_email">$label_nl_sender_email</label>
-        <input class="field-input" type="email" id="nl_sender_email" value="$value_nl_sender_email" placeholder="blog@tuodominio.it">
-      </div>
-      <div class="field">
-        <label for="nl_smtp_host">$label_nl_smtp_host</label>
-        <input class="field-input" type="text" id="nl_smtp_host" value="$value_nl_smtp_host" placeholder="smtp-relay.brevo.com">
-      </div>
-      <div class="field">
-        <label for="nl_smtp_port">$label_nl_smtp_port</label>
-        <input class="field-input" type="number" id="nl_smtp_port" min="1" max="65535" value="$value_nl_smtp_port" aria-describedby="nl_smtp_port-help">
-        <p class="help" id="nl_smtp_port-help">$hint_nl_smtp_port</p>
-      </div>
-      <div class="field">
-        <label for="nl_smtp_security">$label_nl_smtp_security</label>
-        <select class="field-input" id="nl_smtp_security">
-          <option value="starttls" $sel_nl_starttls>$label_nl_starttls</option>
-          <option value="ssl" $sel_nl_ssl>$label_nl_ssl</option>
-          <option value="none" $sel_nl_none>$label_nl_none</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="nl_smtp_user">$label_nl_smtp_user</label>
-        <input class="field-input" type="text" id="nl_smtp_user" value="$value_nl_smtp_user" autocomplete="off">
-      </div>
-    </div>
-    <div class="field">
-      <label for="nl_smtp_password">$label_nl_smtp_password</label>
-      <input class="field-input" type="password" id="nl_smtp_password" value="" placeholder="$ph_nl_password" autocomplete="new-password" aria-describedby="nl_smtp_password-help">
-      <p class="help" id="nl_smtp_password-help">$hint_nl_smtp_password</p>
-    </div>
-    <div class="actions">
-      <button type="button" class="button" onclick="sendNewsletterTest(this)" aria-describedby="nl-test-help">$label_nl_test</button>
-      <span class="hint" id="nl-test-state" role="status"></span>
-    </div>
-    <p class="help" id="nl-test-help">$hint_nl_test</p>
+    <p class="help">$hint_nl_sending_where <a href="#email">$label_section_email</a>.</p>
   </div>
 
   <div class="group">
@@ -593,6 +544,66 @@ $section_header_translation
       <input class="field-input" type="text" id="seo_backlink_site" value="$value_backlink"
              placeholder="startupbusiness.it" aria-describedby="seo_backlink_site-help">
       <p class="help" id="seo_backlink_site-help">$hint_backlink</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="section-email" data-section="email" aria-labelledby="title-email" hidden>
+$section_header_email
+  <div class="group">
+    <h2>$label_grp_nl_shipping</h2>
+    <p class="help">$hint_grp_nl_shipping</p>
+    <div class="fields-two">
+      <div class="field">
+        <label for="nl_sender_name">$label_nl_sender_name</label>
+        <input class="field-input" type="text" id="nl_sender_name" value="$value_nl_sender_name" aria-describedby="nl_sender_name-help">
+        <p class="help" id="nl_sender_name-help">$hint_nl_sender_name</p>
+      </div>
+      <div class="field">
+        <label for="nl_sender_email">$label_nl_sender_email</label>
+        <input class="field-input" type="email" id="nl_sender_email" value="$value_nl_sender_email" placeholder="blog@tuodominio.it">
+      </div>
+      <div class="field">
+        <label for="nl_smtp_host">$label_nl_smtp_host</label>
+        <input class="field-input" type="text" id="nl_smtp_host" value="$value_nl_smtp_host" placeholder="smtp-relay.brevo.com">
+      </div>
+      <div class="field">
+        <label for="nl_smtp_port">$label_nl_smtp_port</label>
+        <input class="field-input" type="number" id="nl_smtp_port" min="1" max="65535" value="$value_nl_smtp_port" aria-describedby="nl_smtp_port-help">
+        <p class="help" id="nl_smtp_port-help">$hint_nl_smtp_port</p>
+      </div>
+      <div class="field">
+        <label for="nl_smtp_security">$label_nl_smtp_security</label>
+        <select class="field-input" id="nl_smtp_security">
+          <option value="starttls" $sel_nl_starttls>$label_nl_starttls</option>
+          <option value="ssl" $sel_nl_ssl>$label_nl_ssl</option>
+          <option value="none" $sel_nl_none>$label_nl_none</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="nl_smtp_user">$label_nl_smtp_user</label>
+        <input class="field-input" type="text" id="nl_smtp_user" value="$value_nl_smtp_user" autocomplete="off">
+      </div>
+    </div>
+    <div class="field">
+      <label for="nl_smtp_password">$label_nl_smtp_password</label>
+      <input class="field-input" type="password" id="nl_smtp_password" value="" placeholder="$ph_nl_password" autocomplete="new-password" aria-describedby="nl_smtp_password-help">
+      <p class="help" id="nl_smtp_password-help">$hint_nl_smtp_password</p>
+    </div>
+    <div class="actions">
+      <button type="button" class="button" onclick="sendNewsletterTest(this)" aria-describedby="nl-test-help">$label_nl_test</button>
+      <span class="hint" id="nl-test-state" role="status"></span>
+    </div>
+    <p class="help" id="nl-test-help">$hint_nl_test</p>
+  </div>
+
+  <div class="group">
+    <h2>$label_grp_recovery</h2>
+    <div class="field">
+      <label for="recovery_email">$label_recovery_email</label>
+      <input class="field-input" type="email" id="recovery_email" value="$value_recovery_email"
+             autocomplete="email" aria-describedby="recovery_email-help">
+      <p class="help" id="recovery_email-help">$hint_recovery_email</p>
     </div>
   </div>
 </section>

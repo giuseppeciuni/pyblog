@@ -51,6 +51,9 @@ def finished_config():
     c["home_content_en"] = "<p>I write about AI and distributed systems.</p>"
     c["subtitle_en"] = "Technical notes on AI, distributed systems and more"
     c["home_cards"] = [{"active": True, "title": "Contatti", "content": "<p>Scrivimi.</p>"}]
+    c["recovery_email"] = "autore@ciunix.com"
+    c["newsletter"] = dict(c.get("newsletter", {}), smtp_host="smtp-relay.brevo.com",
+                           sender_email="blog@ciunix.com")
     return c
 
 
@@ -118,6 +121,30 @@ def test_finished_site():
               and s != "translation"]
     check("nessun avviso, a parte la chiave di traduzione", warnings_found == [], str(warnings_found))
     check("il sito mostra il dominio", state("site", c) == ("ok", "www.ciunix.com"))
+
+
+def test_email_section():
+    print("\nemail e recupero password")
+    c = finished_config()
+    check("con server di posta ed email di recupero è pronta",
+          state("email", c) == ("ok", T("state_email_ready", "it")), str(state("email", c)))
+    c["recovery_email"] = ""
+    check("senza email di recupero lo dice", state("email", c) == ("warn", T("state_email_no_recovery", "it")))
+    c = finished_config()
+    c["newsletter"]["smtp_host"] = ""
+    check("senza server di posta il link non può partire",
+          state("email", c) == ("warn", T("state_email_no_server", "it")))
+    check("è una sezione a sé, tra i servizi", settings_panel.group_label("email") != ""
+          and "email" in settings_panel.SECTION_IDS)
+    page_html = server.config_page("TOKEN")
+    section = page_html[page_html.index('id="section-email"'):]
+    section = section[:section.index("</section>")]
+    check("il server di posta e l'email di recupero stanno lì",
+          'id="nl_smtp_host"' in section and 'id="recovery_email"' in section, section[:200])
+    newsletter_part = page_html[page_html.index('id="section-newsletter"'):]
+    newsletter_part = newsletter_part[:newsletter_part.index("</section>")]
+    check("la newsletter rimanda lì per la spedizione",
+          'href="#email"' in newsletter_part and 'id="nl_smtp_host"' not in newsletter_part)
 
 
 def test_site_and_home():
@@ -385,6 +412,7 @@ def main():
     test_section_descriptions()
     test_everything_from_the_interface()
     test_finished_site()
+    test_email_section()
     test_site_and_home()
     test_texts_in_other_language()
     test_admin_address()

@@ -328,10 +328,7 @@ Vai in **Impostazioni → Sito e autore** e compila:
   resta l'esempio, Google non indicizza niente;
 - **Lingua principale del sito**: la lingua in cui scrivi;
 - in **Chi scrive**: il tuo nome e, se vuoi, ruolo, una breve biografia e i
-  tuoi profili (GitHub, LinkedIn...), uno per riga;
-- **Email per il recupero della password**: dove arriva il link per
-  sceglierne una nuova se la dimentichi. Le email partono con la spedizione
-  impostata in **Newsletter** (passo 6.6), anche a newsletter spenta.
+  tuoi profili (GitHub, LinkedIn...), uno per riga.
 
 Clicca **Salva e aggiorna il sito** in fondo alla pagina.
 
@@ -400,14 +397,29 @@ il servizio e lascia vuoto il campo della chiave. Consiglio: una chiave
 usata solo per il blog, con un tetto di spesa mensile impostato nella
 console del servizio.
 
-### 6.6 (Facoltativo) La newsletter
+### 6.6 (Consigliato) Email e recupero della password
+
+Se dimentichi la password, PyBlog può mandarti un link per sceglierne una
+nuova. Serve un account SMTP (quello del tuo provider di posta, o Brevo,
+Mailgun, Amazon SES). In **Impostazioni → Email e recupero password**:
+
+- in **Server di posta** compila mittente, server SMTP, porta, sicurezza e
+  utente, poi clicca **Manda un'email di prova**;
+- in **Recupero della password** scrivi l'**email per il recupero**: lì
+  arriva il link.
+
+La password SMTP mettila in `/etc/pyblog.env` come
+`PYBLOG_SMTP_PASSWORD=...` (poi `sudo systemctl restart pyblog`). Lo stesso
+server di posta serve anche alla newsletter.
+
+**Controllo:** esci, clicca **Password dimenticata?** nella pagina di
+accesso e scrivi l'email di recupero: in pochi secondi arriva il link.
+
+### 6.7 (Facoltativo) La newsletter
 
 Per far iscrivere i lettori e mandare loro un'email a ogni nuovo articolo
-serve un account SMTP (quello del tuo provider di posta, o Brevo, Mailgun,
-Amazon SES). In **Impostazioni → Newsletter** spunta **Attiva la
-newsletter**, compila **Spedizione delle email**, clicca **Manda un'email di
-prova** e salva. La password SMTP mettila in `/etc/pyblog.env` come
-`PYBLOG_SMTP_PASSWORD=...` (poi `sudo systemctl restart pyblog`). La
+serve il server di posta del passo 6.6. In **Impostazioni → Newsletter**
+spunta **Attiva la newsletter**, scegli dove compare il modulo e salva. La
 configurazione di nginx del passo 4.1 o 4.2 porta già il modulo a PyBlog. Tutti i
 dettagli nel capitolo 8b del manuale.
 
@@ -487,7 +499,7 @@ CHANGELOG lo dice).
 | Una pagina dell'amministrazione dà 404 | una rotta nuova non è nella configurazione di nginx | confronta `/etc/nginx/sites-available/pyblog` con `nginx.conf.example` |
 | Certbot fallisce | il dominio non punta ancora al server | rifai il controllo del passo 1.2 e riprova |
 | "Troppi tentativi" al login | protezione contro chi indovina password | aspetta: il blocco riguarda solo il tuo indirizzo e si allunga a ogni errore |
-| Password dimenticata | — | **Password dimenticata?** nella pagina di accesso manda un link all'email di recupero (Impostazioni → Sito e autore; le email partono con la spedizione della newsletter). Senza: `cd /opt/pyblog && sudo -u pyblog python3 pyblog.py password` |
+| Password dimenticata | — | **Password dimenticata?** nella pagina di accesso manda un link all'email di recupero (Impostazioni → Email e recupero password, passo 6.6). Senza: `cd /opt/pyblog && sudo -u pyblog python3 pyblog.py password` |
 | Le modifiche non compaiono | il browser mostra la copia vecchia | ricarica forzata (Ctrl+F5); dal menu **Rigenera il sito** ricrea tutte le pagine |
 
 ### 7.4 Passare da un indirizzo a due

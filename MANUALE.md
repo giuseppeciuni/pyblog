@@ -1055,7 +1055,8 @@ porta, utente e password.
 
 **Accenderla.** In **Impostazioni → Newsletter**: spunta **Attiva la
 newsletter**, scegli dove compare il modulo (nella barra laterale, in fondo
-a ogni articolo), compila **Spedizione delle email** e clicca **Manda
+a ogni articolo). Il server di posta si imposta in **Impostazioni → Email e
+recupero password → Server di posta**, dove c'è anche **Manda
 un'email di prova**: arriva all'indirizzo del mittente, con i dati scritti,
 anche prima di salvare. Poi **Salva e aggiorna il sito**. La password SMTP è
 meglio in `/etc/pyblog.env` come `PYBLOG_SMTP_PASSWORD=...`: ha la

@@ -144,6 +144,12 @@ All notable changes to PyBlog are documented in this file.
 
 ### New features
 
+- **Email and password recovery have a section of their own.** The mail
+  server used to sit inside the Newsletter section and the recovery email
+  inside "Site and author": now both are in **Settings → Email and password
+  recovery**, which says what is missing for the recovery link to work.
+  The newsletter points there for its sending. The configuration keys are
+  unchanged.
 - **Forgot your password? A link by email.** The login page has
   **Forgot your password?**: it sends a link to the **Password recovery
   email** of Settings → Site and author, with the sending settings of the
